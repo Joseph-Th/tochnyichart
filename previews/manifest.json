@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T15:44:18.528Z",
+  "generatedAt": "2026-08-02T16:40:03.841Z",
   "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   "viewport": {
     "width": 1200,
@@ -15,19 +15,40 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 80656,
-      "sha256": "197131a42156827f8e8bb3215662126a1c9920f442280f1a9d1c403dbd9556c6",
+      "bytes": 86794,
+      "sha256": "1803d30a8d82b8626f7d3a53a2178f98fd552e2f77960e3b7437602a69e0ba2c",
       "diagnostics": {
         "version": "1.0",
-        "status": "pass",
+        "status": "warn",
         "summary": {
           "labelsChecked": 28,
           "objectsChecked": 4,
           "marksChecked": 2,
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "label-clipped",
+            "severity": "warning",
+            "message": "Label “over 80,000 rubles” extends outside its rendering area.",
+            "elements": [
+              {
+                "id": "am5-170",
+                "role": "data-label",
+                "text": "over 80,000 rubles",
+                "bounds": {
+                  "x": 778.2,
+                  "y": 212.7,
+                  "width": 184,
+                  "height": 85.6
+                }
+              }
+            ],
+            "remedy": "Shorten the label, increase chart height, or move labels inside/outside using options.labelMode.",
+            "overlapPercent": 4.9
+          }
+        ]
       },
       "warnings": []
     },
@@ -40,8 +61,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 72003,
-      "sha256": "2d6fe6b20daa685045b970f0e950f00e25a4b4ffbfaa85c073a15c4211631105",
+      "bytes": 73079,
+      "sha256": "ffd9c0e01c664003d3b500193b5649a0dcc659d50da3af7def64807404dcb849",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -65,8 +86,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 65015,
-      "sha256": "eeb384d94fcc9d1370758165eb85951c87cd6733ef782803b35c6d1760e57605",
+      "bytes": 71642,
+      "sha256": "f10aee597ab9e7d31eef2845485739db835d04572e2ca54cdb80f8421859892a",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -90,13 +111,13 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 69325,
-      "sha256": "c73757264dc1a43300b8f6d6d1a53e5b2446ad04675a8ec5f29e0f228c197d75",
+      "bytes": 62911,
+      "sha256": "f887ffba907a6869fd7ef6da53f1157676183f5c686b308742c1c050afbad199",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
         "summary": {
-          "labelsChecked": 26,
+          "labelsChecked": 19,
           "objectsChecked": 5,
           "marksChecked": 3,
           "errors": 0,
@@ -115,8 +136,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 61525,
-      "sha256": "269a7dcff0e4baa18d36517985b59957b9cada0d8c47b3a7148589565acfce09",
+      "bytes": 85958,
+      "sha256": "57586e8d051b4177cf3fcc8719aa150d9300b58c3503e9480822d30e9dfdea3d",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -142,8 +163,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 101635,
-      "sha256": "6e3d3d8c31d83cd4784814b2d7168180d56ce80ff9cf962328a1d30c10bedf98",
+      "bytes": 124721,
+      "sha256": "ddb78aad34975fa6920ef26481cbb3cc85491003d9048de65508d890985054d4",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -169,8 +190,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 78496,
-      "sha256": "381850e6a753b0ee26f3a61b714cc55df116895a886fed503b54d1d020984d36",
+      "bytes": 80945,
+      "sha256": "dd8732efabd66068f7fdb38ea17c5696aba6f7bba9e730180bbd6e5a506c8241",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -194,8 +215,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 70256,
-      "sha256": "aac661ededd9bab2cd6b870e3cbd5aee852afe48bafab05ae8007c287d503dfc",
+      "bytes": 71191,
+      "sha256": "2a71d9937c5fd564ae91ad9979119528b5a96cf39615fdb5eb0e616ccae0349e",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -219,13 +240,13 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 58719,
-      "sha256": "f66d10f0c0f6d08c15fb7feb7b7470eecc2c62902701be2e58227c68aaaabf3f",
+      "bytes": 76734,
+      "sha256": "dbda6a857f49acf5a63e12ea60484f5780eedd990ea40e80a52d26d51d22f247",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
         "summary": {
-          "labelsChecked": 29,
+          "labelsChecked": 24,
           "objectsChecked": 5,
           "marksChecked": 3,
           "errors": 0,
@@ -246,8 +267,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 44066,
-      "sha256": "dc788ef8331fab97e6e53ec4e4e40c92516e13dc18d8550e4febcd3136b5fbbe",
+      "bytes": 59636,
+      "sha256": "a77c9cf7620fd3fa9b00d382bf09ed462dd0a2577ee9e928473f68dc97831dbe",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -269,10 +290,10 @@
       "preview": "previews/russia-coking-coal-price-demand-divergence-2026.png",
       "dimensions": {
         "width": 1200,
-        "height": 900
+        "height": 1368
       },
-      "bytes": 67223,
-      "sha256": "27d6e95c5ff9a5754224a278512d251b2d16fcd4c7f97e459c19cb4627c2b692",
+      "bytes": 130882,
+      "sha256": "015cfa52d675438c90e92f076197890591916a279623a59400d4f449ae5c7659",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -298,13 +319,13 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 67977,
-      "sha256": "a0bb50e1e3e39bab0d4d25308b899a7b0d8634e4c5b986260b3f72ba85d542cb",
+      "bytes": 64143,
+      "sha256": "64510a672ea0f6f2a83dd0055ac905634389a5d8991a3320513a1e0b85bdbf3f",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
         "summary": {
-          "labelsChecked": 22,
+          "labelsChecked": 21,
           "objectsChecked": 5,
           "marksChecked": 3,
           "errors": 0,
@@ -323,8 +344,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 50963,
-      "sha256": "189dedef9181eed31eb867903759759a46642f1df1c20743886ca70de816dfcb",
+      "bytes": 75532,
+      "sha256": "88d36e43aa2e5b1d89ed32e7bc9f974e3201044f058c07aa85b0b1d13c3a8d3b",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -348,8 +369,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 67596,
-      "sha256": "7ff48c18e4d96671653a6972fee438e03df0c3c9507071c9f5816b257439ed34",
+      "bytes": 71058,
+      "sha256": "d1c3d8d8ff9b437bc5011b10458ba683a81f03fc34f44fca9936bdcbea3076b6",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -374,10 +395,10 @@
       "preview": "previews/wildberries-impact-sequence.png",
       "dimensions": {
         "width": 1200,
-        "height": 900
+        "height": 955
       },
-      "bytes": 97897,
-      "sha256": "f8518fabbeb8ddedd4ce860377f84b6b6ec837d1b82953337e2dbe78035a90a8",
+      "bytes": 112037,
+      "sha256": "90cb27a6717dd5c7887e1ab6032118acbedaffd0a395efff7f3c4ac099162d38",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",

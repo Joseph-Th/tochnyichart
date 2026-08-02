@@ -1,0 +1,72 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Severstal's Net Profit Fell 89%",
+  "subtitle": "The first-half decline was much steeper in profit than in revenue, while negative cash flow led the company to withhold its second-quarter dividend.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Kommersant",
+    "period": "H1 2026",
+    "url": "https://www.kommersant.ru/doc/8830427"
+  },
+  "data": [
+    {
+      "label": "Net profit",
+      "value": -89,
+      "displayValue": "−89%",
+      "tone": "critical"
+    },
+    {
+      "label": "EBITDA",
+      "value": -46,
+      "displayValue": "−46%",
+      "tone": "warning"
+    },
+    {
+      "label": "Revenue",
+      "value": -14,
+      "displayValue": "−14%",
+      "tone": "neutral"
+    }
+  ],
+  "measure": {
+    "unit": "% change",
+    "axisTitle": "Year-over-year change",
+    "decimals": 0,
+    "minimum": -100,
+    "maximum": 10,
+    "baseline": "explicit"
+  },
+  "supportingFacts": [
+    {
+      "value": "−29.8bn RUB",
+      "label": "Free cash flow in the first half of 2026.",
+      "tone": "critical"
+    },
+    {
+      "value": "No dividend",
+      "label": "The company declined to pay a dividend for Q2 2026.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "ascending",
+    "showLabels": true,
+    "showLegend": false,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "severstal-h1-collapse-2026",
+    "topic": "steel earnings",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "Severstal's net profit fell 89 percent year over year in H1 2026."
+  }
+}

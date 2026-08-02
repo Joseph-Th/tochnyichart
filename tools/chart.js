@@ -17,7 +17,7 @@ Usage:
   node tools/chart.js guide
   node tools/chart.js validate <spec.json>
   node tools/chart.js render <spec.json> [output.html]
-  node tools/chart.js diagnose <chart.html> [--single]
+  node tools/chart.js diagnose <chart.html> [--single] [--fit]
   node tools/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
 The model-facing artifact is a ChartSpec JSON file. The renderer owns HTML, CSS,
@@ -108,12 +108,13 @@ function main() {
   if (command === 'diagnose') {
     if (!args[1]) usage(1);
     const htmlPath = path.resolve(args[1]);
+    const requireViewportFit = args.includes('--fit');
     if (args.includes('--single')) {
-      const result = diagnoseHtml(htmlPath);
+      const result = diagnoseHtml(htmlPath, { requireViewportFit });
       printResult({ htmlPath: result.htmlPath, viewport: result.viewport, diagnostics: result.diagnostics });
       if (result.diagnostics?.status === 'fail') process.exit(1);
     } else {
-      const result = diagnoseHtmlResponsive(htmlPath);
+      const result = diagnoseHtmlResponsive(htmlPath, { requireViewportFit });
       printResult(result);
       if (result.status === 'fail') process.exit(1);
     }

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="The central bank delivered half the rate cut markets expected.">
-  <title>Russia's Central Bank Disappoints the Doves</title>
+  <meta name="description" content="Moscow coworking vacancy increased by 13 percentage points in one year.">
+  <title>Moscow Coworking Vacancy More Than Tripled</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,71 +20,72 @@
   <div id="tochnyi-app"></div>
   <script id="tochnyi-spec" type="application/json">{
   "version": "2.0",
-  "recipe": "comparison.scenarios",
-  "title": "Russia's Central Bank Disappoints the Doves",
-  "subtitle": "The key rate was reduced by 0.25 percentage points, half the cut markets expected.",
-  "date": "2026-06-21",
+  "recipe": "comparison.change",
+  "title": "Moscow Coworking Vacancy More Than Tripled",
+  "subtitle": "Vacant flexible-office space rose from 4.9% to 17.9% in twelve months, even as asking rents increased.",
+  "date": "2026-08-02",
   "source": {
-    "name": "Bank of Russia",
-    "period": "June 2026"
+    "name": "Kommersant",
+    "period": "12 months to July 2026",
+    "url": "https://www.kommersant.ru/doc/8833366"
   },
   "data": [
     {
-      "label": "Previous rate",
-      "value": 14.5,
-      "displayValue": "14.50%",
+      "label": "One year earlier",
+      "value": 4.9,
+      "displayValue": "4.9%",
       "tone": "neutral"
     },
     {
-      "label": "Market expectation",
-      "value": 14,
-      "displayValue": "14.00%",
-      "tone": "secondary"
-    },
-    {
-      "label": "Actual decision",
-      "value": 14.25,
-      "displayValue": "14.25%",
-      "tone": "primary"
+      "label": "Current vacancy",
+      "value": 17.9,
+      "displayValue": "17.9%",
+      "tone": "critical"
     }
   ],
   "measure": {
     "unit": "%",
-    "axisTitle": "Key interest rate",
-    "decimals": 2,
-    "minimum": 13,
-    "maximum": 15,
+    "axisTitle": "Share of vacant coworking space",
+    "decimals": 1,
+    "minimum": 0,
+    "maximum": 20,
     "baseline": "explicit",
     "scale": "linear"
   },
   "emphasis": {
-    "direction": "down",
-    "displayValue": "0.25 pp",
-    "label": "actual cut",
-    "position": "corner"
+    "direction": "up",
+    "displayValue": "+13 pp",
+    "label": "in twelve months",
+    "position": "between"
   },
+  "supportingFacts": [
+    {
+      "value": "+30.4%",
+      "label": "Year-over-year increase in coworking rental prices.",
+      "tone": "warning"
+    }
+  ],
   "narrative": {
     "frame": "surprise",
-    "density": "minimal",
+    "density": "editorial",
     "emphasis": "gap"
   },
   "options": {
     "height": "standard",
-    "showLabels": true,
-    "animate": true,
     "sort": "none",
-    "showLegend": true,
+    "showLabels": true,
+    "showLegend": false,
+    "animate": true,
     "labelMode": "auto"
   },
   "metadata": {
-    "slug": "russia-central-bank-rate-cut-june-2026",
-    "topic": "monetary policy",
+    "slug": "moscow-coworking-vacancy-surge-2026",
+    "topic": "commercial real estate",
     "country": "Russia",
-    "dataPeriod": "June 2026",
-    "keyFinding": "The central bank delivered half the rate cut markets expected."
+    "dataPeriod": "July 2026",
+    "keyFinding": "Moscow coworking vacancy increased by 13 percentage points in one year."
   },
-  "references": [],
-  "supportingFacts": []
+  "references": []
 }</script>
   <script src="../../lib/tochnyi-runtime.js"></script>
   <script src="../../lib/tochnyi-diagnostics.js"></script>

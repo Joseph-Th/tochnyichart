@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.5.0
+# Tochnyi Charts v2.6.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -89,6 +89,17 @@ npm test
 npm run examples
 npm run visual
 ```
+
+Render the editorial samples extracted from `input.txt`, run responsive diagnostics
+at 1200, 768, and 480 pixels, and capture review PNGs:
+
+```bash
+npm run samples
+```
+
+The sample specifications live in `specs/samples/`. Their generated HTML is written
+to the date-derived `charts/YYYY-week-WW/` directory and their PNGs and manifest are
+written to `previews/new-workflow/`.
 
 `npm run visual` renders every recipe fixture, verifies that the browser runtime
 reports success, captures the previews, and writes `previews/manifest.json` with
@@ -317,6 +328,26 @@ The design system includes reusable components for:
 - Causal sequences
 - Sources and attribution
 - Full, small, and corner watermarks
+
+## Visual planning
+
+Before a recipe is rendered, `lib/tochnyi-visual-plan.js` resolves a deterministic
+visual plan from the ChartSpec, item count, and viewport width. This layer controls
+layout decisions that should not be authored as CSS or pixel values in the spec:
+
+- Item-count-aware chart height
+- Editorial or minimal title alignment
+- Responsive category-label width
+- Axis-title and grid density
+- Ranking focus colors and secondary emphasis
+- Automatic inside or outside value-label placement
+- Watermark prominence
+
+For `ranking.horizontal`, the requested sort order is preserved at the top of the
+chart, rank numbers are added to category labels, and five-row rankings no longer
+inherit the same canvas height as twelve-row rankings. `narrative.density`,
+`narrative.emphasis`, and `options.labelMode` now affect the rendered result rather
+than serving only as validation metadata.
 
 Semantic tones are used instead of one-off classes:
 

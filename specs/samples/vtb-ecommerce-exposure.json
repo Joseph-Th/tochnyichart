@@ -1,0 +1,70 @@
+{
+  "version": "2.0",
+  "recipe": "composition.stacked",
+  "title": "VTB Has at Least 820 Billion Rubles Tied to E-Commerce",
+  "subtitle": "Direct Wildberries debt and Ozon shares pledged by AFK Sistema create a concentrated exposure before other linked investments are counted.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "The Bell and Tochnyi financial reporting compilation",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Wildberries debt to VTB",
+      "value": 500,
+      "displayValue": "500bn RUB",
+      "tone": "critical",
+      "annotation": "Direct bank exposure reported as part of Wildberries' 1.3tn-ruble total debt."
+    },
+    {
+      "label": "Ozon shares pledged to VTB",
+      "value": 320,
+      "displayValue": "320bn RUB",
+      "tone": "warning",
+      "annotation": "AFK Sistema used the shares as collateral at the end of June."
+    }
+  ],
+  "measure": {
+    "unit": "billion RUB",
+    "axisTitle": "Known exposure, billion rubles",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "primaryMetric": {
+    "value": "820bn RUB",
+    "label": "minimum identified exposure"
+  },
+  "supportingFacts": [
+    {
+      "value": "1.3tn RUB",
+      "label": "Wildberries' reported total debt across creditors.",
+      "tone": "critical"
+    },
+    {
+      "value": "57 vs 87 RUB",
+      "label": "VTB's current share price versus the price targeted for a planned stock issue.",
+      "tone": "warning"
+    }
+  ],
+  "note": "The 820bn-ruble total excludes VTB's partnership interests and planned fintech acquisitions.",
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "short",
+    "sort": "none",
+    "showLabels": true,
+    "showLegend": false,
+    "animate": true,
+    "labelMode": "inside"
+  },
+  "metadata": {
+    "slug": "vtb-ecommerce-exposure-2026",
+    "topic": "banking exposure",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "At least 820 billion rubles of VTB exposure is linked to Wildberries and Ozon."
+  }
+}

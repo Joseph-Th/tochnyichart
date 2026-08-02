@@ -75,7 +75,16 @@ function diagnoseHtml(htmlPath, options = {}) {
 
   const absoluteHtml = path.resolve(htmlPath);
   const viewport = options.viewport || { width: 1200, height: 900 };
-  const url = `${pathToFileURL(absoluteHtml).href}?static=1`;
+  const query = new URLSearchParams({
+    static: '1',
+    captureWidth: String(viewport.width),
+    captureHeight: String(viewport.height)
+  });
+  if (options.requireViewportFit) {
+    query.set('checkFit', '1');
+    if (options.autoFit !== false) query.set('fit', '1');
+  }
+  const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
   const result = spawnSync(browser, [...commonBrowserArgs(profileDir, viewport), '--dump-dom', url], {
     encoding: 'utf8',
@@ -126,12 +135,44 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
 }
 
 function captureHtml(htmlPath, outputPath, options = {}) {
-  const inspection = diagnoseHtml(htmlPath, options);
+  const requireViewportFit = options.requireViewportFit !== false;
+  const viewport = options.viewport || { width: 1200, height: 900 };
+  const inspection = diagnoseHtml(htmlPath, { ...options, viewport, requireViewportFit });
+  const overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
+  const adaptiveAttempts = options._adaptiveAttempts || 0;
+  if (
+    requireViewportFit &&
+    options.adaptiveHeight !== false &&
+    overflowIssue &&
+    adaptiveAttempts < 4
+  ) {
+    const overflow = Number(overflowIssue.overflowPixels?.vertical) || 0;
+    if (overflow > 0) {
+      return captureHtml(htmlPath, outputPath, {
+        ...options,
+        viewport: {
+          width: viewport.width,
+          height: Math.ceil(viewport.height + overflow + 32)
+        },
+        autoFit: false,
+        _adaptiveAttempts: adaptiveAttempts + 1
+      });
+    }
+  }
   const browser = inspection.browser;
   const absoluteHtml = inspection.htmlPath;
   const absoluteOutput = path.resolve(outputPath || absoluteHtml.replace(/\.html?$/i, '.png'));
   fs.mkdirSync(path.dirname(absoluteOutput), { recursive: true });
-  const url = `${pathToFileURL(absoluteHtml).href}?static=1`;
+  const query = new URLSearchParams({
+    static: '1',
+    captureWidth: String(inspection.viewport.width),
+    captureHeight: String(inspection.viewport.height)
+  });
+  if (requireViewportFit) {
+    query.set('checkFit', '1');
+    if (options.autoFit !== false) query.set('fit', '1');
+  }
+  const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
   const args = [
     ...commonBrowserArgs(profileDir, inspection.viewport),

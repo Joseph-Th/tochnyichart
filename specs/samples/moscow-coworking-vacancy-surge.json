@@ -1,0 +1,67 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "Moscow Coworking Vacancy More Than Tripled",
+  "subtitle": "Vacant flexible-office space rose from 4.9% to 17.9% in twelve months, even as asking rents increased.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Kommersant",
+    "period": "12 months to July 2026",
+    "url": "https://www.kommersant.ru/doc/8833366"
+  },
+  "data": [
+    {
+      "label": "One year earlier",
+      "value": 4.9,
+      "displayValue": "4.9%",
+      "tone": "neutral"
+    },
+    {
+      "label": "Current vacancy",
+      "value": 17.9,
+      "displayValue": "17.9%",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Share of vacant coworking space",
+    "decimals": 1,
+    "minimum": 0,
+    "maximum": 20,
+    "baseline": "explicit"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "+13 pp",
+    "label": "in twelve months",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "+30.4%",
+      "label": "Year-over-year increase in coworking rental prices.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "surprise",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLabels": true,
+    "showLegend": false,
+    "animate": true,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "moscow-coworking-vacancy-surge-2026",
+    "topic": "commercial real estate",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Moscow coworking vacancy increased by 13 percentage points in one year."
+  }
+}

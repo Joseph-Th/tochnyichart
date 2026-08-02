@@ -1,0 +1,67 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "Importers Get 3.6 Times More Fuel Support",
+  "subtitle": "The proposed diesel import subsidy is 39,740 rubles per ton above the payment made to domestic producers.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian government subsidy proposal, compiled by Tochnyi",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Domestic producer subsidy",
+      "value": 15440,
+      "displayValue": "15,440",
+      "tone": "neutral"
+    },
+    {
+      "label": "Proposed import subsidy",
+      "value": 55180,
+      "displayValue": "55,180",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "RUB/ton",
+    "axisTitle": "Subsidy, rubles per ton",
+    "decimals": 0,
+    "minimum": 0,
+    "maximum": 60000,
+    "baseline": "explicit"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "3.6×",
+    "label": "import support",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "112,600",
+      "label": "Indian Ai-92 reference price used in the proposed calculation.",
+      "tone": "warning"
+    }
+  ],
+  "note": "Ratio calculated as 55,180 divided by 15,440; rounded to one decimal place.",
+  "narrative": {
+    "frame": "comparison",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLabels": true,
+    "showLegend": false,
+    "animate": true,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "diesel-import-subsidy-gap-2026",
+    "topic": "fuel subsidies",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "The proposed import subsidy is about 3.6 times the domestic producer payment."
+  }
+}

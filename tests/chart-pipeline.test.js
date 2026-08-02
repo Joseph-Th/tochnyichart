@@ -12,6 +12,7 @@ const { recipeIds } = require('../renderer/catalog');
 const { extractLayoutDiagnostics } = require('../renderer/capture');
 const { diagnoseBoxes, diagnoseMarkStyles, normalizeRect } = require('../lib/tochnyi-diagnostics');
 const Tochnyi = require('../lib/tochnyi-charts');
+const VisualPlan = require('../lib/tochnyi-visual-plan');
 
 const examplesDir = path.join(__dirname, '..', 'specs', 'examples');
 const exampleFiles = fs.readdirSync(examplesDir).filter((name) => name.endsWith('.json')).sort();
@@ -40,8 +41,31 @@ test('generated shells contain no chart implementation or inline styles', () => 
     assert.equal(/\sstyle\s*=/.test(html), false);
     assert.equal(/am5(?:xy|percent)?\.[A-Za-z]+\.new\s*\(/.test(html), false);
     assert.equal(html.includes('tochnyi-diagnostics.js'), true);
+    assert.equal(html.includes('tochnyi-visual-plan.js'), true);
     assert.ok(Buffer.byteLength(html) < 12000, `${file} shell is unexpectedly large`);
   }
+});
+
+test('visual planning adapts ranking geometry and editorial hierarchy', () => {
+  const spec = validateSpec(loadExample('regional-ranking.json')).normalized;
+  const data = [...spec.data].sort((a, b) => b.value - a.value);
+  const plan = VisualPlan.resolveVisualPlan(spec, data, 1200);
+
+  assert.equal(plan.titleAlign, 'left');
+  assert.equal(plan.colorPolicy, 'focus');
+  assert.equal(plan.accentSecond, true);
+  assert.equal(plan.chartHeight, 454);
+  assert.ok(plan.chartHeight < 550, 'five-row rankings should not use a fixed tall canvas');
+  assert.equal(VisualPlan.rankingHeight(12, 'detailed'), 700);
+  assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
+});
+
+test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /function renderRanking\(spec\)[\s\S]*?inversed:\s*true/);
+  assert.doesNotMatch(runtime, /spec\.options\.sort === 'none'\) data\.sort/);
+  assert.match(runtime, /plan\.labelMode === 'inside'/);
+  assert.match(runtime, /labelFitsInside\(item, bounds\)/);
 });
 
 test('shared quantitative marks use restrained translucent styling', () => {
@@ -76,6 +100,12 @@ test('shared quantitative marks use restrained translucent styling', () => {
   assert.ok(opaqueIssues.some((issue) => issue.code === 'column-fill-too-opaque' && issue.severity === 'error'));
 });
 
+test('semantic cards do not use thick colored border highlights', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\{[^}]*border-top:\s*(?:[2-9]|\d{2,})px/gs);
+  assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\[[^\]]+\][^{]*\{[^}]*border-top-color/gs);
+});
+
 test('layout diagnostics detect text overlap and clipping', () => {
   const labels = [
     { id: 'a', source: 'amcharts', role: 'data-label', text: 'First', rect: normalizeRect({ left: 10, top: 10, right: 90, bottom: 40 }) },
@@ -89,6 +119,23 @@ test('layout diagnostics detect text overlap and clipping', () => {
   });
   assert.ok(issues.some((issue) => issue.code === 'text-text-overlap'));
   assert.ok(issues.some((issue) => issue.code === 'label-clipped'));
+});
+
+test('layout diagnostics fail text that overflows its visible box', () => {
+  const label = {
+    id: 'truncated',
+    source: 'dom',
+    role: 'page-label',
+    text: 'A visibly truncated label',
+    intrinsicOverflow: true,
+    rect: normalizeRect({ left: 10, top: 10, right: 120, bottom: 30 })
+  };
+  const issues = diagnoseBoxes({
+    labels: [label],
+    objects: [],
+    boundaries: [{ source: 'dom', rect: normalizeRect({ left: 0, top: 0, right: 200, bottom: 100 }) }]
+  });
+  assert.ok(issues.some((issue) => issue.code === 'text-truncated' && issue.severity === 'error'));
 });
 
 test('layout diagnostics ignore a label inside its own column', () => {
