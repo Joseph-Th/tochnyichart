@@ -61,6 +61,45 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
 });
 
+test('column labels fall outside when an inside label cannot physically fit', () => {
+  const plan = { chartHeight: 540, compact: false, labelMode: 'inside' };
+  const bounds = { minimum: -20, maximum: 56 };
+  const smallLoss = VisualPlan.columnLabelPlacement(
+    { value: -10.7, display: '−10.7' },
+    bounds,
+    plan,
+    { plotHeight: 390, barHeight: 43, labelHeight: 50.8, fontSize: 28 }
+  );
+  assert.equal(smallLoss.inside, false);
+  assert.equal(smallLoss.fellBackOutside, true);
+  assert.equal(smallLoss.placement, 'start');
+  assert.equal(smallLoss.locationY, 0);
+  assert.equal(smallLoss.centerYPercent, 100);
+  assert.ok(smallLoss.dy < 0);
+
+  const lossWithEndRoom = VisualPlan.columnLabelPlacement(
+    { value: -5, display: '−5' },
+    bounds,
+    plan,
+    { plotHeight: 390, barHeight: 24, labelHeight: 50.8, fontSize: 28 }
+  );
+  assert.equal(lossWithEndRoom.placement, 'end');
+  assert.equal(lossWithEndRoom.locationY, 1);
+  assert.equal(lossWithEndRoom.centerYPercent, 0);
+  assert.ok(lossWithEndRoom.dy > 0);
+
+  const tallLoss = VisualPlan.columnLabelPlacement(
+    { value: -18, display: '−18' },
+    bounds,
+    plan,
+    { plotHeight: 390, barHeight: 92, labelHeight: 50.8, fontSize: 28 }
+  );
+  assert.equal(tallLoss.inside, true);
+  assert.equal(tallLoss.locationY, 0.5);
+  assert.equal(tallLoss.centerYPercent, 50);
+  assert.equal(tallLoss.dy, 0);
+});
+
 test('Russia region registry exposes stable ISO-style identifiers', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   assert.ok(regionSet);
