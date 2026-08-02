@@ -90,6 +90,7 @@
         "callouts": { "type": "string", "enum": ["auto", "cards", "none"] },
         "summaryPosition": { "type": "string", "enum": ["auto", "right", "below", "none"] },
         "viewport": { "type": "string", "enum": ["auto", "all", "data"] },
+        "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
         "excludeRegions": {
           "type": "array",
           "maxItems": 12,

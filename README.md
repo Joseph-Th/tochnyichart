@@ -194,7 +194,9 @@ regions (`data`), or chooses automatically (`auto`). `map.excludeRegions` remove
 irrelevant polygons from the display. Region registries can also identify detached
 areas, which are omitted automatically unless they are part of the data. Regional
 status maps use a restrained teal, ochre, brick, plum, and slate palette rather
-than saturated red-green signaling.
+than saturated red-green signaling. Region callouts do not show centroid dots by
+default because the filled polygon already identifies the area. Set
+`map.anchorStyle = "dot"` only when an explicit point marker is useful.
 
 ## Project structure
 

@@ -57,6 +57,7 @@
     "callouts": "auto",
     "summaryPosition": "auto",
     "viewport": "data",
+    "anchorStyle": "none",
     "excludeRegions": ["RU-KGD"]
   },
   "primaryMetric": {

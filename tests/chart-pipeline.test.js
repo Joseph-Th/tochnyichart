@@ -120,6 +120,12 @@ test('regional maps use a restrained non-flag-like status palette', () => {
   assert.ok(policy.inactiveFillOpacity < policy.activeFillOpacity);
 });
 
+test('regional maps suppress centroid dots unless explicitly requested', () => {
+  assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'auto' }), 'none');
+  assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'none' }), 'none');
+  assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'dot');
+});
+
 test('regional map planning focuses on active data and omits inactive detached regions', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   const rectangle = (left, bottom, right, top) => ({
@@ -182,6 +188,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidExclusions);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.excludeRegions must be an array')));
+
+  const invalidAnchorStyle = loadExample('russia-regional-map.json');
+  invalidAnchorStyle.map.anchorStyle = 'capital';
+  result = validateSpec(invalidAnchorStyle);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.anchorStyle is not supported')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {
