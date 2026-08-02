@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia 5G Frequency Band Penalty</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia 5G — Base Station Penalty from Restricted Frequencies</h1>
+        <p class="tochnyi-subtitle">Global 3.4–3.8 GHz band reserved for security services; telecoms forced into <span class="tochnyi-highlight">4.8–4.99 GHz</span> requiring up to <span class="tochnyi-highlight">2× more base stations</span></p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian telecom industry analysis — 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 0,
+                paddingRight: 60,
+                paddingTop: 10,
+                paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // Index: global standard = 100 stations; Russia low = 150; Russia high = 200
+            // Also: existing-frequency option = 100 stations but no speed gains
+            var data = [
+                {
+                    scenario: "Global standard\n(3.4–3.8 GHz band)",
+                    stationsLow: 100, stationsHigh: 100,
+                    color: 0x005bbb,
+                    label: "100 stations",
+                    detail: "Standard global 5G deployment on 3.4–3.8 GHz — reserved in Russia for security services (FSB/military)"
+                },
+                {
+                    scenario: "Russia allocation\n(4.8–4.99 GHz band)",
+                    stationsLow: 150, stationsHigh: 200,
+                    color: 0xb30000,
+                    label: "150–200 stations",
+                    detail: "Higher frequency = shorter range = 50–100% more base stations required for identical coverage area"
+                },
+                {
+                    scenario: "Existing frequencies\n(no new band allocation)",
+                    stationsLow: 100, stationsHigh: 100,
+                    color: 0x888888,
+                    label: "100 stations — no speed gain",
+                    detail: "5G could run on current in-use frequencies using same station count — but delivers no speed improvement over 4G"
+                }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, {
+                inversed: false,
+                minGridDistance: 20
+            });
+            yRenderer.labels.template.setAll({
+                fontSize: 15,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                maxWidth: 220,
+                oversizedBehavior: "wrap",
+                textAlign: "right",
+                paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "scenario",
+                renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({
+                fontSize: 14,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 240,
+                strictMinMax: true,
+                renderer: xRenderer
+            }));
+
+            xAxis.children.push(am5.Label.new(root, {
+                text: "BASE STATIONS NEEDED (INDEX — GLOBAL STANDARD = 100)",
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 13,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666),
+                paddingTop: 8
+            }));
+
+            // Low bar (stationsLow for all — forms the base)
+            var seriesLow = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueXField: "stationsLow",
+                categoryYField: "scenario",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{detail}",
+                    getFillFromSprite: false,
+                    background: am5.Rectangle.new(root, {
+                        fill: am5.color(0x020303),
+                        fillOpacity: 0.88,
+                        cornerRadiusTL: 4, cornerRadiusTR: 4,
+                        cornerRadiusBL: 4, cornerRadiusBR: 4
+                    })
+                })
+            }));
+
+            seriesLow.columns.template.setAll({
+                height: am5.percent(45),
+                cornerRadiusTR: 0,
+                cornerRadiusBR: 0
+            });
+
+            seriesLow.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            seriesLow.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            // High-end range bar (additional stations for Russia scenario)
+            var seriesRange = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                openValueXField: "stationsLow",
+                valueXField: "stationsHigh",
+                categoryYField: "scenario"
+            }));
+
+            seriesRange.columns.template.setAll({
+                height: am5.percent(45),
+                cornerRadiusTR: 5,
+                cornerRadiusBR: 5
+            });
+
+            seriesRange.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (!di) return fill;
+                // Only show range extension for Russia scenario
+                if (di.dataContext.stationsHigh > di.dataContext.stationsLow)
+                    return am5.color(0xff6600);
+                return am5.color(0x00000000);
+            });
+            seriesRange.columns.template.adapters.add("strokeOpacity", function(v, target) {
+                var di = target.dataItem;
+                if (di && di.dataContext.stationsHigh > di.dataContext.stationsLow) return 1;
+                return 0;
+            });
+            seriesRange.columns.template.adapters.add("fillOpacity", function(v, target) {
+                var di = target.dataItem;
+                if (di && di.dataContext.stationsHigh > di.dataContext.stationsLow) return 0.5;
+                return 0;
+            });
+
+            // Labels to the right
+            seriesLow.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{label}",
+                        fontSize: 15,
+                        fontFamily: "Mukta",
+                        fontWeight: "700",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(50),
+                        centerX: am5.percent(0),
+                        paddingLeft: 10,
+                        populateText: true
+                    })
+                });
+            });
+
+            // Reference line at 100 (global standard)
+            var refRange = xAxis.createAxisRange(xAxis.makeDataItem({ value: 100 }));
+            refRange.get("grid").setAll({
+                stroke: am5.color(0x005bbb),
+                strokeOpacity: 0.5,
+                strokeDasharray: [6, 4]
+            });
+            refRange.get("label").setAll({
+                text: "global standard",
+                fontSize: 12,
+                fontFamily: "Mukta",
+                fontWeight: "600",
+                fill: am5.color(0x005bbb),
+                above: true,
+                centerX: am5.percent(50),
+                paddingBottom: 4
+            });
+
+            seriesLow.data.setAll(data);
+            seriesRange.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

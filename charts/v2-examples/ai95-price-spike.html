@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ai-95 exchange prices rose by roughly 10,000 rubles per ton in one week.">
+  <title>Ten Thousand Rubles a Ton in One Week</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "Ten Thousand Rubles a Ton in One Week",
+  "subtitle": "Ai-95 exchange prices moved above 80,000 rubles per ton after holding near 70,000.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Saint Petersburg International Mercantile Exchange gasoline pricing",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Before the spike",
+      "value": 70000,
+      "displayValue": "70,000 rubles",
+      "tone": "primary"
+    },
+    {
+      "label": "Current peak",
+      "value": 80000,
+      "displayValue": "over 80,000 rubles",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "RUB/ton",
+    "axisTitle": "Rubles per ton of Ai-95 gasoline",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "10k",
+    "label": "RUB/t",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "5% per bid",
+      "label": "Permitted price step reintroduced for certain gasoline sales.",
+      "tone": "critical"
+    },
+    {
+      "value": "10,000 tons/day",
+      "label": "Approximate exchange volume despite much higher domestic consumption.",
+      "tone": "warning"
+    },
+    {
+      "value": "45 million tons",
+      "label": "Refining capacity still absent from exchange offers.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": true,
+    "sort": "none",
+    "showLegend": true,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "russia-ai95-price-spike-2026",
+    "topic": "gasoline prices",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Ai-95 exchange prices rose by roughly 10,000 rubles per ton in one week."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

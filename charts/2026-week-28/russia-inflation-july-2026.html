@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Inflation — July 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #005bbb; } .stat-card.s2 .sv { color: #005bbb; }
+        .stat-card.s3 { border-top-color: #cc9900; } .stat-card.s3 .sv { color: #cc9900; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-12</div>
+        </div>
+
+        <h1 class="tochnyi-title">Inflation Breaks Above Target</h1>
+        <p class="tochnyi-subtitle">Russian year-to-date inflation reached <span class="tochnyi-highlight">4.49%</span> by early July 2026 — now above the lower bound of the Central Bank's 4% target</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">4.49% YTD</div>
+                <div class="sl">Cumulative 2026 inflation, above the 4% target lower bound</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">0.31% weekly</div>
+                <div class="sl">Price growth for June 30 – July 6, 2026</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">0.26% in July</div>
+                <div class="sl">Month-to-date July inflation so far</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Rosstat, compiled by Tochnyi — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, paddingTop: 20, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { label: "CB target\n(lower bound)", value: 4.0, col: Tochnyi.colors.blue },
+                { label: "2026 inflation\nso far", value: 4.49, col: 0xcc0000 }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label",
+                renderer: Tochnyi.createXRenderer(root, { cellStartLocation: 0.25, cellEndLocation: 0.75 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 5, strictMinMax: true, numberFormat: "#.0'%'",
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "CUMULATIVE PRICE GROWTH");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Inflation", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "label", sequencedInterpolation: true
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(55), cornerRadiusTL: 6, cornerRadiusTR: 6,
+                tooltipText: "{categoryX}: {valueY}%"
+            });
+            series.columns.template.adapters.add("fill", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.columns.template.adapters.add("stroke", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{valueY}%", fontSize: 26, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(130), centerX: am5.percent(50),
+                    populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            // Target reference line at 4%
+            var range = yAxis.makeDataItem({ value: 4.0 });
+            yAxis.createAxisRange(range);
+            range.get("grid").setAll({ stroke: am5.color(0x005bbb), strokeWidth: 2, strokeDasharray: [6, 4], strokeOpacity: 0.8 });
+            range.get("label").setAll({
+                text: "4% target", fill: am5.color(0x005bbb), fontFamily: "Mukta",
+                fontWeight: "600", fontSize: 14, inside: true, centerY: am5.percent(100), dy: -4
+            });
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

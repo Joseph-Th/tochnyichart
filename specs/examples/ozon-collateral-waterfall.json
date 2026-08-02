@@ -1,0 +1,74 @@
+{
+  "version": "2.0",
+  "recipe": "flow.waterfall",
+  "title": "The Collateral Lost Forty-Eight Billion Rubles",
+  "subtitle": "AFK Sistema pledged Ozon shares worth 320 billion rubles to VTB. A market decline reduced the estimated collateral value to roughly 272 billion.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Ozon share performance and AFK Sistema collateral described in the weekly source text",
+    "period": "30 June to late July 2026"
+  },
+  "data": [
+    {
+      "label": "Pledged value",
+      "value": 320,
+      "role": "start",
+      "displayValue": "320 billion rubles",
+      "tone": "primary"
+    },
+    {
+      "label": "Market-value loss",
+      "value": -48,
+      "role": "change",
+      "displayValue": "−48 billion rubles",
+      "tone": "critical",
+      "annotation": "The estimate follows a decline of more than 15% in Ozon shares."
+    },
+    {
+      "label": "Estimated value now",
+      "value": 272,
+      "role": "end",
+      "displayValue": "272 billion rubles",
+      "tone": "secondary"
+    }
+  ],
+  "measure": {
+    "unit": "billion rubles",
+    "axisTitle": "Collateral value",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "VTB",
+      "label": "The state bank accepted the Ozon shares as security for a large loan.",
+      "tone": "warning"
+    },
+    {
+      "value": ">15%",
+      "label": "Approximate Ozon share-price decline over the two-week period described.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "flow"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "ozon-collateral-waterfall",
+    "topic": "loan collateral erosion",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "The estimated value of pledged Ozon shares fell by 48 billion rubles."
+  }
+}

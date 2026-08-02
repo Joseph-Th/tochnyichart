@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia 5G Base Station Rollout 2027–2036</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .phase-row {
+            display: flex;
+            gap: 0;
+            margin-top: 18px;
+        }
+        .phase-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-top: 4px solid #ddd;
+            font-family: 'Mukta', sans-serif;
+        }
+        .phase-card .ph-year { font-size: 22px; font-weight: 700; }
+        .phase-card .ph-detail { font-size: 14px; font-weight: 500; color: #444; margin-top: 4px; }
+        .phase-card.p1 { border-top-color: #005bbb; }
+        .phase-card.p1 .ph-year { color: #005bbb; }
+        .phase-card.p2 { border-top-color: #cc9900; }
+        .phase-card.p2 .ph-year { color: #cc9900; }
+        .phase-card.p3 { border-top-color: #003d7a; }
+        .phase-card.p3 .ph-year { color: #003d7a; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia 5G Base Station Rollout — 2027 to 2036</h1>
+        <p class="tochnyi-subtitle">From <span class="tochnyi-highlight">4,300 stations</span> in 3 cities by 2027 to <span class="tochnyi-highlight">61,200 stations</span> across Russia by 2036</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="phase-row">
+            <div class="phase-card p1">
+                <div class="ph-year">2027</div>
+                <div class="ph-detail">Moscow · St. Petersburg · Novosibirsk<br>15% of city territory covered in year 1</div>
+            </div>
+            <div class="phase-card p2">
+                <div class="ph-year">2029</div>
+                <div class="ph-detail">Expanded to all 16 Russian cities over 1 million population<br>50% of city territory covered by year 3</div>
+            </div>
+            <div class="phase-card p3">
+                <div class="ph-year">2036</div>
+                <div class="ph-detail">Full target: 61,200 base stations<br>All-Russian domestic manufacturing required</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: Russian telecom industry rollout plan — 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            // 2027: 4,300; 2029 interpolated ~14,000; 2036: 61,200
+            var data = [
+                { year: "2027", stations: 4300,  cities: "3 cities",   color: 0x005bbb },
+                { year: "2029", stations: 14000, cities: "16 cities",  color: 0x0088ff },
+                { year: "2036", stations: 61200, cities: "All Russia", color: 0x003d7a }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1,
+                cellEndLocation: 0.9,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 22,
+                fontFamily: "Mukta",
+                fontWeight: "600"
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "year",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 70000,
+                strictMinMax: true,
+                numberFormat: "#,###",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "BASE STATIONS",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 15,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "stations",
+                categoryXField: "year",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{year}: {valueY.formatNumber('#,###')} base stations\n{cities}"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(55),
+                cornerRadiusTL: 6,
+                cornerRadiusTR: 6
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueY.formatNumber('#,###')}\n{cities}",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 18,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 8,
+                        textAlign: "center"
+                    })
+                });
+            });
+
+            // 100B prepaid reference annotation
+            chart.children.push(am5.Label.new(root, {
+                text: "100B+ rubles already prepaid for stations not yet in serial production",
+                fontSize: 14,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                fill: am5.color(0xb30000),
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                paddingTop: 10,
+                textAlign: "center"
+            }));
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

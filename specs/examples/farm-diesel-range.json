@@ -1,0 +1,78 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.range",
+  "title": "The Proposed Fuel Reaches Nine Hundred Times the Sulfur Limit",
+  "subtitle": "Russian ministries asked whether farmers could accept diesel or heating oil with sulfur concentrations far beyond the tolerance of modern agricultural engines.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Russian Ministry of Energy proposal described in the weekly source text",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Modern diesel limit",
+      "value": 10,
+      "displayValue": "10 ppm",
+      "tone": "positive",
+      "annotation": "Equivalent to the 0.001% sulfur ceiling cited for modern engines."
+    },
+    {
+      "label": "Fuel offered to farmers",
+      "low": 3000,
+      "high": 9000,
+      "tone": "critical",
+      "annotation": "The proposed 0.3% to 0.9% range is 300 to 900 times the cited limit."
+    }
+  ],
+  "references": [
+    {
+      "value": 10,
+      "label": "Modern-engine limit",
+      "tone": "positive",
+      "lineStyle": "dashed"
+    }
+  ],
+  "measure": {
+    "unit": "ppm sulfur",
+    "axisTitle": "Sulfur concentration",
+    "decimals": 0,
+    "baseline": "auto",
+    "scale": "logarithmic"
+  },
+  "primaryMetric": {
+    "value": "300×–900×",
+    "label": "above the cited modern-engine limit"
+  },
+  "supportingFacts": [
+    {
+      "value": "Heating oil",
+      "label": "The proposal also asked whether farmers could use heating oil instead of road diesel.",
+      "tone": "warning"
+    },
+    {
+      "value": "Engine damage risk",
+      "label": "The source text warns that modern agricultural engines would be damaged by such fuel.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "range"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "farm-diesel-range",
+    "topic": "agricultural diesel quality",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "The proposed fuel contains hundreds of times more sulfur than the cited limit."
+  }
+}

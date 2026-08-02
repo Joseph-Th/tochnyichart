@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia FMCG Store Openings — Q1 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-21</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia's Big Grocers Stop Expanding</h1>
+        <p class="tochnyi-subtitle">The largest FMCG retailers opened just <span class="tochnyi-highlight">282,500 m²</span> of new stores in Q1 2026 — down 36.4% year over year and the lowest in 15 years, as consumer demand weakens.</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge down corner">&#9660; 36.4%</div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant (kommersant.ru/doc/8740443) — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, layout: root.verticalLayout
+            }));
+
+            // Q1 2025 = 282500 / (1 - 0.364) = 444,182
+            var data = [
+                { period: "Q1 2025", value: 444182, color: 0x999999, tag: "444,182 m²" },
+                { period: "Q1 2026", value: 282500, color: 0x005bbb, tag: "282,500 m²" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { cellStartLocation: 0.18, cellEndLocation: 0.82, minGridDistance: 30 });
+            xRenderer.labels.template.setAll({ fontSize: 19, fontFamily: "Mukta", fontWeight: "600" });
+            xRenderer.grid.template.setAll({ visible: false });
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, { categoryField: "period", renderer: xRenderer }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 500000, strictMinMax: true, numberFormat: "#,###", renderer: yRenderer
+            }));
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90, text: "NEW STORE SPACE (m²)", y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis, valueYField: "value", categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, { labelText: "{period}: {tag}" })
+            }));
+            series.columns.template.setAll({ width: am5.percent(55), cornerRadiusTL: 6, cornerRadiusTR: 6 });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    populateText: true, fontSize: 22, fontWeight: "700", fontFamily: "Mukta", paddingBottom: 8 }) });
+            });
+            series.data.setAll(data);
+
+            var refRange = yAxis.createAxisRange(yAxis.makeDataItem({ value: 282500 }));
+            refRange.get("grid").setAll({ stroke: am5.color(0xb30000), strokeOpacity: 0.55, strokeDasharray: [6, 4] });
+            refRange.get("label").setAll({
+                text: "Lowest in 15 years", fontSize: 13, fontFamily: "Mukta", fontWeight: "600",
+                fill: am5.color(0xb30000), above: true, centerX: 0, paddingLeft: 6
+            });
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

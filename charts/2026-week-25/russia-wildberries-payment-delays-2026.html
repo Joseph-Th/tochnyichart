@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildberries Seller Payment Delays — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-21</div>
+        </div>
+
+        <h1 class="tochnyi-title">Wildberries Keeps Its Sellers Waiting</h1>
+        <p class="tochnyi-subtitle">The share of sellers facing payment delays from the marketplace jumped from <span class="tochnyi-highlight">30%</span> to <span class="tochnyi-highlight">76%</span> this year — and 17.5% now wait more than three weeks.</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner" style="color:#cc0000;border-color:#cc0000;">&#9650; 46 pp</div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant (kommersant.ru/doc/8740518) — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, layout: root.verticalLayout
+            }));
+
+            var data = [
+                { period: "Last year", value: 30, color: 0x999999, tag: "30%" },
+                { period: "This year", value: 76, color: 0x005bbb, tag: "76%" },
+                { period: "This year:\ndelay over 3 weeks", value: 17.5, color: 0xb30000, tag: "17.5%" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { cellStartLocation: 0.12, cellEndLocation: 0.88, minGridDistance: 30 });
+            xRenderer.labels.template.setAll({ fontSize: 17, fontFamily: "Mukta", fontWeight: "600" });
+            xRenderer.grid.template.setAll({ visible: false });
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, { categoryField: "period", renderer: xRenderer }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({ fontSize: 16, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 85, strictMinMax: true, numberFormat: "#'%'", renderer: yRenderer
+            }));
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90, text: "SHARE OF SELLERS", y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis, valueYField: "value", categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, { labelText: "{period}: {tag}" })
+            }));
+            series.columns.template.setAll({ width: am5.percent(58), cornerRadiusTL: 6, cornerRadiusTR: 6 });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    populateText: true, fontSize: 26, fontWeight: "700", fontFamily: "Mukta", paddingBottom: 8 }) });
+            });
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

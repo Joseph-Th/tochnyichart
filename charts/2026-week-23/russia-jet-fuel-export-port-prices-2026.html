@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Jet Fuel Export Port Prices 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Northwest Port Jet Fuel Export Prices</h1>
+        <p class="tochnyi-subtitle">March 2026 prices <span class="tochnyi-highlight">doubled</span> month-on-month and year-on-year — rubles per ton</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner">&#9650; +100% YoY &amp; MoM</div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: FAS Russia — average prices from NW export ports (per FAS reporting)
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            // March 2026 doubled both YoY and MoM → Feb 2026 ≈ 73,725; Mar 2025 ≈ 73,725
+            var data = [
+                { period: "Mar 2025\n(est.)", value: 73725,  note: "~73,700 ₽/t (estimated)", color: 0xaaaaaa },
+                { period: "Feb 2026\n(est.)", value: 73725,  note: "~73,700 ₽/t (estimated)", color: 0x005bbb },
+                { period: "Mar 2026",         value: 147450, note: "147,450 ₽/t (FAS)",       color: 0xffd500 },
+                { period: "Apr 2026",         value: 140890, note: "140,890 ₽/t (FAS)",       color: 0xcc9900 }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1,
+                cellEndLocation: 0.9,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 18,
+                fontFamily: "Mukta",
+                fontWeight: "600",
+                textAlign: "center",
+                oversizedBehavior: "wrap",
+                maxWidth: 120
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.2 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 170000,
+                strictMinMax: true,
+                numberFormat: "#,###",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "RUBLES PER TON",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 15,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "value",
+                categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{categoryX}: {note}"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(65),
+                cornerRadiusTL: 5,
+                cornerRadiusTR: 5
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueY.formatNumber('#,###')}",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 20,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 6
+                    })
+                });
+            });
+
+            // Estimated label on first two bars
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 0.5,
+                    sprite: am5.Label.new(root, {
+                        text: "{period.indexOf('est') >= 0 ? 'est.' : ''}",
+                        fill: am5.color(0xffffff),
+                        centerY: am5.percent(50),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 13,
+                        fontWeight: "500",
+                        fontFamily: "Mukta"
+                    })
+                });
+            });
+
+            // Separator line between 2025 and 2026 bars
+            var sepRange = xAxis.createAxisRange(xAxis.makeDataItem({
+                category: "Mar 2025\n(est.)",
+                endCategory: "Feb 2026\n(est.)"
+            }));
+
+            series.data.setAll(data);
+
+            // YoY annotation arrow label
+            chart.children.push(am5.Label.new(root, {
+                text: "Mar 2025 → Mar 2026: prices doubled YoY (+100%)\nFeb 2026 → Mar 2026: prices doubled MoM (+100%)",
+                fontSize: 15,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                fill: am5.color(0x666666),
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                paddingTop: 12,
+                textAlign: "center"
+            }));
+
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Beef Prices — July 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-19</div>
+        </div>
+
+        <h1 class="tochnyi-title">A Hundred Rubles More per Kilogram of Beef</h1>
+        <p class="tochnyi-subtitle">Russian beef averaged <span class="tochnyi-highlight">744.9 rubles a kilogram</span> on 1 July 2026, up about 100 rubles in twelve months — as the cattle herd shrank 3.9% and meat production fell 5.7%</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner">▲ 100.4 ₽/kg</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">−3.9% cattle herd</div>
+                <div class="sl">Reduction in the Russian cattle herd over January to March 2026</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">−5.7% production</div>
+                <div class="sl">Year-on-year fall in meat production, tightening supply further</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">353 ₽ entry price</div>
+                <div class="sl">Cheapest available beef in June 2026 — less than half the national average</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant, citing Russian retail price monitoring — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 10, paddingRight: 30, paddingTop: 45, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { cat: "July 2025", value: 644.5, tag: "644.5 ₽", color: 0x005bbb },
+                { cat: "July 2026", value: 744.9, tag: "744.9 ₽", color: 0xcc0000 },
+                { cat: "Cheapest beef\navailable, June 2026", value: 353, tag: "353 ₽", color: 0xcc9900 }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "cat",
+                renderer: Tochnyi.createXRenderer(root, { minGridDistance: 30, fontSize: 17 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 900, strictMinMax: true,
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "PRICE PER KILOGRAM (RUBLES)");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Beef price", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "cat",
+                tooltip: am5.Tooltip.new(root, { labelText: "{cat}: {tag} per kg" })
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(58), cornerRadiusTL: 6, cornerRadiusTR: 6
+            });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fontSize: 28, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    paddingBottom: 8, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

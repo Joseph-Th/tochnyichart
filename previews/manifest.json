@@ -1,0 +1,398 @@
+{
+  "generatedAt": "2026-08-02T15:44:18.528Z",
+  "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "viewport": {
+    "width": 1200,
+    "height": 900
+  },
+  "captures": [
+    {
+      "recipe": "comparison.change",
+      "spec": "specs/examples/ai95-price-spike.json",
+      "html": "charts/v2-examples/ai95-price-spike.html",
+      "preview": "previews/ai95-price-spike.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 80656,
+      "sha256": "197131a42156827f8e8bb3215662126a1c9920f442280f1a9d1c403dbd9556c6",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 28,
+          "objectsChecked": 4,
+          "marksChecked": 2,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "trend.line",
+      "spec": "specs/examples/bankruptcies-trend.json",
+      "html": "charts/v2-examples/bankruptcies-trend.html",
+      "preview": "previews/bankruptcies-trend.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 72003,
+      "sha256": "2d6fe6b20daa685045b970f0e950f00e25a4b4ffbfaa85c073a15c4211631105",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 22,
+          "objectsChecked": 2,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "composition.donut",
+      "spec": "specs/examples/budget-composition.json",
+      "html": "charts/v2-examples/budget-composition.html",
+      "preview": "previews/budget-composition.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 65015,
+      "sha256": "eeb384d94fcc9d1370758165eb85951c87cd6733ef782803b35c6d1760e57605",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 25,
+          "objectsChecked": 2,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "comparison.scenarios",
+      "spec": "specs/examples/central-bank-scenarios.json",
+      "html": "charts/v2-examples/central-bank-scenarios.html",
+      "preview": "previews/central-bank-scenarios.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 69325,
+      "sha256": "c73757264dc1a43300b8f6d6d1a53e5b2446ad04675a8ec5f29e0f228c197d75",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 26,
+          "objectsChecked": 5,
+          "marksChecked": 3,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "comparison.range",
+      "spec": "specs/examples/farm-diesel-range.json",
+      "html": "charts/v2-examples/farm-diesel-range.html",
+      "preview": "previews/farm-diesel-range.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 61525,
+      "sha256": "269a7dcff0e4baa18d36517985b59957b9cada0d8c47b3a7148589565acfce09",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 27,
+          "objectsChecked": 9,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available."
+      ]
+    },
+    {
+      "recipe": "status.grid",
+      "spec": "specs/examples/fuel-shortage-status.json",
+      "html": "charts/v2-examples/fuel-shortage-status.html",
+      "preview": "previews/fuel-shortage-status.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 101635,
+      "sha256": "6e3d3d8c31d83cd4784814b2d7168180d56ce80ff9cf962328a1d30c10bedf98",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 37,
+          "objectsChecked": 2,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available."
+      ]
+    },
+    {
+      "recipe": "headline.metric",
+      "spec": "specs/examples/headline-metric.json",
+      "html": "charts/v2-examples/headline-metric.html",
+      "preview": "previews/headline-metric.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 78496,
+      "sha256": "381850e6a753b0ee26f3a61b714cc55df116895a886fed503b54d1d020984d36",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 15,
+          "objectsChecked": 2,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "composition.stacked",
+      "spec": "specs/examples/moscow-warehouse-delay-2026.json",
+      "html": "charts/v2-examples/moscow-warehouse-delay-2026.html",
+      "preview": "previews/moscow-warehouse-delay-2026.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 70256,
+      "sha256": "aac661ededd9bab2cd6b870e3cbd5aee852afe48bafab05ae8007c287d503dfc",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 18,
+          "objectsChecked": 2,
+          "marksChecked": 2,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "flow.waterfall",
+      "spec": "specs/examples/ozon-collateral-waterfall.json",
+      "html": "charts/v2-examples/ozon-collateral-waterfall.html",
+      "preview": "previews/ozon-collateral-waterfall.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 58719,
+      "sha256": "f66d10f0c0f6d08c15fb7feb7b7470eecc2c62902701be2e58227c68aaaabf3f",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 29,
+          "objectsChecked": 5,
+          "marksChecked": 3,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available."
+      ]
+    },
+    {
+      "recipe": "ranking.horizontal",
+      "spec": "specs/examples/regional-ranking.json",
+      "html": "charts/v2-examples/regional-ranking.html",
+      "preview": "previews/regional-ranking.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 44066,
+      "sha256": "dc788ef8331fab97e6e53ec4e4e40c92516e13dc18d8550e4febcd3136b5fbbe",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 25,
+          "objectsChecked": 7,
+          "marksChecked": 5,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "comparison.range",
+      "spec": "specs/examples/russia-coking-coal-price-demand-divergence-2026.json",
+      "html": "charts/v2-examples/russia-coking-coal-price-demand-divergence-2026.html",
+      "preview": "previews/russia-coking-coal-price-demand-divergence-2026.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 67223,
+      "sha256": "27d6e95c5ff9a5754224a278512d251b2d16fcd4c7f97e459c19cb4627c2b692",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 46,
+          "objectsChecked": 19,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available."
+      ]
+    },
+    {
+      "recipe": "comparison.scenarios",
+      "spec": "specs/examples/russia-fuel-inflation-july-2026.json",
+      "html": "charts/v2-examples/russia-fuel-inflation-july-2026.html",
+      "preview": "previews/russia-fuel-inflation-july-2026.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 67977,
+      "sha256": "a0bb50e1e3e39bab0d4d25308b899a7b0d8634e4c5b986260b3f72ba85d542cb",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 22,
+          "objectsChecked": 5,
+          "marksChecked": 3,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "comparison.diverging",
+      "spec": "specs/examples/severstal-diverging.json",
+      "html": "charts/v2-examples/severstal-diverging.html",
+      "preview": "previews/severstal-diverging.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 50963,
+      "sha256": "189dedef9181eed31eb867903759759a46642f1df1c20743886ca70de816dfcb",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 27,
+          "objectsChecked": 6,
+          "marksChecked": 3,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": []
+    },
+    {
+      "recipe": "composition.stacked",
+      "spec": "specs/examples/spimex-demand-stacked.json",
+      "html": "charts/v2-examples/spimex-demand-stacked.html",
+      "preview": "previews/spimex-demand-stacked.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 67596,
+      "sha256": "7ff48c18e4d96671653a6972fee438e03df0c3c9507071c9f5816b257439ed34",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 19,
+          "objectsChecked": 2,
+          "marksChecked": 2,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available.",
+        "This two-part composition repeats the same categories across segment labels, legend, annotations, and supporting facts. The renderer will collapse redundant layers."
+      ]
+    },
+    {
+      "recipe": "story.sequence",
+      "spec": "specs/examples/wildberries-impact-sequence.json",
+      "html": "charts/v2-examples/wildberries-impact-sequence.html",
+      "preview": "previews/wildberries-impact-sequence.png",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "bytes": 97897,
+      "sha256": "f8518fabbeb8ddedd4ce860377f84b6b6ec837d1b82953337e2dbe78035a90a8",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 35,
+          "objectsChecked": 2,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      },
+      "warnings": [
+        "source.name looks like an internal working reference; use the underlying publication or dataset when available."
+      ]
+    }
+  ]
+}

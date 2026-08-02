@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia–Kazakhstan Fuel & Border — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 22px; font-weight: 700; }
+        .stat-card .sl { font-size: 13px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc9900; } .stat-card.s1 .sv { color: #cc9900; }
+        .stat-card.s2 { border-top-color: #cc0000; } .stat-card.s2 .sv { color: #cc0000; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-12</div>
+        </div>
+
+        <h1 class="tochnyi-title">Half a Day's Fuel, and a Sealed Border</h1>
+        <p class="tochnyi-subtitle">Russia reportedly asked Kazakhstan for up to <span class="tochnyi-highlight">50,000 tonnes</span> of gasoline — less than half a day's demand — even as Kazakhstan itself bans exports and cracks down on cross-border fuel smuggling</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">50,000 t requested</div>
+                <div class="sl">Reported Russian ask from Kazakhstan — under half a day of demand</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">200+ arrests</div>
+                <div class="sl">Smugglers caught with vehicles modified to carry extra fuel tanks</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">59 police units</div>
+                <div class="sl">Deployed to border checkpoints to stop fuel smuggling</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Regional & border reports compiled by Tochnyi — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 30, paddingTop: 10, paddingBottom: 10
+            }));
+
+            // Kazakhstan request vs one day of Russian demand (tonnes)
+            var data = [
+                { label: "Kazakhstan request", tonnes: 50000, col: 0xcc9900 },
+                { label: "One day of demand", tonnes: 130000, col: 0x005bbb }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: true, minGridDistance: 20 });
+            yRenderer.labels.template.setAll({ fontSize: 20, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ visible: false });
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({ fontSize: 18, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 165000, strictMinMax: true, numberFormat: "#a",
+                renderer: xRenderer
+            }));
+            Tochnyi.addXAxisLabel(root, xAxis, "TONNES OF GASOLINE");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Tonnes", xAxis: xAxis, yAxis: yAxis,
+                valueXField: "tonnes", categoryYField: "label", sequencedInterpolation: true
+            }));
+            series.columns.template.setAll({
+                height: am5.percent(55), cornerRadiusTR: 6, cornerRadiusBR: 6,
+                tooltipText: "{categoryY}: {valueX} t"
+            });
+            series.columns.template.adapters.add("fill", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.columns.template.adapters.add("stroke", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationX: 1, sprite: am5.Label.new(root, {
+                    text: "{valueX.formatNumber('#,###')} t", fontSize: 22, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(50), centerX: am5.percent(0),
+                    dx: 8, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Coal Export Cost Squeeze 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Coal Exports — Cost Squeeze Since March 2026</h1>
+        <p class="tochnyi-subtitle">Costs soar while export netbacks collapse — eastern route now loss-making once production costs included</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian coal industry reports — March–May 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 0, paddingRight: 70, paddingTop: 10, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // Positive = cost increase; negative = netback decline
+            // Railcar: 610→1200 rubles/ton = +96.7%
+            var data = [
+                {
+                    item: "Railcar operator rates\n(610 → 1,200 ₽/t since March)",
+                    change: 97, color: 0xb30000, tag: "+97%",
+                    detail: "Railcar operator rates nearly doubled from 610 ₽/ton in March to 1,200 ₽/ton in May"
+                },
+                {
+                    item: "Vostochny → China freight\n(to 12.5 USD/t since March)",
+                    change: 39, color: 0xff4400, tag: "+39%",
+                    detail: "Freight from Vostochny to China rose 39% to 12.5 USD/ton since March 2026"
+                },
+                {
+                    item: "Domestic diesel\n(ruble-denominated input cost)",
+                    change: 19, color: 0xcc9900, tag: "+19%",
+                    detail: "Domestic diesel prices up 19% — a key ruble-denominated production cost"
+                },
+                {
+                    item: "Ust-Luga → China freight\n(to 54.5 USD/t since March)",
+                    change: 11, color: 0xffaa00, tag: "+11%",
+                    detail: "Ust-Luga to China freight up 11% to 54.5 USD/ton since March 2026"
+                },
+                {
+                    item: "Ruble appreciation\n(+14 rubles since mid-March)",
+                    change: 10, color: 0x888888, tag: "~+10%",
+                    detail: "Ruble strengthened ~14 rubles vs USD since mid-March — erodes USD export revenue when converted to rubles"
+                },
+                {
+                    item: "Eastern route export netback\n(fell to 1,600 ₽/t — loss before production costs)",
+                    change: -20, color: 0x003d7a, tag: "−20%",
+                    detail: "Export netback on the profitable eastern (Vostochny) route fell 20% since March to 1,600 ₽/ton — producers operate at a loss once production costs included"
+                }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: false, minGridDistance: 15 });
+            yRenderer.labels.template.setAll({
+                fontSize: 13, fontFamily: "Mukta", fontWeight: "500",
+                maxWidth: 220, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "item", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: -30, max: 115, strictMinMax: true, numberFormat: "#'%'",
+                renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "CHANGE SINCE MARCH 2026 (%)",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            // Zero line
+            var zeroRange = xAxis.createAxisRange(xAxis.makeDataItem({ value: 0 }));
+            zeroRange.get("grid").setAll({ stroke: am5.color(0x020303), strokeOpacity: 0.4, strokeWidth: 2 });
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis,
+                valueXField: "change", categoryYField: "item",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{detail}",
+                    getFillFromSprite: false,
+                    background: am5.Rectangle.new(root, {
+                        fill: am5.color(0x020303), fillOpacity: 0.88,
+                        cornerRadiusTL: 4, cornerRadiusTR: 4, cornerRadiusBL: 4, cornerRadiusBR: 4
+                    })
+                })
+            }));
+            series.columns.template.setAll({
+                height: am5.percent(55),
+                cornerRadiusTR: 5, cornerRadiusBR: 5, cornerRadiusTL: 5, cornerRadiusBL: 5
+            });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: function(target) {
+                        var di = target ? target.dataItem : null;
+                        return (di && di.dataContext.change < 0) ? 0 : 1;
+                    },
+                    sprite: am5.Label.new(root, {
+                        text: "{tag}",
+                        fontSize: 16, fontFamily: "Mukta", fontWeight: "700",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(50),
+                        centerX: function(target) {
+                            var di = target ? target.dataItem : null;
+                            return (di && di.dataContext.change < 0) ? am5.percent(100) : am5.percent(0);
+                        },
+                        populateText: true, paddingLeft: 8, paddingRight: 8
+                    })
+                });
+            });
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crimea Fuel Subsidy Gap — July 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 26px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #005bbb; } .stat-card.s2 .sv { color: #005bbb; }
+        .stat-card.s3 { border-top-color: #cc9900; } .stat-card.s3 .sv { color: #cc9900; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-19</div>
+        </div>
+
+        <h1 class="tochnyi-title">The State Now Pays 5 Rubles for Every 1 the Driver Does</h1>
+        <p class="tochnyi-subtitle">To hold Crimean pump prices at 70 rubles per litre while stations source fuel at 350–450, the budget must cover a gap of up to <span class="tochnyi-highlight">380 rubles on every litre sold</span></p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">280–380 ₽/litre</div>
+                <div class="sl">Subsidy the budget must pay directly to each Crimean station</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">100% private</div>
+                <div class="sl">Every Crimean filling station is privately run, so the state cannot simply order prices down</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">5–6× cost cover</div>
+                <div class="sl">The driver pays roughly one-sixth of what the fuel actually costs to deliver</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian regional government announcements, compiled by Tochnyi — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 0, paddingRight: 40, paddingTop: 20, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            var data = [
+                { label: "High-end sourcing\ncost per litre", driver: 70, state: 380, sTag: "state pays 380 ₽" },
+                { label: "Low-end sourcing\ncost per litre", driver: 70, state: 280, sTag: "state pays 280 ₽" }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: true, minGridDistance: 15 });
+            yRenderer.labels.template.setAll({
+                fontSize: 17, fontFamily: "Mukta", fontWeight: "600",
+                maxWidth: 210, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 12
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0 });
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 470, strictMinMax: true, renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "RUBLES PER LITRE",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            var s1 = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Paid by the driver at the pump", xAxis: xAxis, yAxis: yAxis,
+                valueXField: "driver", categoryYField: "label", stacked: true,
+                fill: am5.color(0x005bbb), stroke: am5.color(0x005bbb)
+            }));
+            s1.columns.template.setAll({ height: am5.percent(55) });
+            s1.bullets.push(function() {
+                return am5.Bullet.new(root, { locationX: 0.5, sprite: am5.Label.new(root, {
+                    text: "70 ₽", fontSize: 17, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0xffffff), centerY: am5.percent(50), centerX: am5.percent(50)
+                })});
+            });
+            s1.data.setAll(data);
+
+            var s2 = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Paid by the state budget", xAxis: xAxis, yAxis: yAxis,
+                valueXField: "state", categoryYField: "label", stacked: true,
+                fill: am5.color(0xcc0000), stroke: am5.color(0xcc0000)
+            }));
+            s2.columns.template.setAll({ height: am5.percent(55), cornerRadiusTR: 6, cornerRadiusBR: 6 });
+            s2.bullets.push(function() {
+                return am5.Bullet.new(root, { locationX: 0.5, sprite: am5.Label.new(root, {
+                    text: "{sTag}", fontSize: 20, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0xffffff), centerY: am5.percent(50), centerX: am5.percent(50),
+                    populateText: true
+                })});
+            });
+            s2.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

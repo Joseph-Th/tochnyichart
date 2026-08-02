@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russian Funeral Service Company Registrations — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-26</div>
+        </div>
+
+        <h1 class="tochnyi-title">A Hundred and Eighty-Three New Funeral Firms</h1>
+        <p class="tochnyi-subtitle">Registrations of Russian funeral service companies rose to <span class="tochnyi-highlight">995 in the first half of 2026</span>. The rise reflects big operators splitting apart and firms leaving the grey market rather than new capacity</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <div class="tochnyi-change-badge up">▲ 183 companies</div>
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">Up 22.5%</div>
+                <div class="sl">Growth in registrations against the first half of 2025</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">Fragmentation</div>
+                <div class="sl">Larger operators breaking into smaller registered entities account for much of the rise</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">Leaving the grey market</div>
+                <div class="sl">Previously unregistered operators formalising also inflates the count</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian company registration data via Kommersant, compiled by Tochnyi — first half 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 10, paddingRight: 20, paddingTop: 50, paddingBottom: 10
+            }));
+
+            var data = [
+                { label: "First half 2025", value: 812, color: 0x005bbb, tag: "812 companies" },
+                { label: "First half 2026", value: 995, color: 0xcc9900, tag: "995 companies" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
+            xRenderer.labels.template.setAll({
+                fontSize: 20, fontFamily: "Mukta", fontWeight: "600", paddingTop: 10
+            });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0 });
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label", renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 1300, strictMinMax: true,
+                numberFormat: "#,###", renderer: yRenderer
+            }));
+            yAxis.children.moveValue(am5.Label.new(root, {
+                text: "FUNERAL SERVICE COMPANIES REGISTERED", rotation: -90,
+                y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }), 0);
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "label",
+                tooltip: am5.Tooltip.new(root, { labelText: "{label}: {tag}" })
+            }));
+            series.columns.template.setAll({ width: am5.percent(45), cornerRadiusTL: 8, cornerRadiusTR: 8 });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fontSize: 30, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    dy: -12, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

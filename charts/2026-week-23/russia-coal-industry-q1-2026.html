@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Coal Industry Q1 2026 P&amp;L</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Coal Industry — Q1 2026 Profit &amp; Loss</h1>
+        <p class="tochnyi-subtitle">Net industry loss deepens to <span class="tochnyi-highlight">88B rubles</span>; profitable companies' earnings collapse <span class="tochnyi-highlight">−53.8%</span> — billion rubles</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian coal industry statistics — Q1 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 0, paddingRight: 40, paddingTop: 10, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // Q1 2026: profitable +20.5B, losses -108.5B, net -88B
+            // Q1 2025: profitable ~44.4B (20.5/0.462), losses ~-126.3B (108.5/0.859), net -79.9B (stated)
+            var data = [
+                {
+                    segment: "Net industry loss",
+                    v2025: -79.9, v2026: -88.0,
+                    change: "−10.1% worse YoY",
+                    color25: 0x888888, color26: 0xb30000
+                },
+                {
+                    segment: "Profitable companies —\nnet profit",
+                    v2025: 44.4, v2026: 20.5,
+                    change: "−53.8% YoY",
+                    color25: 0x0088ff, color26: 0x005bbb
+                },
+                {
+                    segment: "Loss-making companies —\ntotal loss",
+                    v2025: -126.3, v2026: -108.5,
+                    change: "−14.1% less bad YoY",
+                    color25: 0xddaaaa, color26: 0xff4400
+                }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: false, minGridDistance: 20 });
+            yRenderer.labels.template.setAll({
+                fontSize: 14, fontFamily: "Mukta", fontWeight: "500",
+                maxWidth: 210, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "segment", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1, cellEndLocation: 0.9, strokeOpacity: 0.3
+            });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: -150, max: 60, strictMinMax: true, numberFormat: "#",
+                renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "BILLION RUBLES",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            // Zero line
+            var zeroRange = xAxis.createAxisRange(xAxis.makeDataItem({ value: 0 }));
+            zeroRange.get("grid").setAll({ stroke: am5.color(0x020303), strokeOpacity: 0.4, strokeWidth: 2 });
+
+            function makeSeries(name, field, colorField, isQ26) {
+                var s = chart.series.push(am5xy.ColumnSeries.new(root, {
+                    name: name,
+                    xAxis: xAxis, yAxis: yAxis,
+                    valueXField: field, categoryYField: "segment",
+                    clustered: true,
+                    tooltip: am5.Tooltip.new(root, {
+                        labelText: "{categoryY}\n" + name + ": {valueX}B ₽  ({change})"
+                    })
+                }));
+                s.columns.template.setAll({
+                    height: am5.percent(42),
+                    cornerRadiusTR: 4, cornerRadiusBR: 4,
+                    cornerRadiusTL: 4, cornerRadiusBL: 4
+                });
+                s.columns.template.adapters.add("fill", function(fill, target) {
+                    var di = target.dataItem;
+                    if (di) return am5.color(di.dataContext[colorField]);
+                    return fill;
+                });
+                s.columns.template.adapters.add("stroke", function(stroke, target) {
+                    var di = target.dataItem;
+                    if (di) return am5.color(di.dataContext[colorField]);
+                    return stroke;
+                });
+                if (isQ26) {
+                    s.bullets.push(function() {
+                        return am5.Bullet.new(root, {
+                            locationX: target => {
+                                var di = target ? target.dataItem : null;
+                                return (di && di.dataContext[field] < 0) ? 0 : 1;
+                            },
+                            sprite: am5.Label.new(root, {
+                                text: "{change}",
+                                fontSize: 12, fontFamily: "Mukta", fontWeight: "600",
+                                fill: am5.color(0x444444),
+                                centerY: am5.percent(50),
+                                centerX: target => {
+                                    var di = target ? target.dataItem : null;
+                                    return (di && di.dataContext[field] < 0) ? am5.percent(100) : am5.percent(0);
+                                },
+                                populateText: true,
+                                paddingLeft: 6, paddingRight: 6
+                            })
+                        });
+                    });
+                }
+                return s;
+            }
+
+            var s2025 = makeSeries("Q1 2025", "v2025", "color25", false);
+            var s2026 = makeSeries("Q1 2026", "v2026", "color26", true);
+
+            s2025.data.setAll(data);
+            s2026.data.setAll(data);
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.percent(50), x: am5.percent(50), marginTop: 14
+            }));
+            legend.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            legend.data.setAll(chart.series.values);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

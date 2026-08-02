@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia GDP Growth April 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia GDP Growth Slows Sharply — 2026</h1>
+        <p class="tochnyi-subtitle">April year-on-year growth at <span class="tochnyi-highlight">+1.3%</span>; first 4 months of 2026 average just <span class="tochnyi-highlight">+0.2%</span></p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian Ministry of Economic Development — June 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { period: "Jan–Apr 2026\n(YTD average)", value: 0.2, color: 0xcc9900, label: "+0.2%" },
+                { period: "April 2026\n(year-on-year)", value: 1.3, color: 0x005bbb, label: "+1.3%" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.15,
+                cellEndLocation: 0.85,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 20,
+                fontFamily: "Mukta",
+                fontWeight: "600",
+                textAlign: "center",
+                oversizedBehavior: "wrap",
+                maxWidth: 180
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 5,
+                strictMinMax: true,
+                numberFormat: "#.#'%'",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "GDP GROWTH RATE (% YEAR-ON-YEAR)",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 14,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "value",
+                categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{categoryX}: {label} GDP growth"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(50),
+                cornerRadiusTL: 6,
+                cornerRadiusTR: 6
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{label}",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 36,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 10
+                    })
+                });
+            });
+
+            // Reference lines for context
+            var range3 = yAxis.createAxisRange(yAxis.makeDataItem({ value: 3 }));
+            range3.get("grid").setAll({
+                stroke: am5.color(0x666666),
+                strokeOpacity: 0.25,
+                strokeDasharray: [4, 4]
+            });
+            range3.get("label").setAll({
+                text: "3% (approx. 2025 avg)",
+                fontSize: 12,
+                fontFamily: "Mukta",
+                fill: am5.color(0x888888),
+                above: true,
+                centerX: 0,
+                paddingLeft: 4
+            });
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

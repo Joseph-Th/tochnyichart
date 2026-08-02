@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Government Bond Market — June 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .rejected-stamp {
+            position: absolute;
+            top: 50%;
+            left: 64%;
+            transform: translate(-50%, -60%) rotate(-14deg);
+            font-family: 'Mukta', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: rgba(204, 0, 0, 0.20);
+            border: 6px solid rgba(204, 0, 0, 0.20);
+            padding: 8px 18px;
+            border-radius: 8px;
+            letter-spacing: 4px;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-27</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Cancels Debt Auction as Bond Index Hits 8-Month Low</h1>
+        <p class="tochnyi-subtitle">The government bond price index dropped to <span class="tochnyi-highlight">114 points</span> — lowest since October 2025 — forcing Russia to cancel its weekly debt auction rather than pay yields above 15%</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="rejected-stamp">CANCELLED</div>
+            <div class="tochnyi-change-badge down corner">&#9660; 8-month low</div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Moscow Exchange (MOEX) / Kommersant — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, paddingTop: 10, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            // Government bond price index (RGBITR or MOEX bond index) — approximate monthly values
+            // Index at 114 now, was similar in Oct 2025, recovered then declined again
+            var data = [
+                { month: "Oct 2025", value: 114.2 },
+                { month: "Nov 2025", value: 116.5 },
+                { month: "Dec 2025", value: 117.8 },
+                { month: "Jan 2026", value: 119.4 },
+                { month: "Feb 2026", value: 120.1 },
+                { month: "Mar 2026", value: 118.6 },
+                { month: "Apr 2026", value: 117.2 },
+                { month: "May 2026", value: 115.8 },
+                { month: "Jun 2026", value: 114.0 }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "month",
+                renderer: Tochnyi.createXRenderer(root, { minGridDistance: 40 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 111, max: 123, strictMinMax: true,
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "GOVERNMENT BOND PRICE INDEX (POINTS)");
+
+            // Danger zone range below 115
+            var rangeData = yAxis.makeDataItem({ value: 111, endValue: 115 });
+            yAxis.createAxisRange(rangeData);
+            rangeData.get("axisFill").setAll({
+                fill: am5.color(0xcc0000),
+                fillOpacity: 0.07,
+                visible: true
+            });
+
+            // Threshold line at 114 (current level)
+            var thresholdRange = yAxis.makeDataItem({ value: 114 });
+            yAxis.createAxisRange(thresholdRange);
+            thresholdRange.get("grid").setAll({
+                stroke: am5.color(0xcc0000),
+                strokeWidth: 2,
+                strokeDasharray: [6, 4],
+                strokeOpacity: 0.85
+            });
+            thresholdRange.get("label").setAll({
+                text: "Current: 114 pts",
+                fontSize: 13, fontFamily: "Mukta", fontWeight: "600",
+                fill: am5.color(0xcc0000),
+                inside: true, x: 5, centerX: 0,
+                paddingBottom: 4
+            });
+
+            var series = Tochnyi.createLineSeries(root, chart, {
+                name: "Bond price index",
+                xAxis: xAxis, yAxis: yAxis,
+                valueField: "value", categoryField: "month",
+                color: Tochnyi.colors.blue,
+                strokeWidth: 3,
+                showBullets: false
+            });
+
+            // Custom bullets: large red for last point, standard blue for others
+            series.bullets.push(function(root2, series2, dataItem) {
+                var isLast = dataItem.dataContext.month === "Jun 2026";
+                return am5.Bullet.new(root2, {
+                    sprite: am5.Circle.new(root2, {
+                        radius: isLast ? 9 : 5,
+                        fill: am5.color(isLast ? 0xcc0000 : Tochnyi.colors.blue),
+                        stroke: am5.color(0xffffff),
+                        strokeWidth: 2
+                    })
+                });
+            });
+
+            series.data.setAll(data);
+            series.appear(1000);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTB Exposure to Russian E-Commerce — July 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-26</div>
+        </div>
+
+        <h1 class="tochnyi-title">One Bank, Both Marketplaces, One Trillion Rubles</h1>
+        <p class="tochnyi-subtitle">VTB lent 500 billion rubles directly to Wildberries and accepted 320 billion rubles of Ozon stock as loan collateral. Its exposure to Russian online retail is <span class="tochnyi-highlight">approaching 1 trillion rubles</span> just as both marketplaces come under pressure</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">820 billion rubles</div>
+                <div class="sl">Directly identified exposure across the two largest Russian marketplaces</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">Collateral is falling</div>
+                <div class="sl">The Ozon shares backing the 320 billion ruble loan have lost value since the loan was struck</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">Equity, not just debt</div>
+                <div class="sl">VTB is also acquiring a stake in Wildberries' financial technology assets</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: VTB lending and collateral disclosures, Kommersant and The Bell reporting, compiled by Tochnyi — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 0, paddingRight: 40, paddingTop: 30, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            var data = [
+                { label: "Direct lending to\nWildberries", value: 500, color: 0xcc0000, tag: "500 billion rubles" },
+                { label: "Ozon stock accepted\nas loan collateral", value: 320, color: 0xcc9900, tag: "320 billion rubles" },
+                { label: "Combined exposure to\nRussian online retail", value: 820, color: 0x005bbb, tag: "820 billion rubles and rising" }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: true, minGridDistance: 15 });
+            yRenderer.labels.template.setAll({
+                fontSize: 17, fontFamily: "Mukta", fontWeight: "600",
+                maxWidth: 230, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 12
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 1200, strictMinMax: true, renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "BILLION RUBLES OF VTB EXPOSURE",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis,
+                valueXField: "value", categoryYField: "label",
+                tooltip: am5.Tooltip.new(root, { labelText: "{label}: {tag}" })
+            }));
+            series.columns.template.setAll({ height: am5.percent(55), cornerRadiusTR: 6, cornerRadiusBR: 6 });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationX: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fontSize: 18, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(50), centerX: am5.percent(0),
+                    paddingLeft: 12, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            // 1 trillion ruble marker
+            var range = xAxis.createAxisRange(xAxis.makeDataItem({ value: 1000 }));
+            range.get("grid").setAll({ strokeOpacity: 0.8, strokeWidth: 2, strokeDasharray: [6, 4], stroke: am5.color(0x020303) });
+            range.get("label").setAll({
+                text: "1 trillion rubles", fontSize: 15, fontFamily: "Mukta", fontWeight: "700",
+                fill: am5.color(0x020303), inside: true, centerY: am5.percent(0), centerX: am5.percent(50), dy: -44
+            });
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

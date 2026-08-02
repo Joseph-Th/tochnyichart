@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Gasoline Shortages — June 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 860px;
+            position: relative;
+        }
+
+        .legend-row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 18px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Mukta', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: #020303;
+        }
+
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Gasoline Shortages — June 2026</h1>
+        <p class="tochnyi-subtitle">19 regions with fuel restrictions, shortages or price hikes this week</p>
+
+        <div class="legend-row">
+            <div class="legend-item">
+                <div class="legend-dot" style="background:#b30000;"></div>
+                Shortage / Closed Stations
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:#005bbb;"></div>
+                Sales Limits
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:#cc9900;"></div>
+                Price Hikes
+            </div>
+        </div>
+
+        <div id="chartdiv">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian regional news reports, June 2–6, 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 0,
+                paddingRight: 40,
+                paddingTop: 10,
+                paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // Severity: 3 = shortage/closed, 2 = strict limits, 1 = moderate/price
+            // Ordered worst → least bad (chart will render top to bottom with inversed:false on Y)
+            var data = [
+                { region: "Rostov / Zernograd",        label: "Closed — no gasoline",          level: 3, type: "shortage", detail: "No gasoline at any station in Zernograd; shortages across the region & on M4 highway" },
+                { region: "Tomsk",                      label: "Buses stopped, 20L limit",       level: 3, type: "shortage", detail: "Buses halted due to fuel shortages; 20-litre refuelling limit in place" },
+                { region: "Zabaykalsky Krai",           label: "Station closed, 20L limit",      level: 3, type: "shortage", detail: "One independent station stopped; two others capped at 20 litres" },
+                { region: "Tula",                       label: "Stations closed, 20L limit",     level: 3, type: "shortage", detail: "Some district stations have stopped; remaining ones enforce 20-litre limit" },
+                { region: "Tver",                       label: "No Ai-95 at some stations",      level: 2, type: "shortage", detail: "Certain stations fully out of Ai-95 petrol grade" },
+                { region: "Karelia",                    label: "20L limit, no Ai-95 some sites", level: 2, type: "shortage", detail: "20-litre sales limit; several stations carrying no Ai-95" },
+                { region: "Novgorod (Veliky Novgorod)", label: "20L refuel limit",               level: 2, type: "limit",    detail: "20-litre per visit limit on refuelling" },
+                { region: "Pskov",                      label: "20L limit",                      level: 2, type: "limit",    detail: "Gas station chains imposing 20-litre limit" },
+                { region: "Voronezh",                   label: "No canisters, pumps offline",    level: 2, type: "limit",    detail: "Canister refuelling banned at some stations; non-working fuel pumps reported" },
+                { region: "Oryol",                      label: "No canisters; stations closing", level: 2, type: "limit",    detail: "Loading into canisters forbidden; some stations shut while Taneco offers only expensive diesel" },
+                { region: "St. Petersburg",             label: "50L per car limit",              level: 1, type: "limit",    detail: "50-litre limit introduced just before St Petersburg Economic Forum (SPIEF)" },
+                { region: "Arkhangelsk",                label: "50L limit, no canisters",        level: 1, type: "limit",    detail: "50-litre per person cap; canister refuelling forbidden" },
+                { region: "Kamchatka",                  label: "100L car · 20L canister · 35L boat", level: 1, type: "limit", detail: "Tiered limits: 100L per car, 20L per canister, 35L per boat" },
+                { region: "Kursk",                      label: "No full tank, no canisters",     level: 1, type: "limit",    detail: "Full-tank fills and container fills both banned" },
+                { region: "Belgorod",                   label: "No full tank, no canisters",     level: 1, type: "limit",    detail: "Full-tank fills and container fills both banned" },
+                { region: "Moscow Region",              label: "No full-tank refuelling",         level: 1, type: "limit",    detail: "Stations in Moscow region not allowing full-tank fills" },
+                { region: "Krasnoyarsk (Rosneft)",      label: "No canister filling",            level: 1, type: "limit",    detail: "Rosneft stations have banned filling canisters brought by customers" },
+                { region: "Tatarstan",                  label: "Prices +13–14% overnight",       level: 1, type: "price",    detail: "Two gas station chains raised prices by 13–14% overnight" },
+                { region: "Chuvashia",                  label: "Prices +13–14% overnight",       level: 1, type: "price",    detail: "Two gas station chains raised prices by 13–14% overnight" }
+            ];
+
+            var colorMap = {
+                shortage: 0xb30000,
+                limit:    0x005bbb,
+                price:    0xcc9900
+            };
+
+            // Y axis — regions
+            var yRenderer = am5xy.AxisRendererY.new(root, {
+                inversed: false,
+                minGridDistance: 10
+            });
+            yRenderer.labels.template.setAll({
+                fontSize: 15,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                maxWidth: 220,
+                oversizedBehavior: "wrap",
+                textAlign: "right",
+                paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({
+                strokeOpacity: 0.08
+            });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "region",
+                renderer: yRenderer,
+                tooltip: am5.Tooltip.new(root, {})
+            }));
+            yAxis.data.setAll(data);
+
+            // X axis — severity level (hidden labels)
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                strokeOpacity: 0.2,
+                minGridDistance: 60
+            });
+            xRenderer.labels.template.setAll({
+                visible: false
+            });
+            xRenderer.grid.template.setAll({
+                strokeOpacity: 0.08
+            });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 3.6,
+                strictMinMax: true,
+                renderer: xRenderer
+            }));
+
+            // Severity zone labels (painted as axis ranges)
+            function addZoneLabel(xAxis, value, text, color) {
+                var range = xAxis.createAxisRange(xAxis.makeDataItem({ value: value }));
+                range.get("grid").setAll({
+                    stroke: am5.color(color),
+                    strokeOpacity: 0.35,
+                    strokeDasharray: [4, 4]
+                });
+                range.get("label").setAll({
+                    text: text,
+                    fontSize: 13,
+                    fontFamily: "Mukta",
+                    fontWeight: "600",
+                    fill: am5.color(color),
+                    fillOpacity: 0.8,
+                    above: true,
+                    centerX: am5.percent(50),
+                    paddingBottom: 6
+                });
+            }
+
+            addZoneLabel(xAxis, 1, "MODERATE", 0x005bbb);
+            addZoneLabel(xAxis, 2, "STRICT", 0x994400);
+            addZoneLabel(xAxis, 3, "SEVERE", 0xb30000);
+
+            // Bar series
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueXField: "level",
+                categoryYField: "region",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "[bold]{categoryY}[/]\n{detail}",
+                    getFillFromSprite: false,
+                    background: am5.Rectangle.new(root, {
+                        fill: am5.color(0x020303),
+                        fillOpacity: 0.85,
+                        cornerRadiusTL: 4,
+                        cornerRadiusTR: 4,
+                        cornerRadiusBL: 4,
+                        cornerRadiusBR: 4
+                    })
+                })
+            }));
+
+            series.columns.template.setAll({
+                height: am5.percent(68),
+                cornerRadiusTR: 4,
+                cornerRadiusBR: 4
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(colorMap[di.dataContext.type] || 0x005bbb);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(colorMap[di.dataContext.type] || 0x005bbb);
+                return stroke;
+            });
+
+            // Short label to the right of each bar
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{label}",
+                        fontSize: 13,
+                        fontFamily: "Mukta",
+                        fontWeight: "500",
+                        fill: am5.color(0x333333),
+                        centerY: am5.percent(50),
+                        centerX: am5.percent(0),
+                        paddingLeft: 8,
+                        populateText: true
+                    })
+                });
+            });
+
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

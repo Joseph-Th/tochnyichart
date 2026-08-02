@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>China to Russia Trucking Rates — July 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-19</div>
+        </div>
+
+        <h1 class="tochnyi-title">250,000 Rubles Added to One Truckload in Two Days</h1>
+        <p class="tochnyi-subtitle">A single road shipment from Manchuria to Novolipetsk went from 900,000 to <span class="tochnyi-highlight">1,150,000 rubles</span> between 5 and 7 July — part of a 50% climb in China–Russia road freight since the end of April</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner" style="top: 40px; left: 240px; right: auto;">▲ 250,000 ₽</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">+50% since April</div>
+                <div class="sl">Cumulative rise in China–Russia road freight rates since the end of April 2026</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">+15–25%</div>
+                <div class="sl">Increase over the last 30 days alone, with rates still climbing daily</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">Kazakhstan steady</div>
+                <div class="sl">Routing via Kazakhstan saw little change in price or time — its fuel supply held up</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian freight forwarders and logistics operators, compiled by Tochnyi — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 10, paddingRight: 30, paddingTop: 40, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { period: "5 July 2026", value: 900000, tag: "900,000 ₽" },
+                { period: "7 July 2026", value: 1150000, tag: "1,150,000 ₽" }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period",
+                renderer: Tochnyi.createXRenderer(root, { minGridDistance: 40 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 1400000, strictMinMax: true,
+                numberFormat: "#,###", renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "COST OF ONE TRUCKLOAD (RUBLES)");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Manchuria to Novolipetsk", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, { labelText: "{period}: {tag}" })
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(50), cornerRadiusTL: 6, cornerRadiusTR: 6
+            });
+            var palette = [0x005bbb, 0xcc0000];
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                return di ? am5.color(palette[series.dataItems.indexOf(di) % palette.length]) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                return di ? am5.color(palette[series.dataItems.indexOf(di) % palette.length]) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fontSize: 30, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    paddingBottom: 8, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

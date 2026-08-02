@@ -1,0 +1,80 @@
+{
+  "version": "2.0",
+  "recipe": "story.sequence",
+  "title": "A Warehouse Strike Became a Marketplace Liquidity Crisis",
+  "subtitle": "Physical damage propagated through fulfilment, regional service, seller cash flow, employment, and the balance sheet of a state bank.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Wildberries operational, seller, employment, and debt reports summarized in input.txt",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Logistics capacity hit",
+      "displayValue": "8 warehouses",
+      "detail": "More than half a million square metres of capacity were reported lost across nine days of attacks.",
+      "tone": "critical"
+    },
+    {
+      "label": "Regional service fails",
+      "displayValue": "4 major areas",
+      "detail": "Belarus faced week-long delays, Crimea lost app coverage, and southern pick-up points stopped receiving goods.",
+      "tone": "warning"
+    },
+    {
+      "label": "Seller inventory is trapped",
+      "displayValue": "Withdrawals locked",
+      "detail": "Sellers could not freely recover goods or funds, while repayment credits were often only a fraction of lost value.",
+      "tone": "warning"
+    },
+    {
+      "label": "Local businesses lose cash flow",
+      "displayValue": "40,000+ jobs",
+      "detail": "Pick-up points and warehouse labour depended on continuous delivery volumes and were exposed to prolonged disruption.",
+      "tone": "critical"
+    },
+    {
+      "label": "State-bank exposure rises",
+      "displayValue": "500 billion rubles",
+      "detail": "VTB holds a large direct exposure while also investing in Wildberries financial assets.",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": ">60 billion rubles",
+      "label": "Conservative warehouse reconstruction cost before equivalent or greater automation and equipment costs.",
+      "tone": "critical"
+    },
+    {
+      "value": "1.3 trillion rubles",
+      "label": "Total Wildberries debt reported by The Bell in the source text.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "detailed",
+    "emphasis": "flow"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "wildberries-impact-sequence",
+    "topic": "marketplace operational contagion",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Physical warehouse damage propagated into regional service, seller liquidity, jobs, and bank exposure."
+  }
+}

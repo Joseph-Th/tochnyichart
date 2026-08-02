@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Jet Fuel Monthly Exports by Route — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Jet Fuel Monthly Exports by Route</h1>
+        <p class="tochnyi-subtitle">Prior to June 1 export ban — <span class="tochnyi-highlight">~125,000 tons/month</span> now restricted</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark small" alt="">
+            <div class="tochnyi-big-number">
+                <div class="number">~125K</div>
+                <div class="label">tons / month</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Platts, FAS Russia, industry reports — June 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                layout: root.horizontalLayout,
+                innerRadius: am5.percent(55),
+                radius: am5.percent(85)
+            }));
+
+            // Seaborne total: 80-100K → midpoint 90K
+            // Rail: 30-40K → midpoint 35K
+            // Ust-Luga est. 60% of seaborne = 54K; Novorossiysk 40% = 36K
+            var data = [
+                { route: "Ust-Luga (Baltic Sea)\nto Turkey & Middle East",    tons: 54000, color: 0x005bbb },
+                { route: "Novorossiysk (Black Sea)\nto Turkey & Middle East", tons: 36000, color: 0x0088ff },
+                { route: "Rail to Central Asia\n(Mongolia · Tajikistan · Kyrgyzstan · Uzbekistan)", tons: 35000, color: 0xffd500 }
+            ];
+
+            var series = chart.series.push(am5percent.PieSeries.new(root, {
+                valueField: "tons",
+                categoryField: "route",
+                alignLabels: true,
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{category}\n{value} tons/month (est.)"
+                })
+            }));
+
+            series.slices.template.setAll({
+                strokeWidth: 2,
+                stroke: am5.color(0xffffff),
+                cornerRadiusTopLeft: 2,
+                cornerRadiusTopRight: 2
+            });
+
+            series.slices.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.slices.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                fill: am5.color(0x020303),
+                text: "{category}\n[bold]{value}K t/mo[/]",
+                maxWidth: 200,
+                oversizedBehavior: "wrap"
+            });
+
+            series.ticks.template.setAll({
+                strokeOpacity: 0.3
+            });
+
+            // Value labels formatted as K
+            series.labels.template.adapters.add("text", function(text, target) {
+                var di = target.dataItem;
+                if (di) {
+                    var v = di.get("value");
+                    return di.dataContext.route + "\n[bold]" + (v / 1000).toFixed(0) + "K t/mo[/]";
+                }
+                return text;
+            });
+
+            series.data.setAll(data);
+            series.appear(1000, 100);
+
+            // Seaborne note inside donut
+            chart.seriesContainer.children.push(am5.Label.new(root, {
+                text: "Seaborne\n90K t/mo",
+                fontSize: 17,
+                fontFamily: "Mukta",
+                fontWeight: "600",
+                fill: am5.color(0x005bbb),
+                textAlign: "center",
+                centerX: am5.percent(50),
+                centerY: am5.percent(50)
+            }));
+
+        });
+    </script>
+</body>
+</html>

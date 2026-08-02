@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Diesel Wholesale vs SPIMEX Price Gap 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .signals-row {
+            display: flex;
+            gap: 0;
+            margin-top: 18px;
+        }
+        .signal-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-top: 4px solid #ddd;
+            font-family: 'Mukta', sans-serif;
+        }
+        .signal-card .sig-val {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .signal-card .sig-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-top: 4px;
+        }
+        .signal-card.red   { border-top-color: #b30000; }
+        .signal-card.red   .sig-val { color: #b30000; }
+        .signal-card.amber { border-top-color: #cc9900; }
+        .signal-card.amber .sig-val { color: #cc9900; }
+        .signal-card.blue  { border-top-color: #005bbb; }
+        .signal-card.blue  .sig-val { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Diesel: Small-Scale Wholesale vs SPIMEX</h1>
+        <p class="tochnyi-subtitle">Off-exchange wholesale runs <span class="tochnyi-highlight">20,000 ₽/t above</span> SPIMEX — independent stations and small buyers squeezed hardest</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner" style="font-size:24px;">+28.7%<br><span style="font-size:16px;font-weight:500">premium</span></div>
+        </div>
+
+        <div class="signals-row">
+            <div class="signal-card red">
+                <div class="sig-val">30+ days</div>
+                <div class="sig-label">Diesel delivery times (up from normal 7–10 days)</div>
+            </div>
+            <div class="signal-card amber">
+                <div class="sig-val">−400,000 t</div>
+                <div class="sig-label">May 2026 SPIMEX diesel sales below May 2025 — shortfall heading into peak summer demand</div>
+            </div>
+            <div class="signal-card blue">
+                <div class="sig-val">~+10%</div>
+                <div class="sig-label">Diesel wholesale price rise since April 2026 — approaching level that may trigger regulator action</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: SPIMEX, industry insiders — June 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 0,
+                paddingRight: 60,
+                paddingTop: 10,
+                paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // SPIMEX diesel: 69,790; small-scale wholesale: ~89,790 (+20,000)
+            var data = [
+                {
+                    label: "SPIMEX exchange price\n(rail-delivery lots, June 2)",
+                    value: 69790,
+                    color: 0x005bbb,
+                    detail: "69,790 ₽/t — official SPIMEX price. Market sensitive: shift to expensive depots moves index without a real market-wide jump."
+                },
+                {
+                    label: "Small-scale wholesale market\n(off-exchange, June 2026)",
+                    value: 89790,
+                    color: 0xb30000,
+                    detail: "~89,790 ₽/t — actual price paid by independent gas stations and exchange-dependent buyers; 20,000 ₽/t above SPIMEX."
+                }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, {
+                inversed: false,
+                minGridDistance: 30
+            });
+            yRenderer.labels.template.setAll({
+                fontSize: 15,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                maxWidth: 240,
+                oversizedBehavior: "wrap",
+                textAlign: "right",
+                paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label",
+                renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({
+                fontSize: 14,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 105000,
+                strictMinMax: true,
+                numberFormat: "#,###",
+                renderer: xRenderer
+            }));
+
+            xAxis.children.push(am5.Label.new(root, {
+                text: "RUBLES PER TON",
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 14,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666),
+                paddingTop: 8
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueXField: "value",
+                categoryYField: "label",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{detail}",
+                    getFillFromSprite: false,
+                    background: am5.Rectangle.new(root, {
+                        fill: am5.color(0x020303),
+                        fillOpacity: 0.88,
+                        cornerRadiusTL: 4,
+                        cornerRadiusTR: 4,
+                        cornerRadiusBL: 4,
+                        cornerRadiusBR: 4
+                    })
+                })
+            }));
+
+            series.columns.template.setAll({
+                height: am5.percent(45),
+                cornerRadiusTR: 5,
+                cornerRadiusBR: 5
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueX.formatNumber('#,###')} ₽/t",
+                        fontSize: 20,
+                        fontFamily: "Mukta",
+                        fontWeight: "700",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(50),
+                        centerX: am5.percent(0),
+                        paddingLeft: 10,
+                        populateText: true
+                    })
+                });
+            });
+
+            // Highlight the 20,000 gap
+            var gapRange = xAxis.createAxisRange(xAxis.makeDataItem({ value: 69790, endValue: 89790 }));
+            gapRange.get("axisFill").setAll({
+                fill: am5.color(0xb30000),
+                fillOpacity: 0.06,
+                visible: true
+            });
+            gapRange.get("label").setAll({
+                text: "+20,000 ₽/t gap",
+                fontSize: 13,
+                fontFamily: "Mukta",
+                fontWeight: "600",
+                fill: am5.color(0xb30000),
+                above: true,
+                inside: true,
+                centerX: am5.percent(50),
+                paddingBottom: 4
+            });
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

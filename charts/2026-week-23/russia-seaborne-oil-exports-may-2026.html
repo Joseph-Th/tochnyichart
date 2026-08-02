@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Seaborne Oil Exports — Last Week May 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .terminal-row {
+            display: flex;
+            gap: 0;
+            margin-top: 18px;
+        }
+        .terminal-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-top: 4px solid #ddd;
+            font-family: 'Mukta', sans-serif;
+        }
+        .terminal-card .tc-val  { font-size: 26px; font-weight: 700; }
+        .terminal-card .tc-chg  { font-size: 18px; font-weight: 600; margin-top: 2px; }
+        .terminal-card .tc-note { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .terminal-card.ust  { border-top-color: #005bbb; }
+        .terminal-card.ust  .tc-val { color: #005bbb; }
+        .terminal-card.ust  .tc-chg { color: #005bbb; }
+        .terminal-card.koz  { border-top-color: #cc9900; }
+        .terminal-card.koz  .tc-val { color: #cc9900; }
+        .terminal-card.koz  .tc-chg { color: #cc9900; }
+        .terminal-card.tot  { border-top-color: #003d7a; }
+        .terminal-card.tot  .tc-val { color: #003d7a; }
+        .terminal-card.tot  .tc-chg { color: #009900; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Seaborne Oil Exports — Last Week of May 2026</h1>
+        <p class="tochnyi-subtitle">Weekly exports surged <span class="tochnyi-highlight">+17.1% week-on-week</span> to 469,000 tons/day (3.44 million bpd); tankers loaded rose from 27 to 32</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner">&#9650; +17.1%<br><span style="font-size:16px;font-weight:500">week-on-week</span></div>
+        </div>
+
+        <div class="terminal-row">
+            <div class="terminal-card ust">
+                <div class="tc-val">90K t/day</div>
+                <div class="tc-chg">&#9650; +58% WoW</div>
+                <div class="tc-note">Ust-Luga — Baltic export terminal</div>
+            </div>
+            <div class="terminal-card koz">
+                <div class="tc-val">143K t/day</div>
+                <div class="tc-chg">&#9650; +25% WoW</div>
+                <div class="tc-note">Kozmino — Pacific terminal; mainly China, some India. ESPO flows to India: 2 tankers/week</div>
+            </div>
+            <div class="terminal-card tot">
+                <div class="tc-val">469K t/day</div>
+                <div class="tc-chg">&#9650; +17.1% WoW  |  3.438M bpd</div>
+                <div class="tc-note">All terminals combined. May monthly average: ≥423K t/day (+3.2% MoM)</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: Tanker tracking data — last week of May 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 0, paddingRight: 50, paddingTop: 10, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            // Last week of May: Ust-Luga 90K, Kozmino 143K, Others 469-90-143=236K t/day
+            // Prior week: total = 469/1.171 = 400.5K; Ust-Luga = 90/1.58=57K; Kozmino=143/1.25=114.4K; Others prior=400.5-57-114.4=229.1K
+            var data = [
+                { terminal: "Ust-Luga\n(Baltic)",    prev: 57,    curr: 90,  color: 0x005bbb, change: "+58%"  },
+                { terminal: "Kozmino\n(Pacific)",    prev: 114.4, curr: 143, color: 0xcc9900, change: "+25%"  },
+                { terminal: "Other terminals",       prev: 229.1, curr: 236, color: 0x888888, change: "+3%"   }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: false, minGridDistance: 15 });
+            yRenderer.labels.template.setAll({
+                fontSize: 15, fontFamily: "Mukta", fontWeight: "600",
+                maxWidth: 160, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 8
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "terminal", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1, cellEndLocation: 0.9, strokeOpacity: 0.3
+            });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 280, strictMinMax: true, numberFormat: "#",
+                renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "THOUSAND TONS PER DAY",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            // Prior week bars (faded)
+            var seriesPrev = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Prior week",
+                xAxis: xAxis, yAxis: yAxis,
+                valueXField: "prev", categoryYField: "terminal",
+                clustered: true,
+                tooltip: am5.Tooltip.new(root, { labelText: "{terminal} prior week: {valueX.formatNumber('#,###.#')}K t/day" })
+            }));
+            seriesPrev.columns.template.setAll({ height: am5.percent(38), cornerRadiusTR: 4, cornerRadiusBR: 4 });
+            seriesPrev.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                return di ? am5.color(di.dataContext.color) : fill;
+            });
+            seriesPrev.columns.template.adapters.add("fillOpacity", function() { return 0.3; });
+            seriesPrev.columns.template.adapters.add("strokeOpacity", function() { return 0; });
+
+            // Last week bars (full)
+            var seriesCurr = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Last week of May 2026",
+                xAxis: xAxis, yAxis: yAxis,
+                valueXField: "curr", categoryYField: "terminal",
+                clustered: true,
+                tooltip: am5.Tooltip.new(root, { labelText: "{terminal}: {valueX.formatNumber('#,###')}K t/day  ({change} WoW)" })
+            }));
+            seriesCurr.columns.template.setAll({ height: am5.percent(38), cornerRadiusTR: 5, cornerRadiusBR: 5 });
+            seriesCurr.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            seriesCurr.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            seriesCurr.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueX.formatNumber('#,###')}K t/day  {change}",
+                        fontSize: 14, fontFamily: "Mukta", fontWeight: "700",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(50), centerX: am5.percent(0),
+                        paddingLeft: 8, populateText: true
+                    })
+                });
+            });
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.percent(50), x: am5.percent(50), marginTop: 14
+            }));
+            legend.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            legend.data.setAll(chart.series.values);
+
+            seriesPrev.data.setAll(data);
+            seriesCurr.data.setAll(data);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

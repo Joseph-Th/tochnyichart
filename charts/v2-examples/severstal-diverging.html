@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Severstal profit declined far faster than revenue.">
+  <title>Revenue Fell by a Seventh, Profit by Nine Tenths</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Revenue Fell by a Seventh, Profit by Nine Tenths",
+  "subtitle": "Severstal preserved most of its sales in the first half of 2026, but earnings deteriorated much faster as margins and cash generation collapsed.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Severstal H1 2026 financial results reported by Kommersant",
+    "period": "H1 2026"
+  },
+  "data": [
+    {
+      "label": "Revenue",
+      "value": -14,
+      "tone": "warning",
+      "annotation": "Sales declined, but the operating structure deteriorated much faster."
+    },
+    {
+      "label": "EBITDA",
+      "value": -46,
+      "tone": "critical"
+    },
+    {
+      "label": "Net profit",
+      "value": -89,
+      "tone": "critical",
+      "annotation": "Net profit fell to 4.2 billion rubles."
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Year-over-year change",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "−29.8 billion rubles",
+      "label": "Free cash flow in H1 2026, leading the company to withhold its second-quarter dividend.",
+      "tone": "critical"
+    },
+    {
+      "value": "314.87 billion rubles",
+      "label": "Revenue remained substantial even as profitability collapsed.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "severstal-diverging",
+    "topic": "steel company financial performance",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "Severstal profit declined far faster than revenue."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

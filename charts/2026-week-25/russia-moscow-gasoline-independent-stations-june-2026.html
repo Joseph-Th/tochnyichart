@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moscow Gasoline — The Real Price at Independent Stations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-21</div>
+        </div>
+
+        <h1 class="tochnyi-title">Moscow's Real Gasoline Price Nears ₽100/Litre</h1>
+        <p class="tochnyi-subtitle">Independent chains — which must buy on the open wholesale market and cannot run at a loss — make up <span class="tochnyi-highlight">over 60%</span> of Russia's stations. They face mass bankruptcy if the squeeze lasts the summer.</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark small" alt="">
+            <div class="tochnyi-big-number">
+                <div class="number">~₽100</div>
+                <div class="label">per litre at independents</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Tochnyi analysis of Russian retail fuel market — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                layout: root.verticalLayout, innerRadius: am5.percent(55)
+            }));
+
+            var data = [
+                { category: "Independent chains (market prices)", value: 60, color: 0x005bbb },
+                { category: "State-linked majors (state-set prices, subsidised)", value: 40, color: 0xffd500 }
+            ];
+
+            var series = chart.series.push(am5percent.PieSeries.new(root, {
+                valueField: "value", categoryField: "category", alignLabels: false
+            }));
+            series.slices.template.setAll({ strokeWidth: 3, stroke: am5.color(0xffffff), tooltipText: "{category}: {value}%" });
+            series.get("colors").set("colors", [am5.color(0x005bbb), am5.color(0xffd500)]);
+            series.labels.template.setAll({
+                fontSize: 17, fontFamily: "Mukta", fontWeight: "600", text: "{value}%", radius: 12,
+                fill: am5.color(0x020303)
+            });
+            series.ticks.template.setAll({ strokeOpacity: 0.4 });
+            series.data.setAll(data);
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                x: am5.percent(50), centerX: am5.percent(50), y: am5.percent(100), centerY: am5.percent(100),
+                layout: root.verticalLayout
+            }));
+            legend.labels.template.setAll({ fontSize: 16, fontFamily: "Mukta", fontWeight: "500" });
+            legend.valueLabels.template.set("forceHidden", true);
+            legend.data.setAll(series.dataItems);
+
+            series.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

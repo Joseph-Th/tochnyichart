@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Jet Fuel Airline Subsidies 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .annotation-box {
+            background: #fff8e1;
+            border-left: 4px solid #cc9900;
+            padding: 12px 18px;
+            margin-top: 16px;
+            font-family: 'Mukta', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: #020303;
+            border-radius: 0 4px 4px 0;
+        }
+        .annotation-box strong {
+            color: #b30000;
+        }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Jet Fuel Subsidies to Airlines</h1>
+        <p class="tochnyi-subtitle">Per-ton subsidy surged <span class="tochnyi-highlight">29× in a single month</span> as export prices soared — rubles per ton</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner">&#9650; +2,843%<br><span style="font-size:18px;font-weight:500">Feb → Mar</span></div>
+        </div>
+
+        <div class="annotation-box">
+            Subsidy formula: airlines receive <strong>65%</strong> of (export price − 67,300 ₽/t fixed reference) &nbsp;·&nbsp;
+            April 2026 estimated total payout: <strong>~24 billion rubles</strong> &nbsp;·&nbsp;
+            MinFin reportedly considering pausing the programme
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: FAS Russia, MinFin, airline industry reports — 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { month: "February 2026", subsidy: 1770,  color: 0x005bbb, label: "1,770" },
+                { month: "March 2026",    subsidy: 52090, color: 0xb30000, label: "52,090" },
+                { month: "April 2026",    subsidy: 47830, color: 0xcc9900, label: "47,830" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.12,
+                cellEndLocation: 0.88,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 20,
+                fontFamily: "Mukta",
+                fontWeight: "600"
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "month",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 60000,
+                strictMinMax: true,
+                numberFormat: "#,###",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "SUBSIDY — RUBLES PER TON",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 15,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "subsidy",
+                categoryXField: "month",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{month}: {label} ₽/ton subsidy\n= 65% × (export price − 67,300 ₽/t)"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(65),
+                cornerRadiusTL: 6,
+                cornerRadiusTR: 6
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            // Value label above each bar
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{label} ₽/t",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 22,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 8
+                    })
+                });
+            });
+
+            // February bar is tiny — add a separate label inside it pointing upward
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 0,
+                    sprite: am5.Label.new(root, {
+                        text: "{month.indexOf('Feb') >= 0 ? '← nearly zero before March' : ''}",
+                        fill: am5.color(0x666666),
+                        centerY: am5.percent(0),
+                        centerX: am5.percent(0),
+                        populateText: true,
+                        fontSize: 13,
+                        fontWeight: "500",
+                        fontFamily: "Mukta",
+                        paddingLeft: 6,
+                        paddingBottom: -20
+                    })
+                });
+            });
+
+            // Reference line at 0 baseline for February context
+            var febNote = chart.children.push(am5.Label.new(root, {
+                text: "February bar is 1,770 ₽/t — 3.4% of March's level",
+                fontSize: 14,
+                fontFamily: "Mukta",
+                fontWeight: "500",
+                fill: am5.color(0x888888),
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                paddingTop: 8
+            }));
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

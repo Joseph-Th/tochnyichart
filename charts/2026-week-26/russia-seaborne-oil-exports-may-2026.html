@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Seaborne Oil Exports — May 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-27</div>
+        </div>
+
+        <h1 class="tochnyi-title">India Slashes Russian Oil Purchases by Nearly Half</h1>
+        <p class="tochnyi-subtitle">Russia's seaborne crude exports to India collapsed <span class="tochnyi-highlight">▼ 46%</span> month-over-month in May 2026 as Asian demand weakened and Iran sanctions easing loomed</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Vortexa / Bloomberg — May 2026 seaborne exports data
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, paddingTop: 10, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            // April figures derived from % changes
+            var data = [
+                { destination: "India", april: 2.24, may: 1.21 },
+                { destination: "China", april: 0.896, may: 0.905 },
+                { destination: "Total Seaborne", april: 4.07, may: 4.03 }
+            ];
+
+            var xRenderer = Tochnyi.createXRenderer(root, { cellStartLocation: 0.1, cellEndLocation: 0.9 });
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "destination", renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 6, strictMinMax: true,
+                numberFormat: "#.## 'M bpd'",
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "MILLION BARRELS PER DAY");
+
+            var series1 = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "April 2026", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "april", categoryXField: "destination",
+                fill: am5.color(Tochnyi.colors.blueLight),
+                stroke: am5.color(Tochnyi.colors.blueLight),
+                clustered: true, sequencedInterpolation: true
+            }));
+            series1.columns.template.setAll({
+                width: am5.percent(38), cornerRadiusTL: 4, cornerRadiusTR: 4,
+                tooltipText: "{name}: {valueY}M bpd"
+            });
+            series1.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 0.95, sprite: am5.Label.new(root, {
+                    text: "{valueY}M", fontSize: 18, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0xffffff), centerY: am5.percent(100), centerX: am5.percent(50),
+                    populateText: true
+                })});
+            });
+            series1.data.setAll(data);
+
+            var series2 = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "May 2026", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "may", categoryXField: "destination",
+                fill: am5.color(Tochnyi.colors.blue),
+                stroke: am5.color(Tochnyi.colors.blue),
+                clustered: true, sequencedInterpolation: true
+            }));
+            series2.columns.template.setAll({
+                width: am5.percent(38), cornerRadiusTL: 4, cornerRadiusTR: 4,
+                tooltipText: "{name}: {valueY}M bpd"
+            });
+            series2.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 0.95, sprite: am5.Label.new(root, {
+                    text: "{valueY}M", fontSize: 18, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0xffffff), centerY: am5.percent(100), centerX: am5.percent(50),
+                    populateText: true
+                })});
+            });
+            series2.data.setAll(data);
+
+            var legend = Tochnyi.createLegend(root, chart);
+            legend.data.setAll(chart.series.values);
+
+            // Change badge for India collapse
+            var badge = document.createElement("div");
+            badge.className = "tochnyi-change-badge down corner";
+            badge.innerHTML = "&#9660; 46% India";
+            document.getElementById("chartdiv").appendChild(badge);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

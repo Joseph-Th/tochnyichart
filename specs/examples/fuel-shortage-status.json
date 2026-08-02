@@ -1,0 +1,86 @@
+{
+  "version": "2.0",
+  "recipe": "status.grid",
+  "title": "The Fuel Shortage Moved East, It Did Not End",
+  "subtitle": "Moscow and Saint Petersburg improved, while cities, hospitals, emergency services, and filling stations elsewhere still faced severe supply failures.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Regional fuel availability reports summarized in the weekly source text",
+    "period": "Late July 2026"
+  },
+  "data": [
+    {
+      "label": "Moscow and Saint Petersburg",
+      "status": "improving",
+      "detail": "Availability improved during the week, though the wider national shortage continued."
+    },
+    {
+      "label": "Novosibirsk",
+      "status": "critical",
+      "detail": "Russia's third-largest city remained in a severe shortage."
+    },
+    {
+      "label": "Kursk region",
+      "status": "critical",
+      "displayValue": ">⅓ stations closed",
+      "detail": "More than one third of filling stations were reported closed."
+    },
+    {
+      "label": "Tyumen",
+      "status": "strained",
+      "detail": "Special refuelling schedules were introduced for emergency vehicles, followed by further refinery disruption."
+    },
+    {
+      "label": "Krasnoyarsk",
+      "status": "critical",
+      "detail": "Local fuel companies failed to supply firefighters and faced a formal case."
+    },
+    {
+      "label": "Vladimir region",
+      "status": "blocked",
+      "displayValue": "5 hospitals",
+      "detail": "Five hospitals, including the main emergency unit, could not find sellers for fuel tenders."
+    },
+    {
+      "label": "Mari El capital",
+      "status": "strained",
+      "detail": "Volunteers were stationed at filling stations to manage queues and maintain order."
+    },
+    {
+      "label": "Irkutsk",
+      "status": "improving",
+      "displayValue": "68 rubles/litre",
+      "detail": "Supply and prices improved temporarily around a presidential visit."
+    },
+    {
+      "label": "Pskov",
+      "status": "critical",
+      "detail": "No meaningful improvement in fuel availability was reported."
+    }
+  ],
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "status"
+  },
+  "options": {
+    "height": "tall",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "fuel-shortage-status",
+    "topic": "regional fuel availability",
+    "country": "Russia",
+    "dataPeriod": "Late July 2026",
+    "keyFinding": "Improvement in the two largest cities concealed severe regional shortages elsewhere."
+  }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G7/Western Tanker Share of Russian Oil Exports 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .context-row {
+            display: flex;
+            gap: 0;
+            margin-top: 18px;
+        }
+        .context-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-top: 4px solid #ddd;
+            font-family: 'Mukta', sans-serif;
+        }
+        .context-card .cc-val { font-size: 24px; font-weight: 700; }
+        .context-card .cc-label { font-size: 14px; font-weight: 500; color: #444; margin-top: 4px; }
+        .context-card.c1 { border-top-color: #005bbb; }
+        .context-card.c1 .cc-val { color: #005bbb; }
+        .context-card.c2 { border-top-color: #cc9900; }
+        .context-card.c2 .cc-val { color: #cc9900; }
+        .context-card.c3 { border-top-color: #009900; }
+        .context-card.c3 .cc-val { color: #009900; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">G7 &amp; Allies Tanker Share of Russian Oil Exports</h1>
+        <p class="tochnyi-subtitle">Western-owner share jumped from <span class="tochnyi-highlight">20.3%</span> in March to <span class="tochnyi-highlight">29.4%</span> in April as sanctions-easing signals draw Greek operators back</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner">&#9650; +9.1 pp</div>
+        </div>
+
+        <div class="context-row">
+            <div class="context-card c1">
+                <div class="cc-val">687K bpd</div>
+                <div class="cc-label">Greek operators in April — <strong>+120% vs March</strong>, highest since October 2025</div>
+            </div>
+            <div class="context-card c2">
+                <div class="cc-val">74.16–74.56 $/bbl</div>
+                <div class="cc-label">Urals price early June 2026 — 22.50–22.90 USD discount to Dated Brent</div>
+            </div>
+            <div class="context-card c3">
+                <div class="cc-val">~4.1M bpd</div>
+                <div class="cc-label">Total Russian oil exports in April 2026 — Western owners now carry 29.4% of this volume</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: Tanker tracking data, Argus — April–June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, layout: root.verticalLayout
+            }));
+
+            var data = [
+                { month: "March 2026", western: 20.3, shadow: 79.7, color: 0x005bbb, label: "20.3%" },
+                { month: "April 2026", western: 29.4, shadow: 70.6, color: 0xffd500, label: "29.4%" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.15, cellEndLocation: 0.85, minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({ fontSize: 22, fontFamily: "Mukta", fontWeight: "600" });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "month", renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({ fontSize: 16, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 100, strictMinMax: true, numberFormat: "#'%'",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90, text: "SHARE OF RUSSIAN OIL EXPORTS",
+                y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            // Shadow bar (non-Western share)
+            var seriesShadow = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Shadow fleet / non-Western owners",
+                xAxis: xAxis, yAxis: yAxis,
+                valueYField: "shadow", categoryXField: "month",
+                stacked: true,
+                fill: am5.color(0xdddddd), stroke: am5.color(0xcccccc),
+                tooltip: am5.Tooltip.new(root, { labelText: "{month} — Shadow/non-Western: {valueY}%" })
+            }));
+            seriesShadow.columns.template.setAll({
+                width: am5.percent(55), cornerRadiusTL: 0, cornerRadiusTR: 0
+            });
+            seriesShadow.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 0.5,
+                    sprite: am5.Label.new(root, {
+                        text: "Shadow/non-Western\n{valueY}%",
+                        fill: am5.color(0x666666), centerY: am5.percent(50), centerX: am5.percent(50),
+                        populateText: true, fontSize: 15, fontWeight: "500",
+                        fontFamily: "Mukta", textAlign: "center"
+                    })
+                });
+            });
+
+            // Western tanker share bar
+            var seriesWest = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "G7 & allies (Western owners)",
+                xAxis: xAxis, yAxis: yAxis,
+                valueYField: "western", categoryXField: "month",
+                stacked: true,
+                tooltip: am5.Tooltip.new(root, { labelText: "{month} — G7 & allies: {label}" })
+            }));
+            seriesWest.columns.template.setAll({
+                width: am5.percent(55), cornerRadiusTL: 6, cornerRadiusTR: 6
+            });
+            seriesWest.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            seriesWest.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            seriesWest.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 0.5,
+                    sprite: am5.Label.new(root, {
+                        text: "[bold]{label}[/]\nG7 & allies",
+                        fill: am5.color(0x020303), centerY: am5.percent(50), centerX: am5.percent(50),
+                        populateText: true, fontSize: 18, fontWeight: "700",
+                        fontFamily: "Mukta", textAlign: "center"
+                    })
+                });
+            });
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.percent(50), x: am5.percent(50), marginTop: 14
+            }));
+            legend.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            legend.data.setAll(chart.series.values);
+
+            seriesShadow.data.setAll(data);
+            seriesWest.data.setAll(data);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

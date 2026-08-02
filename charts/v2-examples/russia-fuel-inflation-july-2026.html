@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gasoline and diesel prices rose roughly three times faster than headline inflation in July.">
+  <title>Fuel Inflation Is Running at Triple the Headline Rate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.scenarios",
+  "title": "Fuel Inflation Is Running at Triple the Headline Rate",
+  "subtitle": "By July 20, gasoline prices had risen 1.66% and diesel 1.87%, compared with 0.60% headline inflation for the month to date.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Interfax",
+    "period": "14–20 July 2026",
+    "url": "https://www.interfax.ru/business/1104873"
+  },
+  "data": [
+    {
+      "label": "Headline",
+      "value": 0.6,
+      "displayValue": "0.60%",
+      "tone": "neutral"
+    },
+    {
+      "label": "Gasoline",
+      "value": 1.66,
+      "displayValue": "1.66%",
+      "tone": "warning"
+    },
+    {
+      "label": "Diesel",
+      "value": 1.87,
+      "displayValue": "1.87%",
+      "tone": "critical"
+    }
+  ],
+  "references": [],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "July-to-date increase",
+    "decimals": 2,
+    "minimum": 0,
+    "maximum": 2.3,
+    "baseline": "explicit",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "4.82%",
+      "label": "Official inflation for 2026 through July 20.",
+      "tone": "neutral"
+    }
+  ],
+  "note": "Gasoline rose 2.8 times and diesel 3.1 times as much as the reported July headline rate.",
+  "narrative": {
+    "frame": "warning",
+    "density": "minimal",
+    "emphasis": "gap"
+  },
+  "options": {
+    "height": "short",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-fuel-inflation-july-2026",
+    "topic": "fuel inflation",
+    "country": "Russia",
+    "dataPeriod": "July 2026 through July 20",
+    "keyFinding": "Gasoline and diesel prices rose roughly three times faster than headline inflation in July."
+  }
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Northwest Europe Jet Fuel CIF Price Surge 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Northwest Europe Jet Fuel CIF Prices</h1>
+        <p class="tochnyi-subtitle">Middle East conflict drives surge — <span class="tochnyi-highlight">+68%</span> from end-February to mid-May 2026</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up">&#9650; +68%</div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Platts (per FAS Russia) — NW Europe CIF jet fuel prices
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            // Index: end-Feb = 100, mid-May = 168 (+68%)
+            var data = [
+                { period: "End Feb 2026", value: 100 },
+                { period: "Mid-May 2026", value: 168 }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.15,
+                cellEndLocation: 0.85,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 22,
+                fontFamily: "Mukta",
+                fontWeight: "600"
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 18,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.2 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 200,
+                strictMinMax: true,
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "PRICE INDEX (END FEB = 100)",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 15,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            // Gridline at 100 (baseline)
+            var baseRange = xAxis.createAxisRange(xAxis.makeDataItem({}));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "value",
+                categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{categoryX}: {valueY} (index)"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(60),
+                cornerRadiusTL: 6,
+                cornerRadiusTR: 6
+            });
+
+            // Blue for end-Feb, yellow for mid-May
+            var colors = [0x005bbb, 0xffd500];
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                if (target.dataItem) return am5.color(colors[target.dataItem.index] || 0x005bbb);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                if (target.dataItem) return am5.color(colors[target.dataItem.index] || 0x005bbb);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueY}",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 32,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 8
+                    })
+                });
+            });
+
+            // Baseline 100 reference line
+            var yRange = yAxis.createAxisRange(yAxis.makeDataItem({ value: 100 }));
+            yRange.get("grid").setAll({
+                stroke: am5.color(0x666666),
+                strokeOpacity: 0.5,
+                strokeDasharray: [6, 4]
+            });
+            yRange.get("label").setAll({
+                text: "baseline",
+                fontSize: 13,
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666),
+                above: true,
+                centerX: 0,
+                paddingLeft: 4
+            });
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

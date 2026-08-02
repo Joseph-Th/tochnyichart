@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Copper Exports to China — Jan–Apr 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-21</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russian Copper Floods Into China</h1>
+        <p class="tochnyi-subtitle">January–April 2026 copper product &amp; concentrate exports to China rose <span class="tochnyi-highlight">+50%</span> to 529,800 tons; their value climbed <span class="tochnyi-highlight">+60%</span> to $3.39 billion.</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant (kommersant.ru/doc/8739495) — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 70, layout: root.verticalLayout
+            }));
+
+            // 2025 derived: volume 529.8/1.5 = 353.2 kt; value 3.39/1.6 = 2.12 B
+            var data = [
+                { year: "Jan–Apr 2025", volume: 353.2, value: 2.12, color: 0x999999 },
+                { year: "Jan–Apr 2026", volume: 529.8, value: 3.39, color: 0x005bbb }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { cellStartLocation: 0.15, cellEndLocation: 0.85 });
+            xRenderer.labels.template.setAll({ fontSize: 18, fontFamily: "Mukta", fontWeight: "700" });
+            xRenderer.grid.template.setAll({ visible: false });
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, { categoryField: "year", renderer: xRenderer }));
+            xAxis.data.setAll(data);
+
+            // Left axis — volume (kt)
+            var yVolRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yVolRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            yVolRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+            var yVolAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 600, strictMinMax: true, numberFormat: "#", renderer: yVolRenderer
+            }));
+            yVolAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90, text: "VOLUME  (thousand tons)", y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 13, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            // Right axis — value ($B)
+            var yValRenderer = am5xy.AxisRendererY.new(root, { opposite: true, strokeOpacity: 0 });
+            yValRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            yValRenderer.grid.template.setAll({ visible: false });
+            var yValAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 4, strictMinMax: true, numberFormat: "$#.##'B'", renderer: yValRenderer
+            }));
+            yValAxis.children.push(am5.Label.new(root, {
+                rotation: 90, text: "VALUE  (US$ billion)", y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 13, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            var volSeries = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Volume (kt)", xAxis: xAxis, yAxis: yVolAxis,
+                valueYField: "volume", categoryXField: "year",
+                tooltip: am5.Tooltip.new(root, { labelText: "{year}\nVolume: {valueY} kt" })
+            }));
+            volSeries.columns.template.setAll({ width: am5.percent(55), cornerRadiusTL: 7, cornerRadiusTR: 7 });
+            volSeries.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            volSeries.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            volSeries.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{valueY} kt", fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    populateText: true, fontSize: 22, fontWeight: "700", fontFamily: "Mukta", paddingBottom: 10 }) });
+            });
+            volSeries.data.setAll(data);
+
+            var valSeries = chart.series.push(am5xy.LineSeries.new(root, {
+                name: "Value ($B)", xAxis: xAxis, yAxis: yValAxis,
+                valueYField: "value", categoryXField: "year",
+                stroke: am5.color(0xcc9900), fill: am5.color(0xcc9900)
+            }));
+            valSeries.strokes.template.setAll({ strokeWidth: 4 });
+            valSeries.bullets.push(function() {
+                return am5.Bullet.new(root, { sprite: am5.Circle.new(root, {
+                    radius: 8, fill: am5.color(0xcc9900), stroke: am5.color(0xffffff), strokeWidth: 2 }) });
+            });
+            valSeries.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "${valueY.formatNumber('#.##')}B", fill: am5.color(0xb37a00), centerY: am5.percent(0), centerX: am5.percent(50),
+                    populateText: true, fontSize: 18, fontWeight: "700", fontFamily: "Mukta", paddingBottom: 6 }) });
+            });
+            valSeries.data.setAll(data);
+
+            var legend = chart.children.push(am5.Legend.new(root, { centerX: am5.percent(50), x: am5.percent(50), marginTop: 12 }));
+            legend.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            legend.data.setAll(chart.series.values);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "skills": {
+    "tochnyi-chart": {
+      "path": ".claude/skills/tochnyi-chart.md",
+      "description": "Turn sourced statistics into a validated ChartSpec and render it through the standard Tochnyi recipe system.",
+      "trigger": "/chart"
+    }
+  }
+}

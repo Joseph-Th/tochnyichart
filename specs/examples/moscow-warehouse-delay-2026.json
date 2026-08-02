@@ -1,0 +1,62 @@
+{
+  "version": "2.0",
+  "recipe": "composition.stacked",
+  "title": "2.6 Million m² of Moscow Warehouse Space Is Delayed to 2027",
+  "subtitle": "The postponement covers 46.4% of projects under construction in Moscow and the surrounding region as demand weakens.",
+  "date": "2026-07-26",
+  "source": {
+    "name": "Kommersant",
+    "period": "July 2026",
+    "url": "https://www.kommersant.ru/doc/8832546"
+  },
+  "data": [
+    {
+      "label": "Shifted to 2027",
+      "value": 2.6,
+      "tone": "critical"
+    },
+    {
+      "label": "Still scheduled before 2027",
+      "value": 3.0034482759,
+      "tone": "neutral"
+    }
+  ],
+  "measure": {
+    "unit": "million m²",
+    "decimals": 2,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "primaryMetric": {
+    "value": "5.60 million m²",
+    "label": "estimated total construction pipeline"
+  },
+  "supportingFacts": [
+    {
+      "value": "Weaker demand",
+      "label": "Kommersant identifies declining demand as the reason projects are being postponed.",
+      "tone": "warning"
+    }
+  ],
+  "note": "Derived total: 2.6 million m² ÷ 46.4% ≈ 5.60 million m².",
+  "narrative": {
+    "frame": "warning",
+    "density": "minimal",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "short",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "inside"
+  },
+  "metadata": {
+    "slug": "moscow-warehouse-delay-2026",
+    "topic": "warehouse construction delays",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Almost half of warehouse space under construction in Moscow and the Moscow region has been postponed to 2027."
+  }
+}

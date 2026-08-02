@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Family Mortgage Payment Increase — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-19</div>
+        </div>
+
+        <h1 class="tochnyi-title">A Family Mortgage That Costs 100,000 Rubles More a Month</h1>
+        <p class="tochnyi-subtitle">Planned changes to Russia's preferential family mortgage would lift the maximum monthly payment in Moscow and St Petersburg from 71,900 rubles to <span class="tochnyi-highlight">172,000</span> — a jump of 85–139% depending on family size</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge up corner" style="top: 40px; left: 240px; right: auto;">▲ 100,100 ₽/month</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">Term halved</div>
+                <div class="sl">The credit term drops from 30 years to roughly 15, concentrating repayment</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">12M → 18M ₽</div>
+                <div class="sl">Maximum loan size rises for most families, but at a far higher monthly cost</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">1 October 2026</div>
+                <div class="sl">Current conditions remain in place until this date, then the new structure applies</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant, based on Russian government proposals for the family mortgage programme — July 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 10, paddingRight: 30, paddingTop: 40, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { cat: "Now\n(until 1 October 2026)", value: 71900, tag: "71,900 ₽", color: 0x005bbb },
+                { cat: "New rules,\nfamilies with 5+ children", value: 133000, tag: "133,000 ₽", color: 0xcc9900 },
+                { cat: "New rules,\nfamilies with 3 children", value: 172000, tag: "172,000 ₽", color: 0xcc0000 }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "cat",
+                renderer: Tochnyi.createXRenderer(root, { minGridDistance: 30, fontSize: 17 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 210000, strictMinMax: true,
+                numberFormat: "#,###", renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "MAXIMUM MONTHLY PAYMENT (RUBLES)");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Maximum monthly payment", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "cat",
+                tooltip: am5.Tooltip.new(root, { labelText: "{cat}: {tag}" })
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(60), cornerRadiusTL: 6, cornerRadiusTR: 6
+            });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{tag}", fontSize: 28, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(100), centerX: am5.percent(50),
+                    paddingBottom: 8, populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

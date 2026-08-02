@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALROSA Diamond Export Duty Impact — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 28px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; }
+        .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #005bbb; }
+        .stat-card.s2 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-27</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Taxes Its Own Diamond Giant Into Crisis</h1>
+        <p class="tochnyi-subtitle">A new export duty on diamonds (effective September 2026) could cost state miner <span class="tochnyi-highlight">ALROSA 29% of its EBITDA</span> in 2027 — with 90% of revenues dependent on exports now taxed</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark small" alt="">
+            <div class="tochnyi-big-number">
+                <div class="number">90%</div>
+                <div class="label">export revenue</div>
+            </div>
+            <div class="tochnyi-change-badge down left">&#9660; 29% EBITDA</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">−29% EBITDA</div>
+                <div class="sl">Estimated 2027 impact of export duty on ALROSA earnings</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">Sept 2026</div>
+                <div class="sl">When the new diamond export duty takes effect</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: BCS Global Markets / Kommersant (kommersant.ru/doc/8762300) — 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                layout: root.horizontalLayout,
+                innerRadius: am5.percent(55)
+            }));
+
+            var data = [
+                { segment: "Export revenue (90%)", value: 90, color: 0x005bbb },
+                { segment: "Domestic revenue (10%)", value: 10, color: 0x0088ff }
+            ];
+
+            var series = Tochnyi.createPieSeries(root, chart, {
+                valueField: "value",
+                categoryField: "segment",
+                labelFormat: "{category}",
+                colors: [0x005bbb, 0x0088ff],
+                minLabelPercent: 8
+            });
+            series.data.setAll(data);
+
+            var legend = Tochnyi.createPieLegend(root, chart);
+            legend.data.setAll(series.dataItems);
+            series.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

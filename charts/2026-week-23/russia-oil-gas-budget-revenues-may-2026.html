@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Oil &amp; Gas Budget Revenues May 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+</head>
+<body>
+    <div class="tochnyi-chart">
+
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Oil &amp; Gas Budget Revenues — Mar–May 2026</h1>
+        <p class="tochnyi-subtitle">May revenues fell <span class="tochnyi-highlight">20.7% month-on-month</span> after April spike — billion rubles</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge down corner">&#9660; &minus;20.7%<br><span style="font-size:16px;font-weight:500">vs April</span></div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian Ministry of Finance — May 2026
+        </div>
+
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+
+    </div>
+
+    <script>
+        am5.ready(function() {
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            // May = 678.9B; +10% vs March → March = 678.9/1.10 = 617.2B
+            // May is 79.3% of April → April = 678.9/0.793 = 856.1B
+            var data = [
+                { month: "March 2026",  value: 617.2, color: 0x005bbb, label: "617.2B",  note: "~617 bln ₽ (calculated from May +10% YoY comparison)" },
+                { month: "April 2026",  value: 856.1, color: 0xffd500, label: "856.1B",  note: "~856 bln ₽ (calculated from May −20.7% MoM comparison)" },
+                { month: "May 2026",    value: 678.9, color: 0xcc9900, label: "678.9B",  note: "678.9 bln ₽ (reported) — down 20.7% vs April, up 10% vs March" }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1,
+                cellEndLocation: 0.9,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 20,
+                fontFamily: "Mukta",
+                fontWeight: "600"
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "month",
+                renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.15 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 1000,
+                strictMinMax: true,
+                numberFormat: "#,###",
+                renderer: yRenderer
+            }));
+
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "BILLION RUBLES",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 15,
+                fontWeight: "600",
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666)
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "value",
+                categoryXField: "month",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{month}: {note}"
+                })
+            }));
+
+            series.columns.template.setAll({
+                width: am5.percent(60),
+                cornerRadiusTL: 6,
+                cornerRadiusTR: 6
+            });
+
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem;
+                if (di) return am5.color(di.dataContext.color);
+                return stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{label} ₽",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(100),
+                        centerX: am5.percent(50),
+                        populateText: true,
+                        fontSize: 22,
+                        fontWeight: "700",
+                        fontFamily: "Mukta",
+                        paddingBottom: 8
+                    })
+                });
+            });
+
+            // Estimated note on March and April
+            var estNote = chart.children.push(am5.Label.new(root, {
+                text: "March and April values calculated from reported May relationships; May figure is as reported",
+                fontSize: 13,
+                fontFamily: "Mukta",
+                fontWeight: "400",
+                fill: am5.color(0x888888),
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                paddingTop: 10,
+                textAlign: "center"
+            }));
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+
+        });
+    </script>
+</body>
+</html>

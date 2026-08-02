@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Tourism Bookings and Refunds — H1 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 24px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #005bbb; } .stat-card.s3 .sv { color: #005bbb; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-19</div>
+        </div>
+
+        <h1 class="tochnyi-title">The Foreign Rebound That Never Arrived</h1>
+        <p class="tochnyi-subtitle">Russian outbound tourism opened 2026 running 40% ahead of last year. The Middle East conflict erased all of it — bookings fell back to 2025 levels and operators paid out <span class="tochnyi-highlight">19 billion rubles</span> in refunds</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">19 billion ₽</div>
+                <div class="sl">Refunds paid out by Russian operators after Middle East cancellations</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">16% → 19%</div>
+                <div class="sl">Foreign share of tours rose — but only because domestic collapsed faster</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">Sochi and Crimea</div>
+                <div class="sl">Airport closure and the fuel crisis hit the two biggest domestic destinations at once</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian booking aggregators and tour operator reporting, compiled by Tochnyi — H1 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                maskBullets: false,
+                paddingLeft: 0, paddingRight: 60, paddingTop: 20, paddingBottom: 10,
+                layout: root.horizontalLayout
+            }));
+
+            var data = [
+                { label: "Foreign tours,\nexpected start to 2026", value: 40, color: 0x005bbb, tag: "+40%" },
+                { label: "Foreign tours,\nwhere they ended up", value: 0, color: 0x999999, tag: "level with 2025" },
+                { label: "Domestic bookings,\nsmallest fall", value: -22, color: 0xcc9900, tag: "−22%" },
+                { label: "Domestic bookings,\nlargest fall", value: -31, color: 0xcc0000, tag: "−31%" }
+            ];
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { inversed: true, minGridDistance: 15 });
+            yRenderer.labels.template.setAll({
+                fontSize: 16, fontFamily: "Mukta", fontWeight: "600",
+                maxWidth: 230, oversizedBehavior: "wrap", textAlign: "right", paddingRight: 12
+            });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.08 });
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "label", renderer: yRenderer
+            }));
+            yAxis.data.setAll(data);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { strokeOpacity: 0.3 });
+            xRenderer.labels.template.setAll({ fontSize: 14, fontFamily: "Mukta", fontWeight: "500" });
+            xRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                min: -42, max: 52, strictMinMax: true,
+                numberFormat: "#'%'", renderer: xRenderer
+            }));
+            xAxis.children.push(am5.Label.new(root, {
+                text: "CHANGE IN BOOKINGS VERSUS 2025",
+                x: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 14, fontWeight: "600", fontFamily: "Mukta",
+                fill: am5.color(0x666666), paddingTop: 8
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis,
+                valueXField: "value", categoryYField: "label",
+                tooltip: am5.Tooltip.new(root, { labelText: "{label}: {tag}" })
+            }));
+            series.columns.template.setAll({ height: am5.percent(58) });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+            series.bullets.push(function() {
+                var label = am5.Label.new(root, {
+                    text: "{tag}", fontSize: 18, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(50), populateText: true
+                });
+                label.adapters.add("centerX", function(cx, target) {
+                    var di = target.dataItem;
+                    if (di && di.dataContext.value < 0) return am5.percent(100);
+                    return am5.percent(0);
+                });
+                label.adapters.add("dx", function(dx, target) {
+                    var di = target.dataItem;
+                    if (di && di.dataContext.value < 0) return -10;
+                    return 10;
+                });
+                return am5.Bullet.new(root, { locationX: 1, sprite: label });
+            });
+            series.data.setAll(data);
+
+            var range = xAxis.createAxisRange(xAxis.makeDataItem({ value: 0 }));
+            range.get("grid").setAll({ strokeOpacity: 0.9, strokeWidth: 2, stroke: am5.color(0x020303) });
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

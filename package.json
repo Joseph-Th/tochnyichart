@@ -1,0 +1,17 @@
+{
+  "name": "tochnyi-charts",
+  "version": "2.5.0",
+  "private": true,
+  "description": "Declarative, validated chart rendering for Tochnyi visuals",
+  "type": "commonjs",
+  "scripts": {
+    "chart": "node tools/chart.js",
+    "test": "node --test tests/*.test.js",
+    "examples": "node tools/render-examples.js",
+    "visual": "node tools/visual-review-examples.js",
+    "layout": "node tools/layout-stress.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

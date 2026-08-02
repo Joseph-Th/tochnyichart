@@ -1,0 +1,107 @@
+{
+  "version": "2.1.0",
+  "recipes": [
+    {
+      "id": "comparison.change",
+      "purpose": "Show a before-and-after or two-point change.",
+      "data": "Exactly 2 labeled numeric values.",
+      "bestFor": ["price moves", "year-over-year change", "before versus after"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "comparison.scenarios",
+      "purpose": "Compare actual, expected, previous, target, or alternative scenarios.",
+      "data": "2 to 5 labeled numeric values.",
+      "bestFor": ["expected versus actual", "policy choices", "benchmark comparisons"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "comparison.diverging",
+      "purpose": "Compare positive and negative changes around a visible zero line.",
+      "data": "2 to 10 labeled numeric changes; values may be positive or negative.",
+      "bestFor": ["financial metric changes", "gainers and losers", "mixed direction outcomes"],
+      "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 2 }
+    },
+    {
+      "id": "comparison.range",
+      "purpose": "Show exact values, min-max intervals, and thresholds on one scale.",
+      "data": "2 to 8 items with value or low/high fields; benchmark is optional.",
+      "bestFor": ["uncertainty ranges", "policy limits", "price ranges", "threshold breaches"],
+      "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 2 }
+    },
+    {
+      "id": "trend.line",
+      "purpose": "Show a sequence over time.",
+      "data": "At least 3 ordered labeled numeric values; 5 or more preferred.",
+      "bestFor": ["time series", "rates", "prices", "production"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "composition.donut",
+      "purpose": "Show parts of a whole when the shape of the composition matters.",
+      "data": "2 to 6 positive labeled numeric values.",
+      "bestFor": ["market share", "category mix", "balanced multi-part composition"],
+      "defaults": { "height": "standard", "watermark": "small", "supportingFacts": 3 }
+    },
+    {
+      "id": "composition.stacked",
+      "purpose": "Show exact parts of one total in a compact horizontal composition.",
+      "data": "2 to 6 positive labeled numeric values.",
+      "bestFor": ["served versus unmet", "delayed versus on-time", "debt composition", "two-part shares"],
+      "defaults": { "height": "short", "watermark": "corner", "supportingFacts": 3 }
+    },
+    {
+      "id": "flow.waterfall",
+      "purpose": "Explain how a starting amount changes into an ending amount.",
+      "data": "2 to 8 ordered items with role start, change, subtotal, or end.",
+      "bestFor": ["collateral erosion", "cost build-up", "funding gaps", "profit bridges"],
+      "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 2 }
+    },
+    {
+      "id": "ranking.horizontal",
+      "purpose": "Rank categories where labels need horizontal space.",
+      "data": "3 to 12 labeled numeric values.",
+      "bestFor": ["regional comparisons", "company rankings", "long category names"],
+      "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 0 }
+    },
+    {
+      "id": "status.grid",
+      "purpose": "Compare named places or operating areas by categorical status and concise evidence.",
+      "data": "3 to 12 items with label, status, and detail; numeric value is optional.",
+      "bestFor": ["regional shortages", "service availability", "operational disruption", "risk monitoring"],
+      "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 0 }
+    },
+    {
+      "id": "story.sequence",
+      "purpose": "Show a causal or operational chain from trigger to downstream consequence.",
+      "data": "3 to 6 ordered items with label and detail; displayValue is optional.",
+      "bestFor": ["cause and effect", "policy transmission", "supply-chain failure", "multi-stage impact"],
+      "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 0 }
+    },
+    {
+      "id": "headline.metric",
+      "purpose": "Lead with one primary number and compact supporting context.",
+      "data": "Exactly 1 labeled numeric value.",
+      "bestFor": ["single decisive metric", "loss or gain", "headline statistic"],
+      "defaults": { "height": "short", "watermark": "corner", "supportingFacts": 3 }
+    }
+  ],
+  "composableFeatures": [
+    {
+      "id": "references",
+      "purpose": "Add target, average, legal limit, prior norm, or other numeric reference lines without changing recipe."
+    },
+    {
+      "id": "data.annotation",
+      "purpose": "Attach one short explanatory note to a specific data point or stage."
+    },
+    {
+      "id": "measure.scale",
+      "purpose": "Use linear or logarithmic scale for extreme ratios."
+    },
+    {
+      "id": "supportingFacts",
+      "purpose": "Add up to four contextual facts after the primary visual instead of forcing unlike measures onto one axis."
+    }
+  ]
+}

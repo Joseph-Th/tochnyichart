@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Budget Deficit — June 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 26px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #00aa00; } .stat-card.s1 .sv { color: #00aa00; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-12</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia's First Surplus Month of 2026</h1>
+        <p class="tochnyi-subtitle">A June monthly surplus — the year's first — trimmed the cumulative budget deficit by <span class="tochnyi-highlight">279 billion ₽</span>, pulling it back to just above 5.7 trillion ₽</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+            <div class="tochnyi-change-badge down">▼ 279 bn</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">First surplus of 2026</div>
+                <div class="sl">June is the first month this year the budget ran a monthly surplus</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">5.72 trillion ₽</div>
+                <div class="sl">Cumulative deficit at end of June, down from over 6 trillion in May</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Russian Finance Ministry data, compiled by Tochnyi — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, paddingTop: 20, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { period: "End of May", value: 6.00, col: Tochnyi.colors.yellowDark },
+                { period: "End of June", value: 5.72, col: Tochnyi.colors.blue }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period",
+                renderer: Tochnyi.createXRenderer(root, { cellStartLocation: 0.25, cellEndLocation: 0.75 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0, max: 7.2, strictMinMax: true, numberFormat: "#.0' tn'",
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "CUMULATIVE DEFICIT (TRILLION ₽)");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Deficit", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "period", sequencedInterpolation: true
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(55), cornerRadiusTL: 6, cornerRadiusTR: 6,
+                tooltipText: "{categoryX}: {valueY} trillion ₽"
+            });
+            series.columns.template.adapters.add("fill", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.columns.template.adapters.add("stroke", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, { locationY: 1, sprite: am5.Label.new(root, {
+                    text: "{valueY} tn ₽", fontSize: 26, fontFamily: "Mukta", fontWeight: "700",
+                    fill: am5.color(0x020303), centerY: am5.percent(130), centerX: am5.percent(50),
+                    populateText: true
+                })});
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

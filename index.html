@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Flight Delays 2025</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Mukta', sans-serif;
+            background-color: #ffffff;
+            min-height: 100vh;
+            padding: 40px;
+        }
+        .chart-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #020303;
+        }
+        .logo span {
+            color: #005bbb;
+        }
+        .date {
+            color: gray;
+            font-size: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #020303;
+            font-size: 42px;
+            font-weight: 400;
+            margin-bottom: 30px;
+        }
+        #chartdiv {
+            width: 100%;
+            height: 550px;
+        }
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            font-size: 16px;
+            color: #020303;
+        }
+        .footer a {
+            color: #005bbb;
+            text-decoration: none;
+        }
+        .source {
+            margin-top: 15px;
+            font-size: 14px;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-wrapper">
+        <div class="header">
+            <div class="logo">T<span>○</span>chnyi</div>
+            <div class="date">Date: 2026-01-26</div>
+        </div>
+
+        <h1>Russia Airline Flight Delays - Share of Delayed Flights</h1>
+
+        <div id="chartdiv"></div>
+
+        <div class="source">Source: Russia airline delay statistics, 2025</div>
+
+        <div class="footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            // Create root element
+            var root = am5.Root.new("chartdiv");
+
+            // Set default font
+            root.interfaceColors.set("text", am5.color(0x020303));
+
+            // Set themes
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            // Create chart
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "none",
+                wheelY: "none",
+                paddingLeft: 10,
+                paddingRight: 10,
+                layout: root.verticalLayout
+            }));
+
+            // Data
+            var data = [{
+                category: "Delays > 3 hours",
+                before: 2,
+                year2025: 4
+            }, {
+                category: "Delays > 4 hours",
+                before: 1,
+                year2025: 2
+            }];
+
+            // Create axes
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.15,
+                cellEndLocation: 0.85,
+                minGridDistance: 30
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 20,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            xRenderer.grid.template.setAll({
+                visible: false
+            });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "category",
+                renderer: xRenderer,
+                tooltip: am5.Tooltip.new(root, {})
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, {
+                strokeOpacity: 0.3
+            });
+            yRenderer.labels.template.setAll({
+                fontSize: 18,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            yRenderer.grid.template.setAll({
+                strokeOpacity: 0.3
+            });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: 0,
+                max: 5,
+                strictMinMax: true,
+                numberFormat: "#'%'",
+                renderer: yRenderer
+            }));
+
+            // Add Y-axis label
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90,
+                text: "SHARE OF TOTAL FLIGHTS",
+                y: am5.percent(50),
+                centerX: am5.percent(50),
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "Mukta"
+            }));
+
+            // Function to create series
+            function makeSeries(name, fieldName, color) {
+                var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                    name: name,
+                    xAxis: xAxis,
+                    yAxis: yAxis,
+                    valueYField: fieldName,
+                    categoryXField: "category",
+                    fill: am5.color(color),
+                    stroke: am5.color(color)
+                }));
+
+                series.columns.template.setAll({
+                    tooltipText: "{name}: {valueY}%",
+                    width: am5.percent(80),
+                    tooltipY: 0,
+                    cornerRadiusTL: 4,
+                    cornerRadiusTR: 4
+                });
+
+                // Add value labels on bars
+                series.bullets.push(function() {
+                    return am5.Bullet.new(root, {
+                        locationY: 0.5,
+                        sprite: am5.Label.new(root, {
+                            text: "{valueY}%",
+                            fill: am5.color(0xffffff),
+                            centerY: am5.percent(50),
+                            centerX: am5.percent(50),
+                            populateText: true,
+                            fontSize: 28,
+                            fontWeight: "700",
+                            fontFamily: "Mukta"
+                        })
+                    });
+                });
+
+                series.data.setAll(data);
+                series.appear();
+
+                return series;
+            }
+
+            // Create the two series with Ukrainian colors
+            makeSeries("Before 2025", "before", 0x005bbb);  // Blue
+            makeSeries("2025", "year2025", 0xffd500);       // Yellow
+
+            // Add legend
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.percent(50),
+                x: am5.percent(50),
+                marginTop: 20
+            }));
+            legend.labels.template.setAll({
+                fontSize: 18,
+                fontFamily: "Mukta",
+                fontWeight: "500"
+            });
+            legend.data.setAll(chart.series.values);
+
+            // Add annotation
+            chart.children.push(am5.Label.new(root, {
+                text: "↑ Both categories doubled (+100% increase)",
+                fontSize: 16,
+                fontFamily: "Mukta",
+                fill: am5.color(0x666666),
+                x: am5.percent(50),
+                centerX: am5.percent(50),
+                paddingTop: 10
+            }));
+
+            // Animate on load
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

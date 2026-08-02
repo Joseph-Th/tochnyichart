@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russian Post Financials — 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row { display: flex; gap: 0; margin-top: 16px; }
+        .stat-card { flex: 1; padding: 14px 16px; border-top: 4px solid #ddd; font-family: 'Mukta', sans-serif; }
+        .stat-card .sv { font-size: 22px; font-weight: 700; }
+        .stat-card .sl { font-size: 13px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #cc0000; } .stat-card.s1 .sv { color: #cc0000; }
+        .stat-card.s2 { border-top-color: #cc9900; } .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #cc0000; } .stat-card.s3 .sv { color: #cc0000; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-07-12</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russian Post's Widening Hole</h1>
+        <p class="tochnyi-subtitle">Net debt and losses at the state postal operator climbed sharply year-over-year, while earnings shrank — net loss is now up <span class="tochnyi-highlight">37%</span> to 23.7 billion ₽</p>
+
+        <div id="chartdiv" class="tochnyi-chart-container">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">Net debt +29%</div>
+                <div class="sl">Grew to 107.8 billion ₽</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">EBITDA −27%</div>
+                <div class="sl">Fell to 3.8 billion ₽</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">Net loss +37%</div>
+                <div class="sl">Widened to 23.7 billion ₽</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source">
+            Source: Kommersant (kommersant.ru/doc/8798464) — 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 10, paddingTop: 20, paddingBottom: 10,
+                layout: root.verticalLayout
+            }));
+
+            var data = [
+                { metric: "Net debt", value: 29, col: 0xcc0000 },
+                { metric: "EBITDA", value: -27, col: 0xcc9900 },
+                { metric: "Net loss", value: 37, col: 0xcc0000 }
+            ];
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "metric",
+                renderer: Tochnyi.createXRenderer(root, { cellStartLocation: 0.2, cellEndLocation: 0.8 })
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                min: -40, max: 45, strictMinMax: true, numberFormat: "#'%'",
+                renderer: Tochnyi.createYRenderer(root)
+            }));
+            Tochnyi.addYAxisLabel(root, yAxis, "YEAR-OVER-YEAR CHANGE");
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Change", xAxis: xAxis, yAxis: yAxis,
+                valueYField: "value", categoryXField: "metric", sequencedInterpolation: true
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(55), cornerRadiusTL: 6, cornerRadiusTR: 6,
+                cornerRadiusBL: 0, cornerRadiusBR: 0,
+                tooltipText: "{categoryX}: {valueY}% YoY"
+            });
+            series.columns.template.adapters.add("fill", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            series.columns.template.adapters.add("stroke", function(f, t) {
+                return t.dataItem ? am5.color(t.dataItem.dataContext.col) : f;
+            });
+            // Value labels: above positive bars, below negative bars
+            series.bullets.push(function(root, series, dataItem) {
+                var val = dataItem.get("valueY");
+                return am5.Bullet.new(root, {
+                    locationY: val >= 0 ? 1 : 0,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueY}%", fontSize: 24, fontFamily: "Mukta", fontWeight: "700",
+                        fill: am5.color(0x020303),
+                        centerY: am5.percent(val >= 0 ? 130 : -30),
+                        centerX: am5.percent(50), populateText: true
+                    })
+                });
+            });
+            series.data.setAll(data);
+
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>

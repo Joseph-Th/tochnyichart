@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russia Flower Purchases 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../lib/tochnyi.css">
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="../../lib/tochnyi-charts.js"></script>
+    <style>
+        .stat-row {
+            display: flex;
+            gap: 0;
+            margin-top: 16px;
+        }
+        .stat-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-top: 4px solid #ddd;
+            font-family: 'Mukta', sans-serif;
+        }
+        .stat-card .sv { font-size: 28px; font-weight: 700; }
+        .stat-card .sl { font-size: 14px; font-weight: 500; color: #555; margin-top: 4px; }
+        .stat-card.s1 { border-top-color: #005bbb; }
+        .stat-card.s1 .sv { color: #005bbb; }
+        .stat-card.s2 { border-top-color: #cc9900; }
+        .stat-card.s2 .sv { color: #cc9900; }
+        .stat-card.s3 { border-top-color: #b30000; }
+        .stat-card.s3 .sv { color: #b30000; }
+    </style>
+</head>
+<body>
+    <div class="tochnyi-chart">
+        <div class="tochnyi-header">
+            <img src="../../lib/tochnyi-logo.png" class="tochnyi-logo" alt="Tochnyi">
+            <div class="tochnyi-date">Date: 2026-06-06</div>
+        </div>
+
+        <h1 class="tochnyi-title">Russia Flower Purchase Growth Slows Sharply in 2026</h1>
+        <p class="tochnyi-subtitle">Jan–May average spend rose only <span class="tochnyi-highlight">+2.4%</span> to ₽4,100 — vs +11.8% in 2025; April 2026 saw an outright <span class="tochnyi-highlight">−0.4% nominal decline</span></p>
+
+        <div id="chartdiv" class="tochnyi-chart-container short">
+            <img src="../../lib/watermark.svg" class="tochnyi-watermark" alt="">
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-card s1">
+                <div class="sv">+11.8%</div>
+                <div class="sl">Jan–May 2025 YoY growth in average spend per purchase</div>
+            </div>
+            <div class="stat-card s2">
+                <div class="sv">+2.4%</div>
+                <div class="sl">Jan–May 2026 YoY growth — average ticket ₽4,100</div>
+            </div>
+            <div class="stat-card s3">
+                <div class="sv">−0.4%</div>
+                <div class="sl">April 2026 — first nominal year-on-year spending decline</div>
+            </div>
+        </div>
+
+        <div class="tochnyi-source" style="margin-top:14px;">
+            Source: Kommersant — June 2026
+        </div>
+        <div class="tochnyi-footer">
+            <span>Analysis by:</span>
+            <a href="https://x.com/delfoo">@delfoo</a>
+            <a href="https://bsky.app/profile/delfoo.bsky.social">@delfoo.bsky.social</a>
+        </div>
+    </div>
+
+    <script>
+        am5.ready(function() {
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false, panY: false, wheelX: "none", wheelY: "none",
+                paddingLeft: 10, paddingRight: 30, layout: root.verticalLayout
+            }));
+
+            // YoY growth rates by period
+            var data = [
+                { period: "Jan–May 2025", growth: 11.8, color: 0x005bbb, label: "+11.8%" },
+                { period: "Jan–May 2026", growth: 2.4,  color: 0xcc9900, label: "+2.4%"  },
+                { period: "April 2026",   growth: -0.4, color: 0xb30000, label: "−0.4%"  }
+            ];
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                cellStartLocation: 0.1, cellEndLocation: 0.9
+            });
+            xRenderer.labels.template.setAll({
+                fontSize: 17, fontFamily: "Mukta", fontWeight: "600", textAlign: "center",
+                oversizedBehavior: "wrap", maxWidth: 160
+            });
+            xRenderer.grid.template.setAll({ visible: false });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "period", renderer: xRenderer
+            }));
+            xAxis.data.setAll(data);
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.3 });
+            yRenderer.labels.template.setAll({ fontSize: 15, fontFamily: "Mukta", fontWeight: "500" });
+            yRenderer.grid.template.setAll({ strokeOpacity: 0.12 });
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                numberFormat: "#.#'%'", renderer: yRenderer
+            }));
+            yAxis.children.unshift(am5.Label.new(root, {
+                rotation: -90, text: "YoY CHANGE IN AVERAGE SPEND PER PURCHASE",
+                y: am5.percent(50), centerX: am5.percent(50),
+                fontSize: 12, fontWeight: "600", fontFamily: "Mukta", fill: am5.color(0x666666)
+            }));
+
+            // Zero line
+            var zeroRange = yAxis.createAxisRange(yAxis.makeDataItem({ value: 0 }));
+            zeroRange.get("grid").setAll({ stroke: am5.color(0x020303), strokeOpacity: 0.35, strokeWidth: 2 });
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                xAxis: xAxis, yAxis: yAxis,
+                valueYField: "growth", categoryXField: "period",
+                tooltip: am5.Tooltip.new(root, { labelText: "{period}: {label} YoY" })
+            }));
+            series.columns.template.setAll({
+                width: am5.percent(52),
+                cornerRadiusTL: 6, cornerRadiusTR: 6, cornerRadiusBL: 6, cornerRadiusBR: 6
+            });
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : fill;
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                var di = target.dataItem; return di ? am5.color(di.dataContext.color) : stroke;
+            });
+
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationY: function(target) {
+                        var di = target ? target.dataItem : null;
+                        return (di && di.dataContext.growth < 0) ? 0 : 1;
+                    },
+                    sprite: am5.Label.new(root, {
+                        text: "{label}",
+                        fill: am5.color(0x020303),
+                        centerX: am5.percent(50),
+                        centerY: function(target) {
+                            var di = target ? target.dataItem : null;
+                            return (di && di.dataContext.growth < 0) ? am5.percent(0) : am5.percent(100);
+                        },
+                        populateText: true, fontSize: 28, fontWeight: "700",
+                        fontFamily: "Mukta", paddingBottom: 8, paddingTop: 8
+                    })
+                });
+            });
+
+            series.data.setAll(data);
+            chart.appear(1000, 100);
+        });
+    </script>
+</body>
+</html>
