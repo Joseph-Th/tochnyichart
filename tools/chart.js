@@ -8,12 +8,14 @@ const { validateSpec } = require('../renderer/validate');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtml, diagnoseHtmlResponsive } = require('../renderer/capture');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 
 function usage(exitCode = 0) {
   const text = `Tochnyi Charts v2
 
 Usage:
   node tools/chart.js catalog
+  node tools/chart.js regions [region-set]
   node tools/chart.js guide
   node tools/chart.js validate <spec.json>
   node tools/chart.js render <spec.json> [output.html]
@@ -55,6 +57,19 @@ function main() {
     return;
   }
 
+  if (command === 'regions') {
+    const requested = args[1];
+    const regionSets = TochnyiMaps.listRegionSets();
+    if (!requested) {
+      printResult({ regionSets });
+      return;
+    }
+    const regionSet = regionSets.find((entry) => entry.id === requested);
+    if (!regionSet) throw new Error(`Unknown region set: ${requested}. Available: ${TochnyiMaps.regionSetIds.join(', ')}.`);
+    printResult(regionSet);
+    return;
+  }
+
   if (command === 'guide') {
     printResult({
       selectionRules: [
@@ -69,6 +84,7 @@ function main() {
         { when: 'Start, additions or losses, and an ending value', use: 'flow.waterfall' },
         { when: 'Ranked categories with long labels', use: 'ranking.horizontal' },
         { when: 'Places or operations have categorical conditions', use: 'status.grid' },
+        { when: 'Administrative regions need a geographic breakdown with callouts', use: 'map.regional' },
         { when: 'Trigger, transmission, and consequence form a chain', use: 'story.sequence' }
       ],
       composableFeatures: [

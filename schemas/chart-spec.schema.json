@@ -20,6 +20,7 @@
         "flow.waterfall",
         "ranking.horizontal",
         "status.grid",
+        "map.regional",
         "story.sequence",
         "headline.metric"
       ]
@@ -47,6 +48,16 @@
         "required": ["label"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "regionId": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{2,3}$" },
+          "regionIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{2,3}$" }
+          },
+          "calloutSide": { "type": "string", "enum": ["auto", "left", "right"] },
+          "calloutOrder": { "type": "integer", "minimum": 0, "maximum": 99 },
           "label": { "type": "string", "minLength": 1, "maxLength": 80 },
           "value": { "type": "number" },
           "low": { "type": "number" },
@@ -68,6 +79,16 @@
             "enum": ["start", "change", "subtotal", "end"]
           }
         }
+      }
+    },
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regionSet"],
+      "properties": {
+        "regionSet": { "type": "string", "enum": ["russia"] },
+        "callouts": { "type": "string", "enum": ["auto", "cards", "none"] },
+        "summaryPosition": { "type": "string", "enum": ["auto", "right", "below", "none"] }
       }
     },
     "references": {
@@ -153,7 +174,7 @@
         "density": { "type": "string", "enum": ["minimal", "editorial", "detailed"] },
         "emphasis": {
           "type": "string",
-          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status"]
+          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography"]
         }
       }
     },

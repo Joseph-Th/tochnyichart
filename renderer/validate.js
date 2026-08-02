@@ -1,6 +1,7 @@
 'use strict';
 
 const { getRecipe, recipeIds } = require('./catalog');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 
 const FORBIDDEN_KEYS = new Set([
   'html', 'script', 'style', 'styles', 'customCss', 'customJS', 'customJs',
@@ -16,14 +17,20 @@ const SCALES = new Set(['linear', 'logarithmic']);
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
-const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status']);
+const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography']);
+const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
+const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
+const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
-  'emphasis', 'primaryMetric', 'supportingFacts', 'note', 'narrative', 'options', 'metadata'
+  'emphasis', 'primaryMetric', 'supportingFacts', 'note', 'narrative', 'options', 'metadata', 'map'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
-const DATA_KEYS = new Set(['id', 'label', 'value', 'low', 'high', 'benchmark', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role']);
+const DATA_KEYS = new Set([
+  'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'value', 'low', 'high',
+  'benchmark', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role'
+]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const MEASURE_KEYS = new Set(['unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale']);
 const EMPHASIS_KEYS = new Set(['direction', 'value', 'displayValue', 'label', 'position']);
@@ -32,6 +39,7 @@ const FACT_KEYS = new Set(['value', 'label', 'tone']);
 const NARRATIVE_KEYS = new Set(['frame', 'density', 'emphasis']);
 const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'animate', 'labelMode']);
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
+const MAP_KEYS = new Set(['regionSet', 'callouts', 'summaryPosition']);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -133,11 +141,24 @@ function normalizeSpec(input) {
   spec.narrative.density = spec.narrative.density || 'editorial';
   spec.narrative.emphasis = spec.narrative.emphasis || 'magnitude';
 
+  if (spec.recipe === 'map.regional' || isObject(spec.map)) {
+    spec.map = isObject(spec.map) ? spec.map : {};
+    spec.map.regionSet = spec.map.regionSet || 'russia';
+    spec.map.callouts = spec.map.callouts || 'auto';
+    spec.map.summaryPosition = spec.map.summaryPosition || 'auto';
+  }
+
   spec.data = Array.isArray(spec.data)
     ? spec.data.map((item) => isObject(item) ? ({
         ...item,
         label: typeof item.label === 'string' ? item.label.trim() : item.label,
         ...(item.id !== undefined ? { id: typeof item.id === 'string' ? item.id.trim() : item.id } : {}),
+        ...(item.regionId !== undefined ? { regionId: typeof item.regionId === 'string' ? item.regionId.trim().toUpperCase() : item.regionId } : {}),
+        ...(item.regionIds !== undefined ? {
+          regionIds: Array.isArray(item.regionIds)
+            ? item.regionIds.map((regionId) => typeof regionId === 'string' ? regionId.trim().toUpperCase() : regionId)
+            : item.regionIds
+        } : {}),
         ...(item.displayValue !== undefined
           ? { displayValue: typeof item.displayValue === 'string' ? item.displayValue.trim() : item.displayValue }
           : {}),
@@ -193,6 +214,7 @@ function validateStructure(input, errors) {
   if (isObject(input.narrative)) rejectUnknownKeys(input.narrative, NARRATIVE_KEYS, 'narrative', errors);
   if (isObject(input.options)) rejectUnknownKeys(input.options, OPTION_KEYS, 'options', errors);
   if (isObject(input.metadata)) rejectUnknownKeys(input.metadata, METADATA_KEYS, 'metadata', errors);
+  if (isObject(input.map)) rejectUnknownKeys(input.map, MAP_KEYS, 'map', errors);
 }
 
 function validateData(spec, errors, warnings) {
@@ -221,6 +243,20 @@ function validateData(spec, errors, warnings) {
     if (item.detail !== undefined && (typeof item.detail !== 'string' || item.detail.length > 180)) errors.push(`${path}.detail must be a string of 180 characters or fewer.`);
     if (item.annotation !== undefined && (typeof item.annotation !== 'string' || item.annotation.length > 120)) errors.push(`${path}.annotation must be a string of 120 characters or fewer.`);
     if (item.id !== undefined && (typeof item.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id))) errors.push(`${path}.id must use lowercase letters, numbers, and single hyphens.`);
+    if (item.regionId !== undefined && (typeof item.regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(item.regionId))) errors.push(`${path}.regionId must be an ISO-style region identifier such as RU-OMS.`);
+    if (item.regionId !== undefined && item.regionIds !== undefined) errors.push(`${path} cannot define both regionId and regionIds.`);
+    if (item.regionIds !== undefined) {
+      if (!Array.isArray(item.regionIds) || item.regionIds.length < 1 || item.regionIds.length > 4) {
+        errors.push(`${path}.regionIds must contain 1 to 4 region identifiers.`);
+      } else {
+        item.regionIds.forEach((regionId, regionIndex) => {
+          if (typeof regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(regionId)) errors.push(`${path}.regionIds[${regionIndex}] must be an ISO-style region identifier.`);
+        });
+        if (new Set(item.regionIds).size !== item.regionIds.length) errors.push(`${path}.regionIds cannot contain duplicates.`);
+      }
+    }
+    if (item.calloutSide !== undefined && !CALLOUT_SIDES.has(item.calloutSide)) errors.push(`${path}.calloutSide is not supported.`);
+    if (item.calloutOrder !== undefined && (!Number.isInteger(item.calloutOrder) || item.calloutOrder < 0 || item.calloutOrder > 99)) errors.push(`${path}.calloutOrder must be an integer from 0 to 99.`);
     if (item.tone !== undefined && !TONES.has(item.tone)) errors.push(`${path}.tone is not supported.`);
     if (item.status !== undefined && !STATUSES.has(item.status)) errors.push(`${path}.status is not supported.`);
     if (item.role !== undefined && !ROLES.has(item.role)) errors.push(`${path}.role is not supported.`);
@@ -309,6 +345,24 @@ function validateRecipe(spec, errors, warnings) {
         if (typeof item.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for status.grid.`);
       });
       break;
+    case 'map.regional': {
+      if (count < 1 || count > 12) errors.push('map.regional requires 1 to 12 data items.');
+      const regionSet = TochnyiMaps.getRegionSet(spec.map?.regionSet);
+      const usedRegions = new Set();
+      spec.data.forEach((item, index) => {
+        const regionIds = item.regionIds || (item.regionId ? [item.regionId] : []);
+        if (!regionIds.length) errors.push(`data[${index}] requires regionId or regionIds for map.regional.`);
+        if (!item.detail && !item.displayValue && item.value === undefined && !item.status) {
+          warnings.push(`data[${index}] has no detail, displayValue, numeric value, or status; its callout may be uninformative.`);
+        }
+        regionIds.forEach((regionId) => {
+          if (regionSet && !regionSet.regions[regionId]) errors.push(`data[${index}] references ${regionId}, which is not in map.regionSet ${spec.map.regionSet}.`);
+          if (usedRegions.has(regionId)) warnings.push(`${regionId} is referenced by more than one map item.`);
+          usedRegions.add(regionId);
+        });
+      });
+      break;
+    }
     case 'story.sequence':
       if (count < 3 || count > 6) errors.push('story.sequence requires 3 to 6 data items.');
       spec.data.forEach((item, index) => {
@@ -355,7 +409,7 @@ function validateMeasure(spec, errors, warnings) {
       errors.push(`measure.${key} must be a string of ${max} characters or fewer.`);
     }
   }
-  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.sequence'].includes(spec.recipe)) {
+  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.sequence', 'map.regional'].includes(spec.recipe)) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
@@ -443,6 +497,21 @@ function validateOptions(spec, errors) {
   }
 }
 
+function validateMap(spec, errors) {
+  if (spec.recipe !== 'map.regional' && spec.map === undefined) return;
+  if (spec.recipe !== 'map.regional') {
+    errors.push('map is only supported by map.regional.');
+    return;
+  }
+  if (!isObject(spec.map)) {
+    errors.push('map must be an object for map.regional.');
+    return;
+  }
+  if (!TochnyiMaps.getRegionSet(spec.map.regionSet)) errors.push(`map.regionSet must be one of: ${TochnyiMaps.regionSetIds.join(', ')}.`);
+  if (!MAP_CALLOUTS.has(spec.map.callouts)) errors.push('map.callouts is not supported.');
+  if (!MAP_SUMMARY_POSITIONS.has(spec.map.summaryPosition)) errors.push('map.summaryPosition is not supported.');
+}
+
 function validateMetadata(spec, errors, warnings) {
   if (spec.metadata === undefined) return;
   if (!isObject(spec.metadata)) {
@@ -522,6 +591,7 @@ function validateSpec(input) {
   validatePrimaryMetric(spec, errors, warnings);
   validateNarrative(spec, errors);
   validateOptions(spec, errors);
+  validateMap(spec, errors);
   validateMetadata(spec, errors, warnings);
   validateEditorialEconomy(spec, warnings);
 

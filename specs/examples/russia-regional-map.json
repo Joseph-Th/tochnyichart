@@ -1,0 +1,91 @@
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Fuel Access Split Along Regional Supply Lines",
+  "subtitle": "Refinery regions recovered first while delivery-dependent regions remained rationed or dry.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Regional fuel availability reports",
+    "period": "Late July 2026"
+  },
+  "data": [
+    {
+      "label": "Omsk region",
+      "regionId": "RU-OMS",
+      "status": "improving",
+      "displayValue": "Limits lifted",
+      "detail": "Purchase limits were removed in a major refinery region."
+    },
+    {
+      "label": "Volgograd region",
+      "regionId": "RU-VGG",
+      "status": "critical",
+      "displayValue": "Limits restored",
+      "detail": "Limits returned after a renewed refinery disruption."
+    },
+    {
+      "label": "Astrakhan region",
+      "regionId": "RU-AST",
+      "status": "strained",
+      "displayValue": "4–8 hours a day",
+      "detail": "Many filling stations operated only within short daily windows."
+    },
+    {
+      "label": "Novosibirsk region",
+      "regionId": "RU-NVS",
+      "status": "critical",
+      "displayValue": ">50% dry",
+      "detail": "More than half of independent stations had no fuel."
+    },
+    {
+      "label": "Zabaykalsky krai",
+      "regionId": "RU-ZAB",
+      "status": "blocked",
+      "displayValue": "5% of requirement",
+      "detail": "Weekly deliveries covered only a fraction of regional demand."
+    },
+    {
+      "label": "Krasnodar krai",
+      "regionId": "RU-KDA",
+      "status": "critical",
+      "displayValue": "Half of July need",
+      "detail": "Farmers received half the fuel required for seasonal work."
+    }
+  ],
+  "map": {
+    "regionSet": "russia",
+    "callouts": "auto",
+    "summaryPosition": "auto"
+  },
+  "primaryMetric": {
+    "value": "6 regions",
+    "label": "regional supply conditions tracked"
+  },
+  "supportingFacts": [
+    {
+      "value": "4",
+      "label": "critical or blocked regions",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "russia-regional-map",
+    "topic": "regional fuel access",
+    "country": "Russia",
+    "dataPeriod": "Late July 2026",
+    "keyFinding": "Regional fuel access diverged according to refinery proximity and delivery dependence."
+  }
+}

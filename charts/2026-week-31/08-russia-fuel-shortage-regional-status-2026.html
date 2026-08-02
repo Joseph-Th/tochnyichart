@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Improvement was confined to refinery regions while delivery-dependent regions rationed by litre and by hour.">
+  <title>Refinery Towns Recovered, Everyone Downstream Did Not</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  
+  <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/geodata/russiaLow.js"></script>
+  <script src="../../lib/tochnyi-maps.js"></script>
+  <script src="../../lib/tochnyi-map-runtime.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Refinery Towns Recovered, Everyone Downstream Did Not",
+  "subtitle": "Regions with their own refineries lifted purchase limits, while regions dependent on deliveries rationed fuel by the litre or by the hour.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Regional fuel availability reports from Russian and regional media",
+    "period": "Late July 2026"
+  },
+  "data": [
+    {
+      "label": "Omsk region",
+      "regionId": "RU-OMS",
+      "status": "improving",
+      "displayValue": "Limits lifted",
+      "detail": "Refuelling limits were lifted in full in a region hosting one of Russia's largest refineries."
+    },
+    {
+      "label": "Kaliningrad",
+      "regionId": "RU-KGD",
+      "status": "improving",
+      "displayValue": "Limits lifted",
+      "detail": "Limits were lifted in full, most plausibly for reasons of prestige rather than supply."
+    },
+    {
+      "label": "Volgograd region",
+      "regionId": "RU-VGG",
+      "status": "critical",
+      "displayValue": "Limits restored",
+      "detail": "Limits were lifted, then reimposed by the end of the week after the local refinery was struck again."
+    },
+    {
+      "label": "Bashkortostan and neighbours",
+      "regionId": "RU-BA",
+      "status": "critical",
+      "displayValue": "Multiple refinery hits",
+      "detail": "Repeated strikes on refineries around Ufa made supply difficult across the region and those next to it."
+    },
+    {
+      "label": "Astrakhan region",
+      "regionId": "RU-AST",
+      "status": "strained",
+      "displayValue": "4–8 hours a day",
+      "detail": "Most filling stations now open only four to eight hours a day and refuse service outside those windows."
+    },
+    {
+      "label": "Novokuznetsk, Kemerovo region",
+      "regionId": "RU-KEM",
+      "status": "critical",
+      "displayValue": "1 in 3 closed",
+      "detail": "A third of filling stations in the region's second-largest city are not operating."
+    },
+    {
+      "label": "Novosibirsk region",
+      "regionId": "RU-NVS",
+      "status": "critical",
+      "displayValue": ">50% of independents dry",
+      "detail": "More than half of independent stations have no fuel and queues returned after the strike on the Perm refinery."
+    },
+    {
+      "label": "Bryansk region",
+      "regionId": "RU-BRY",
+      "status": "blocked",
+      "displayValue": "10–20 litres per person",
+      "detail": "Severe per-person rationing, tightening to 20 litres closer to the border with Ukraine."
+    },
+    {
+      "label": "Zabaykalsky krai",
+      "regionId": "RU-ZAB",
+      "status": "blocked",
+      "displayValue": "5% of requirement",
+      "detail": "Weekly deliveries of 1,050 tons against a monthly requirement of 88,000 tons."
+    },
+    {
+      "label": "Chelyabinsk region",
+      "regionId": "RU-CHE",
+      "status": "strained",
+      "displayValue": "Farms short",
+      "detail": "Small farmers are struggling to source fuel during the working season."
+    },
+    {
+      "label": "Krasnodar krai",
+      "regionId": "RU-KDA",
+      "status": "critical",
+      "displayValue": "Half of July need",
+      "detail": "Farmers received only half the fuel they needed from the state in July and drew down their own reserves."
+    }
+  ],
+  "map": {
+    "regionSet": "russia",
+    "callouts": "auto",
+    "summaryPosition": "below"
+  },
+  "primaryMetric": {
+    "value": "11 regions",
+    "label": "regional fuel conditions tracked"
+  },
+  "supportingFacts": [
+    {
+      "value": "7",
+      "label": "critical or blocked regions",
+      "tone": "critical"
+    },
+    {
+      "value": "2",
+      "label": "regions where limits were lifted",
+      "tone": "positive"
+    }
+  ],
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "08-russia-fuel-shortage-regional-status-2026",
+    "topic": "regional fuel rationing",
+    "country": "Russia",
+    "dataPeriod": "Late July 2026",
+    "keyFinding": "Improvement was confined to refinery regions while delivery-dependent regions rationed by litre and by hour."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

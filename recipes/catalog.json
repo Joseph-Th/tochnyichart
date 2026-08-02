@@ -1,5 +1,5 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -70,6 +70,13 @@
       "data": "3 to 12 items with label, status, and detail; numeric value is optional.",
       "bestFor": ["regional shortages", "service availability", "operational disruption", "risk monitoring"],
       "defaults": { "height": "standard", "watermark": "corner", "supportingFacts": 0 }
+    },
+    {
+      "id": "map.regional",
+      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards.",
+      "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
+      "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
+      "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
     },
     {
       "id": "story.sequence",

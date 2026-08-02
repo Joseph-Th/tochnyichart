@@ -13,6 +13,7 @@ const { extractLayoutDiagnostics } = require('../renderer/capture');
 const { diagnoseBoxes, diagnoseMarkStyles, normalizeRect } = require('../lib/tochnyi-diagnostics');
 const Tochnyi = require('../lib/tochnyi-charts');
 const VisualPlan = require('../lib/tochnyi-visual-plan');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 
 const examplesDir = path.join(__dirname, '..', 'specs', 'examples');
 const exampleFiles = fs.readdirSync(examplesDir).filter((name) => name.endsWith('.json')).sort();
@@ -58,6 +59,30 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.ok(plan.chartHeight < 550, 'five-row rankings should not use a fixed tall canvas');
   assert.equal(VisualPlan.rankingHeight(12, 'detailed'), 700);
   assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
+});
+
+test('Russia region registry exposes stable ISO-style identifiers', () => {
+  const regionSet = TochnyiMaps.getRegionSet('russia');
+  assert.ok(regionSet);
+  assert.equal(Object.keys(regionSet.regions).length, 83);
+  assert.equal(regionSet.regions['RU-OMS'], 'Omsk');
+  assert.equal(regionSet.regions['RU-ZAB'], 'Zabaykalsky');
+});
+
+test('regional map specs validate known regions and load map tooling', () => {
+  const spec = loadExample('russia-regional-map.json');
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  const html = renderHtml(result.normalized);
+  assert.match(html, /lib\/5\/map[.]js/);
+  assert.match(html, /geodata\/russiaLow[.]js/);
+  assert.match(html, /tochnyi-maps[.]js/);
+  assert.match(html, /tochnyi-map-runtime[.]js/);
+
+  spec.data[0].regionId = 'RU-XXX';
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('RU-XXX') && error.includes('not in map.regionSet')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {

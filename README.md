@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.6.0
+# Tochnyi Charts v2.8.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -39,6 +39,12 @@ List the available chart recipes:
 
 ```bash
 node tools/chart.js catalog
+```
+
+List reusable map region sets and their region identifiers:
+
+```bash
+node tools/chart.js regions russia
 ```
 
 Get the compact story-to-recipe decision guide:
@@ -121,6 +127,7 @@ The machine-readable catalog is `recipes/catalog.json`.
 | `flow.waterfall` | Starting value, additions or losses, and ending value |
 | `ranking.horizontal` | Ranked categories with longer labels |
 | `status.grid` | Places or operations with categorical conditions |
+| `map.regional` | Administrative regions with highlighted geography, callout cards, and an optional summary panel |
 | `story.sequence` | Trigger-to-consequence or operational chain |
 | `headline.metric` | One decisive number with supporting context |
 
@@ -176,6 +183,13 @@ A minimal comparison specification:
 
 See `specs/examples/` for a validated example of every recipe.
 
+Regional maps use stable region identifiers rather than coordinates. For Russia,
+use `map.regionSet = "russia"` and assign `data[].regionId`, such as `RU-OMS` or
+`RU-VGG`. One callout can cover several regions with `data[].regionIds`. The
+renderer calculates geographic anchors, balances cards between the two sides,
+packs them to avoid collisions, and draws leader lines. `primaryMetric` and
+`supportingFacts` become an optional map summary panel.
+
 ## Project structure
 
 ```text
@@ -200,6 +214,8 @@ stanichart_2/
 ├── lib/
 │   ├── tochnyi.css
 │   ├── tochnyi-charts.js
+│   ├── tochnyi-maps.js
+│   ├── tochnyi-map-runtime.js
 │   ├── tochnyi-runtime.js
 │   ├── tochnyi-logo.png
 │   └── watermark.svg
@@ -243,6 +259,7 @@ The renderer is responsible for:
 - Donut composition constraints
 - Waterfall roles and endpoints
 - Regional status and sequence requirements
+- Region-set membership and regional map callout requirements
 - Explicit axis bounds
 - Semantic emphasis direction
 - Unsupported fields

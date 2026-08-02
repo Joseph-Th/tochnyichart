@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { validateSpec } = require('./validate');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 
 function slugify(value) {
   return String(value)
@@ -47,6 +48,10 @@ function renderHtml(spec, options = {}) {
   const metadata = spec.metadata || {};
   const description = metadata.keyFinding || spec.subtitle;
   const payload = jsonForHtml(spec);
+  const regionSet = spec.recipe === 'map.regional' ? TochnyiMaps.getRegionSet(spec.map.regionSet) : null;
+  const mapScripts = regionSet
+    ? `\n  <script src="https://cdn.amcharts.com/lib/5/map.js"></script>\n  <script src="${htmlEscape(regionSet.geodataScript)}"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-maps.js"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-map-runtime.js"></script>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="en" data-assets="${htmlEscape(assetPrefix)}">
@@ -62,6 +67,7 @@ function renderHtml(spec, options = {}) {
   <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  ${mapScripts}
   <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
   <script src="${htmlEscape(assetPrefix)}tochnyi-charts.js"></script>
   <script src="${htmlEscape(assetPrefix)}tochnyi-visual-plan.js"></script>
