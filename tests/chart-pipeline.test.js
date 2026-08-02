@@ -109,6 +109,17 @@ test('Russia region registry exposes stable ISO-style identifiers', () => {
   assert.deepEqual(regionSet.detachedRegionIds, ['RU-KGD']);
 });
 
+test('regional maps use a restrained non-flag-like status palette', () => {
+  const policy = TochnyiMaps.visualPolicy;
+  assert.equal(policy.statusColors.improving, '#3f727b');
+  assert.equal(policy.statusColors.critical, '#a45350');
+  assert.equal(policy.statusColors.blocked, '#66505e');
+  assert.notEqual(policy.statusColors.improving, '#008844');
+  assert.notEqual(policy.statusColors.critical, '#cc0000');
+  assert.ok(policy.activeFillOpacity < 0.9);
+  assert.ok(policy.inactiveFillOpacity < policy.activeFillOpacity);
+});
+
 test('regional map planning focuses on active data and omits inactive detached regions', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   const rectangle = (left, bottom, right, top) => ({

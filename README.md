@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.9.0
+# Tochnyi Charts v2.9.1
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -192,7 +192,9 @@ packs them to avoid collisions, and draws leader lines. `primaryMetric` and
 whether the renderer shows the complete region set (`all`), fits the highlighted
 regions (`data`), or chooses automatically (`auto`). `map.excludeRegions` removes
 irrelevant polygons from the display. Region registries can also identify detached
-areas, which are omitted automatically unless they are part of the data.
+areas, which are omitted automatically unless they are part of the data. Regional
+status maps use a restrained teal, ochre, brick, plum, and slate palette rather
+than saturated red-green signaling.
 
 ## Project structure
 
