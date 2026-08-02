@@ -137,10 +137,7 @@ test('regional map leader routing separates clustered callouts into traceable la
     routing: 'auto', top: 80, bottom: 180, gap: 16
   });
   assert.equal(planned.routing, 'lanes');
-  const routeYs = planned.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
-  for (let index = 1; index < routeYs.length; index += 1) {
-    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9);
-  }
+  assert.deepEqual(planned.map((entry) => entry.laneIndex).sort((a, b) => a - b), [0, 1, 2, 3, 4]);
   assert.ok(planned.every((entry) => entry.sideCount === entries.length));
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries.slice(0, 2)), 'direct');
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
@@ -159,8 +156,9 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     endY: 120
   });
   assert.match(leftPath.path, /^M 520 310 H /);
-  assert.match(leftPath.path, / V 340 H .* V 120 H 220$/);
+  assert.match(leftPath.path, / V 120 H 220$/);
   assert.doesNotMatch(leftPath.path, /\sL\s/);
+  assert.equal((leftPath.path.match(/\sV\s/g) || []).length, 1);
   assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
 
   const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
@@ -175,6 +173,7 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     endY: 450
   });
   assert.doesNotMatch(rightPath.path, /\sL\s/);
+  assert.equal((rightPath.path.match(/\sV\s/g) || []).length, 1);
   assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
 });
 

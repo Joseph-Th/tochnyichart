@@ -200,8 +200,9 @@ default because the filled polygon already identifies the area. Set
 Leader lines use automatic lane routing when several callouts would otherwise
 share nearly the same path. The router preserves geographic order, separates
 parallel segments, adds a light halo, and colors each line to match its region.
-All leader geometry is orthogonal, using horizontal and vertical segments only,
-so routing changes never introduce arbitrary diagonals across the map.
+All leader geometry is orthogonal and uses a single vertical adjustment between
+the region and its card. Dense layouts stagger that one bend across separate
+columns, avoiding both arbitrary diagonals and double-step routes.
 Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
 collision-resistant layout.
 
