@@ -146,6 +146,38 @@ test('regional map leader routing separates clustered callouts into traceable la
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
 });
 
+test('regional map leaders use orthogonal geometry without arbitrary diagonals', () => {
+  const leftPath = TochnyiMaps.buildOrthogonalLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    routeY: 340,
+    laneIndex: 2,
+    sideCount: 5
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 120
+  });
+  assert.match(leftPath.path, /^M 520 310 H /);
+  assert.match(leftPath.path, / V 340 H .* V 120 H 220$/);
+  assert.doesNotMatch(leftPath.path, /\sL\s/);
+  assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
+
+  const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
+    side: 'right',
+    point: { x: 610, y: 330 },
+    routeY: 360,
+    laneIndex: 3,
+    sideCount: 5
+  }, {
+    mapEdgeX: 960,
+    cardX: 980,
+    endY: 450
+  });
+  assert.doesNotMatch(rightPath.path, /\sL\s/);
+  assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
+});
+
 test('regional map planning focuses on active data and omits inactive detached regions', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   const rectangle = (left, bottom, right, top) => ({

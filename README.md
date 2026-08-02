@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.10.0
+# Tochnyi Charts v2.10.1
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -200,6 +200,8 @@ default because the filled polygon already identifies the area. Set
 Leader lines use automatic lane routing when several callouts would otherwise
 share nearly the same path. The router preserves geographic order, separates
 parallel segments, adds a light halo, and colors each line to match its region.
+All leader geometry is orthogonal, using horizontal and vertical segments only,
+so routing changes never introduce arbitrary diagonals across the map.
 Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
 collision-resistant layout.
 
