@@ -73,7 +73,7 @@
     },
     {
       "id": "map.regional",
-      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards.",
+      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards and an adaptive viewport.",
       "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
       "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
       "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }

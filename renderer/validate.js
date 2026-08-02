@@ -21,6 +21,7 @@ const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'compositio
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
 const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
+const MAP_VIEWPORTS = new Set(['auto', 'all', 'data']);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
@@ -39,7 +40,7 @@ const FACT_KEYS = new Set(['value', 'label', 'tone']);
 const NARRATIVE_KEYS = new Set(['frame', 'density', 'emphasis']);
 const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'animate', 'labelMode']);
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
-const MAP_KEYS = new Set(['regionSet', 'callouts', 'summaryPosition']);
+const MAP_KEYS = new Set(['regionSet', 'callouts', 'summaryPosition', 'viewport', 'excludeRegions']);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -146,6 +147,12 @@ function normalizeSpec(input) {
     spec.map.regionSet = spec.map.regionSet || 'russia';
     spec.map.callouts = spec.map.callouts || 'auto';
     spec.map.summaryPosition = spec.map.summaryPosition || 'auto';
+    spec.map.viewport = spec.map.viewport || 'auto';
+    spec.map.excludeRegions = spec.map.excludeRegions === undefined
+      ? []
+      : Array.isArray(spec.map.excludeRegions)
+        ? spec.map.excludeRegions.map((regionId) => typeof regionId === 'string' ? regionId.trim().toUpperCase() : regionId)
+        : spec.map.excludeRegions;
   }
 
   spec.data = Array.isArray(spec.data)
@@ -510,6 +517,24 @@ function validateMap(spec, errors) {
   if (!TochnyiMaps.getRegionSet(spec.map.regionSet)) errors.push(`map.regionSet must be one of: ${TochnyiMaps.regionSetIds.join(', ')}.`);
   if (!MAP_CALLOUTS.has(spec.map.callouts)) errors.push('map.callouts is not supported.');
   if (!MAP_SUMMARY_POSITIONS.has(spec.map.summaryPosition)) errors.push('map.summaryPosition is not supported.');
+  if (!MAP_VIEWPORTS.has(spec.map.viewport)) errors.push('map.viewport is not supported.');
+  if (!Array.isArray(spec.map.excludeRegions) || spec.map.excludeRegions.length > 12) {
+    errors.push('map.excludeRegions must be an array of no more than 12 region identifiers.');
+    return;
+  }
+  const regionSet = TochnyiMaps.getRegionSet(spec.map.regionSet);
+  const activeRegions = new Set((Array.isArray(spec.data) ? spec.data : []).flatMap((item) => item?.regionIds || (item?.regionId ? [item.regionId] : [])));
+  const excludedRegions = new Set();
+  spec.map.excludeRegions.forEach((regionId, index) => {
+    if (typeof regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(regionId)) {
+      errors.push(`map.excludeRegions[${index}] must be an ISO-style region identifier.`);
+      return;
+    }
+    if (regionSet && !regionSet.regions[regionId]) errors.push(`map.excludeRegions[${index}] references ${regionId}, which is not in map.regionSet ${spec.map.regionSet}.`);
+    if (excludedRegions.has(regionId)) errors.push(`map.excludeRegions cannot contain duplicate region ${regionId}.`);
+    if (activeRegions.has(regionId)) errors.push(`map.excludeRegions cannot hide active data region ${regionId}.`);
+    excludedRegions.add(regionId);
+  });
 }
 
 function validateMetadata(spec, errors, warnings) {

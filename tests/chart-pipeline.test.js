@@ -106,6 +106,43 @@ test('Russia region registry exposes stable ISO-style identifiers', () => {
   assert.equal(Object.keys(regionSet.regions).length, 83);
   assert.equal(regionSet.regions['RU-OMS'], 'Omsk');
   assert.equal(regionSet.regions['RU-ZAB'], 'Zabaykalsky');
+  assert.deepEqual(regionSet.detachedRegionIds, ['RU-KGD']);
+});
+
+test('regional map planning focuses on active data and omits inactive detached regions', () => {
+  const regionSet = TochnyiMaps.getRegionSet('russia');
+  const rectangle = (left, bottom, right, top) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[
+        [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
+      ]]
+    }
+  });
+  const featureById = {
+    'RU-BRY': rectangle(31, 51, 35, 54),
+    'RU-ZAB': rectangle(107, 49, 122, 58),
+    'RU-KGD': rectangle(19, 54, 23, 55)
+  };
+  const plan = TochnyiMaps.resolveMapPlan(
+    { viewport: 'auto', excludeRegions: [] },
+    regionSet,
+    [{ regionId: 'RU-BRY' }, { regionId: 'RU-ZAB' }],
+    featureById
+  );
+  assert.equal(plan.viewportMode, 'data');
+  assert.ok(plan.excludedRegionIds.includes('RU-KGD'));
+  assert.ok(plan.geoBounds.left < 31);
+  assert.ok(plan.geoBounds.right > 122);
+
+  const kaliningradPlan = TochnyiMaps.resolveMapPlan(
+    { viewport: 'auto', excludeRegions: [] },
+    regionSet,
+    [{ regionId: 'RU-KGD' }],
+    featureById
+  );
+  assert.equal(kaliningradPlan.excludedRegionIds.includes('RU-KGD'), false);
 });
 
 test('regional map specs validate known regions and load map tooling', () => {
@@ -122,6 +159,18 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(spec);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('RU-XXX') && error.includes('not in map.regionSet')));
+
+  const hiddenActive = loadExample('russia-regional-map.json');
+  hiddenActive.map.excludeRegions = [hiddenActive.data[0].regionId];
+  result = validateSpec(hiddenActive);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('cannot hide active data region')));
+
+  const invalidExclusions = loadExample('russia-regional-map.json');
+  invalidExclusions.map.excludeRegions = 'RU-KGD';
+  result = validateSpec(invalidExclusions);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.excludeRegions must be an array')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {

@@ -17,13 +17,6 @@
       "detail": "Refuelling limits were lifted in full in a region hosting one of Russia's largest refineries."
     },
     {
-      "label": "Kaliningrad",
-      "regionId": "RU-KGD",
-      "status": "improving",
-      "displayValue": "Limits lifted",
-      "detail": "Limits were lifted in full, most plausibly for reasons of prestige rather than supply."
-    },
-    {
       "label": "Volgograd region",
       "regionId": "RU-VGG",
       "status": "critical",
@@ -90,10 +83,12 @@
   "map": {
     "regionSet": "russia",
     "callouts": "auto",
-    "summaryPosition": "below"
+    "summaryPosition": "below",
+    "viewport": "data",
+    "excludeRegions": ["RU-KGD"]
   },
   "primaryMetric": {
-    "value": "11 regions",
+    "value": "10 regions",
     "label": "regional fuel conditions tracked"
   },
   "supportingFacts": [
@@ -103,7 +98,7 @@
       "tone": "critical"
     },
     {
-      "value": "2",
+      "value": "1",
       "label": "regions where limits were lifted",
       "tone": "positive"
     }

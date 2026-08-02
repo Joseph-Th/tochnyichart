@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.8.0
+# Tochnyi Charts v2.9.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -188,7 +188,11 @@ use `map.regionSet = "russia"` and assign `data[].regionId`, such as `RU-OMS` or
 `RU-VGG`. One callout can cover several regions with `data[].regionIds`. The
 renderer calculates geographic anchors, balances cards between the two sides,
 packs them to avoid collisions, and draws leader lines. `primaryMetric` and
-`supportingFacts` become an optional map summary panel.
+`supportingFacts` become an optional map summary panel. `map.viewport` controls
+whether the renderer shows the complete region set (`all`), fits the highlighted
+regions (`data`), or chooses automatically (`auto`). `map.excludeRegions` removes
+irrelevant polygons from the display. Region registries can also identify detached
+areas, which are omitted automatically unless they are part of the data.
 
 ## Project structure
 

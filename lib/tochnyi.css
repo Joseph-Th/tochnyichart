@@ -884,11 +884,18 @@ body {
 
 .tochnyi-map-canvas {
     position: absolute;
-    top: 0;
-    right: 245px;
-    bottom: 0;
-    left: 245px;
+    inset: 0 12px;
     z-index: 1;
+}
+
+.tochnyi-map-stage.has-callouts .tochnyi-map-canvas {
+    right: 238px;
+    left: 238px;
+}
+
+.tochnyi-map-stage.has-callouts.is-dense .tochnyi-map-canvas {
+    right: 222px;
+    left: 222px;
 }
 
 .tochnyi-map-lines,
