@@ -91,6 +91,7 @@
         "summaryPosition": { "type": "string", "enum": ["auto", "right", "below", "none"] },
         "viewport": { "type": "string", "enum": ["auto", "all", "data"] },
         "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
+        "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes"] },
         "excludeRegions": {
           "type": "array",
           "maxItems": 12,

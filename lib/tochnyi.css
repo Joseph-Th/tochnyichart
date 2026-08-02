@@ -910,11 +910,19 @@ body {
 
 .tochnyi-map-leader {
     fill: none;
-    stroke: #4c5962;
-    stroke-width: 1.25;
+    stroke-width: 1.45;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.7;
+    opacity: 0.82;
+}
+
+.tochnyi-map-leader-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.92);
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.95;
 }
 
 .tochnyi-map-anchor {

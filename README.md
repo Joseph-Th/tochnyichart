@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.9.1
+# Tochnyi Charts v2.10.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -197,6 +197,11 @@ status maps use a restrained teal, ochre, brick, plum, and slate palette rather
 than saturated red-green signaling. Region callouts do not show centroid dots by
 default because the filled polygon already identifies the area. Set
 `map.anchorStyle = "dot"` only when an explicit point marker is useful.
+Leader lines use automatic lane routing when several callouts would otherwise
+share nearly the same path. The router preserves geographic order, separates
+parallel segments, adds a light halo, and colors each line to match its region.
+Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
+collision-resistant layout.
 
 ## Project structure
 

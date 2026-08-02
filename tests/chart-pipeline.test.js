@@ -126,6 +126,26 @@ test('regional maps suppress centroid dots unless explicitly requested', () => {
   assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'dot');
 });
 
+test('regional map leader routing separates clustered callouts into traceable lanes', () => {
+  const entries = [100, 104, 109, 113, 119].map((y, index) => ({
+    index,
+    side: 'left',
+    point: { x: 500 + index * 20, y }
+  }));
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries), 'lanes');
+  const planned = TochnyiMaps.planLeaderRoutes(entries, {
+    routing: 'auto', top: 80, bottom: 180, gap: 16
+  });
+  assert.equal(planned.routing, 'lanes');
+  const routeYs = planned.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
+  for (let index = 1; index < routeYs.length; index += 1) {
+    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9);
+  }
+  assert.ok(planned.every((entry) => entry.sideCount === entries.length));
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries.slice(0, 2)), 'direct');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
+});
+
 test('regional map planning focuses on active data and omits inactive detached regions', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   const rectangle = (left, bottom, right, top) => ({
@@ -194,6 +214,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidAnchorStyle);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.anchorStyle is not supported')));
+
+  const invalidLeaderRouting = loadExample('russia-regional-map.json');
+  invalidLeaderRouting.map.leaderRouting = 'spaghetti';
+  result = validateSpec(invalidLeaderRouting);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {
