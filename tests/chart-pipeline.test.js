@@ -246,6 +246,7 @@ test('regional map planning focuses on active data and omits inactive detached r
   assert.equal(plan.viewportAlignment, 'auto');
   assert.equal(plan.visualCentering, true);
   assert.equal(plan.centerShiftLongitude, 0);
+  assert.equal(plan.centerShiftLatitude, 0);
 
   const kaliningradPlan = TochnyiMaps.resolveMapPlan(
     { viewport: 'auto', excludeRegions: [] },
@@ -274,7 +275,7 @@ test('regional map viewport centering balances data and surrounding geography', 
   assert.equal((contextCentered.left + contextCentered.right) / 2, 100);
 });
 
-test('regional map visual centering corrects the rendered footprint rather than only geographic bounds', () => {
+test('regional map visual centering offsets the rendered footprint on both axes', () => {
   const feature = {
     geometry: {
       type: 'Polygon',
@@ -290,18 +291,25 @@ test('regional map visual centering corrects the rendered footprint rather than 
   assert.equal(projected.right, 240);
   assert.equal(projected.centerX, 200);
 
-  const offCenter = { ...projected, left: 210, right: 290, centerX: 250 };
-  const correction = TochnyiMaps.correctViewportCenter(
-    { left: 20, right: 120, bottom: 40, top: 70, longitudeSpan: 100, latitudeSpan: 30 },
+  const offCenter = {
+    ...projected,
+    left: 210,
+    right: 290,
+    top: 40,
+    bottom: 100,
+    centerX: 250,
+    centerY: 70
+  };
+  const offset = TochnyiMaps.resolveVisualOffset(
     offCenter,
-    400,
-    4,
+    { width: 400, height: 200 },
     { tolerance: 1 }
   );
-  assert.equal(correction.pixelShift, -50);
-  assert.equal(correction.longitudeShift, 12.5);
-  assert.equal(correction.geoBounds.left, 32.5);
-  assert.equal(correction.geoBounds.right, 132.5);
+  assert.equal(offset.rawX, -50);
+  assert.equal(offset.rawY, 30);
+  assert.equal(offset.x, -50);
+  assert.equal(offset.y, 30);
+  assert.equal(offset.centered, false);
 });
 
 test('regional map visual centering ignores negligible edge fragments', () => {
@@ -313,6 +321,20 @@ test('regional map visual centering ignores negligible edge fragments', () => {
   assert.ok(bounds.left >= 95 && bounds.left <= 105);
   assert.ok(bounds.right >= 395 && bounds.right <= 405);
   assert.equal(bounds.centerX, 250);
+});
+
+test('regional map raster bounds measure vertical as well as horizontal whitespace', () => {
+  const columns = new Array(100).fill(0);
+  const rows = new Array(80).fill(0);
+  for (let index = 20; index <= 79; index += 1) columns[index] = 20;
+  for (let index = 10; index <= 49; index += 1) rows[index] = 30;
+  const bounds = TochnyiMaps.visualBoundsFromRasterWeights(columns, rows, 500, 400, 0.005);
+  assert.equal(bounds.left, 100);
+  assert.equal(bounds.right, 400);
+  assert.equal(bounds.centerX, 250);
+  assert.equal(bounds.top, 50);
+  assert.equal(bounds.bottom, 250);
+  assert.equal(bounds.centerY, 150);
 });
 
 test('regional map specs validate known regions and load map tooling', () => {
