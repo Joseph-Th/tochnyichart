@@ -1,0 +1,132 @@
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Dense 02",
+  "subtitle": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Moskva",
+      "regionId": "RU-MOS",
+      "status": "unknown",
+      "displayValue": "17 units",
+      "detail": "Dense sample 2, anchor 1."
+    },
+    {
+      "label": "Voronezh",
+      "regionId": "RU-VOR",
+      "status": "improving",
+      "displayValue": "15 units",
+      "detail": "Dense sample 2, anchor 2."
+    },
+    {
+      "label": "Kurgan",
+      "regionId": "RU-KGN",
+      "status": "improving",
+      "displayValue": "15 units",
+      "detail": "Dense sample 2, anchor 3."
+    },
+    {
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "unknown",
+      "displayValue": "7 units",
+      "detail": "Dense sample 2, anchor 4."
+    },
+    {
+      "label": "Irkutsk",
+      "regionId": "RU-IRK",
+      "status": "unknown",
+      "displayValue": "26 units",
+      "detail": "Dense sample 2, anchor 5."
+    },
+    {
+      "label": "St. Petersburg",
+      "regionId": "RU-SPE",
+      "status": "improving",
+      "displayValue": "5 units",
+      "detail": "Dense sample 2, anchor 6."
+    },
+    {
+      "label": "Astrakhan",
+      "regionId": "RU-AST",
+      "status": "improving",
+      "displayValue": "17 units",
+      "detail": "Dense sample 2, anchor 7."
+    },
+    {
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "strained",
+      "displayValue": "9 units",
+      "detail": "Dense sample 2, anchor 8."
+    },
+    {
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "improving",
+      "displayValue": "19 units",
+      "detail": "Dense sample 2, anchor 9."
+    },
+    {
+      "label": "Dagestan",
+      "regionId": "RU-DA",
+      "status": "stable",
+      "displayValue": "5 units",
+      "detail": "Dense sample 2, anchor 10."
+    },
+    {
+      "label": "Leningrad",
+      "regionId": "RU-LEN",
+      "status": "strained",
+      "displayValue": "10 units",
+      "detail": "Dense sample 2, anchor 11."
+    },
+    {
+      "label": "Magadan",
+      "regionId": "RU-MAG",
+      "status": "critical",
+      "displayValue": "37 units",
+      "detail": "Dense sample 2, anchor 12."
+    }
+  ],
+  "map": {
+    "regionSet": "russia"
+  },
+  "primaryMetric": {
+    "value": "12 regions",
+    "label": "dense routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "1",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "5",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false
+  },
+  "metadata": {
+    "slug": "regional-routing-dense-02",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance."
+  }
+}

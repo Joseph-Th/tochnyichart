@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/" data-assets-version="f205adbc8cf8">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A tight random geographic cluster stresses adjacent polygons and parallel leaders.">
+  <title>Synthetic Routing Matrix: Clustered 02</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css?v=f205adbc8cf8">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+
+  <script src="https://cdn.amcharts.com/lib/5/geodata/russiaLow.js"></script>
+  <script src="../../lib/tochnyi-maps.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-map-runtime.js?v=f205adbc8cf8"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-visual-plan.js?v=f205adbc8cf8"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Clustered 02",
+  "subtitle": "A tight random geographic cluster stresses adjacent polygons and parallel leaders.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Novgorod",
+      "regionId": "RU-NGR",
+      "status": "stable",
+      "displayValue": "24 units",
+      "detail": "Clustered sample 2, anchor 1."
+    },
+    {
+      "label": "Pskov",
+      "regionId": "RU-PSK",
+      "status": "strained",
+      "displayValue": "5 units",
+      "detail": "Clustered sample 2, anchor 2."
+    },
+    {
+      "label": "St. Petersburg",
+      "regionId": "RU-SPE",
+      "status": "unknown",
+      "displayValue": "32 units",
+      "detail": "Clustered sample 2, anchor 3."
+    },
+    {
+      "label": "Arkhangelsk",
+      "regionId": "RU-ARK",
+      "status": "strained",
+      "displayValue": "13 units",
+      "detail": "Clustered sample 2, anchor 4."
+    },
+    {
+      "label": "Smolensk",
+      "regionId": "RU-SMO",
+      "status": "strained",
+      "displayValue": "13 units",
+      "detail": "Clustered sample 2, anchor 5."
+    },
+    {
+      "label": "Yaroslavl",
+      "regionId": "RU-YAR",
+      "status": "improving",
+      "displayValue": "18 units",
+      "detail": "Clustered sample 2, anchor 6."
+    },
+    {
+      "label": "Moskva",
+      "regionId": "RU-MOS",
+      "status": "blocked",
+      "displayValue": "11 units",
+      "detail": "Clustered sample 2, anchor 7."
+    },
+    {
+      "label": "Moscow City",
+      "regionId": "RU-MOW",
+      "status": "unknown",
+      "displayValue": "25 units",
+      "detail": "Clustered sample 2, anchor 8."
+    },
+    {
+      "label": "Tver",
+      "regionId": "RU-TVE",
+      "status": "unknown",
+      "displayValue": "22 units",
+      "detail": "Clustered sample 2, anchor 9."
+    }
+  ],
+  "map": {
+    "regionSet": "russia",
+    "callouts": "auto",
+    "calloutDistribution": "auto",
+    "summaryPosition": "auto",
+    "summaryDisplay": "auto",
+    "viewport": "auto",
+    "viewportAlignment": "auto",
+    "contextFit": "auto",
+    "landmass": "auto",
+    "anchorStyle": "auto",
+    "leaderRouting": "auto",
+    "excludeRegions": []
+  },
+  "primaryMetric": {
+    "value": "9 regions",
+    "label": "clustered routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "1",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "1",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false,
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "regional-routing-clustered-02",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "A tight random geographic cluster stresses adjacent polygons and parallel leaders."
+  },
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-diagnostics.js?v=f205adbc8cf8"></script>
+</body>
+</html>

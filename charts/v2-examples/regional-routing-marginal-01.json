@@ -1,0 +1,83 @@
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Marginal 01",
+  "subtitle": "Low-count random coverage checks whether sparse leaders stay short and readable.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "critical",
+      "displayValue": "33 units",
+      "detail": "Marginal sample 1, anchor 1."
+    },
+    {
+      "label": "Ulyanovsk",
+      "regionId": "RU-ULY",
+      "status": "blocked",
+      "displayValue": "30 units",
+      "detail": "Marginal sample 1, anchor 2."
+    },
+    {
+      "label": "Saratov",
+      "regionId": "RU-SAR",
+      "status": "blocked",
+      "displayValue": "35 units",
+      "detail": "Marginal sample 1, anchor 3."
+    },
+    {
+      "label": "Bryansk",
+      "regionId": "RU-BRY",
+      "status": "stable",
+      "displayValue": "29 units",
+      "detail": "Marginal sample 1, anchor 4."
+    },
+    {
+      "label": "Mariy-El",
+      "regionId": "RU-ME",
+      "status": "improving",
+      "displayValue": "2 units",
+      "detail": "Marginal sample 1, anchor 5."
+    }
+  ],
+  "map": {
+    "regionSet": "russia"
+  },
+  "primaryMetric": {
+    "value": "5 regions",
+    "label": "marginal routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "3",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "1",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false
+  },
+  "metadata": {
+    "slug": "regional-routing-marginal-01",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "Low-count random coverage checks whether sparse leaders stay short and readable."
+  }
+}

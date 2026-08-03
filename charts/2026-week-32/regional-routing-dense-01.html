@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/" data-assets-version="f205adbc8cf8">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Broad random coverage stresses balanced columns, ports, and obstacle avoidance.">
+  <title>Synthetic Routing Matrix: Dense 01</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css?v=f205adbc8cf8">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+
+  <script src="https://cdn.amcharts.com/lib/5/geodata/russiaLow.js"></script>
+  <script src="../../lib/tochnyi-maps.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-map-runtime.js?v=f205adbc8cf8"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-visual-plan.js?v=f205adbc8cf8"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Dense 01",
+  "subtitle": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Khanty-Mansiysk",
+      "regionId": "RU-KHM",
+      "status": "blocked",
+      "displayValue": "27 units",
+      "detail": "Dense sample 1, anchor 1."
+    },
+    {
+      "label": "St. Petersburg",
+      "regionId": "RU-SPE",
+      "status": "unknown",
+      "displayValue": "26 units",
+      "detail": "Dense sample 1, anchor 2."
+    },
+    {
+      "label": "Tula",
+      "regionId": "RU-TUL",
+      "status": "strained",
+      "displayValue": "5 units",
+      "detail": "Dense sample 1, anchor 3."
+    },
+    {
+      "label": "Yaroslavl",
+      "regionId": "RU-YAR",
+      "status": "unknown",
+      "displayValue": "11 units",
+      "detail": "Dense sample 1, anchor 4."
+    },
+    {
+      "label": "Dagestan",
+      "regionId": "RU-DA",
+      "status": "stable",
+      "displayValue": "37 units",
+      "detail": "Dense sample 1, anchor 5."
+    },
+    {
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "improving",
+      "displayValue": "13 units",
+      "detail": "Dense sample 1, anchor 6."
+    },
+    {
+      "label": "Omsk",
+      "regionId": "RU-OMS",
+      "status": "critical",
+      "displayValue": "36 units",
+      "detail": "Dense sample 1, anchor 7."
+    },
+    {
+      "label": "Volgograd",
+      "regionId": "RU-VGG",
+      "status": "strained",
+      "displayValue": "20 units",
+      "detail": "Dense sample 1, anchor 8."
+    },
+    {
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "unknown",
+      "displayValue": "9 units",
+      "detail": "Dense sample 1, anchor 9."
+    },
+    {
+      "label": "Chukotka",
+      "regionId": "RU-CHU",
+      "status": "improving",
+      "displayValue": "4 units",
+      "detail": "Dense sample 1, anchor 10."
+    }
+  ],
+  "map": {
+    "regionSet": "russia",
+    "callouts": "auto",
+    "calloutDistribution": "auto",
+    "summaryPosition": "auto",
+    "summaryDisplay": "auto",
+    "viewport": "auto",
+    "viewportAlignment": "auto",
+    "contextFit": "auto",
+    "landmass": "auto",
+    "anchorStyle": "auto",
+    "leaderRouting": "auto",
+    "excludeRegions": []
+  },
+  "primaryMetric": {
+    "value": "10 regions",
+    "label": "dense routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "2",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "2",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false,
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "regional-routing-dense-01",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance."
+  },
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-diagnostics.js?v=f205adbc8cf8"></script>
+</body>
+</html>

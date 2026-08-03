@@ -1,0 +1,118 @@
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Dense 01",
+  "subtitle": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Khanty-Mansiysk",
+      "regionId": "RU-KHM",
+      "status": "blocked",
+      "displayValue": "27 units",
+      "detail": "Dense sample 1, anchor 1."
+    },
+    {
+      "label": "St. Petersburg",
+      "regionId": "RU-SPE",
+      "status": "unknown",
+      "displayValue": "26 units",
+      "detail": "Dense sample 1, anchor 2."
+    },
+    {
+      "label": "Tula",
+      "regionId": "RU-TUL",
+      "status": "strained",
+      "displayValue": "5 units",
+      "detail": "Dense sample 1, anchor 3."
+    },
+    {
+      "label": "Yaroslavl",
+      "regionId": "RU-YAR",
+      "status": "unknown",
+      "displayValue": "11 units",
+      "detail": "Dense sample 1, anchor 4."
+    },
+    {
+      "label": "Dagestan",
+      "regionId": "RU-DA",
+      "status": "stable",
+      "displayValue": "37 units",
+      "detail": "Dense sample 1, anchor 5."
+    },
+    {
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "improving",
+      "displayValue": "13 units",
+      "detail": "Dense sample 1, anchor 6."
+    },
+    {
+      "label": "Omsk",
+      "regionId": "RU-OMS",
+      "status": "critical",
+      "displayValue": "36 units",
+      "detail": "Dense sample 1, anchor 7."
+    },
+    {
+      "label": "Volgograd",
+      "regionId": "RU-VGG",
+      "status": "strained",
+      "displayValue": "20 units",
+      "detail": "Dense sample 1, anchor 8."
+    },
+    {
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "unknown",
+      "displayValue": "9 units",
+      "detail": "Dense sample 1, anchor 9."
+    },
+    {
+      "label": "Chukotka",
+      "regionId": "RU-CHU",
+      "status": "improving",
+      "displayValue": "4 units",
+      "detail": "Dense sample 1, anchor 10."
+    }
+  ],
+  "map": {
+    "regionSet": "russia"
+  },
+  "primaryMetric": {
+    "value": "10 regions",
+    "label": "dense routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "2",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "2",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false
+  },
+  "metadata": {
+    "slug": "regional-routing-dense-01",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "Broad random coverage stresses balanced columns, ports, and obstacle avoidance."
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Synthetic Routing Matrix: Marginal 03",
+  "subtitle": "Low-count random coverage checks whether sparse leaders stay short and readable.",
+  "date": "2026-08-03",
+  "source": {
+    "name": "Seeded synthetic routing matrix",
+    "period": "Seed 20260803"
+  },
+  "data": [
+    {
+      "label": "Saratov",
+      "regionId": "RU-SAR",
+      "status": "critical",
+      "displayValue": "4 units",
+      "detail": "Marginal sample 3, anchor 1."
+    },
+    {
+      "label": "Chechnya",
+      "regionId": "RU-CE",
+      "status": "critical",
+      "displayValue": "22 units",
+      "detail": "Marginal sample 3, anchor 2."
+    },
+    {
+      "label": "St. Petersburg",
+      "regionId": "RU-SPE",
+      "status": "improving",
+      "displayValue": "23 units",
+      "detail": "Marginal sample 3, anchor 3."
+    },
+    {
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "improving",
+      "displayValue": "17 units",
+      "detail": "Marginal sample 3, anchor 4."
+    }
+  ],
+  "map": {
+    "regionSet": "russia"
+  },
+  "primaryMetric": {
+    "value": "4 regions",
+    "label": "marginal routing sample"
+  },
+  "supportingFacts": [
+    {
+      "value": "2",
+      "label": "critical or blocked dummy regions",
+      "tone": "critical"
+    },
+    {
+      "value": "2",
+      "label": "dummy regions improving",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "neutral",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "options": {
+    "height": "tall",
+    "animate": false
+  },
+  "metadata": {
+    "slug": "regional-routing-marginal-03",
+    "topic": "synthetic regional routing matrix",
+    "country": "Russia",
+    "dataPeriod": "Seed 20260803",
+    "keyFinding": "Low-count random coverage checks whether sparse leaders stay short and readable."
+  }
+}

@@ -101,7 +101,7 @@ function renderHtml(spec, options = {}) {
   <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
-  ${mapScripts}
+${mapScripts}
   <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
   <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-charts.js', assetVersion))}"></script>
   <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-visual-plan.js', assetVersion))}"></script>

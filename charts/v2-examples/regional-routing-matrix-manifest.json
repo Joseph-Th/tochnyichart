@@ -1,0 +1,208 @@
+{
+  "seed": 20260803,
+  "sampleCount": 3,
+  "categories": [
+    "dense",
+    "marginal",
+    "clustered",
+    "edge"
+  ],
+  "charts": [
+    {
+      "category": "dense",
+      "sample": 1,
+      "specPath": "charts/v2-examples/regional-routing-dense-01.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-dense-01.html",
+      "regionIds": [
+        "RU-KHM",
+        "RU-SPE",
+        "RU-TUL",
+        "RU-YAR",
+        "RU-DA",
+        "RU-AMU",
+        "RU-OMS",
+        "RU-VGG",
+        "RU-PRI",
+        "RU-CHU"
+      ]
+    },
+    {
+      "category": "dense",
+      "sample": 2,
+      "specPath": "charts/v2-examples/regional-routing-dense-02.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-dense-02.html",
+      "regionIds": [
+        "RU-MOS",
+        "RU-VOR",
+        "RU-KGN",
+        "RU-MUR",
+        "RU-IRK",
+        "RU-SPE",
+        "RU-AST",
+        "RU-PRI",
+        "RU-YAN",
+        "RU-DA",
+        "RU-LEN",
+        "RU-MAG"
+      ]
+    },
+    {
+      "category": "dense",
+      "sample": 3,
+      "specPath": "charts/v2-examples/regional-routing-dense-03.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-dense-03.html",
+      "regionIds": [
+        "RU-KYA",
+        "RU-ZAB",
+        "RU-SAR",
+        "RU-SPE",
+        "RU-TYU",
+        "RU-VOR",
+        "RU-CHU",
+        "RU-VGG",
+        "RU-PER"
+      ]
+    },
+    {
+      "category": "marginal",
+      "sample": 1,
+      "specPath": "charts/v2-examples/regional-routing-marginal-01.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-marginal-01.html",
+      "regionIds": [
+        "RU-MUR",
+        "RU-ULY",
+        "RU-SAR",
+        "RU-BRY",
+        "RU-ME"
+      ]
+    },
+    {
+      "category": "marginal",
+      "sample": 2,
+      "specPath": "charts/v2-examples/regional-routing-marginal-02.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-marginal-02.html",
+      "regionIds": [
+        "RU-AD",
+        "RU-MOS",
+        "RU-NGR",
+        "RU-NIZ"
+      ]
+    },
+    {
+      "category": "marginal",
+      "sample": 3,
+      "specPath": "charts/v2-examples/regional-routing-marginal-03.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-marginal-03.html",
+      "regionIds": [
+        "RU-SAR",
+        "RU-CE",
+        "RU-SPE",
+        "RU-AMU"
+      ]
+    },
+    {
+      "category": "clustered",
+      "sample": 1,
+      "specPath": "charts/v2-examples/regional-routing-clustered-01.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-clustered-01.html",
+      "regionIds": [
+        "RU-MOW",
+        "RU-MUR",
+        "RU-PSK",
+        "RU-TUL",
+        "RU-LEN",
+        "RU-MOS",
+        "RU-KLU",
+        "RU-NGR",
+        "RU-TVE",
+        "RU-KRS"
+      ]
+    },
+    {
+      "category": "clustered",
+      "sample": 2,
+      "specPath": "charts/v2-examples/regional-routing-clustered-02.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-clustered-02.html",
+      "regionIds": [
+        "RU-NGR",
+        "RU-PSK",
+        "RU-SPE",
+        "RU-ARK",
+        "RU-SMO",
+        "RU-YAR",
+        "RU-MOS",
+        "RU-MOW",
+        "RU-TVE"
+      ]
+    },
+    {
+      "category": "clustered",
+      "sample": 3,
+      "specPath": "charts/v2-examples/regional-routing-clustered-03.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-clustered-03.html",
+      "regionIds": [
+        "RU-STA",
+        "RU-AST",
+        "RU-ORE",
+        "RU-SAM",
+        "RU-DA",
+        "RU-ROS",
+        "RU-BA",
+        "RU-VGG",
+        "RU-VOR"
+      ]
+    },
+    {
+      "category": "edge",
+      "sample": 1,
+      "specPath": "charts/v2-examples/regional-routing-edge-01.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-edge-01.html",
+      "regionIds": [
+        "RU-SA",
+        "RU-KAM",
+        "RU-YAN",
+        "RU-ZAB",
+        "RU-MUR",
+        "RU-NEN",
+        "RU-KDA",
+        "RU-PRI",
+        "RU-DA",
+        "RU-CHU"
+      ]
+    },
+    {
+      "category": "edge",
+      "sample": 2,
+      "specPath": "charts/v2-examples/regional-routing-edge-02.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-edge-02.html",
+      "regionIds": [
+        "RU-PRI",
+        "RU-KAM",
+        "RU-SA",
+        "RU-ZAB",
+        "RU-NEN",
+        "RU-DA",
+        "RU-CHU",
+        "RU-AMU",
+        "RU-YAN",
+        "RU-KDA"
+      ]
+    },
+    {
+      "category": "edge",
+      "sample": 3,
+      "specPath": "charts/v2-examples/regional-routing-edge-03.json",
+      "htmlPath": "charts/2026-week-32/regional-routing-edge-03.html",
+      "regionIds": [
+        "RU-KHA",
+        "RU-SA",
+        "RU-CHU",
+        "RU-DA",
+        "RU-ZAB",
+        "RU-AMU",
+        "RU-KDA",
+        "RU-MAG"
+      ]
+    }
+  ]
+}

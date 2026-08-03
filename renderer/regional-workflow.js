@@ -9,7 +9,7 @@ const { diagnoseHtmlResponsive } = require('./capture');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 
 const REGIONAL_WORKFLOW_VIEWPORTS = Object.freeze([
-  Object.freeze({ width: 1190, height: 679 }),
+  Object.freeze({ width: 1450, height: 679 }),
   Object.freeze({ width: 768, height: 900 }),
   Object.freeze({ width: 480, height: 900 })
 ]);

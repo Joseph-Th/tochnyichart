@@ -290,6 +290,8 @@ test('dense map callout placement minimizes crossings across balanced side assig
   assert.ok(Number.isFinite(optimized.maximumAttachmentSlope));
   assert.ok(optimized.maximumAttachmentSlope < 2.1);
   assert.ok(optimized.attachmentSharpness < 1.3);
+  assert.ok(optimized.left.every((entry) => entry.side === 'left'));
+  assert.ok(optimized.right.every((entry) => entry.side === 'right'));
 
   const fixed = optimizedEntries.map((entry) => ({ ...entry, item: {} }));
   fixed[2].item.calloutSide = 'left';
@@ -308,7 +310,7 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(dense.attachmentInset, 14);
   assert.equal(dense.portGap, 18);
   assert.equal(dense.minimumCardStub, 36);
-  assert.equal(dense.shapeClearance, 3.25);
+  assert.equal(dense.shapeClearance, 2);
   assert.equal(standard.dense, false);
   assert.equal(standard.cardWidth, 226);
   assert.equal(standard.cardGap, 10);
@@ -379,6 +381,49 @@ test('edge-port leaders use a smooth region curve and readable horizontal card c
   assert.equal(rightPath.cardStubLength, 32);
   assert.ok(rightPath.firstControlX > 610);
   assert.ok(rightPath.secondControlX < 948);
+});
+
+test('port detours do not reverse into their terminal card stub', () => {
+  const straight = (start, end) => ({
+    start,
+    control1: {
+      x: start.x + (end.x - start.x) / 3,
+      y: start.y + (end.y - start.y) / 3
+    },
+    control2: {
+      x: start.x + (end.x - start.x) * 2 / 3,
+      y: start.y + (end.y - start.y) * 2 / 3
+    },
+    end
+  });
+  const routed = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 238, y: 336 },
+    portY: 265,
+    portIndex: 2,
+    sideCount: 6
+  }, {
+    mapEdgeX: 244,
+    cardX: 220,
+    cardTop: 255,
+    cardBottom: 336,
+    portOffset: 10,
+    minimumCardStub: 32,
+    routeTop: 80,
+    routeBottom: 520,
+    routeLeft: 180,
+    routeRight: 430,
+    avoidRoutes: [[straight({ x: 180, y: 300 }, { x: 300, y: 300 })]],
+    samplesPerSegment: 48
+  });
+  assert.equal(routed.fallback, false);
+  assert.equal(routed.selfIntersection, false);
+  const approach = routed.routeSegments[routed.routeSegments.length - 2];
+  const terminal = routed.routeSegments[routed.routeSegments.length - 1];
+  const tangentX = approach.end.x - approach.control2.x;
+  const cardDirection = Math.sign(terminal.end.x - terminal.start.x);
+  assert.ok(Math.abs(tangentX) < 0.5 || tangentX * cardDirection >= 0,
+    'the final curve must arrive from the map side before entering the card');
 });
 
 test('steep box connectors reserve a long horizontal terminal tangent', () => {
@@ -582,6 +627,33 @@ test('edge-port leaders curve around highlighted-region obstacles when a corrido
   assert.equal(blocked.avoidance, 'fallback');
   assert.equal(blocked.fallback, true);
   assert.ok(blocked.collisionCount > 0);
+
+  const nestedSource = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10,
+    obstacles: [{
+      left: 450,
+      right: 560,
+      top: 240,
+      bottom: 380,
+      contains: () => true,
+      exactContains: () => true
+    }],
+    sourceObstacles: [{ left: 500, right: 540, top: 290, bottom: 330 }],
+    obstacleClearance: 8,
+    routeTop: 80,
+    routeBottom: 500,
+    samplesPerSegment: 48
+  });
+  assert.equal(nestedSource.fallback, false,
+    'a containing active region must not make a nested source route impossible');
+  assert.equal(nestedSource.collisionCount, 0);
 });
 
 test('indexed regional markers deconflict nearby anchors with short local links', () => {
@@ -721,9 +793,11 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-map-port-fallback-routes/);
   assert.match(runtime, /data-map-port-final-collisions/);
   assert.match(runtime, /data-map-port-source-exit-routes/);
+  assert.match(runtime, /data-map-port-self-intersections/);
   assert.match(runtime, /data-map-port-rendered-crossings/);
   assert.match(runtime, /data-route-direct-collisions/);
   assert.match(runtime, /data-route-final-collisions/);
+  assert.match(runtime, /data-route-self-intersection/);
   assert.match(runtime, /exactContains:/);
   assert.match(runtime, /shapeClearance = regionalPolicy\.shapeClearance/);
   assert.match(runtime, /routeLeft:/);
@@ -869,6 +943,7 @@ test('regional map context fitting chooses complete national context for broad b
   const dataBounds = { longitudeSpan: 95, latitudeSpan: 20 };
   const contextBounds = { longitudeSpan: 160, latitudeSpan: 42 };
   assert.equal(TochnyiMaps.resolveContextFit({}, dataBounds, contextBounds, 10, regionSet), 'all');
+  assert.equal(TochnyiMaps.resolveContextFit({}, { longitudeSpan: 20, latitudeSpan: 12 }, contextBounds, 10, regionSet), 'focus');
   assert.equal(TochnyiMaps.resolveContextFit({}, { longitudeSpan: 20, latitudeSpan: 8 }, contextBounds, 2, regionSet), 'focus');
   assert.equal(TochnyiMaps.resolveContextFit({ contextFit: 'all' }, dataBounds, contextBounds, 2, regionSet), 'all');
 });
