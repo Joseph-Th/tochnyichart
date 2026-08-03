@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Clothing volumes fell while spending rose, with premium prices up as much as 20%.">
+  <title>Russians Are Buying Fewer Clothes and Paying More for Them</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Russians Are Buying Fewer Clothes and Paying More for Them",
+  "subtitle": "Between January and May the number of clothing and footwear items bought fell by 10% to 15%, while spending rose 5% to 7% on higher prices.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian clothing and footwear retail data reported by Kommersant",
+    "period": "January to May 2026",
+    "url": "https://www.kommersant.ru/doc/8847662"
+  },
+  "data": [
+    {
+      "label": "Items bought",
+      "value": -12.5,
+      "tone": "critical",
+      "annotation": "Reported decline of 10% to 15% in units purchased."
+    },
+    {
+      "label": "Spending",
+      "value": 6,
+      "tone": "warning",
+      "annotation": "Reported growth of 5% to 7%, driven entirely by price."
+    },
+    {
+      "label": "Premium prices",
+      "value": 15,
+      "tone": "critical",
+      "annotation": "Prices in the premium segment rose 10% to 20%."
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Change against 2025",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "note": "Midpoints of the reported ranges are plotted; the ranges themselves appear in the annotations.",
+  "supportingFacts": [
+    {
+      "value": "Volume down, value up",
+      "label": "A wardrobe that shrinks while the bill grows is the household-level signature of price-driven retail growth.",
+      "tone": "critical"
+    },
+    {
+      "value": "Premium leads",
+      "label": "The steepest price increases are in the premium segment, where the least price-sensitive buyers sit.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-clothing-volume-versus-spend-2026",
+    "topic": "consumer retail",
+    "country": "Russia",
+    "dataPeriod": "January-May 2026",
+    "keyFinding": "Clothing volumes fell while spending rose, with premium prices up as much as 20%."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

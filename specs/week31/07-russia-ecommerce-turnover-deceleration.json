@@ -1,0 +1,76 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.scenarios",
+  "title": "Marketplace Growth Has Fallen by Two Thirds in Two Years",
+  "subtitle": "Turnover still rises, but the rate of increase has collapsed from 60.3% in 2024 to 18.4% in the first half of 2026.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian online trade turnover statistics",
+    "period": "2024 to H1 2026"
+  },
+  "data": [
+    {
+      "label": "2024",
+      "value": 60.3,
+      "displayValue": "60.3%",
+      "tone": "primary"
+    },
+    {
+      "label": "2025",
+      "value": 29.4,
+      "displayValue": "29.4%",
+      "tone": "secondary"
+    },
+    {
+      "label": "First half of 2026",
+      "value": 18.4,
+      "displayValue": "18.4%",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Growth in sector turnover",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−41.9 pp",
+    "label": "since 2024",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "5.9 trillion rubles",
+      "label": "Sector turnover in the first half of 2026, still growing but at the slowest pace on record for the sector.",
+      "tone": "primary"
+    },
+    {
+      "value": "Commissions bite",
+      "label": "Rising platform commissions and added fees made small-seller businesses unprofitable and slowed new supply.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "07-russia-ecommerce-turnover-deceleration-2026",
+    "topic": "e-commerce turnover growth",
+    "country": "Russia",
+    "dataPeriod": "2024-H1 2026",
+    "keyFinding": "Sector turnover growth slowed from 60.3% to 18.4% in two years."
+  }
+}

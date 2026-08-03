@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sector turnover growth slowed from 60.3% to 18.4% in two years.">
+  <title>Marketplace Growth Has Fallen by Two Thirds in Two Years</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.scenarios",
+  "title": "Marketplace Growth Has Fallen by Two Thirds in Two Years",
+  "subtitle": "Turnover still rises, but the rate of increase has collapsed from 60.3% in 2024 to 18.4% in the first half of 2026.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian online trade turnover statistics",
+    "period": "2024 to H1 2026"
+  },
+  "data": [
+    {
+      "label": "2024",
+      "value": 60.3,
+      "displayValue": "60.3%",
+      "tone": "primary"
+    },
+    {
+      "label": "2025",
+      "value": 29.4,
+      "displayValue": "29.4%",
+      "tone": "secondary"
+    },
+    {
+      "label": "First half of 2026",
+      "value": 18.4,
+      "displayValue": "18.4%",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Growth in sector turnover",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−41.9 pp",
+    "label": "since 2024",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "5.9 trillion rubles",
+      "label": "Sector turnover in the first half of 2026, still growing but at the slowest pace on record for the sector.",
+      "tone": "primary"
+    },
+    {
+      "value": "Commissions bite",
+      "label": "Rising platform commissions and added fees made small-seller businesses unprofitable and slowed new supply.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-ecommerce-turnover-deceleration-2026",
+    "topic": "e-commerce turnover growth",
+    "country": "Russia",
+    "dataPeriod": "2024-H1 2026",
+    "keyFinding": "Sector turnover growth slowed from 60.3% to 18.4% in two years."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

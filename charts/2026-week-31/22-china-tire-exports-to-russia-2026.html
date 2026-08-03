@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Chinese passenger tyre exports to Russia doubled to 2.99 million units in June 2026.">
+  <title>Chinese Tyre Shipments to Russia Doubled in a Year</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "Chinese Tyre Shipments to Russia Doubled in a Year",
+  "subtitle": "June deliveries of passenger car tyres reached 2.99 million units worth 85 million dollars, strengthening the case in Moscow for anti-dumping duties.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Chinese customs data on tyre exports to Russia reported by Kommersant",
+    "period": "June 2026",
+    "url": "https://www.kommersant.ru/doc/8847653"
+  },
+  "data": [
+    {
+      "label": "June 2025",
+      "value": 1.5,
+      "displayValue": "1.5 million",
+      "tone": "neutral"
+    },
+    {
+      "label": "June 2026",
+      "value": 2.99,
+      "displayValue": "2.99 million",
+      "tone": "critical",
+      "annotation": "Value doubled in parallel, reaching 85 million dollars."
+    }
+  ],
+  "measure": {
+    "unit": "million tyres",
+    "axisTitle": "Passenger car tyres shipped",
+    "decimals": 2,
+    "baseline": "explicit",
+    "scale": "linear",
+    "minimum": 0,
+    "maximum": 5
+  },
+  "emphasis": {
+    "direction": "neutral",
+    "displayValue": "×2",
+    "label": "in a year",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "Duties likely",
+      "label": "The scale of the increase raises the probability that Russia introduces duties against Chinese tyre dumping.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "surprise",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "china-tire-exports-to-russia-2026",
+    "topic": "import dumping",
+    "country": "Russia",
+    "dataPeriod": "June 2026",
+    "keyFinding": "Chinese passenger tyre exports to Russia doubled to 2.99 million units in June 2026."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

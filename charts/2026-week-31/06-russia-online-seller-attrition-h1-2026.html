@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="The number of companies trading online fell for the first time since 2021.">
+  <title>Sellers Were Already Leaving Before the First Warehouse Burned</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Sellers Were Already Leaving Before the First Warehouse Burned",
+  "subtitle": "Liquidations of online traders rose while registrations collapsed, producing the first contraction in the number of companies trading online since 2021.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian company registry data on online trade, first half of 2026",
+    "period": "H1 2026"
+  },
+  "data": [
+    {
+      "label": "Liquidations",
+      "value": 19.6,
+      "tone": "critical",
+      "annotation": "76,400 companies and sellers wound up in six months."
+    },
+    {
+      "label": "New registrations",
+      "value": -25,
+      "tone": "warning",
+      "annotation": "Only 58,200 new sellers registered, far fewer than the number leaving."
+    },
+    {
+      "label": "Active companies",
+      "value": -4.9,
+      "tone": "critical",
+      "annotation": "The stock fell to 456,700, the first decline in the sector since 2021."
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Year-over-year change",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "18,200 net exits",
+      "label": "Liquidations exceeded registrations by more than eighteen thousand companies in six months.",
+      "tone": "critical"
+    },
+    {
+      "value": "10–15% at risk",
+      "label": "Sellers with turnover up to 100,000 rubles a month, expected to exit as commissions rose.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-online-seller-attrition-h1-2026",
+    "topic": "marketplace seller attrition",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "The number of companies trading online fell for the first time since 2021."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

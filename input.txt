@@ -1,112 +1,118 @@
 Main news and Budget news
 
-When it comes to attacks on Wildberries what we said last Sunday happened over the week though the success rate of Ukrainian attacks on facilities was closer to 50%. However the damage caused would require over 60 billion rubles to rebuild warehouses and has left in our conservative estimates over 40 000 people without jobs. The costs to outfit the warehouses with the required equipment and automation is according to Russian experts equal to or higher than the base warehouse construction costs. When it comes to Wildberries operations these have been severely impacted with customers in Belarus waiting for a week for deliveries, Crimea losing all coverage in the app and the ability to buy anything. In southern Russia which was serviced by the warehouses in Krasnodar and Stavropol pick up points aren't getting anything delivered and these are private businesses which rely on goods coming in for revenue. They have even started asking the government to provide financial support until things normalized. In the North Western part of the country when sellers tried to ship their goods our of warehouses they were denied that and were told they could only do this at cost and to a pick up point but all of those were overloaded with goods as people all wanted to reclaim their goods or do a fire sale.
-
-When it comes to the way Wildberries has treated sellers it has effectively blocked them from recovering their goods and has blocked them from recovering their funds on balance with the company. Instant withdraws are locked and the nearest point at which sellers can withdraw funds is in August. When it comes to the promised repayments the company has said it will make a simulation as if the goods were sold and then transfer that to the balance of sellers but so far the best repayment I have seen was 1/6th of the value of the goods, not the sale price and the usually payments have been a few percent to a fraction of a percent of the value none of which can be withdrawn mind you for the upcoming deadline to pay taxes. The Russian government hasn't intervened to protect sellers from Wildberries taking them down with the ship essentially. If only there was a federal antimopoly service supposed to combat such practices. However Wildberries has a strong backing in the Kremlin in the form of the head of the Presidential Administration Vaino, First deputy head of the presidential admin Gromov and Suleiman Kerimov which may prevent intervention but even I doubt they will make Putin spend trillions to bail out sellers. When it comes to workers the company can easily downsize as they are hired through recruiting companies that are shells that provide subcontracted labor to Wildberries.
-
-For those who think this might embitter sellers to Ukraine I would point out that videos of sellers crying about how their life keeps getting harder have been filmed for years and the reason for that is Wildberries. Commissions can already be as high as 60%, they can force discounts on sellers that eat their entire profit and in 2024 the fines they imposed on pick up points were higher than Wildberries' net profit. They've abused their position, they are seen as a company taking them as they said down with the ship.
-
-In terms of further exposure to a now likely Wildberries collapse according to The Bell the company has a total debt of 1,3 trillion rubles. 500 billion of that are directly to Russian state bank VTB. VTB is also in a partnership with Wildberries and aims to acquire 5% of the company's fintech assets and has started with 5% of Wildberries bank.
-
-Ozon which is much smaller but also Wildberries' nearest competitor and unlike them is publicly traded saw its stock price drop by over 15% over the last 2 weeks and that's important as at the end of June the largest owner of Ozon stock AFK Sistema used 320 billion rubles in Ozon stock as a collateral for a large loan from VTB. We can say that VTB's exposure to this part of the E-commerce market is nearing 1 trillion rubles. And as a bank it planned to issue new stock to fund these investments and hoped to sell said stock at 87 rubles per share. VTB's current stock price is around 57 rubles a share.
-
-
-
-The Russian Central Bank lowered the interest rate from 14,25% to 14%. According to the Russian Central Bank's governor Nabiulina the increase in the price of fuel has started to affect the price of other goods and services. She also said that an increase of the interest rate is possible in the upcoming meetings of the Central Bank. However given that Putin has publicly said it has to be lowered the only thing she can realistically do is lower it by even smaller increments.
-
-
-On the Russian gasoline news front this week the Russian government introduced the subsidies for the import of diesel the same way as with gasoline. We learned that the subsidies will likely be 260% higher than the domestic ones for gasoline as they will be based on the price of Indian gasoline which came in at 112 600 rubles per ton for Ai-92 in June. So on average the Russian government will pay domestic producers 15 440 rubles per ton and importers 55 180 rubles per ton. The government is also considering extending the gasoline ban until January 2027.
-
-We also found out that refineries with a total refining capacity of 40 million tons returned to selling volumes on SPIMEX though that doesn't mean they are fully operational and refineries with a capacity of 45 million tons are still not offering anything to SPIMEX. For certain sales of gasoline they reintroduced price increases of up to 5% per bid which this week led to Ai-95 prices spiking to over 80 000 rubles after staying close to 70 000 rubles. But in another move to further destroy domestic free fuel trading the Russian government is planning to force refineries to sell only 2% of the fuel their produce on SPIMEX down from the current 10% and down from the 15% in May. In practice last week sales volumes were still very low at a bit over 10 000 tons per day or less than 10% of Russian daily consumption but this covered only 18,1% of solvent demand for gasoline.
-
-Another government move this time regarding farmers is in effect with the Russian Ministry of Agriculture proposing quotas for regions for diesel for the harvest and essentially admitting they don't have enough to cover the harvest. This followed an even more bizarre request to ask Russian farmers if they would accept diesel fuel with 0,3% to 0,9% of sulfur content or even outright heating oil instead of actual diesel. The initiative came from the Ministry of Energy which asked the Ministry of agriculture to find possible farmers that will use such bad fuel. Needless to say most of Russian farmers use modern equipment with modern engines that will be completely wrecked by such fuel yet it seems that this is the only surplus fuel available right now for Russian buyers.
-
-When it comes to the gasoline shortage in parts of Western Russia it improved especially in Moscow and St Petersburg but in places in the south where fuel depots continued to be hit big queues remained. East of the Ural the only noticeable increase was Irkutsk because of Putin's visit in a Potemnkin like operation even prices were ordered to be lowered to 68 rubles per liter. Russia's 3rd largest town Novosibirsk continued to be caught in a crippling shortage by comparison. Kirov region has crippling fuel issues as well, over a third of gas stations in Kursk have closed down and in Mari El's capital volunteers are staying all day at gas stations to impose order. Pskov also doesn't see improvements. Tyumen had to introduce a special schedule for gas stations to refill emergency vehicles and things only got worse with fuel availability after the latest attack on the local refinery .In Krasnoyarsk local fuel companies failed to supply fire fighters and had a case opened against them and in Vladimir regions 5 hospitals have failed finding sellers for their fuel tenders including the main ER unit of the region.
-
-The front also saw disruptions when it comes to gasoline delivery as units started getting a 20 liter daily limit of gasoline to run personal cars and generators. When it comes to the southern part of the front in Zaporizhzhia the fuel allowance dropped even further to 15 liter per day suggesting that Ukraine's logistics strikes campaign has started to really limit Russian fuel deliveries in that part.
-
-
-On The EV side Rosatom, the country's nuclear power plant operator said that its EV charging stations saw a 23% increase in usage in H1 2026 and 80% increase in early July vs early June .
 
 
 
 
-RosAviatsia lowered the flight ceiling over and near Moscow to 4900 meters as an attempt to combat drone attacks. These measures will be in effect until August 12th.
 
-https://www.kommersant.ru/doc/8831908
 
+
+
+
+Overall during the week Ozon was the target of an attack once with the drone hitting outside the facility. The company already raised insurance prices by 230% for goods and bought fiberglass flame resistant panels which it will install on the roof of its facilities to prevent drone attacks. The stocks of the company again dropped by 8,5% and then recovered to be down by over 3% when their facility was targeted. Magnit shut down its own online makret place expediting that process and announced it would transform into another format.  
+
+Wildberries we learned had already asked the government for 500 billion in support funds for sellers and 300 billion rubles in funds for air defense.  It tried also to look for warehouses on the Kazakhstan market out of desperation looking for a big Class A 100 000 square meter facility in a country that only has 130 000 high class warehousing space vacant in all the country. This is on top of the two facilities it's g in Almaty and Astana. They canceled mergers and acquisitions as a company and paused investment. And by the end of the week Tatyana Kim had a presidential like address claiming the attacks on it were terror attacks, that sellers should band together though she is keeping their money and goods hostage and what's even more insane that their Yekaterinburg facility resisted 200 drones trikes when there's video of only one hitting the parking lot. The entire E-commerce sector in Russia employes in various forms about 4 million people and has a growing share in the economy bordering on 8-10% combined so the question is now how many people will Kim drag with her to make it so that the government has to bail her. But if the government does start offering trillions of rubles in compensations that would be an incentive for Ukraine to strike more warehouses as that's money not going to the Russian army, 
+
+Its Ryazan Facility burned though we have to see if half of it was lost or all of it. Its perm facility may have been damaged but it's still not operational. The Udmirtia and Penza facilties were destroyed. Tambov seems half destroyed in side videos but operational. Volgograd was destoyed as was the Samara site
+
+
+A bit of pre-history on how the Russian online makretplace market was faring before July. In h1 2026 we actually had a jump in liquidations of companies and sellers on platforms. They rose by 19,6% to 76 400 whilst the registrations of new sellers dropped by 25% to 58 200. In essence the companies doing online trade over H1 2026 decreased by 4,9% to 456 700. This is the first decrease in the sector since 2021. Turnoever of the sector continues to rise by 18,4% to 5,9 trillion rubles. But for comparison in 2025 the growth had been 29,4% and in 2024 60,3%. The reason for the drop in the registration of companies is obvious, the growing commissions and added fees have made it harder to have a profitable business facilitated by the e-commerce market. The way the market was heading it was expected to lose 10-15% of active sellers which are the smaller ones with monthly turnover of up to 100 000 rubles as the growth in commissions made their business unprofitable. 
+
+
+
+
+
+
+
+Overall the fuel shortage continued in the eastern parts of the country though in some places things improved markedly. In Omsk and Volgograd both areas with their own big refineries the limits on refueling were lifted in full. A same thing happened in Kaliningrad likely for prestige reasons. However by the end of the week after repeated drone attacks on refineries Volgograd had re-established limits on refueling when its own refinery got hit again. Multiple hits were also scored on the refineries around UFA making the situation in the region and nearby regions difficult. In Astrakhan most gas stations to cope with queues operate only 4-8 hours a day and don't offer services outside of those times. In Kemerovo's second largest city 1/3rd of gas stations aren't operational. In Novosibirsk more than half of independent gas stations are without fuel after the attack on the Perm refinery queues returned to the region. Chelyabinsk small farmers face shortage finding fuel and for July Krasnodar krai farmers only got half the fuel they needed from the government so dug deep into their reserves. Bryansk has severe limits of 10 liter per person and 20 liter closer to the border wityh Ukraine. Zabaykalsky krai is getting 1050 tons a week when it actually needs 88 000 tons a month indicating crippling shortages. 
+
+
+
+
+
+
+The government decided to extend the gasoline export ban for 6 months and the diesel export ban for 1 month. It did however sign a contract to deliver 100 000 tons of fuel to Kyrgyzstan but this time at prices linked to the exchange prices. When it comes to fuel they are still waiting for deliveries of 2 tankers from India with 60-100 000 tons of fuel. One additional tanker has been charted from Marocco which will likely dock near Murmansk on the Kola peninsula and it supposedly carries 30 000 tons of fuel. Kazakhstan can offer extra volumes and has pledged 10 000 tons of gasoline and has offered Russia to deliver its refineries oil which then will be refined locally and exported to Russia for a price of course. But the volumes still being talked about cover 1-2-3 days of consumption in a month. Where as according to Financial Times data the damage is closer to 30-35% of all output of gasoline and Russia made it in the summer using the build up of reserves. 
+
+
+
+
+Mongolia fuel shortage
+
+
+
+https://www.kommersant.ru/doc/8847678
 
 
 
 Banking
 
+For H1 2026 the net profit of VTB decreased by almost 20% to 225,2 billion rubles. In Q2 2026 the bank earned 92,6 billion rubles which is 33,6% lower than Q2 2025. The issue is the 100 billion rubles deal to sell Halls development is in installments.
 
-In June 2026 Russian banks issued 1,22 million new credit cards which 19,9% higher than in June 2025 and 4,2% lower than in May 2026.
+https://www.kommersant.ru/doc/8845995
 
-https://www.kommersant.ru/doc/8830511
+VTB said that it is unlikely that for 2026 the bank will pay 50% of its profit in dividend.
 
+https://www.kommersant.ru/doc/8846639
 
-
-
-
-Commodities
-
-
-	Metals
-	The net profit of Severstal for H1 2026 decreased by 89% to 4,2 billion rubles and the revenue of the company by 14% to 314,87 billion rubles. EBITDA was down 46% to 42,34 billion rubles. The company also decided to not pay dividends for Q2 2026 due to a negative cash flow of 29,8 billion rubles  in H1 2026.
-
-https://www.kommersant.ru/doc/8830427
+The bank is also planning to cut 10% of its staff as costs have gone up drastically. 
 
 
+Commodities 
+
+
+	
 	Grain
+	When it comes to Russian grain prices they begun to drop on the Russian domestic market due to the ongoing attacks on shipping in the sea of Azov and the black Sea. By July 26th year over year wheat prices were down 8,6-8,9% domestically and for export from Novorossyisk on July 24th they were down 9,6% to 15 100 rubles per ton. For barley the prices for export were down even more by 12,2% to 13 000 rubles per ton. The Sea of Azov is non operational and it accounts for 35% of Russian wheat exports. THe expected decrease in exports due to the closure was 6,5 million tons for the 2026-2027 season. On top of that transporting by land to the Black Sea ports adds 1400 rubles in costs as such transportation this year is 27,4% more expensive. 
+	
+	Further more on July 30th Ukraine hit the Taman grain exporting terminal and stopped its operations. By the end of the week the other two grain termianls in Novorossyisk had limited their exports of grain. The combined output of these 3 facilities is estimated at 20 million tons a year and Russia's exports are around 50 million tons a year when it comes to grain.
 
-	Russian wheat exports in July 2026 was the lowest it has been since 2017 according to SovEcon falling down to 1,5 million tons largely due to the closure of the Azov sea by Ukraine.
-
-https://www.kommersant.ru/doc/8830735
-
-
+	Also impacted by the closure of the Azov sea is sunflower oil and its export. In July month over month exports are down 53.9% and year over year by 14% with a further decrease of 40% expected in August. Prices for it domestically are also down in July by 2,1% for the raw sunflower as export options dwindle. EFKO which is one Russia's largest plant based oil and fats producers also saw turmoil as its executives were arrested in links to the previously reported drone manufacturer arrests in Russia. As they were also in vested in the transportation of the future scheme to attempt to set up large scale drone production for the froent.
+	
+	
+	
 	Coal
-
-	Russian coking coal prices rose on the domestic market by 21-31% and by 16-20% in the key metallurgical regions. For exports due to demand from India and China prices are up year over year in July by 57,6% from the eastern ports and by 25,8% from the Gulf of Finland. The reason for the price increase is likely the overall shortage of fuel and other forms of energy resources both domestically and abroad. However there's not an expectation that these prices will remain high or grow further as Russian steel demand remains week as it decreased by 7,5% in H1 2026 and by 3,5% in Q2 2026. The better result in Q2 was linked to a slight revival in construction and infrastructure spending by the government. By Q3 the price growth will have halted amid furnace repairs.
-
+	When it comes to coking cola Russian prices from the far east ports in  fell by 7,5% over the 30 days between June 17th and July 17th to reach 148 USD per ton under FOB conditions. Pulverized coal fuel prices fell by 2,7% to 144 USD per ton. This is mainly due to the after effects of the large mining incident in China no longer influencing the market. While in June Chinese coal mining dropped by 10% year over by the H1 2026 result was 1% higher than in 2025. Also important is that Chinese steel inventories rose by 21% in June to 9,4 million tons. This coupled with the rain and the weak Chinese real estate sector suggests prices for Russian metallurgical coal for export may drop 10-20% especially with the recovery of Australian output.
+	
+	On the opposite side of Russsia 6000 kcal coal in the week of July 17th rose in price by 3,6% to 107 USD under CIF conditions. Turkish buyers want to buy Russian coal but Russian producers have sold off their lots in the southern ports. Future deliveries are under question form that basin as Ukraine and Russia have intensified the attacks on shipping in the Black Sea and a coal carrying ship was hit on July 22nd Thus Turkish buyers are looking for alternative routes like coal from the Baltic or through rail through Azerbaijan. Over the next 3 months Turkish buyers may need an extra 0,8-1,5 million tons of Russian coal they can't buy. Due to issues with freight in the Black Sea coal is now being redirected to the Baltic. The problem with that for Russian exporters is the lower turnover rate of ships and that due to the duration of the journey profitability is down 15-30 USD per ton for such deliveries.
+	
+	
 
 	Gas and oil
 
-	The French oil company TotalEnergies confirmed it's looking for a buyer for its 10% share in the sanctioned Arctic LNG-2 project.
-
-https://www.kommersant.ru/doc/8833382
-
-
+Due to the attack on tankers last week we saw less tankers in Novorossyisk and there was a knock on effect for Russian Ural prices The discount on Black Seabased Ural went up by 1,1 USD per barrel to 26,6 USD per barrel. Platts noted a 14,6% increase in transportation prices from Novorossyisk to India in July .
+	
 Construction
 
-The commissioning of 46,4% of the warehouse facilities that are currently under construction in Moscow and Moscow region will be shifted to 2027. This represent a total of 2,6 million square meters. This is due to decrease in demand.
+In the southern part of Moscow retailers subleased 63 000 square meters of warehouse space in southern Moscow with two warehouses with 38 000 and 25 000 square meter of space being rented out. Due to cutting down growth programs subleasing rose to a 16% share.
 
-https://www.kommersant.ru/doc/8832546
+https://www.kommersant.ru/doc/8846779
 
 
 
 Interesting data points
 
-Kamaz lowered its loss for H1 2026 by 33,4% year over year to 13,9 billion rubles. Revenue remained virtually unchanged at 127,2 billion rubles. The plant attributes this to a 5,6% increase in productivity. Which confirms they fired a lot of people.
 
-https://www.kommersant.ru/doc/8833203
+The Russian State Leasing company which is owned by Russia via VEB RF reported a record 14,2 billion ruble loss for H1 2026. This is due to the high reserves the company had to set aside for the period of 20 billion rubles and 23 billion rubles on FX conversions.
 
-Rosselkhoznadzor will introduce a ban on the import of dairy products from Armenia from July 27th 2026.
+https://www.kommersant.ru/doc/8847713
 
-https://www.kommersant.ru/doc/8833568
+Exports from China to Russia of passenger car tires in June 2026 doubled to 2,99 million units and in price to 85 million USD. This increases the likelihood of Russia introducing duties on Chinese tires as the are dumping on the Russian market.
 
-Over the last 12 months the share of vacant co-working office space in Moscow rose from 4,9% to 17,9%. This is because there's limited demand and year over year the price to rent such spaces rose 30,4%.
+https://www.kommersant.ru/doc/8847653
 
-https://www.kommersant.ru/doc/8833366
+In Russia for the period Jan-May 2026 the number of clothing and shoe items that were bought decreased by 10-15%. However spending on clothing grew by 5-7% due to the increase in prices especially in the premium segment where they grew 10-20%
 
-In H1 2026 the number of companies registered in Russia that specialize in funeral services rose by 22,5% to 995. However this is due to the fragmentation of bigger companies and more companies exiting the gray market of funeral services
+https://www.kommersant.ru/doc/8847662
 
-https://www.kommersant.ru/doc/8833349
+
+Russian diamond miner ALROSA reported a 10,7 billion ruble loss in H1 2026 vs 39 billion ruble profit in H1 2025. Reminder that ALROSA is under heavy sanctions when it comes to exporting diamonds.
+
+https://www.kommersant.ru/doc/8860166
+
 
 Inflation and debt
 
-Russian official inflation as reported by Rosstat for the period from the 14th to the 20th of July was 0,17%. For July inflation so far is 0,6% and 4,82% for 2026. Officially gasoline prices are up 1,66%, diesel 1,87%.
+ 
+Russian official inflation as reported by Rosstat for the period from the 21st to the 27th of July was 0,04%. For July inflation so far is 0,64% and 4,86% for 2026.
 
-https://www.interfax.ru/business/1104873
-
-Debt auctions have been postponed until further notice when it comes to the fixed coupon issues though the Russian MinFin registered 2 floater issues with a combined worth of 1,5 trillion rubles this week which may be a way to get the desperately needed 1,5 trillion in funds for Q3 2026.
+https://www.interfax.ru/business/1106356

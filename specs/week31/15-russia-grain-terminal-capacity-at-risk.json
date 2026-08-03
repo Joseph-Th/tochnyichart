@@ -1,0 +1,69 @@
+{
+  "version": "2.0",
+  "recipe": "composition.stacked",
+  "title": "Two Fifths of Russia's Grain Export Capacity Is Now in Question",
+  "subtitle": "Taman and the two Novorossiysk terminals can move about 20 million tons a year between them, against total Russian grain exports of roughly 50 million tons.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian Black Sea grain terminal capacity and export volume estimates",
+    "period": "2026"
+  },
+  "data": [
+    {
+      "label": "Capacity of the three affected terminals",
+      "value": 20,
+      "displayValue": "20 million tons",
+      "tone": "critical",
+      "annotation": "Taman halted after the 30 July strike; both Novorossiysk terminals limited exports."
+    },
+    {
+      "label": "Exports handled elsewhere",
+      "value": 30,
+      "displayValue": "30 million tons",
+      "tone": "primary",
+      "annotation": "Now expected to absorb redirected cargo it was not built to carry."
+    }
+  ],
+  "measure": {
+    "unit": "million tons per year",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "primaryMetric": {
+    "value": "about 50 million tons",
+    "label": "annual Russian grain exports"
+  },
+  "supportingFacts": [
+    {
+      "value": "No spare basin",
+      "label": "The Sea of Azov, which normally carries 35% of wheat exports, is already non-operational.",
+      "tone": "critical"
+    },
+    {
+      "value": "27.4% dearer haulage",
+      "label": "Overland transport to the remaining ports costs more than a quarter more than last year.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "short",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "inside"
+  },
+  "metadata": {
+    "slug": "15-russia-grain-terminal-capacity-at-risk-2026",
+    "topic": "grain terminal capacity",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Terminals handling about 40% of Russian grain export capacity were halted or limited."
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "ALROSA Swung Fifty Billion Rubles in One Year",
+  "subtitle": "The state diamond miner turned a 39 billion ruble first-half profit into a 10.7 billion ruble loss while heavy sanctions restricted its exports.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "ALROSA first-half 2026 results reported by Kommersant",
+    "period": "H1 2026",
+    "url": "https://www.kommersant.ru/doc/8860166"
+  },
+  "data": [
+    {
+      "label": "First half of 2025",
+      "value": 39,
+      "displayValue": "+39",
+      "tone": "primary"
+    },
+    {
+      "label": "First half of 2026",
+      "value": -10.7,
+      "displayValue": "−10.7",
+      "tone": "critical",
+      "annotation": "Sanctions on diamond exports leave few routes to market."
+    }
+  ],
+  "measure": {
+    "unit": "billion rubles",
+    "axisTitle": "Net first-half result, billion rubles",
+    "decimals": 1,
+    "baseline": "explicit",
+    "scale": "linear",
+    "minimum": -20,
+    "maximum": 56
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−49.7 billion",
+    "label": "year over year",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "Export sanctions",
+      "label": "ALROSA remains under heavy sanctions restricting where and how its diamonds can be sold.",
+      "tone": "critical"
+    },
+    {
+      "value": "State exposure",
+      "label": "The company is a significant contributor to regional and federal budgets, so the swing is felt in public finances.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "24-russia-alrosa-h1-swing-2026",
+    "topic": "sanctioned mining results",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "ALROSA moved from a 39 billion ruble profit to a 10.7 billion ruble loss."
+  }
+}

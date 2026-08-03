@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T16:40:03.841Z",
+  "generatedAt": "2026-08-02T16:42:23.084Z",
   "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   "viewport": {
     "width": 1200,
@@ -15,8 +15,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 86794,
-      "sha256": "1803d30a8d82b8626f7d3a53a2178f98fd552e2f77960e3b7437602a69e0ba2c",
+      "bytes": 87656,
+      "sha256": "8331164ee0a4f43c74fc4fe0121379509340066d75c916fc31389be964da4022",
       "diagnostics": {
         "version": "1.0",
         "status": "warn",
@@ -111,8 +111,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 62911,
-      "sha256": "f887ffba907a6869fd7ef6da53f1157676183f5c686b308742c1c050afbad199",
+      "bytes": 62867,
+      "sha256": "affe785f116094912955e84176a4e49a4d3427ff53020f30cf650722069f665c",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -240,8 +240,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 76734,
-      "sha256": "dbda6a857f49acf5a63e12ea60484f5780eedd990ea40e80a52d26d51d22f247",
+      "bytes": 76145,
+      "sha256": "9bdeecd064c0861b79536d83527db4386539dafc383fb49189fae2d76f6ac4c1",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -267,8 +267,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 59636,
-      "sha256": "a77c9cf7620fd3fa9b00d382bf09ed462dd0a2577ee9e928473f68dc97831dbe",
+      "bytes": 60697,
+      "sha256": "57fbbb8a0c844cb6b74fd8486e1932f2093c6e03336dc4c1414e26c13030428e",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -319,8 +319,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 64143,
-      "sha256": "64510a672ea0f6f2a83dd0055ac905634389a5d8991a3320513a1e0b85bdbf3f",
+      "bytes": 64741,
+      "sha256": "ddf32d35291a09a047341b30fb594d43ae31364b5dd9b69678fff780d4c4e4a6",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",
@@ -344,8 +344,8 @@
         "width": 1200,
         "height": 900
       },
-      "bytes": 75532,
-      "sha256": "88d36e43aa2e5b1d89ed32e7bc9f974e3201044f058c07aa85b0b1d13c3a8d3b",
+      "bytes": 76061,
+      "sha256": "92326f8acc4fbd01f2417f52c698735694a68e9cc9014683240eed2d5c5b2f6e",
       "diagnostics": {
         "version": "1.0",
         "status": "pass",

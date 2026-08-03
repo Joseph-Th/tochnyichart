@@ -1,0 +1,71 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "VTB's Earnings Are Falling Faster Each Quarter",
+  "subtitle": "First-half profit fell by a fifth, but the second quarter alone was down by a third, and the bank is now planning to cut a tenth of its staff.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "VTB first-half 2026 results reported by Kommersant",
+    "period": "H1 2026",
+    "url": "https://www.kommersant.ru/doc/8845995"
+  },
+  "data": [
+    {
+      "label": "Net profit, first half",
+      "value": -20,
+      "tone": "warning",
+      "annotation": "225.2 billion rubles, down almost a fifth year over year."
+    },
+    {
+      "label": "Net profit, second quarter",
+      "value": -33.6,
+      "tone": "critical",
+      "annotation": "92.6 billion rubles, a much steeper fall than the half-year figure implies."
+    },
+    {
+      "label": "Planned headcount",
+      "value": -10,
+      "tone": "critical",
+      "annotation": "A tenth of staff is to go as costs rise sharply."
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Change against 2025",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "100 billion rubles",
+      "label": "The Gals Development sale that supports the result is being paid in instalments rather than up front.",
+      "tone": "warning"
+    },
+    {
+      "value": "Dividend at risk",
+      "label": "The bank said it is unlikely to pay out half of its 2026 profit as previously indicated.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "12-russia-vtb-h1-2026-profit",
+    "topic": "state bank profitability",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "VTB second-quarter profit fell 33.6% and the bank plans to cut 10% of its staff."
+  }
+}

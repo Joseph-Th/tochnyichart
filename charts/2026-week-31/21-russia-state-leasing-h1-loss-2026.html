@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A record 14.2 billion ruble loss followed 43 billion rubles of provisions and currency losses.">
+  <title>Provisions and the Exchange Rate Turned a Profit Into a Record Loss</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "flow.waterfall",
+  "title": "Provisions and the Exchange Rate Turned a Profit Into a Record Loss",
+  "subtitle": "The State Transport Leasing Company, owned by the state through VEB.RF, set aside 20 billion rubles in reserves and lost 23 billion on currency conversion.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "State Transport Leasing Company first-half 2026 results reported by Kommersant",
+    "period": "H1 2026",
+    "url": "https://www.kommersant.ru/doc/8847713"
+  },
+  "data": [
+    {
+      "label": "Pre-charge",
+      "value": 28.8,
+      "role": "start",
+      "displayValue": "28.8",
+      "tone": "primary",
+      "annotation": "Derived from the reported loss and the two disclosed charges."
+    },
+    {
+      "label": "Reserves",
+      "value": -20,
+      "role": "change",
+      "displayValue": "−20",
+      "tone": "warning"
+    },
+    {
+      "label": "Currency",
+      "value": -23,
+      "role": "change",
+      "displayValue": "−23",
+      "tone": "critical"
+    },
+    {
+      "label": "Net result",
+      "value": -14.2,
+      "role": "end",
+      "displayValue": "−14.2",
+      "tone": "critical",
+      "annotation": "A record loss for the company."
+    }
+  ],
+  "measure": {
+    "unit": "billion rubles",
+    "axisTitle": "First-half result, billion rubles",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "note": "The opening figure is derived from the reported loss and the two disclosed charges rather than separately published.",
+  "supportingFacts": [
+    {
+      "value": "State-owned",
+      "label": "The company is held by the Russian state through VEB.RF, so the loss lands on a public balance sheet.",
+      "tone": "warning"
+    },
+    {
+      "value": "43 billion rubles",
+      "label": "Combined weight of provisions and currency losses, three times the size of the headline loss itself.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "flow"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-state-leasing-h1-loss-2026",
+    "topic": "state leasing company results",
+    "country": "Russia",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "A record 14.2 billion ruble loss followed 43 billion rubles of provisions and currency losses."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

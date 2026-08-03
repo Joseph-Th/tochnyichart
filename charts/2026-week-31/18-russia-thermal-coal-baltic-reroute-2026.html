@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-assets="../../lib/">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Rerouting to the Baltic costs up to 30 dollars a ton against a 107 dollar price.">
+  <title>The Higher Price Is Erased by the Longer Voyage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../lib/tochnyi.css">
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="../../lib/tochnyi-charts.js"></script>
+  <script src="../../lib/tochnyi-visual-plan.js"></script>
+</head>
+<body>
+  <div id="tochnyi-app"></div>
+  <script id="tochnyi-spec" type="application/json">{
+  "version": "2.0",
+  "recipe": "comparison.range",
+  "title": "The Higher Price Is Erased by the Longer Voyage",
+  "subtitle": "Thermal coal firmed to 107 dollars a ton as Turkish buyers chased cargo, but rerouting to the Baltic costs exporters 15 to 30 dollars a ton.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Seaborne thermal coal price assessments and Russian export freight economics",
+    "period": "Week of 17 July 2026"
+  },
+  "data": [
+    {
+      "label": "Coal price, CIF",
+      "value": 107,
+      "displayValue": "107 dollars per ton",
+      "tone": "primary",
+      "annotation": "Up 3.6% in the week as Turkish demand ran into sold-out southern port stocks."
+    },
+    {
+      "label": "Baltic rerouting penalty",
+      "low": 15,
+      "high": 30,
+      "tone": "critical",
+      "annotation": "Longer voyages and slower ship turnover erode the netback per ton."
+    }
+  ],
+  "measure": {
+    "unit": "dollars",
+    "axisTitle": "Dollars per ton",
+    "decimals": 0,
+    "baseline": "explicit",
+    "scale": "linear",
+    "minimum": 0,
+    "maximum": 120
+  },
+  "primaryMetric": {
+    "value": "up to 28%",
+    "label": "of the headline price consumed by rerouting"
+  },
+  "supportingFacts": [
+    {
+      "value": "0.8–1.5 million tons",
+      "label": "Russian coal Turkish buyers may need over the next three months but cannot currently buy.",
+      "tone": "warning"
+    },
+    {
+      "value": "Ship hit on 22 July",
+      "label": "A coal carrier was struck in the Black Sea, pushing buyers towards Baltic cargo and rail through Azerbaijan.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "range"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "russia-thermal-coal-baltic-reroute-2026",
+    "topic": "thermal coal export economics",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Rerouting to the Baltic costs up to 30 dollars a ton against a 107 dollar price."
+  },
+  "references": []
+}</script>
+  <script src="../../lib/tochnyi-runtime.js"></script>
+  <script src="../../lib/tochnyi-diagnostics.js"></script>
+</body>
+</html>

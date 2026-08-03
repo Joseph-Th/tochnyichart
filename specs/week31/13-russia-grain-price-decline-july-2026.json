@@ -1,0 +1,65 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Grain Is Getting Cheaper Because It Cannot Leave",
+  "subtitle": "With the Sea of Azov closed and Black Sea shipping under attack, Russian wheat and barley prices fell against last year both at home and at the export gate.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian domestic and Novorossiysk export grain price series",
+    "period": "24–26 July 2026"
+  },
+  "data": [
+    {
+      "label": "Wheat, domestic market",
+      "value": -8.8,
+      "tone": "warning",
+      "annotation": "Down 8.6% to 8.9% year over year by 26 July."
+    },
+    {
+      "label": "Wheat, export from Novorossiysk",
+      "value": -9.6,
+      "tone": "critical",
+      "annotation": "15,100 rubles per ton on 24 July."
+    },
+    {
+      "label": "Barley, export",
+      "value": -12.2,
+      "tone": "critical",
+      "annotation": "13,000 rubles per ton, the sharpest fall of the three."
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "axisTitle": "Year-over-year price change",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    {
+      "value": "+1,400 rubles per ton",
+      "label": "Added cost of moving grain overland to Black Sea ports, with such transport 27.4% dearer than last year.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "13-russia-grain-price-decline-july-2026",
+    "topic": "grain prices and export logistics",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Barley export prices fell 12.2% year over year as export routes closed."
+  }
+}

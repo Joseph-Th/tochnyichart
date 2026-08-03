@@ -1,0 +1,68 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "Every Attacked Tanker Widens the Urals Discount",
+  "subtitle": "Fewer tankers called at Novorossiysk after the strikes, and the discount on Black Sea Urals widened by 1.1 dollars to 26.6 dollars a barrel.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Platts assessments of Black Sea Urals differentials and Novorossiysk freight",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Discount before the strikes",
+      "value": 25.5,
+      "displayValue": "25.5",
+      "tone": "warning"
+    },
+    {
+      "label": "Discount after the strikes",
+      "value": 26.6,
+      "displayValue": "26.6",
+      "tone": "critical",
+      "annotation": "A wider discount is revenue surrendered on every barrel loaded."
+    }
+  ],
+  "measure": {
+    "unit": "US dollars per barrel",
+    "axisTitle": "Discount, dollars per barrel",
+    "decimals": 1,
+    "baseline": "explicit",
+    "scale": "linear",
+    "minimum": 0,
+    "maximum": 45
+  },
+  "emphasis": {
+    "direction": "neutral",
+    "displayValue": "+1.1",
+    "label": "per barrel",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "+14.6%",
+      "label": "Increase in freight rates from Novorossiysk to India during July, as recorded by Platts.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "outside"
+  },
+  "metadata": {
+    "slug": "19-russia-urals-discount-black-sea-2026",
+    "topic": "crude export differentials",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "The Black Sea Urals discount widened to 26.6 dollars a barrel as freight rose 14.6%."
+  }
+}

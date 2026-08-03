@@ -1,0 +1,66 @@
+{
+  "version": "2.0",
+  "recipe": "headline.metric",
+  "title": "Four Million People Sit Behind the Bailout Request",
+  "subtitle": "Russian e-commerce employs around four million people and accounts for a combined 8% to 10% of the economy. That is the leverage its owners now hold over the budget.",
+  "date": "2026-08-02",
+  "source": {
+    "name": "Russian e-commerce sector employment and output estimates",
+    "period": "2026"
+  },
+  "data": [
+    {
+      "label": "People employed in Russian e-commerce",
+      "value": 4000000,
+      "displayValue": "4 million",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "people",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "primaryMetric": {
+    "value": "4 million",
+    "label": "Estimated jobs across Russian e-commerce"
+  },
+  "supportingFacts": [
+    {
+      "value": "8–10% of the economy",
+      "label": "The combined share attributed to the sector, and a share that has been growing rather than shrinking.",
+      "tone": "warning"
+    },
+    {
+      "value": "Hostage leverage",
+      "label": "The larger the employment base, the harder it becomes for the state to refuse compensation to the platform owners.",
+      "tone": "critical"
+    },
+    {
+      "value": "Trillions at stake",
+      "label": "If compensation is granted at the scale requested, it becomes budget money that does not reach the army.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "short",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "04-russia-ecommerce-employment-scale-2026",
+    "topic": "sector employment leverage",
+    "country": "Russia",
+    "dataPeriod": "2026",
+    "keyFinding": "Around four million jobs and 8-10% of the economy underwrite the sector's bailout demands."
+  }
+}
