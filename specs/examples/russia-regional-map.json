@@ -57,6 +57,7 @@
     "callouts": "auto",
     "summaryPosition": "auto",
     "viewport": "data",
+    "viewportAlignment": "auto",
     "anchorStyle": "none",
     "leaderRouting": "auto",
     "excludeRegions": ["RU-KGD"]

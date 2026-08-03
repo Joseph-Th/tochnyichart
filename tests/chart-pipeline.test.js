@@ -191,6 +191,7 @@ test('regional map planning focuses on active data and omits inactive detached r
   const featureById = {
     'RU-BRY': rectangle(31, 51, 35, 54),
     'RU-ZAB': rectangle(107, 49, 122, 58),
+    'RU-CHU': rectangle(170, 61, 180, 69),
     'RU-KGD': rectangle(19, 54, 23, 55)
   };
   const plan = TochnyiMaps.resolveMapPlan(
@@ -203,6 +204,8 @@ test('regional map planning focuses on active data and omits inactive detached r
   assert.ok(plan.excludedRegionIds.includes('RU-KGD'));
   assert.ok(plan.geoBounds.left < 31);
   assert.ok(plan.geoBounds.right > 122);
+  assert.equal(plan.viewportAlignment, 'balanced');
+  assert.ok(plan.centerShiftLongitude > 0);
 
   const kaliningradPlan = TochnyiMaps.resolveMapPlan(
     { viewport: 'auto', excludeRegions: [] },
@@ -211,6 +214,24 @@ test('regional map planning focuses on active data and omits inactive detached r
     featureById
   );
   assert.equal(kaliningradPlan.excludedRegionIds.includes('RU-KGD'), false);
+});
+
+test('regional map viewport centering balances data and surrounding geography', () => {
+  const viewport = {
+    left: 20, right: 120, bottom: 40, top: 70,
+    longitudeSpan: 100, latitudeSpan: 30
+  };
+  const data = { left: 30, right: 110, longitudeSpan: 80 };
+  const context = { left: 20, right: 180, longitudeSpan: 160 };
+  const balanced = TochnyiMaps.balanceViewportCenter(viewport, data, context, 'auto');
+  assert.ok(balanced.centerShiftLongitude > 0);
+  assert.equal(balanced.right - balanced.left, viewport.right - viewport.left);
+
+  const exact = TochnyiMaps.balanceViewportCenter(viewport, data, context, 'data');
+  assert.deepEqual(exact, viewport);
+
+  const contextCentered = TochnyiMaps.balanceViewportCenter(viewport, data, context, 'context');
+  assert.equal((contextCentered.left + contextCentered.right) / 2, 100);
 });
 
 test('regional map specs validate known regions and load map tooling', () => {
@@ -251,6 +272,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidLeaderRouting);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
+
+  const invalidViewportAlignment = loadExample('russia-regional-map.json');
+  invalidViewportAlignment.map.viewportAlignment = 'left';
+  result = validateSpec(invalidViewportAlignment);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.viewportAlignment is not supported')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {
