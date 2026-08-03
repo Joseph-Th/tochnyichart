@@ -1,6 +1,6 @@
 {
   "name": "tochnyi-charts",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "private": true,
   "description": "Declarative, validated chart rendering for Tochnyi visuals",
   "type": "commonjs",

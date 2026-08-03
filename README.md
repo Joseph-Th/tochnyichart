@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.13.0
+# Tochnyi Charts v2.14.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -214,15 +214,22 @@ columns, avoiding both arbitrary diagonals and double-step routes.
 Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
 collision-resistant layout.
 
-Data-focused map views also use visual centering. `map.viewportAlignment =
-"auto"` keeps the active-region zoom, rasterizes the visible rendered geography,
-and equalizes whitespace on all four sides of the map canvas. The runtime applies
-a bounded screen-space offset to the rendered map layer, so a wide country is not
-left pinned to the top of a tall chart after horizontal fitting. Leader anchors
-inherit the same offset. This uses the actual projected footprint rather than an
-approximate geographic-center bias.
+Regional maps use a deterministic static Mercator projection fitted directly to
+the included GeoJSON features. Longitudes are unwrapped around the selected map
+center before fitting, so countries crossing the antimeridian remain continuous.
+The fitted footprint is centered on both axes and kept inside explicit padding;
+leader anchors use the same projection. `map.viewportAlignment = "auto"` uses
+this visual fit, while `"data"` and `"context"` remain available as semantic
+viewport choices.
 Use `"data"` for mathematically exact data-bound centering or `"context"` to
 center fully on the region-set footprint.
+
+Context fitting is separate from centering. `map.contextFit = "auto"` preserves
+the complete national silhouette for broad regional breakdowns and uses a local
+focus for narrow stories. Local focus excludes whole out-of-frame regions rather
+than displaying polygons cut in half. `"all"` forces the complete region set;
+`"focus"` forces the local view. Every included region is projected in full, so
+the renderer never solves layout by cutting a polygon at the canvas edge.
 
 ## Project structure
 

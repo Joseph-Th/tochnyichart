@@ -25,6 +25,7 @@ const MAP_SUMMARY_DISPLAYS = new Set(['auto', 'show', 'hide']);
 const MAP_CALLOUT_DISTRIBUTIONS = new Set(['auto', 'geographic', 'balanced']);
 const MAP_VIEWPORTS = new Set(['auto', 'all', 'data']);
 const MAP_VIEWPORT_ALIGNMENTS = new Set(['auto', 'data', 'context']);
+const MAP_CONTEXT_FITS = new Set(['auto', 'all', 'focus']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
 const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes']);
 
@@ -47,7 +48,7 @@ const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'anim
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
 const MAP_KEYS = new Set([
   'regionSet', 'callouts', 'calloutDistribution', 'summaryPosition', 'summaryDisplay',
-  'viewport', 'viewportAlignment', 'excludeRegions', 'anchorStyle', 'leaderRouting'
+  'viewport', 'viewportAlignment', 'contextFit', 'excludeRegions', 'anchorStyle', 'leaderRouting'
 ]);
 
 function isObject(value) {
@@ -159,6 +160,7 @@ function normalizeSpec(input) {
     spec.map.summaryDisplay = spec.map.summaryDisplay || 'auto';
     spec.map.viewport = spec.map.viewport || 'auto';
     spec.map.viewportAlignment = spec.map.viewportAlignment || 'auto';
+    spec.map.contextFit = spec.map.contextFit || 'auto';
     spec.map.anchorStyle = spec.map.anchorStyle || 'auto';
     spec.map.leaderRouting = spec.map.leaderRouting || 'auto';
     spec.map.excludeRegions = spec.map.excludeRegions === undefined
@@ -534,6 +536,7 @@ function validateMap(spec, errors) {
   if (!MAP_SUMMARY_DISPLAYS.has(spec.map.summaryDisplay)) errors.push('map.summaryDisplay is not supported.');
   if (!MAP_VIEWPORTS.has(spec.map.viewport)) errors.push('map.viewport is not supported.');
   if (!MAP_VIEWPORT_ALIGNMENTS.has(spec.map.viewportAlignment)) errors.push('map.viewportAlignment is not supported.');
+  if (!MAP_CONTEXT_FITS.has(spec.map.contextFit)) errors.push('map.contextFit is not supported.');
   if (!MAP_ANCHOR_STYLES.has(spec.map.anchorStyle)) errors.push('map.anchorStyle is not supported.');
   if (!MAP_LEADER_ROUTING.has(spec.map.leaderRouting)) errors.push('map.leaderRouting is not supported.');
   if (!Array.isArray(spec.map.excludeRegions) || spec.map.excludeRegions.length > 12) {

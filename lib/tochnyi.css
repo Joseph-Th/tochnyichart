@@ -888,6 +888,20 @@ body {
     z-index: 1;
 }
 
+.tochnyi-map-geometry {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.tochnyi-map-region {
+    vector-effect: non-scaling-stroke;
+    transition: fill-opacity 120ms ease;
+}
+
+.tochnyi-map-region:hover { fill-opacity: 0.96; }
+
 .tochnyi-map-stage.has-callouts .tochnyi-map-canvas {
     right: 238px;
     left: 238px;

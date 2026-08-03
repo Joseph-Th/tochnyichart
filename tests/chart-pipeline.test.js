@@ -234,7 +234,7 @@ test('regional map planning focuses on active data and omits inactive detached r
     'RU-KGD': rectangle(19, 54, 23, 55)
   };
   const plan = TochnyiMaps.resolveMapPlan(
-    { viewport: 'auto', excludeRegions: [] },
+    { viewport: 'auto', contextFit: 'focus', excludeRegions: [] },
     regionSet,
     [{ regionId: 'RU-BRY' }, { regionId: 'RU-ZAB' }],
     featureById
@@ -244,9 +244,11 @@ test('regional map planning focuses on active data and omits inactive detached r
   assert.ok(plan.geoBounds.left < 31);
   assert.ok(plan.geoBounds.right > 122);
   assert.equal(plan.viewportAlignment, 'auto');
+  assert.equal(plan.contextFit, 'focus');
   assert.equal(plan.visualCentering, true);
   assert.equal(plan.centerShiftLongitude, 0);
   assert.equal(plan.centerShiftLatitude, 0);
+  assert.ok(plan.excludedRegionIds.includes('RU-CHU'));
 
   const kaliningradPlan = TochnyiMaps.resolveMapPlan(
     { viewport: 'auto', excludeRegions: [] },
@@ -312,6 +314,65 @@ test('regional map visual centering offsets the rendered footprint on both axes'
   assert.equal(offset.centered, false);
 });
 
+test('regional map centering never shifts a complete silhouette outside the viewport', () => {
+  const offset = TochnyiMaps.resolveVisualOffset(
+    { left: 40, right: 340, top: 30, bottom: 170, centerX: 190, centerY: 100 },
+    { width: 400, height: 200 },
+    {
+      tolerance: 1,
+      hardBounds: { left: 8, right: 396, top: 10, bottom: 190 },
+      padding: 4
+    }
+  );
+  assert.equal(offset.rawX, 10);
+  assert.equal(offset.x, 0);
+  assert.equal(offset.constrainedX, true);
+  assert.equal(offset.hardOverflowX, false);
+  assert.equal(offset.y, 0);
+});
+
+test('regional map containment expands the geographic viewport before allowing clipping', () => {
+  const adjustment = TochnyiMaps.expandGeoBoundsForProjectedOverflow(
+    { left: 20, right: 120, bottom: 40, top: 70, longitudeSpan: 100, latitudeSpan: 30 },
+    { left: -20, right: 440, top: 10, bottom: 190 },
+    { width: 400, height: 200 },
+    { padding: 8, safetyRatio: 1.02 }
+  );
+  assert.equal(adjustment.requiresRefit, true);
+  assert.ok(adjustment.scale > 1.18);
+  assert.ok(adjustment.geoBounds.longitudeSpan > 118);
+});
+
+test('regional map context fitting chooses complete national context for broad breakdowns', () => {
+  const regionSet = TochnyiMaps.getRegionSet('russia');
+  const dataBounds = { longitudeSpan: 95, latitudeSpan: 20 };
+  const contextBounds = { longitudeSpan: 160, latitudeSpan: 42 };
+  assert.equal(TochnyiMaps.resolveContextFit({}, dataBounds, contextBounds, 10, regionSet), 'all');
+  assert.equal(TochnyiMaps.resolveContextFit({}, { longitudeSpan: 20, latitudeSpan: 8 }, contextBounds, 2, regionSet), 'focus');
+  assert.equal(TochnyiMaps.resolveContextFit({ contextFit: 'all' }, dataBounds, contextBounds, 2, regionSet), 'all');
+});
+
+test('regional map static projection keeps antimeridian regions complete and in frame', () => {
+  const rectangle = (left, bottom, right, top) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]]]
+    }
+  });
+  const west = rectangle(20, 45, 40, 60);
+  const east = rectangle(-175, 55, -165, 68);
+  const projection = TochnyiMaps.buildStaticProjection([west, east], { width: 500, height: 300 }, { padding: 10 });
+  assert.ok(projection);
+  const westPoint = projection.project({ longitude: 30, latitude: 52 });
+  const eastPoint = projection.project({ longitude: -170, latitude: 61 });
+  assert.ok(westPoint.x >= 10 && westPoint.x <= 490);
+  assert.ok(eastPoint.x >= 10 && eastPoint.x <= 490);
+  assert.ok(projection.renderedBounds.left >= 9.9);
+  assert.ok(projection.renderedBounds.right <= 490.1);
+  assert.match(projection.path(east), /^M /);
+});
+
 test('regional map visual centering ignores negligible edge fragments', () => {
   const weights = new Array(100).fill(0);
   weights[0] = 1;
@@ -342,7 +403,7 @@ test('regional map specs validate known regions and load map tooling', () => {
   let result = validateSpec(spec);
   assert.equal(result.valid, true, result.errors.join('; '));
   const html = renderHtml(result.normalized);
-  assert.match(html, /lib\/5\/map[.]js/);
+  assert.doesNotMatch(html, /lib\/5\/map[.]js/);
   assert.match(html, /geodata\/russiaLow[.]js/);
   assert.match(html, /tochnyi-maps[.]js/);
   assert.match(html, /tochnyi-map-runtime[.]js/);
@@ -381,6 +442,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidViewportAlignment);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.viewportAlignment is not supported')));
+
+  const invalidContextFit = loadExample('russia-regional-map.json');
+  invalidContextFit.map.contextFit = 'crop-randomly';
+  result = validateSpec(invalidContextFit);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.contextFit is not supported')));
 
   const invalidSummaryDisplay = loadExample('russia-regional-map.json');
   invalidSummaryDisplay.map.summaryDisplay = 'sometimes';

@@ -50,7 +50,7 @@ function renderHtml(spec, options = {}) {
   const payload = jsonForHtml(spec);
   const regionSet = spec.recipe === 'map.regional' ? TochnyiMaps.getRegionSet(spec.map.regionSet) : null;
   const mapScripts = regionSet
-    ? `\n  <script src="https://cdn.amcharts.com/lib/5/map.js"></script>\n  <script src="${htmlEscape(regionSet.geodataScript)}"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-maps.js"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-map-runtime.js"></script>`
+    ? `\n  <script src="${htmlEscape(regionSet.geodataScript)}"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-maps.js"></script>\n  <script src="${htmlEscape(assetPrefix)}tochnyi-map-runtime.js"></script>`
     : '';
 
   return `<!DOCTYPE html>
