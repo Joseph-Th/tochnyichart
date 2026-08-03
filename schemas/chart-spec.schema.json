@@ -96,7 +96,7 @@
         "contextFit": { "type": "string", "enum": ["auto", "all", "focus"] },
         "landmass": { "type": "string", "enum": ["auto", "all", "continental"] },
         "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
-        "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes"] },
+        "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes", "ports", "indexed"] },
         "excludeRegions": {
           "type": "array",
           "maxItems": 12,

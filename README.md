@@ -186,8 +186,17 @@ See `specs/examples/` for a validated example of every recipe.
 Regional maps use stable region identifiers rather than coordinates. For Russia,
 use `map.regionSet = "russia"` and assign `data[].regionId`, such as `RU-OMS` or
 `RU-VGG`. One callout can cover several regions with `data[].regionIds`. The
-renderer calculates geographic anchors, balances cards between the two sides,
-packs them to avoid collisions, and draws leader lines. `primaryMetric` and
+renderer calculates geographic anchors, assigns cards between the two sides,
+packs them to avoid collisions, and draws leader lines. Dense port-routed maps
+evaluate every balanced assignment of automatic callouts. Assignments are scored
+by intersections between sampled smooth leader curves first, then total route length, vertical travel,
+attachment sharpness, and the number of regions moved away from their nearest
+side. Attachment sharpness measures vertical displacement against the horizontal
+curve width available before the card. This prevents a zero-crossing assignment
+from winning when it would force an abrupt near-right-angle turn at the box.
+Cards on each side remain in geographic vertical order, preventing same-column
+inversions. Explicit
+`data[].calloutSide` values remain fixed. `primaryMetric` and
 `supportingFacts` become an optional map summary panel. `map.summaryDisplay =
 "auto"` hides that panel when a dense regional map only repeats the number of
 regions and status counts already visible in the cards and legend. Monetary,
@@ -211,8 +220,43 @@ parallel segments, adds a light halo, and colors each line to match its region.
 All leader geometry is orthogonal and uses a single vertical adjustment between
 the region and its card. Dense layouts stagger that one bend across separate
 columns, avoiding both arbitrary diagonals and double-step routes.
-Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
-collision-resistant layout.
+Use `map.leaderRouting = "direct"` for sparse maps, `"lanes"` for orthogonal
+leaders, or `"ports"` for dense regional breakdowns. Port routing uses the
+crossing-optimized side assignment, assigns each line a dedicated map-side
+attachment in the selected column order, and uses a
+bounded tangent-continuous spline followed by a clearly visible horizontal card
+connection. Dense layouts reserve at least 36 pixels for that final horizontal
+run on both sides, so left-column routes do not have to finish their bend inside
+the narrow card-to-map gutter. The terminal Bézier handle also grows with
+vertical displacement, giving steep connectors a longer horizontal tangent and
+a gradual transition into that straight run instead of a compressed corner.
+Card attachments use the nearest safe vertical
+point on the card edge, rather than one fixed offset, so leaders take the most
+direct readable trajectory. When the region itself is already close to the card,
+the straight attachment is reduced proportionally to give the curve more room.
+When that close anchor is also vertically aligned with its callout, the router
+skips the spline entirely and uses one direct horizontal segment rather than
+introducing a short reversal or kink. Before
+drawing, the router samples each curve against the actual rendered SVG fill of
+every other highlighted region, using projected bounds only as a fast prefilter.
+A colliding route first tries clear corridors above and below the obstruction.
+When those are insufficient, bounded A* pathfinding searches the map stage and
+rounds the resulting collision-free path. Each detour tests simplified waypoint
+sets, including versions that omit optional source-exit points, and keeps the
+shortest collision-free tangent-continuous spline. A source-exit point is retained
+only when removing it would cause a collision, preventing unnecessary extra bends
+near the highlighted region. The router
+uses a strict two-pass vertical-envelope rule between the region anchor and its
+card. It first searches only inside that endpoint envelope and accepts an
+outside detour only when no collision-free in-envelope route exists. This
+prevents unforced U-shaped reversals while preserving an escape route for
+genuinely blocked regions. The same rule applies to both spline candidates and
+grid pathfinding. Detours
+preserve attachment order and never share the old horizontal corridor trunks. A
+direct overlap is retained only when
+no route exists inside the available stage. `"auto"` selects port routing for
+maps with eight or more callouts. `"indexed"` remains available only as an
+explicit alternative.
 
 Regional maps use a deterministic static Mercator projection fitted directly to
 the included GeoJSON features. Longitudes are unwrapped around the selected map

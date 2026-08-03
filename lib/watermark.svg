@@ -8,7 +8,6 @@
 
       .cls-2 {
         fill: #010202;
-        opacity: .05;
       }
 
       .cls-3 {
@@ -16,7 +15,6 @@
       }
 
       .cls-4 {
-        opacity: .08;
       }
     </style>
   </defs>

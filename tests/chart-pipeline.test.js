@@ -6,11 +6,11 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { validateSpec } = require('../renderer/validate');
-const { renderHtml, renderSpecFile, isoWeek } = require('../renderer/render');
+const { renderHtml, renderSpecFile, assetFingerprint, isoWeek } = require('../renderer/render');
 const { reviewHtml, reviewFile } = require('../renderer/review');
 const { recipeIds } = require('../renderer/catalog');
 const { extractLayoutDiagnostics } = require('../renderer/capture');
-const { diagnoseBoxes, diagnoseMarkStyles, normalizeRect } = require('../lib/tochnyi-diagnostics');
+const { diagnoseBoxes, diagnoseMarkStyles, diagnoseBranding, diagnoseWatermark, normalizeRect } = require('../lib/tochnyi-diagnostics');
 const Tochnyi = require('../lib/tochnyi-charts');
 const VisualPlan = require('../lib/tochnyi-visual-plan');
 const TochnyiMaps = require('../lib/tochnyi-maps');
@@ -45,6 +45,33 @@ test('generated shells contain no chart implementation or inline styles', () => 
     assert.equal(html.includes('tochnyi-visual-plan.js'), true);
     assert.ok(Buffer.byteLength(html) < 12000, `${file} shell is unexpectedly large`);
   }
+});
+
+test('generated chart shells version local assets to invalidate browser caches', () => {
+  const validated = validateSpec(loadExample('russia-regional-map.json'));
+  const html = renderHtml(validated.normalized, {
+    assetPrefix: '../../lib/',
+    assetVersion: 'routing-fix-123'
+  });
+  assert.match(html, /data-assets-version="routing-fix-123"/);
+  [
+    'tochnyi.css',
+    'tochnyi-maps.js',
+    'tochnyi-map-runtime.js',
+    'tochnyi-charts.js',
+    'tochnyi-visual-plan.js',
+    'tochnyi-runtime.js',
+    'tochnyi-diagnostics.js'
+  ].forEach((filename) => {
+    assert.ok(
+      html.includes(`../../lib/${filename}?v=routing-fix-123`),
+      `${filename} must carry the shared asset version`
+    );
+  });
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /data-assets-version/);
+  assert.match(runtime, /assetUrl\('tochnyi-logo\.png'\)/);
+  assert.match(runtime, /assetUrl\('watermark\.svg'\)/);
 });
 
 test('visual planning adapts ranking geometry and editorial hierarchy', () => {
@@ -178,15 +205,372 @@ test('regional map leader routing separates clustered callouts into traceable la
   assert.equal(planned.routing, 'lanes');
   assert.deepEqual(planned.map((entry) => entry.laneIndex).sort((a, b) => a - b), [0, 1, 2, 3, 4]);
   assert.ok(planned.every((entry) => entry.sideCount === entries.length));
+  const routeYs = planned.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
+  for (let index = 1; index < routeYs.length; index += 1) {
+    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9, 'lane corridors must retain visible vertical separation');
+  }
+  const pointMean = entries.reduce((sum, entry) => sum + entry.point.y, 0) / entries.length;
+  const routeMean = routeYs.reduce((sum, value) => sum + value, 0) / routeYs.length;
+  assert.ok(Math.abs(pointMean - routeMean) < 8, 'lane expansion should remain centered unless constrained by route bounds');
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries.slice(0, 2)), 'direct');
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
+});
+
+test('dense regional maps switch to ordered edge ports', () => {
+  const entries = new Array(10).fill(null).map((_, index) => ({
+    index,
+    side: index < 5 ? 'left' : 'right',
+    top: (index % 5) * 90,
+    endY: 100 + (index % 5) * 95,
+    point: { x: 430 + index * 22, y: 280 + (index % 5) * 18 }
+  }));
+  const planned = TochnyiMaps.planLeaderRoutes(entries, {
+    routing: 'auto', top: 80, bottom: 540, gap: 22
+  });
+  assert.equal(planned.routing, 'ports');
+  ['left', 'right'].forEach((side) => {
+    const sideEntries = planned.filter((entry) => entry.side === side)
+      .sort((first, second) => first.point.y - second.point.y);
+    for (let index = 1; index < sideEntries.length; index += 1) {
+      assert.ok(sideEntries[index].portY > sideEntries[index - 1].portY);
+      assert.ok(sideEntries[index].portY - sideEntries[index - 1].portY >= 21.9);
+    }
+  });
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'ports' }, entries), 'ports');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'indexed' }, entries), 'indexed');
+});
+
+test('dense map callout placement minimizes crossings across balanced side assignments', () => {
+  const points = [
+    [409, 419], [296, 461], [344, 432], [308, 476], [463, 428],
+    [434, 425], [254, 441], [575, 441], [359, 430], [278, 487]
+  ];
+  const heights = [90, 90, 106, 90, 106, 106, 82, 82, 82, 90];
+  const entries = points.map((point, index) => ({
+    index,
+    item: {},
+    point: { x: point[0], y: point[1] },
+    height: heights[index],
+    side: 'left'
+  }));
+  const previousLeft = [5, 4, 8, 6, 9].map((index) => entries[index]);
+  const previousRight = [0, 2, 7, 1, 3].map((index) => entries[index]);
+  previousLeft.forEach((entry) => { entry.side = 'left'; entry.initialSide = 'left'; });
+  previousRight.forEach((entry) => { entry.side = 'right'; entry.initialSide = 'right'; });
+  const geometry = {
+    width: 1190,
+    cardWidth: 210,
+    topLeft: 10,
+    topRight: 10,
+    bottom: 620,
+    gap: 7,
+    attachmentInset: 14,
+    desiredLeft: 5
+  };
+  const baseline = TochnyiMaps.scoreCalloutPlacement(previousLeft, previousRight, geometry);
+  assert.equal(baseline.crossings, 6);
+
+  const optimizedEntries = entries.map((entry) => ({
+    ...entry,
+    item: {},
+    side: entry.point.x < geometry.width / 2 ? 'left' : 'right'
+  }));
+  const optimized = TochnyiMaps.optimizeCalloutPlacement(optimizedEntries, geometry);
+  assert.equal(optimized.left.length, 5);
+  assert.equal(optimized.right.length, 5);
+  assert.equal(optimized.predictedCrossings, 0);
+  assert.equal(optimized.assignmentEvaluations, 252);
+  assert.ok(Number.isFinite(optimized.maximumAttachmentSlope));
+  assert.ok(optimized.maximumAttachmentSlope < 2.1);
+  assert.ok(optimized.attachmentSharpness < 1.3);
+
+  const fixed = optimizedEntries.map((entry) => ({ ...entry, item: {} }));
+  fixed[2].item.calloutSide = 'left';
+  fixed[8].item.calloutSide = 'right';
+  const constrained = TochnyiMaps.optimizeCalloutPlacement(fixed, geometry);
+  assert.ok(constrained.left.includes(fixed[2]));
+  assert.ok(constrained.right.includes(fixed[8]));
+});
+
+test('edge-port leaders use a smooth region curve and readable horizontal card connection', () => {
+  const leftPath = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10
+  });
+  assert.match(leftPath.path, /^M 520 310 C /);
+  assert.match(leftPath.path, / 252 180 H 220$/);
+  assert.equal(leftPath.portX, 252);
+  assert.equal(leftPath.portY, 180);
+  assert.equal(leftPath.cardStubLength, 32);
+  assert.ok(leftPath.firstControlX < 520);
+  assert.ok(leftPath.secondControlX > 252);
+
+  const rightPath = TochnyiMaps.buildPortLeaderPath({
+    side: 'right',
+    point: { x: 610, y: 330 },
+    portY: 450
+  }, {
+    mapEdgeX: 960,
+    cardX: 980,
+    endY: 450,
+    portOffset: 10
+  });
+  assert.match(rightPath.path, /^M 610 330 C /);
+  assert.match(rightPath.path, / 948 450 H 980$/);
+  assert.equal(rightPath.portX, 948);
+  assert.equal(rightPath.cardStubLength, 32);
+  assert.ok(rightPath.firstControlX > 610);
+  assert.ok(rightPath.secondControlX < 948);
+});
+
+test('steep box connectors reserve a long horizontal terminal tangent', () => {
+  const steep = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 359, y: 430 },
+    portY: 110
+  }, {
+    mapEdgeX: 246,
+    cardX: 220,
+    endY: 110,
+    minimumCardStub: 36,
+    obstacles: []
+  });
+  const values = steep.path.split(/\s+/);
+  const control2X = Number(values[6]);
+  const control2Y = Number(values[7]);
+  const endX = Number(values[8]);
+  const endY = Number(values[9]);
+  assert.ok(Math.abs(control2X - endX) >= 70,
+    'large vertical displacement must receive enough horizontal runway to avoid a sharp box turn');
+  assert.equal(control2Y, endY, 'the curve must remain tangent to the horizontal box connector');
+  assert.equal(steep.fallback, false);
+});
+
+test('near-card regional anchors use a direct horizontal connection without a spline kink', () => {
+  const nearCard = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 255, y: 445 },
+    portY: 454
+  }, {
+    mapEdgeX: 246,
+    cardX: 220,
+    cardTop: 410,
+    cardBottom: 492,
+    endY: 454,
+    minimumCardStub: 36,
+    obstacles: [],
+    samplesPerSegment: 36
+  });
+  assert.equal(nearCard.avoidance, 'near-card');
+  assert.equal(nearCard.path, 'M 255 445 H 220');
+  assert.equal(nearCard.portX, 255);
+  assert.equal(nearCard.portY, 445);
+  assert.equal(nearCard.cardStubLength, 35);
+  assert.equal(nearCard.collisionCount, 0);
+  assert.doesNotMatch(nearCard.path, /\sC\s/);
+});
+
+test('close card routes spend the available gutter on a monotonic smooth curve', () => {
+  const closeRoute = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 279, y: 489 },
+    portY: 546
+  }, {
+    mapEdgeX: 246,
+    cardX: 220,
+    cardTop: 530,
+    cardBottom: 620,
+    endY: 546,
+    minimumCardStub: 36,
+    obstacles: [],
+    samplesPerSegment: 36
+  });
+  assert.equal(closeRoute.avoidance, 'direct');
+  assert.equal(closeRoute.adaptiveCardStub, true);
+  assert.ok(closeRoute.cardStubLength >= 14 && closeRoute.cardStubLength < 24);
+  const values = closeRoute.path.split(/\s+/);
+  const startX = Number(values[1]);
+  const control1X = Number(values[4]);
+  const control2X = Number(values[6]);
+  const endX = Number(values[8]);
+  const control2Y = Number(values[7]);
+  const endY = Number(values[9]);
+  assert.ok(startX > control1X && control1X > control2X && control2X > endX,
+    'close left-side curves must progress monotonically toward the card');
+  assert.equal(control2Y, endY, 'the curve must arrive tangent to the horizontal card attachment');
+  assert.match(closeRoute.path, / H 220$/);
+});
+
+test('edge-port leaders curve around highlighted-region obstacles when a corridor exists', () => {
+  const routed = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10,
+    obstacles: [{ left: 330, right: 430, top: 220, bottom: 300 }],
+    obstacleClearance: 8,
+    routeTop: 80,
+    routeBottom: 500,
+    samplesPerSegment: 48
+  });
+  assert.equal(routed.directCollisionCount, 1);
+  assert.equal(routed.collisionCount, 0);
+  assert.equal(routed.fallback, false);
+  assert.equal(routed.avoidance, 'above');
+  assert.equal(routed.routingEnvelope, 'strict');
+  assert.ok(routed.verticalExcursion <= 0.01,
+    'when the destination is above and an upper corridor is clear, the route must not form a lower U-shaped detour');
+  const routedCurveCount = (routed.path.match(/\sC\s/g) || []).length;
+  assert.ok(routedCurveCount >= 2 && routedCurveCount <= 3,
+    'obstacle detours should use no more than three smooth cubic sections');
+  assert.equal((routed.path.match(/\sH\s/g) || []).length, 1);
+  assert.doesNotMatch(routed.path, /\s[LV]\s/);
+  assert.ok(routed.cardStubLength >= 32);
+  const cubicSegments = routed.path.split(' C ').slice(1).map((segment) => {
+    const values = segment.split(/\s+/).slice(0, 6).map(Number);
+    return {
+      control1: { x: values[0], y: values[1] },
+      control2: { x: values[2], y: values[3] },
+      end: { x: values[4], y: values[5] }
+    };
+  });
+  assert.ok(cubicSegments.every((segment) => !(
+    Math.abs(segment.control1.y - segment.control2.y) < 0.01 &&
+    Math.abs(segment.control2.y - segment.end.y) < 0.01
+  )), 'detour cubics must not collapse into a flat shared trunk');
+  for (let index = 0; index < cubicSegments.length - 1; index += 1) {
+    const current = cubicSegments[index];
+    const next = cubicSegments[index + 1];
+    const incoming = {
+      x: current.end.x - current.control2.x,
+      y: current.end.y - current.control2.y
+    };
+    const outgoing = {
+      x: next.control1.x - current.end.x,
+      y: next.control1.y - current.end.y
+    };
+    const cross = incoming.x * outgoing.y - incoming.y * outgoing.x;
+    const dot = incoming.x * outgoing.x + incoming.y * outgoing.y;
+    assert.ok(Math.abs(cross) < 0.001, 'adjacent detour cubics must share one tangent');
+    assert.ok(dot > 0, 'adjacent detour cubics must continue in the same direction');
+  }
+  const finalSegment = cubicSegments[cubicSegments.length - 1];
+  assert.ok(Math.abs(finalSegment.control2.y - finalSegment.end.y) < 0.001,
+    'the final curve must arrive horizontally before the card stub');
+
+  const optionalSourceExit = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10,
+    obstacles: [{ left: 330, right: 430, top: 220, bottom: 300 }],
+    sourceObstacles: [{ left: 500, right: 540, top: 290, bottom: 330 }],
+    obstacleClearance: 8,
+    routeTop: 80,
+    routeBottom: 500,
+    samplesPerSegment: 48
+  });
+  assert.equal(optionalSourceExit.directCollisionCount, 1);
+  assert.equal(optionalSourceExit.collisionCount, 0);
+  assert.equal(optionalSourceExit.sourceExitUsed, false,
+    'the router must discard a source-exit waypoint when a simpler clear detour exists');
+  assert.ok((optionalSourceExit.path.match(/\sC\s/g) || []).length <= 3,
+    'optional source geometry must not add an extra curve section');
+
+  const envelopeBlocked = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10,
+    obstacles: [{ left: 330, right: 430, top: 170, bottom: 320 }],
+    obstacleClearance: 8,
+    routeTop: 80,
+    routeBottom: 500,
+    samplesPerSegment: 48
+  });
+  assert.equal(envelopeBlocked.routingEnvelope, 'expanded');
+  assert.ok(envelopeBlocked.verticalExcursion > 0,
+    'the router may leave the endpoint envelope only when the envelope itself is blocked');
+  assert.equal(envelopeBlocked.collisionCount, 0);
+  assert.equal(envelopeBlocked.fallback, false);
+
+  const blocked = TochnyiMaps.buildPortLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    portY: 180
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 180,
+    portOffset: 10,
+    obstacles: [{ left: 250, right: 510, top: 150, bottom: 350 }],
+    obstacleClearance: 8,
+    routeTop: 150,
+    routeBottom: 350,
+    samplesPerSegment: 48
+  });
+  assert.equal(blocked.avoidance, 'fallback');
+  assert.equal(blocked.fallback, true);
+  assert.ok(blocked.collisionCount > 0);
+});
+
+test('indexed regional markers deconflict nearby anchors with short local links', () => {
+  const entries = new Array(8).fill(null).map((_, index) => ({
+    index,
+    markerIndex: index + 1,
+    point: { x: 500 + (index % 2) * 4, y: 320 + Math.floor(index / 2) * 3 }
+  }));
+  const markers = TochnyiMaps.planIndexedMarkers(entries, {
+    left: 350,
+    right: 650,
+    top: 190,
+    bottom: 450,
+    markerRadius: 12,
+    minimumDistance: 30,
+    candidateStep: 26,
+    candidateRings: 4
+  });
+  assert.equal(markers.length, entries.length);
+  markers.forEach((marker) => {
+    assert.ok(marker.markerX >= 362 && marker.markerX <= 638);
+    assert.ok(marker.markerY >= 202 && marker.markerY <= 438);
+    assert.ok(marker.markerDisplacement <= 105);
+  });
+  for (let first = 0; first < markers.length; first += 1) {
+    for (let second = first + 1; second < markers.length; second += 1) {
+      const distance = Math.hypot(
+        markers[first].markerX - markers[second].markerX,
+        markers[first].markerY - markers[second].markerY
+      );
+      assert.ok(distance >= 27.9, 'indexed markers must not overlap');
+    }
+  }
+  assert.ok(markers.some((marker) => marker.markerMoved));
 });
 
 test('regional map leaders use orthogonal geometry without arbitrary diagonals', () => {
   const leftPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'left',
     point: { x: 520, y: 310 },
-    routeY: 340,
+    routeY: 338,
     laneIndex: 2,
     sideCount: 5
   }, {
@@ -197,13 +581,15 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
   assert.match(leftPath.path, /^M 520 310 H /);
   assert.match(leftPath.path, / V 120 H 220$/);
   assert.doesNotMatch(leftPath.path, /\sL\s/);
-  assert.equal((leftPath.path.match(/\sV\s/g) || []).length, 1);
+  assert.equal((leftPath.path.match(/\sV\s/g) || []).length, 2);
   assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
+  assert.ok(leftPath.fanX > leftPath.approachX && leftPath.fanX < 520);
+  assert.equal(leftPath.routeY, 338);
 
   const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'right',
     point: { x: 610, y: 330 },
-    routeY: 360,
+    routeY: 366,
     laneIndex: 3,
     sideCount: 5
   }, {
@@ -212,8 +598,85 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     endY: 450
   });
   assert.doesNotMatch(rightPath.path, /\sL\s/);
-  assert.equal((rightPath.path.match(/\sV\s/g) || []).length, 1);
+  assert.equal((rightPath.path.match(/\sV\s/g) || []).length, 2);
   assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
+  assert.ok(rightPath.fanX > 610 && rightPath.fanX < rightPath.approachX);
+  assert.equal(rightPath.routeY, 366);
+
+  const directPath = TochnyiMaps.buildOrthogonalLeaderPath({
+    side: 'left',
+    point: { x: 520, y: 310 },
+    laneIndex: 0,
+    sideCount: 1
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 120
+  });
+  assert.equal((directPath.path.match(/\sV\s/g) || []).length, 1);
+});
+
+test('regional map leader rendering preserves separation after routing', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /gap:\s*chartNode\.classList\.contains\('is-dense'\)\s*\?\s*18\s*:\s*22/);
+  assert.match(runtime, /data-map-leader-route-gap/);
+  assert.match(runtime, /data-map-leader-fanout/);
+  assert.match(runtime, /leaderRenderPlan\.forEach\(function\(plan\)\s*\{[\s\S]*?tochnyi-map-leader-halo[\s\S]*?\}\);[\s\S]*?leaderRenderPlan\.forEach\(function\(plan\)\s*\{[\s\S]*?tochnyi-map-leader'/);
+  assert.match(css, /\.tochnyi-map-leader\s*\{[^}]*stroke-width:\s*1\.65[^}]*opacity:\s*0\.9/gs);
+  assert.match(css, /\.tochnyi-map-leader-halo\s*\{[^}]*stroke-width:\s*5\.25/gs);
+});
+
+test('dense map runtime renders curved edge-port leaders instead of stacked corridors', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /requestedRouting === 'ports'/);
+  assert.match(runtime, /entries\.length >= 8/);
+  assert.match(runtime, /optimizeCalloutPlacement\(entries/);
+  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'editorial'/);
+  assert.match(runtime, /data-map-callout-placement',/);
+  assert.match(runtime, /data-map-callout-predicted-crossings/);
+  assert.match(runtime, /data-map-callout-assignment-evaluations/);
+  assert.match(runtime, /data-map-callout-max-attachment-slope/);
+  assert.match(runtime, /data-map-callout-attachment-sharpness/);
+  assert.match(runtime, /routedEntries\.routing === 'ports'/);
+  assert.match(runtime, /buildPortLeaderPath\(entry/);
+  assert.match(runtime, /data-map-port-order', 'crossing-optimized'/);
+  assert.match(runtime, /minimumCardStub:\s*chartNode\.classList\.contains\('is-dense'\) \? 36 : 32/);
+  assert.match(runtime, /cardTop:\s*entry\.top/);
+  assert.match(runtime, /cardBottom:\s*entry\.top \+ entry\.height/);
+  assert.match(runtime, /data-map-port-curve-model', 'bounded-tangent-spline'/);
+  assert.match(runtime, /data-map-port-min-card-stub/);
+  assert.match(runtime, /data-map-port-near-card-routes/);
+  assert.match(runtime, /data-map-port-adaptive-stub-routes/);
+  assert.match(runtime, /data-adaptive-card-stub/);
+  assert.match(runtime, /data-map-port-directionality', 'strict-envelope-first'/);
+  assert.match(runtime, /data-map-port-strict-envelope-routes/);
+  assert.match(runtime, /data-map-port-expanded-envelope-routes/);
+  assert.match(runtime, /data-route-envelope/);
+  assert.match(runtime, /data-map-port-max-vertical-excursion/);
+  assert.match(runtime, /data-route-vertical-excursion/);
+  assert.match(runtime, /attachmentTop <= attachmentBottom/);
+  assert.match(runtime, /Math\.max\(attachmentTop, Math\.min\(attachmentBottom, entry\.point\.y\)\)/);
+  assert.match(runtime, /data-card-stub-length/);
+  assert.match(runtime, /projectedFeatureBounds\(/);
+  assert.match(runtime, /data-map-port-obstacle-avoidance/);
+  assert.match(runtime, /data-map-port-avoided-routes/);
+  assert.match(runtime, /data-map-port-grid-routes/);
+  assert.match(runtime, /data-map-port-fallback-routes/);
+  assert.match(runtime, /data-route-direct-collisions/);
+  assert.match(runtime, /data-route-final-collisions/);
+  assert.match(runtime, /exactContains:/);
+  assert.match(runtime, /is-dense'\) \? 3\.25 : 8/);
+  assert.match(runtime, /routeLeft:/);
+  assert.match(runtime, /routeRight:/);
+  assert.doesNotMatch(runtime, /tochnyi-map-edge-port/);
+  assert.doesNotMatch(runtime, /tochnyi-map-port-anchor/);
+  assert.doesNotMatch(runtime, /data-tochnyi-mark': 'edge-port'/);
+  assert.match(css, /\.tochnyi-map-port-leader\s*\{/);
+  assert.match(css, /\.tochnyi-map-port-leader-halo\s*\{/);
+  assert.doesNotMatch(css, /\.tochnyi-map-edge-port/);
+  assert.doesNotMatch(css, /\.tochnyi-map-port-anchor/);
 });
 
 test('regional map planning focuses on active data and omits inactive detached regions', () => {
@@ -495,6 +958,22 @@ test('regional map specs validate known regions and load map tooling', () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
 
+  const indexedLeaderRouting = loadExample('russia-regional-map.json');
+  indexedLeaderRouting.map.leaderRouting = 'indexed';
+  result = validateSpec(indexedLeaderRouting);
+  assert.equal(result.valid, true);
+
+  const portLeaderRouting = loadExample('russia-regional-map.json');
+  portLeaderRouting.map.leaderRouting = 'ports';
+  result = validateSpec(portLeaderRouting);
+  assert.equal(result.valid, true);
+
+  const manualLeaderDetour = loadExample('russia-regional-map.json');
+  manualLeaderDetour.data[0].leaderDetour = 'above';
+  result = validateSpec(manualLeaderDetour);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('leaderDetour is not allowed')));
+
   const invalidViewportAlignment = loadExample('russia-regional-map.json');
   invalidViewportAlignment.map.viewportAlignment = 'left';
   result = validateSpec(invalidViewportAlignment);
@@ -547,7 +1026,7 @@ test('shared quantitative marks use restrained translucent styling', () => {
   assert.equal(uses.length, 4, 'all four AMCharts column recipes should use the shared appearance policy');
 
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.14/);
+  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.085/);
   assert.match(css, /rgba\(204, 0, 0, 0\.58\)/);
 
   const rect = normalizeRect({ left: 0, top: 0, right: 40, bottom: 100 });
@@ -570,6 +1049,85 @@ test('semantic cards do not use thick colored border highlights', () => {
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\{[^}]*border-top:\s*(?:[2-9]|\d{2,})px/gs);
   assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\[[^\]]+\][^{]*\{[^}]*border-top-color/gs);
+});
+
+test('shared branding keeps the logo legible after export scaling', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(css, /--tochnyi-logo-height:\s*56px/);
+  assert.match(css, /--tochnyi-logo-height-compact:\s*48px/);
+  assert.match(css, /\.tochnyi-logo\s*\{[^}]*opacity:\s*1/gs);
+  assert.match(css, /\.tochnyi-logo\s*\{[^}]*mix-blend-mode:\s*normal/gs);
+});
+
+test('branding diagnostics reject missing, faint, unloaded, and undersized logos', () => {
+  assert.ok(diagnoseBranding([]).some((issue) => issue.code === 'logo-missing'));
+
+  const base = {
+    id: 'logo', role: 'logo', loaded: true, opacity: 1,
+    rect: normalizeRect({ left: 0, top: 0, right: 193, bottom: 56 })
+  };
+  assert.equal(diagnoseBranding([base]).length, 0);
+  assert.ok(diagnoseBranding([{ ...base, loaded: false }]).some((issue) => issue.code === 'logo-not-loaded'));
+  assert.ok(diagnoseBranding([{ ...base, opacity: 0.2 }]).some((issue) => issue.code === 'logo-too-faint'));
+  assert.ok(diagnoseBranding([{
+    ...base,
+    rect: normalizeRect({ left: 0, top: 0, right: 138, bottom: 40 })
+  }]).some((issue) => issue.code === 'logo-too-small'));
+});
+
+test('watermark opacity is controlled once by CSS rather than compounded inside the SVG', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  const svg = fs.readFileSync(path.join(__dirname, '..', 'lib', 'watermark.svg'), 'utf8');
+  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.085/);
+  assert.match(css, /--tochnyi-watermark-opacity-quiet:\s*0\.065/);
+  assert.match(css, /--tochnyi-watermark-opacity-corner:\s*0\.10/);
+  assert.doesNotMatch(svg, /opacity\s*:\s*\.(?:0[0-9]|1[0-9])/);
+});
+
+test('watermark diagnostics reject missing, faint, unloaded, and undersized marks', () => {
+  assert.ok(diagnoseWatermark([]).some((issue) => issue.code === 'watermark-missing'));
+
+  const base = {
+    id: 'watermark', role: 'watermark', loaded: true, opacity: 0.085,
+    rect: normalizeRect({ left: 0, top: 0, right: 550, bottom: 550 })
+  };
+  assert.equal(diagnoseWatermark([base]).length, 0);
+  assert.ok(diagnoseWatermark([{ ...base, loaded: false }]).some((issue) => issue.code === 'watermark-not-loaded'));
+  assert.ok(diagnoseWatermark([{ ...base, occluded: true }]).some((issue) => issue.code === 'watermark-occluded'));
+  assert.ok(diagnoseWatermark([{ ...base, opacity: 0.01 }]).some((issue) => issue.code === 'watermark-too-faint'));
+  assert.ok(diagnoseWatermark([{
+    ...base,
+    rect: normalizeRect({ left: 0, top: 0, right: 40, bottom: 40 })
+  }]).some((issue) => issue.code === 'watermark-too-small'));
+});
+
+test('regional map watermark stays behind geography and within restrained size and opacity limits', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /chartNode\.appendChild\(watermark\);[\s\S]*?chartNode\.appendChild\(mapCanvas\);[\s\S]*?chartNode\.appendChild\(lineLayer\);/);
+  assert.match(runtime, /watermark\.classList\.add\('watermark-map', 'watermark-map-behind'\)/);
+  assert.match(runtime, /data-watermark-layer', 'behind-map'/);
+  assert.match(css, /--tochnyi-map-watermark-opacity:\s*0\.075/);
+  assert.match(css, /--tochnyi-map-watermark-height:\s*min\(58%, 390px\)/);
+  assert.match(css, /--tochnyi-map-watermark-height-compact:\s*220px/);
+  assert.match(css, /\.tochnyi-map-stage > \.tochnyi-watermark\.watermark-map\s*\{[^}]*z-index:\s*0/gs);
+  assert.match(css, /\.tochnyi-map-stage > \.tochnyi-watermark\.watermark-map\s*\{[^}]*filter:\s*none/gs);
+  assert.match(css, /\.tochnyi-map-canvas\s*\{[^}]*z-index:\s*1/gs);
+  assert.match(css, /\.tochnyi-map-lines\s*\{\s*z-index:\s*2/);
+  assert.match(css, /\.tochnyi-map-callouts[^{]*\{[^}]*z-index:\s*3/gs);
+
+  const mapWatermark = {
+    id: 'map-watermark', role: 'watermark', loaded: true, occluded: true,
+    opacity: 0.075, watermarkLayer: 'behind-map',
+    rect: normalizeRect({ left: 0, top: 0, right: 390, bottom: 390 })
+  };
+  assert.equal(diagnoseWatermark([mapWatermark]).length, 0);
+  assert.ok(diagnoseWatermark([{ ...mapWatermark, opacity: 0.11 }])
+    .some((issue) => issue.code === 'watermark-too-prominent'));
+  assert.ok(diagnoseWatermark([{
+    ...mapWatermark,
+    rect: normalizeRect({ left: 0, top: 0, right: 420, bottom: 420 })
+  }]).some((issue) => issue.code === 'watermark-too-large'));
 });
 
 test('layout diagnostics detect text overlap and clipping', () => {
@@ -665,6 +1223,10 @@ test('renderer writes a reviewable chart file', () => {
   const result = renderSpecFile(path.join(examplesDir, 'ai95-price-spike.json'), output);
   assert.equal(fs.existsSync(output), true);
   assert.equal(result.recipe, 'comparison.change');
+  const html = fs.readFileSync(output, 'utf8');
+  const fingerprint = assetFingerprint(path.join(__dirname, '..'));
+  assert.match(html, new RegExp(`data-assets-version="${fingerprint}"`));
+  assert.ok(html.includes(`tochnyi-runtime.js?v=${fingerprint}`));
   const review = reviewFile(output);
   assert.equal(review.valid, true, review.errors.join('; '));
   fs.rmSync(tempDir, { recursive: true, force: true });

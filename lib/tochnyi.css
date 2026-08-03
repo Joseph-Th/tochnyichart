@@ -24,7 +24,12 @@
     /* Grid and quantitative marks */
     --tochnyi-grid-opacity: 0.3;
     --tochnyi-column-fill-opacity: 0.66;
-    --tochnyi-watermark-opacity: 0.14;
+    --tochnyi-watermark-opacity: 0.085;
+    --tochnyi-watermark-opacity-quiet: 0.065;
+    --tochnyi-watermark-opacity-corner: 0.10;
+    --tochnyi-map-watermark-opacity: 0.075;
+    --tochnyi-map-watermark-height: min(58%, 390px);
+    --tochnyi-map-watermark-height-compact: 220px;
 
     /* Typography */
     --tochnyi-font: 'Mukta', sans-serif;
@@ -32,6 +37,8 @@
     /* Spacing */
     --tochnyi-padding: 40px;
     --tochnyi-max-width: 1200px;
+    --tochnyi-logo-height: 56px;
+    --tochnyi-logo-height-compact: 48px;
 }
 
 /* ===== Reset ===== */
@@ -65,8 +72,16 @@ body {
 }
 
 .tochnyi-logo {
-    height: 40px;
+    display: block;
+    flex: 0 0 auto;
+    height: var(--tochnyi-logo-height);
+    min-height: var(--tochnyi-logo-height-compact);
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    opacity: 1;
+    filter: none;
+    mix-blend-mode: normal;
 }
 
 .tochnyi-date {
@@ -142,11 +157,11 @@ body {
     left: auto;
     transform: none;
     height: 72px;
-    opacity: 0.075;
+    opacity: var(--tochnyi-watermark-opacity-corner);
 }
 
 .tochnyi-watermark.watermark-quiet {
-    opacity: 0.045;
+    opacity: var(--tochnyi-watermark-opacity-quiet);
 }
 
 /* ===== Source & Footer Container ===== */
@@ -333,6 +348,14 @@ body {
 .tochnyi-v2 .tochnyi-watermark {
     z-index: 0;
     opacity: var(--tochnyi-watermark-opacity);
+}
+
+.tochnyi-v2 .tochnyi-watermark.watermark-quiet {
+    opacity: var(--tochnyi-watermark-opacity-quiet);
+}
+
+.tochnyi-v2 .tochnyi-watermark.corner {
+    opacity: var(--tochnyi-watermark-opacity-corner);
 }
 
 .tochnyi-v2 .tochnyi-change-badge {
@@ -882,6 +905,19 @@ body {
     background: linear-gradient(180deg, #f6f9fa 0%, #eef3f5 100%);
 }
 
+.tochnyi-map-stage > .tochnyi-watermark.watermark-map {
+    top: 50%;
+    right: auto;
+    left: 50%;
+    z-index: 0;
+    height: var(--tochnyi-map-watermark-height);
+    width: auto;
+    transform: translate(-50%, -50%);
+    opacity: var(--tochnyi-map-watermark-opacity);
+    filter: none;
+    mix-blend-mode: normal;
+}
+
 .tochnyi-map-canvas {
     position: absolute;
     inset: 0 12px;
@@ -924,24 +960,67 @@ body {
 
 .tochnyi-map-leader {
     fill: none;
-    stroke-width: 1.45;
+    stroke-width: 1.65;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.82;
+    opacity: 0.9;
 }
 
 .tochnyi-map-leader-halo {
     fill: none;
     stroke: rgba(255, 255, 255, 0.92);
-    stroke-width: 4.5;
+    stroke-width: 5.25;
     stroke-linecap: round;
     stroke-linejoin: round;
     opacity: 0.95;
 }
 
+.tochnyi-map-port-leader {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.94;
+}
+
+.tochnyi-map-port-leader-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.96);
+    stroke-width: 5.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .tochnyi-map-anchor {
     stroke: #ffffff;
     stroke-width: 2;
+}
+
+.tochnyi-map-marker-link {
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    opacity: 0.92;
+}
+
+.tochnyi-map-marker-link-halo {
+    stroke: rgba(255, 255, 255, 0.96);
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+
+.tochnyi-map-index-marker circle {
+    stroke: #ffffff;
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.24));
+}
+
+.tochnyi-map-index-marker text {
+    fill: #ffffff;
+    font-family: var(--tochnyi-font);
+    font-size: 11px;
+    font-weight: 700;
+    pointer-events: none;
 }
 
 .tochnyi-map-callout {
@@ -964,7 +1043,29 @@ body {
     gap: 7px;
 }
 
+.tochnyi-map-index {
+    display: none;
+}
+
+.tochnyi-map-stage.has-indexed-connectors .tochnyi-map-index {
+    display: inline-flex;
+    flex: 0 0 21px;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    background: var(--tochnyi-map-accent, #666666);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .tochnyi-map-callout-header strong {
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: 15px;
     font-weight: 700;
     line-height: 1.08;
@@ -1125,6 +1226,7 @@ body {
 
 @media (max-width: 760px) {
     body { padding: 20px; }
+    .tochnyi-logo { height: var(--tochnyi-logo-height-compact); }
     .tochnyi-title { font-size: 34px; }
     .tochnyi-subtitle { font-size: 19px; }
     .tochnyi-change-badge {
@@ -1146,6 +1248,10 @@ body {
     .tochnyi-status-grid { grid-template-columns: 1fr 1fr; }
     .tochnyi-map-stage { overflow: visible; border: 0; background: transparent; }
     .tochnyi-map-stage.is-narrow { display: grid; grid-template-rows: 330px auto auto; gap: 12px; }
+    .tochnyi-map-stage.is-narrow > .tochnyi-watermark.watermark-map {
+        top: 165px;
+        height: var(--tochnyi-map-watermark-height-compact);
+    }
     .tochnyi-map-stage.is-narrow .tochnyi-map-canvas {
         position: relative;
         inset: auto;

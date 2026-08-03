@@ -28,7 +28,7 @@ const MAP_VIEWPORT_ALIGNMENTS = new Set(['auto', 'data', 'context']);
 const MAP_CONTEXT_FITS = new Set(['auto', 'all', 'focus']);
 const MAP_LANDMASSES = new Set(['auto', 'all', 'continental']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
-const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes']);
+const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed']);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
