@@ -55,7 +55,9 @@
   "map": {
     "regionSet": "russia",
     "callouts": "auto",
+    "calloutDistribution": "auto",
     "summaryPosition": "auto",
+    "summaryDisplay": "auto",
     "viewport": "data",
     "viewportAlignment": "auto",
     "anchorStyle": "none",

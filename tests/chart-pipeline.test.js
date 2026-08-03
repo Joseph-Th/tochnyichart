@@ -126,6 +126,45 @@ test('regional maps suppress centroid dots unless explicitly requested', () => {
   assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'dot');
 });
 
+test('regional maps suppress redundant dense summaries but preserve informative ones', () => {
+  const data = [
+    ...new Array(1).fill(null).map((_, index) => ({ label: `Improving ${index}`, status: 'improving' })),
+    ...new Array(5).fill(null).map((_, index) => ({ label: `Critical ${index}`, status: 'critical' })),
+    ...new Array(2).fill(null).map((_, index) => ({ label: `Blocked ${index}`, status: 'blocked' })),
+    ...new Array(2).fill(null).map((_, index) => ({ label: `Strained ${index}`, status: 'strained' }))
+  ];
+  const redundant = TochnyiMaps.resolveSummaryPlan({
+    map: { summaryDisplay: 'auto', summaryPosition: 'below' },
+    data,
+    primaryMetric: { value: '10 regions', label: 'regional conditions tracked' },
+    supportingFacts: [
+      { value: '7', label: 'critical or blocked regions', tone: 'critical' },
+      { value: '1', label: 'regions where limits were lifted', tone: 'positive' }
+    ]
+  });
+  assert.equal(redundant.show, false);
+  assert.equal(redundant.reason, 'redundant-dense-summary');
+
+  const informative = TochnyiMaps.resolveSummaryPlan({
+    map: { summaryDisplay: 'auto', summaryPosition: 'below' },
+    data,
+    primaryMetric: { value: '₽86.5bn', label: 'total investment at risk' },
+    supportingFacts: [{ value: '₽126bn', label: 'estimated rebuild cost', tone: 'critical' }]
+  });
+  assert.equal(informative.show, true);
+  assert.equal(informative.reason, 'informative');
+  assert.equal(TochnyiMaps.resolveSummaryPlan({
+    map: { summaryDisplay: 'show' }, data, primaryMetric: { value: '10 regions', label: 'tracked' }
+  }).show, true);
+});
+
+test('regional map callouts use balanced columns when a dense summary is hidden', () => {
+  const entries = new Array(5).fill(null).map((_, index) => ({ index }));
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, false, entries), 'balanced');
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, true, entries), 'geographic');
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'geographic' }, false, entries), 'geographic');
+});
+
 test('regional map leader routing separates clustered callouts into traceable lanes', () => {
   const entries = [100, 104, 109, 113, 119].map((y, index) => ({
     index,
@@ -320,6 +359,18 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidViewportAlignment);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.viewportAlignment is not supported')));
+
+  const invalidSummaryDisplay = loadExample('russia-regional-map.json');
+  invalidSummaryDisplay.map.summaryDisplay = 'sometimes';
+  result = validateSpec(invalidSummaryDisplay);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.summaryDisplay is not supported')));
+
+  const invalidCalloutDistribution = loadExample('russia-regional-map.json');
+  invalidCalloutDistribution.map.calloutDistribution = 'bottom-heavy';
+  result = validateSpec(invalidCalloutDistribution);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.calloutDistribution is not supported')));
 });
 
 test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {

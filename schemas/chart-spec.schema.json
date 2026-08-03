@@ -88,7 +88,9 @@
       "properties": {
         "regionSet": { "type": "string", "enum": ["russia"] },
         "callouts": { "type": "string", "enum": ["auto", "cards", "none"] },
+        "calloutDistribution": { "type": "string", "enum": ["auto", "geographic", "balanced"] },
         "summaryPosition": { "type": "string", "enum": ["auto", "right", "below", "none"] },
+        "summaryDisplay": { "type": "string", "enum": ["auto", "show", "hide"] },
         "viewport": { "type": "string", "enum": ["auto", "all", "data"] },
         "viewportAlignment": { "type": "string", "enum": ["auto", "data", "context"] },
         "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },

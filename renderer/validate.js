@@ -21,6 +21,8 @@ const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'compositio
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
 const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
+const MAP_SUMMARY_DISPLAYS = new Set(['auto', 'show', 'hide']);
+const MAP_CALLOUT_DISTRIBUTIONS = new Set(['auto', 'geographic', 'balanced']);
 const MAP_VIEWPORTS = new Set(['auto', 'all', 'data']);
 const MAP_VIEWPORT_ALIGNMENTS = new Set(['auto', 'data', 'context']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
@@ -43,7 +45,10 @@ const FACT_KEYS = new Set(['value', 'label', 'tone']);
 const NARRATIVE_KEYS = new Set(['frame', 'density', 'emphasis']);
 const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'animate', 'labelMode']);
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
-const MAP_KEYS = new Set(['regionSet', 'callouts', 'summaryPosition', 'viewport', 'viewportAlignment', 'excludeRegions', 'anchorStyle', 'leaderRouting']);
+const MAP_KEYS = new Set([
+  'regionSet', 'callouts', 'calloutDistribution', 'summaryPosition', 'summaryDisplay',
+  'viewport', 'viewportAlignment', 'excludeRegions', 'anchorStyle', 'leaderRouting'
+]);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -149,7 +154,9 @@ function normalizeSpec(input) {
     spec.map = isObject(spec.map) ? spec.map : {};
     spec.map.regionSet = spec.map.regionSet || 'russia';
     spec.map.callouts = spec.map.callouts || 'auto';
+    spec.map.calloutDistribution = spec.map.calloutDistribution || 'auto';
     spec.map.summaryPosition = spec.map.summaryPosition || 'auto';
+    spec.map.summaryDisplay = spec.map.summaryDisplay || 'auto';
     spec.map.viewport = spec.map.viewport || 'auto';
     spec.map.viewportAlignment = spec.map.viewportAlignment || 'auto';
     spec.map.anchorStyle = spec.map.anchorStyle || 'auto';
@@ -522,7 +529,9 @@ function validateMap(spec, errors) {
   }
   if (!TochnyiMaps.getRegionSet(spec.map.regionSet)) errors.push(`map.regionSet must be one of: ${TochnyiMaps.regionSetIds.join(', ')}.`);
   if (!MAP_CALLOUTS.has(spec.map.callouts)) errors.push('map.callouts is not supported.');
+  if (!MAP_CALLOUT_DISTRIBUTIONS.has(spec.map.calloutDistribution)) errors.push('map.calloutDistribution is not supported.');
   if (!MAP_SUMMARY_POSITIONS.has(spec.map.summaryPosition)) errors.push('map.summaryPosition is not supported.');
+  if (!MAP_SUMMARY_DISPLAYS.has(spec.map.summaryDisplay)) errors.push('map.summaryDisplay is not supported.');
   if (!MAP_VIEWPORTS.has(spec.map.viewport)) errors.push('map.viewport is not supported.');
   if (!MAP_VIEWPORT_ALIGNMENTS.has(spec.map.viewportAlignment)) errors.push('map.viewportAlignment is not supported.');
   if (!MAP_ANCHOR_STYLES.has(spec.map.anchorStyle)) errors.push('map.anchorStyle is not supported.');
