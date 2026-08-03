@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.14.0
+# Tochnyi Charts v2.15.0
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -230,6 +230,15 @@ focus for narrow stories. Local focus excludes whole out-of-frame regions rather
 than displaying polygons cut in half. `"all"` forces the complete region set;
 `"focus"` forces the local view. Every included region is projected in full, so
 the renderer never solves layout by cutting a polygon at the canvas edge.
+
+Landmass selection is also independent. `map.landmass = "continental"` builds a
+boundary-connectivity graph from the GeoJSON polygon components and keeps the
+largest connected landmass. This removes archipelagos, offshore islands, and
+island-only regions without relying on latitude cutoffs or country-specific
+polygon lists. `"all"` preserves every component. `"auto"` uses the region-set
+default but automatically falls back to `"all"` when an active data region would
+otherwise disappear. Russia defaults to continental context, while a story about
+Sakhalin or another detached region retains its islands automatically.
 
 ## Project structure
 

@@ -373,6 +373,64 @@ test('regional map static projection keeps antimeridian regions complete and in 
   assert.match(projection.path(east), /^M /);
 });
 
+test('regional map continental mode keeps the largest connected landmass and removes islands', () => {
+  const ring = (left, bottom, right, top) => [
+    [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
+  ];
+  const rectangle = (left, bottom, right, top) => [ring(left, bottom, right, top)];
+  const mainWithEnclave = [ring(0, 0, 10, 10), ring(4, 4, 6, 6)];
+  const features = [
+    {
+      type: 'Feature', id: 'MAIN-A', properties: { name: 'Main A' },
+      geometry: { type: 'MultiPolygon', coordinates: [mainWithEnclave, rectangle(0, 20, 2, 22)] }
+    },
+    {
+      type: 'Feature', id: 'MAIN-B', properties: { name: 'Main B' },
+      geometry: { type: 'Polygon', coordinates: rectangle(10, 0, 20, 10) }
+    },
+    {
+      type: 'Feature', id: 'ENCLAVE', properties: { name: 'Enclave' },
+      geometry: { type: 'Polygon', coordinates: [ring(4, 4, 6, 6)] }
+    },
+    {
+      type: 'Feature', id: 'ISLAND', properties: { name: 'Island' },
+      geometry: { type: 'Polygon', coordinates: rectangle(30, 30, 38, 38) }
+    }
+  ];
+  const result = TochnyiMaps.selectLargestConnectedLandmass(features);
+  assert.deepEqual(result.features.map((feature) => feature.id), ['MAIN-A', 'MAIN-B', 'ENCLAVE']);
+  assert.deepEqual(result.removedRegionIds, ['ISLAND']);
+  assert.equal(result.keptComponentCount, 3);
+  assert.equal(result.removedComponentCount, 2);
+  assert.equal(result.features[0].geometry.type, 'Polygon');
+  assert.deepEqual(result.features[0].geometry.coordinates, mainWithEnclave);
+});
+
+test('regional map automatic landmass mode preserves active island regions', () => {
+  const rectangle = (left, bottom, right, top) => [[
+    [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
+  ]];
+  const features = [
+    { type: 'Feature', id: 'MAIN-A', geometry: { type: 'Polygon', coordinates: rectangle(0, 0, 10, 10) } },
+    { type: 'Feature', id: 'MAIN-B', geometry: { type: 'Polygon', coordinates: rectangle(10, 0, 20, 10) } },
+    { type: 'Feature', id: 'ISLAND', geometry: { type: 'Polygon', coordinates: rectangle(30, 30, 38, 38) } }
+  ];
+  const regionSet = { defaultLandmass: 'continental', landmass: { coordinatePrecision: 1000 } };
+  const mainland = TochnyiMaps.resolveLandmassPlan(
+    { landmass: 'auto' }, regionSet, [{ regionId: 'MAIN-A' }], features
+  );
+  assert.equal(mainland.mode, 'continental');
+  assert.equal(mainland.reason, 'region-set-default');
+  assert.deepEqual(mainland.removedRegionIds, ['ISLAND']);
+
+  const island = TochnyiMaps.resolveLandmassPlan(
+    { landmass: 'auto' }, regionSet, [{ regionId: 'ISLAND' }], features
+  );
+  assert.equal(island.mode, 'all');
+  assert.equal(island.reason, 'active-detached-region');
+  assert.equal(island.features.length, 3);
+});
+
 test('regional map visual centering ignores negligible edge fragments', () => {
   const weights = new Array(100).fill(0);
   weights[0] = 1;
@@ -448,6 +506,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidContextFit);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.contextFit is not supported')));
+
+  const invalidLandmass = loadExample('russia-regional-map.json');
+  invalidLandmass.map.landmass = 'northern-islands-only';
+  result = validateSpec(invalidLandmass);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.landmass is not supported')));
 
   const invalidSummaryDisplay = loadExample('russia-regional-map.json');
   invalidSummaryDisplay.map.summaryDisplay = 'sometimes';

@@ -89,6 +89,7 @@
     "viewport": "data",
     "viewportAlignment": "auto",
     "contextFit": "auto",
+    "landmass": "continental",
     "anchorStyle": "none",
     "leaderRouting": "auto",
     "excludeRegions": ["RU-KGD"]

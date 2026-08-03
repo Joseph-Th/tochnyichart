@@ -94,6 +94,7 @@
         "viewport": { "type": "string", "enum": ["auto", "all", "data"] },
         "viewportAlignment": { "type": "string", "enum": ["auto", "data", "context"] },
         "contextFit": { "type": "string", "enum": ["auto", "all", "focus"] },
+        "landmass": { "type": "string", "enum": ["auto", "all", "continental"] },
         "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
         "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes"] },
         "excludeRegions": {
