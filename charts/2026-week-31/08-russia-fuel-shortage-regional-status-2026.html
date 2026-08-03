@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-assets="../../lib/" data-assets-version="384b8a4b1e9f">
+<html lang="en" data-assets="../../lib/" data-assets-version="200be159b619">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,17 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../lib/tochnyi.css?v=384b8a4b1e9f">
+  <link rel="stylesheet" href="../../lib/tochnyi.css?v=200be159b619">
   <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
   
   <script src="https://cdn.amcharts.com/lib/5/geodata/russiaLow.js"></script>
-  <script src="../../lib/tochnyi-maps.js?v=384b8a4b1e9f"></script>
-  <script src="../../lib/tochnyi-map-runtime.js?v=384b8a4b1e9f"></script>
+  <script src="../../lib/tochnyi-maps.js?v=200be159b619"></script>
+  <script src="../../lib/tochnyi-map-runtime.js?v=200be159b619"></script>
   <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-  <script src="../../lib/tochnyi-charts.js?v=384b8a4b1e9f"></script>
-  <script src="../../lib/tochnyi-visual-plan.js?v=384b8a4b1e9f"></script>
+  <script src="../../lib/tochnyi-charts.js?v=200be159b619"></script>
+  <script src="../../lib/tochnyi-visual-plan.js?v=200be159b619"></script>
 </head>
 <body>
   <div id="tochnyi-app"></div>
@@ -106,19 +106,19 @@
   ],
   "map": {
     "regionSet": "russia",
+    "viewport": "data",
+    "landmass": "continental",
+    "excludeRegions": [
+      "RU-KGD"
+    ],
     "callouts": "auto",
     "calloutDistribution": "auto",
     "summaryPosition": "auto",
     "summaryDisplay": "auto",
-    "viewport": "data",
     "viewportAlignment": "auto",
     "contextFit": "auto",
-    "landmass": "continental",
-    "anchorStyle": "none",
-    "leaderRouting": "auto",
-    "excludeRegions": [
-      "RU-KGD"
-    ]
+    "anchorStyle": "auto",
+    "leaderRouting": "auto"
   },
   "primaryMetric": {
     "value": "10 regions",
@@ -136,11 +136,6 @@
       "tone": "positive"
     }
   ],
-  "measure": {
-    "decimals": 0,
-    "baseline": "zero",
-    "scale": "linear"
-  },
   "narrative": {
     "frame": "warning",
     "density": "detailed",
@@ -148,10 +143,10 @@
   },
   "options": {
     "height": "tall",
+    "animate": false,
     "sort": "none",
     "showLegend": true,
     "showLabels": true,
-    "animate": false,
     "labelMode": "auto"
   },
   "metadata": {
@@ -161,9 +156,14 @@
     "dataPeriod": "Late July 2026",
     "keyFinding": "Improvement was confined to refinery regions while delivery-dependent regions rationed by litre and by hour."
   },
+  "measure": {
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
   "references": []
 }</script>
-  <script src="../../lib/tochnyi-runtime.js?v=384b8a4b1e9f"></script>
-  <script src="../../lib/tochnyi-diagnostics.js?v=384b8a4b1e9f"></script>
+  <script src="../../lib/tochnyi-runtime.js?v=200be159b619"></script>
+  <script src="../../lib/tochnyi-diagnostics.js?v=200be159b619"></script>
 </body>
 </html>

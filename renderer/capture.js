@@ -54,6 +54,27 @@ function extractLayoutDiagnostics(dom) {
   return JSON.parse(payload);
 }
 
+function extractDataAttributes(dom, elementId = null, prefix = 'data-map-') {
+  const tags = String(dom || '').match(/<[^>]+>/g) || [];
+  const requested = elementId
+    ? tags.find((candidate) => new RegExp(`\\bid=["']${elementId}["']`).test(candidate))
+    : null;
+  const tag = requested || tags
+    .map((candidate) => ({
+      candidate,
+      matches: (candidate.match(new RegExp(`\\s${prefix}[\\w-]+=`, 'g')) || []).length
+    }))
+    .sort((first, second) => second.matches - first.matches)[0]?.candidate;
+  if (!tag) return {};
+  const result = {};
+  const attributes = tag.matchAll(/\s([A-Za-z_:][\w:.-]*)="([^"]*)"/g);
+  for (const match of attributes) {
+    if (!match[1].startsWith(prefix)) continue;
+    result[match[1]] = decodeHtmlEntities(match[2]);
+  }
+  return result;
+}
+
 function commonBrowserArgs(profileDir, viewport) {
   return [
     '--headless=new',
@@ -105,6 +126,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   const source = fs.readFileSync(absoluteHtml, 'utf8');
   const expectsDiagnostics = source.includes('tochnyi-diagnostics.js');
   const diagnostics = extractLayoutDiagnostics(result.stdout);
+  const chartAttributes = extractDataAttributes(result.stdout);
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
     throw new Error(`Layout diagnostics did not complete (state: ${state}).`);
@@ -115,6 +137,7 @@ function diagnoseHtml(htmlPath, options = {}) {
     htmlPath: absoluteHtml,
     viewport,
     diagnostics,
+    chartAttributes,
     rendered: true
   };
 }
@@ -130,7 +153,11 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
     browser,
     htmlPath: path.resolve(htmlPath),
     status,
-    runs: runs.map((run) => ({ viewport: run.viewport, diagnostics: run.diagnostics }))
+    runs: runs.map((run) => ({
+      viewport: run.viewport,
+      diagnostics: run.diagnostics,
+      chartAttributes: run.chartAttributes
+    }))
   };
 }
 
@@ -206,6 +233,7 @@ module.exports = {
   diagnoseHtml,
   diagnoseHtmlResponsive,
   extractLayoutDiagnostics,
+  extractDataAttributes,
   DEFAULT_DIAGNOSTIC_VIEWPORTS,
   findBrowser,
   pngDimensions

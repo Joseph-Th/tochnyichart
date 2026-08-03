@@ -54,16 +54,7 @@
   ],
   "map": {
     "regionSet": "russia",
-    "callouts": "auto",
-    "calloutDistribution": "auto",
-    "summaryPosition": "auto",
-    "summaryDisplay": "auto",
     "viewport": "data",
-    "viewportAlignment": "auto",
-    "contextFit": "auto",
-    "landmass": "auto",
-    "anchorStyle": "none",
-    "leaderRouting": "auto",
     "excludeRegions": ["RU-KGD"]
   },
   "primaryMetric": {
@@ -84,11 +75,7 @@
   },
   "options": {
     "height": "tall",
-    "sort": "none",
-    "showLegend": true,
-    "showLabels": true,
-    "animate": false,
-    "labelMode": "auto"
+    "animate": false
   },
   "metadata": {
     "slug": "russia-regional-map",

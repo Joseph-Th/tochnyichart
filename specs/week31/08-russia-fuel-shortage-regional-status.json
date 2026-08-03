@@ -82,16 +82,8 @@
   ],
   "map": {
     "regionSet": "russia",
-    "callouts": "auto",
-    "calloutDistribution": "auto",
-    "summaryPosition": "auto",
-    "summaryDisplay": "auto",
     "viewport": "data",
-    "viewportAlignment": "auto",
-    "contextFit": "auto",
     "landmass": "continental",
-    "anchorStyle": "none",
-    "leaderRouting": "auto",
     "excludeRegions": ["RU-KGD"]
   },
   "primaryMetric": {
@@ -110,11 +102,6 @@
       "tone": "positive"
     }
   ],
-  "measure": {
-    "decimals": 0,
-    "baseline": "zero",
-    "scale": "linear"
-  },
   "narrative": {
     "frame": "warning",
     "density": "detailed",
@@ -122,11 +109,7 @@
   },
   "options": {
     "height": "tall",
-    "sort": "none",
-    "showLegend": true,
-    "showLabels": true,
-    "animate": false,
-    "labelMode": "auto"
+    "animate": false
   },
   "metadata": {
     "slug": "08-russia-fuel-shortage-regional-status-2026",

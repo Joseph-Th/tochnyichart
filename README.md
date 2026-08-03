@@ -53,6 +53,12 @@ Get the compact story-to-recipe decision guide:
 node tools/chart.js guide
 ```
 
+Get the agent-facing regional breakdown contract and supported statuses:
+
+```bash
+node tools/chart.js regional-guide russia
+```
+
 Validate a specification:
 
 ```bash
@@ -70,6 +76,20 @@ Render to a specific path:
 ```bash
 node tools/chart.js render specs/examples/ai95-price-spike.json charts/v2-examples/ai95-price-spike.html
 ```
+
+For a regional breakdown, use the consolidated workflow command. It validates,
+renders, reviews, and runs browser diagnostics at the canonical desktop, tablet,
+and mobile viewports. It does not generate a screenshot.
+
+```bash
+node tools/chart.js regional \
+  specs/week31/08-russia-fuel-shortage-regional-status.json \
+  charts/2026-week-31/08-russia-fuel-shortage-regional-status-2026.html
+```
+
+Use `--no-diagnose` only when a browser is unavailable. The normal command
+returns routing mode, placement mode, predicted crossings, final region
+collisions, fallback count, and source-exit count for each viewport.
 
 Review the generated shell and capture a 1200 × 900 PNG:
 
@@ -182,6 +202,46 @@ A minimal comparison specification:
 ```
 
 See `specs/examples/` for a validated example of every recipe.
+
+### Regional breakdown agent workflow
+
+Agents should author the smallest semantic specification possible. For the
+standard regional breakdown, the map object normally contains only the region
+set. The renderer owns all placement and routing behavior.
+
+```json
+{
+  "version": "2.0",
+  "recipe": "map.regional",
+  "title": "Regional Conditions",
+  "date": "2026-08-02",
+  "source": { "name": "Source", "period": "Reporting period" },
+  "data": [
+    {
+      "label": "Omsk region",
+      "regionId": "RU-OMS",
+      "status": "improving",
+      "displayValue": "Limits lifted",
+      "detail": "A concise explanation of the regional condition."
+    }
+  ],
+  "map": { "regionSet": "russia" },
+  "metadata": { "slug": "regional-conditions" }
+}
+```
+
+Do not add `leaderRouting`, `calloutDistribution`, `summaryDisplay`,
+`summaryPosition`, `anchorStyle`, or other `"auto"` values. Normalization supplies
+them. Add map overrides only when the story requires a different geographic
+frame, such as `viewport`, `contextFit`, `landmass`, or `excludeRegions`. Use
+`data[].calloutSide` only for a genuine editorial constraint; it is not a manual
+layout tool.
+
+The shared regional planner owns the dense-map threshold, card dimensions,
+column assignment, curve-aware crossing score, obstacle clearance, port spacing,
+card-attachment smoothing, and responsive policy. The browser workflow reports
+these decisions through `data-map-*` diagnostics, so agents do not need to tune
+geometry or inspect generated SVG paths.
 
 Regional maps use stable region identifiers rather than coordinates. For Russia,
 use `map.regionSet = "russia"` and assign `data[].regionId`, such as `RU-OMS` or

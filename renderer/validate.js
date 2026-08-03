@@ -154,17 +154,9 @@ function normalizeSpec(input) {
 
   if (spec.recipe === 'map.regional' || isObject(spec.map)) {
     spec.map = isObject(spec.map) ? spec.map : {};
-    spec.map.regionSet = spec.map.regionSet || 'russia';
-    spec.map.callouts = spec.map.callouts || 'auto';
-    spec.map.calloutDistribution = spec.map.calloutDistribution || 'auto';
-    spec.map.summaryPosition = spec.map.summaryPosition || 'auto';
-    spec.map.summaryDisplay = spec.map.summaryDisplay || 'auto';
-    spec.map.viewport = spec.map.viewport || 'auto';
-    spec.map.viewportAlignment = spec.map.viewportAlignment || 'auto';
-    spec.map.contextFit = spec.map.contextFit || 'auto';
-    spec.map.landmass = spec.map.landmass || 'auto';
-    spec.map.anchorStyle = spec.map.anchorStyle || 'auto';
-    spec.map.leaderRouting = spec.map.leaderRouting || 'auto';
+    Object.entries(TochnyiMaps.regionalMapDefaults).forEach(([key, value]) => {
+      spec.map[key] = spec.map[key] || value;
+    });
     spec.map.excludeRegions = spec.map.excludeRegions === undefined
       ? []
       : Array.isArray(spec.map.excludeRegions)

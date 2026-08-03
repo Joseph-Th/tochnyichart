@@ -8,6 +8,7 @@ const { validateSpec } = require('../renderer/validate');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtml, diagnoseHtmlResponsive } = require('../renderer/capture');
+const { renderRegionalBreakdown, regionalAgentGuide } = require('../renderer/regional-workflow');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 
 function usage(exitCode = 0) {
@@ -17,8 +18,10 @@ Usage:
   node tools/chart.js catalog
   node tools/chart.js regions [region-set]
   node tools/chart.js guide
+  node tools/chart.js regional-guide [region-set]
   node tools/chart.js validate <spec.json>
   node tools/chart.js render <spec.json> [output.html]
+  node tools/chart.js regional <spec.json> [output.html] [--no-diagnose]
   node tools/chart.js diagnose <chart.html> [--single] [--fit]
   node tools/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
@@ -98,6 +101,11 @@ function main() {
     return;
   }
 
+  if (command === 'regional-guide') {
+    printResult(regionalAgentGuide(args[1] || 'russia'));
+    return;
+  }
+
   if (command === 'validate') {
     if (!args[1]) usage(1);
     const result = validateSpec(readJson(args[1]));
@@ -118,6 +126,16 @@ function main() {
       review: { valid: review.valid, errors: review.errors }
     });
     if (!review.valid) process.exit(1);
+    return;
+  }
+
+  if (command === 'regional') {
+    if (!args[1]) usage(1);
+    const outputPath = args[2] && !args[2].startsWith('--') ? args[2] : undefined;
+    const result = renderRegionalBreakdown(args[1], outputPath, {
+      diagnose: !args.includes('--no-diagnose')
+    });
+    printResult(result);
     return;
   }
 

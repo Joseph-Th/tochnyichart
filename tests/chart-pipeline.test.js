@@ -9,7 +9,13 @@ const { validateSpec } = require('../renderer/validate');
 const { renderHtml, renderSpecFile, assetFingerprint, isoWeek } = require('../renderer/render');
 const { reviewHtml, reviewFile } = require('../renderer/review');
 const { recipeIds } = require('../renderer/catalog');
-const { extractLayoutDiagnostics } = require('../renderer/capture');
+const { extractLayoutDiagnostics, extractDataAttributes } = require('../renderer/capture');
+const {
+  validateRegionalSpec,
+  renderRegionalBreakdown,
+  regionalAgentGuide,
+  summarizeDiagnosticRun
+} = require('../renderer/regional-workflow');
 const { diagnoseBoxes, diagnoseMarkStyles, diagnoseBranding, diagnoseWatermark, normalizeRect } = require('../lib/tochnyi-diagnostics');
 const Tochnyi = require('../lib/tochnyi-charts');
 const VisualPlan = require('../lib/tochnyi-visual-plan');
@@ -143,6 +149,7 @@ test('regional maps use a restrained non-flag-like status palette', () => {
   assert.equal(policy.statusColors.blocked, '#66505e');
   assert.notEqual(policy.statusColors.improving, '#008844');
   assert.notEqual(policy.statusColors.critical, '#cc0000');
+  assert.equal(policy.inactiveFill, '#c3cbd0');
   assert.ok(policy.activeFillOpacity < 0.9);
   assert.ok(policy.inactiveFillOpacity < policy.activeFillOpacity);
 });
@@ -290,6 +297,51 @@ test('dense map callout placement minimizes crossings across balanced side assig
   const constrained = TochnyiMaps.optimizeCalloutPlacement(fixed, geometry);
   assert.ok(constrained.left.includes(fixed[2]));
   assert.ok(constrained.right.includes(fixed[8]));
+});
+
+test('regional breakdown policy centralizes layout and routing defaults', () => {
+  const dense = TochnyiMaps.getRegionalBreakdownPolicy({ count: 10 });
+  const standard = TochnyiMaps.getRegionalBreakdownPolicy({ count: 4 });
+  assert.equal(dense.dense, true);
+  assert.equal(dense.cardWidth, 210);
+  assert.equal(dense.cardGap, 7);
+  assert.equal(dense.attachmentInset, 14);
+  assert.equal(dense.portGap, 18);
+  assert.equal(dense.minimumCardStub, 36);
+  assert.equal(dense.shapeClearance, 3.25);
+  assert.equal(standard.dense, false);
+  assert.equal(standard.cardWidth, 226);
+  assert.equal(standard.cardGap, 10);
+  assert.equal(standard.portGap, 22);
+  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 8);
+});
+
+test('regional breakdown planner owns routing mode, side assignment, and distribution', () => {
+  const entries = new Array(8).fill(null).map((_, index) => ({
+    index,
+    item: {},
+    point: { x: 260 + index * 65, y: 180 + index * 38 },
+    height: 82,
+    side: index < 4 ? 'left' : 'right'
+  }));
+  const plan = TochnyiMaps.planRegionalBreakdown(entries, {
+    map: { leaderRouting: 'auto', calloutDistribution: 'auto' },
+    dense: false,
+    width: 1190,
+    cardWidth: 226,
+    topLeft: 10,
+    topRight: 10,
+    bottom: 620,
+    summaryShown: false,
+    summaryOnRight: false
+  });
+  assert.equal(plan.usePortRouting, true);
+  assert.equal(plan.placementMode, 'crossing-optimized');
+  assert.equal(plan.sides.left.length, 4);
+  assert.equal(plan.sides.right.length, 4);
+  assert.equal(plan.leftDistribution, 'balanced');
+  assert.equal(plan.rightDistribution, 'balanced');
+  assert.ok(plan.placement.assignmentEvaluations > 0);
 });
 
 test('edge-port leaders use a smooth region curve and readable horizontal card connection', () => {
@@ -619,7 +671,7 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
 test('regional map leader rendering preserves separation after routing', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(runtime, /gap:\s*chartNode\.classList\.contains\('is-dense'\)\s*\?\s*18\s*:\s*22/);
+  assert.match(runtime, /gap:\s*regionalPolicy\.portGap/);
   assert.match(runtime, /data-map-leader-route-gap/);
   assert.match(runtime, /data-map-leader-fanout/);
   assert.match(runtime, /leaderRenderPlan\.forEach\(function\(plan\)\s*\{[\s\S]*?tochnyi-map-leader-halo[\s\S]*?\}\);[\s\S]*?leaderRenderPlan\.forEach\(function\(plan\)\s*\{[\s\S]*?tochnyi-map-leader'/);
@@ -629,10 +681,13 @@ test('regional map leader rendering preserves separation after routing', () => {
 
 test('dense map runtime renders curved edge-port leaders instead of stacked corridors', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const maps = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-maps.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(runtime, /requestedRouting === 'ports'/);
-  assert.match(runtime, /entries\.length >= 8/);
-  assert.match(runtime, /optimizeCalloutPlacement\(entries/);
+  assert.match(runtime, /planRegionalBreakdown\(entries/);
+  assert.match(runtime, /data-map-workflow', 'regional-breakdown'/);
+  assert.match(maps, /portRoutingThreshold:\s*8/);
+  assert.match(maps, /function planRegionalBreakdown\(/);
+  assert.match(maps, /optimizeCalloutPlacement\(all, placementOptions\)/);
   assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'editorial'/);
   assert.match(runtime, /data-map-callout-placement',/);
   assert.match(runtime, /data-map-callout-predicted-crossings/);
@@ -642,7 +697,7 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /routedEntries\.routing === 'ports'/);
   assert.match(runtime, /buildPortLeaderPath\(entry/);
   assert.match(runtime, /data-map-port-order', 'crossing-optimized'/);
-  assert.match(runtime, /minimumCardStub:\s*chartNode\.classList\.contains\('is-dense'\) \? 36 : 32/);
+  assert.match(runtime, /minimumCardStub:\s*regionalPolicy\.minimumCardStub/);
   assert.match(runtime, /cardTop:\s*entry\.top/);
   assert.match(runtime, /cardBottom:\s*entry\.top \+ entry\.height/);
   assert.match(runtime, /data-map-port-curve-model', 'bounded-tangent-spline'/);
@@ -664,10 +719,13 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-map-port-avoided-routes/);
   assert.match(runtime, /data-map-port-grid-routes/);
   assert.match(runtime, /data-map-port-fallback-routes/);
+  assert.match(runtime, /data-map-port-final-collisions/);
+  assert.match(runtime, /data-map-port-source-exit-routes/);
+  assert.match(runtime, /data-map-port-rendered-crossings/);
   assert.match(runtime, /data-route-direct-collisions/);
   assert.match(runtime, /data-route-final-collisions/);
   assert.match(runtime, /exactContains:/);
-  assert.match(runtime, /is-dense'\) \? 3\.25 : 8/);
+  assert.match(runtime, /shapeClearance = regionalPolicy\.shapeClearance/);
   assert.match(runtime, /routeLeft:/);
   assert.match(runtime, /routeRight:/);
   assert.doesNotMatch(runtime, /tochnyi-map-edge-port/);
@@ -1215,6 +1273,54 @@ test('browser diagnostic JSON can be extracted from dumped DOM', () => {
   const report = { version: '1.0', status: 'pass', summary: { errors: 0, warnings: 0 }, issues: [] };
   const dom = `<html data-layout-diagnostics="pass"><body><script id="tochnyi-layout-diagnostics" type="application/json">${JSON.stringify(report)}</script></body></html>`;
   assert.deepEqual(extractLayoutDiagnostics(dom), report);
+});
+
+test('regional workflow extracts routing diagnostics from the chart element', () => {
+  const dom = '<div id="chart" data-map-workflow="regional-breakdown" data-map-leader-routing="ports" ' +
+    'data-map-callout-predicted-crossings="0" data-map-port-final-collisions="0" ' +
+    'data-map-port-rendered-crossings="0" data-map-port-fallback-routes="0"></div>';
+  const attributes = extractDataAttributes(dom);
+  assert.equal(attributes['data-map-workflow'], 'regional-breakdown');
+  const summary = summarizeDiagnosticRun({
+    viewport: { width: 1190, height: 679 },
+    diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0 } },
+    chartAttributes: attributes
+  });
+  assert.equal(summary.routing, 'ports');
+  assert.equal(summary.predictedCrossings, 0);
+  assert.equal(summary.renderedCrossings, 0);
+  assert.equal(summary.finalCollisions, 0);
+  assert.equal(summary.fallbackRoutes, 0);
+});
+
+test('regional agent workflow validates, renders, and reports normalized automatic defaults', () => {
+  const specPath = path.join(examplesDir, 'russia-regional-map.json');
+  const checked = validateRegionalSpec(specPath);
+  assert.equal(checked.validation.normalized.recipe, 'map.regional');
+  assert.equal(checked.validation.normalized.map.leaderRouting, 'auto');
+  assert.equal(checked.validation.normalized.map.calloutDistribution, 'auto');
+
+  const guide = regionalAgentGuide('russia');
+  assert.equal(guide.recipe, 'map.regional');
+  assert.deepEqual(guide.minimalMap, { regionSet: 'russia' });
+  assert.ok(guide.automaticByDefault.includes('leader routing'));
+
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-'));
+  const output = path.join(tempDir, 'regional.html');
+  const result = renderRegionalBreakdown(specPath, output, { diagnose: false });
+  assert.equal(result.workflow, 'regional-breakdown');
+  assert.equal(result.review.valid, true);
+  assert.equal(result.diagnostics.status, 'not-run');
+  assert.equal(fs.existsSync(output), true);
+  assert.equal(fs.existsSync(path.join(tempDir, 'regional.png')), false);
+  fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('regional workflow rejects non-map recipes', () => {
+  assert.throws(
+    () => validateRegionalSpec(path.join(examplesDir, 'ai95-price-spike.json')),
+    /only accepts recipe "map\.regional"/
+  );
 });
 
 test('renderer writes a reviewable chart file', () => {
