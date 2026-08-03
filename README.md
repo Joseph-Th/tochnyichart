@@ -1,4 +1,4 @@
-# Tochnyi Charts v2.11.0
+# Tochnyi Charts v2.11.1
 
 Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
 
@@ -207,10 +207,11 @@ Use `map.leaderRouting = "direct"` for sparse maps or `"lanes"` to force the
 collision-resistant layout.
 
 Data-focused map views also use visual centering. `map.viewportAlignment =
-"auto"` keeps the active-region zoom but applies a restrained bias toward the
-overall region-set center when the surrounding geography would otherwise crowd
-one side of the callout columns. Use `"data"` for mathematically exact data-bound
-centering or `"context"` to center fully on the region-set footprint.
+"auto"` keeps the active-region zoom, measures the visible rendered geography,
+and iteratively equalizes the whitespace on both sides of the map canvas. This
+uses the actual projected footprint rather than an approximate geographic-center
+bias. Use `"data"` for mathematically exact data-bound centering or `"context"`
+to center fully on the region-set footprint.
 
 ## Project structure
 

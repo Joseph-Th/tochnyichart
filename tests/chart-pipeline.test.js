@@ -204,8 +204,9 @@ test('regional map planning focuses on active data and omits inactive detached r
   assert.ok(plan.excludedRegionIds.includes('RU-KGD'));
   assert.ok(plan.geoBounds.left < 31);
   assert.ok(plan.geoBounds.right > 122);
-  assert.equal(plan.viewportAlignment, 'balanced');
-  assert.ok(plan.centerShiftLongitude > 0);
+  assert.equal(plan.viewportAlignment, 'auto');
+  assert.equal(plan.visualCentering, true);
+  assert.equal(plan.centerShiftLongitude, 0);
 
   const kaliningradPlan = TochnyiMaps.resolveMapPlan(
     { viewport: 'auto', excludeRegions: [] },
@@ -232,6 +233,47 @@ test('regional map viewport centering balances data and surrounding geography', 
 
   const contextCentered = TochnyiMaps.balanceViewportCenter(viewport, data, context, 'context');
   assert.equal((contextCentered.left + contextCentered.right) / 2, 100);
+});
+
+test('regional map visual centering corrects the rendered footprint rather than only geographic bounds', () => {
+  const feature = {
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[10, 10], [30, 10], [30, 20], [10, 20], [10, 10]]]
+    }
+  };
+  const projected = TochnyiMaps.projectedFeatureBounds(
+    [feature],
+    ({ longitude, latitude }) => ({ x: longitude * 4 + 120, y: latitude * 3 }),
+    { width: 400, height: 200 }
+  );
+  assert.equal(projected.left, 160);
+  assert.equal(projected.right, 240);
+  assert.equal(projected.centerX, 200);
+
+  const offCenter = { ...projected, left: 210, right: 290, centerX: 250 };
+  const correction = TochnyiMaps.correctViewportCenter(
+    { left: 20, right: 120, bottom: 40, top: 70, longitudeSpan: 100, latitudeSpan: 30 },
+    offCenter,
+    400,
+    4,
+    { tolerance: 1 }
+  );
+  assert.equal(correction.pixelShift, -50);
+  assert.equal(correction.longitudeShift, 12.5);
+  assert.equal(correction.geoBounds.left, 32.5);
+  assert.equal(correction.geoBounds.right, 132.5);
+});
+
+test('regional map visual centering ignores negligible edge fragments', () => {
+  const weights = new Array(100).fill(0);
+  weights[0] = 1;
+  weights[99] = 1;
+  for (let index = 20; index <= 79; index += 1) weights[index] = 20;
+  const bounds = TochnyiMaps.visualBoundsFromColumnWeights(weights, 500, 0.005);
+  assert.ok(bounds.left >= 95 && bounds.left <= 105);
+  assert.ok(bounds.right >= 395 && bounds.right <= 405);
+  assert.equal(bounds.centerX, 250);
 });
 
 test('regional map specs validate known regions and load map tooling', () => {
