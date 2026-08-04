@@ -2,87 +2,98 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Clustered 03",
-  "subtitle": "A tight random geographic cluster stresses adjacent polygons and parallel leaders.",
+  "subtitle": "Adversarial clusters force near-parallel leaders through adjacent polygons.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Stavropol",
-      "regionId": "RU-STA",
-      "status": "improving",
-      "displayValue": "23 units",
+      "label": "Chukotka",
+      "regionId": "RU-CHU",
+      "status": "critical",
+      "displayValue": "7 units",
       "detail": "Clustered sample 3, anchor 1."
     },
     {
-      "label": "Astrakhan",
-      "regionId": "RU-AST",
+      "label": "Zabaykalsky",
+      "regionId": "RU-ZAB",
       "status": "improving",
-      "displayValue": "12 units",
+      "displayValue": "17 units",
       "detail": "Clustered sample 3, anchor 2."
     },
     {
-      "label": "Orenburg",
-      "regionId": "RU-ORE",
-      "status": "blocked",
-      "displayValue": "33 units",
+      "label": "Yevrey",
+      "regionId": "RU-YEV",
+      "status": "strained",
+      "displayValue": "19 units",
       "detail": "Clustered sample 3, anchor 3."
     },
     {
-      "label": "Samara",
-      "regionId": "RU-SAM",
-      "status": "blocked",
-      "displayValue": "31 units",
+      "label": "Kamchatka",
+      "regionId": "RU-KAM",
+      "status": "strained",
+      "displayValue": "17 units",
       "detail": "Clustered sample 3, anchor 4."
     },
     {
-      "label": "Dagestan",
-      "regionId": "RU-DA",
-      "status": "critical",
-      "displayValue": "16 units",
+      "label": "Magadan",
+      "regionId": "RU-MAG",
+      "status": "improving",
+      "displayValue": "13 units",
       "detail": "Clustered sample 3, anchor 5."
     },
     {
-      "label": "Rostov",
-      "regionId": "RU-ROS",
-      "status": "blocked",
-      "displayValue": "36 units",
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "improving",
+      "displayValue": "25 units",
       "detail": "Clustered sample 3, anchor 6."
     },
     {
-      "label": "Bashkortostan",
-      "regionId": "RU-BA",
-      "status": "unknown",
-      "displayValue": "14 units",
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "stable",
+      "displayValue": "36 units",
       "detail": "Clustered sample 3, anchor 7."
     },
     {
-      "label": "Volgograd",
-      "regionId": "RU-VGG",
-      "status": "improving",
-      "displayValue": "37 units",
+      "label": "Sakha",
+      "regionId": "RU-SA",
+      "status": "unknown",
+      "displayValue": "23 units",
       "detail": "Clustered sample 3, anchor 8."
     },
     {
-      "label": "Voronezh",
-      "regionId": "RU-VOR",
-      "status": "stable",
-      "displayValue": "12 units",
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "strained",
+      "displayValue": "25 units",
       "detail": "Clustered sample 3, anchor 9."
+    },
+    {
+      "label": "Khabarovsk",
+      "regionId": "RU-KHA",
+      "status": "stable",
+      "displayValue": "18 units",
+      "detail": "Clustered sample 3, anchor 10."
     }
   ],
   "map": {
-    "regionSet": "russia"
+    "regionSet": "russia",
+    "viewport": "all",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports"
   },
   "primaryMetric": {
-    "value": "9 regions",
+    "value": "10 regions",
     "label": "clustered routing sample"
   },
   "supportingFacts": [
     {
-      "value": "4",
+      "value": "1",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
@@ -105,7 +116,7 @@
     "slug": "regional-routing-clustered-03",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "A tight random geographic cluster stresses adjacent polygons and parallel leaders."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial clusters force near-parallel leaders through adjacent polygons."
   }
 }

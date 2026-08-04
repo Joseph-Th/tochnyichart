@@ -2,87 +2,98 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Clustered 02",
-  "subtitle": "A tight random geographic cluster stresses adjacent polygons and parallel leaders.",
+  "subtitle": "Adversarial clusters force near-parallel leaders through adjacent polygons.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Novgorod",
-      "regionId": "RU-NGR",
-      "status": "stable",
-      "displayValue": "24 units",
+      "label": "Dagestan",
+      "regionId": "RU-DA",
+      "status": "unknown",
+      "displayValue": "9 units",
       "detail": "Clustered sample 2, anchor 1."
     },
     {
-      "label": "Pskov",
-      "regionId": "RU-PSK",
-      "status": "strained",
-      "displayValue": "5 units",
+      "label": "Samara",
+      "regionId": "RU-SAM",
+      "status": "unknown",
+      "displayValue": "28 units",
       "detail": "Clustered sample 2, anchor 2."
     },
     {
-      "label": "St. Petersburg",
-      "regionId": "RU-SPE",
-      "status": "unknown",
-      "displayValue": "32 units",
+      "label": "Saratov",
+      "regionId": "RU-SAR",
+      "status": "strained",
+      "displayValue": "6 units",
       "detail": "Clustered sample 2, anchor 3."
     },
     {
-      "label": "Arkhangelsk",
-      "regionId": "RU-ARK",
-      "status": "strained",
-      "displayValue": "13 units",
+      "label": "Rostov",
+      "regionId": "RU-ROS",
+      "status": "critical",
+      "displayValue": "17 units",
       "detail": "Clustered sample 2, anchor 4."
     },
     {
-      "label": "Smolensk",
-      "regionId": "RU-SMO",
-      "status": "strained",
-      "displayValue": "13 units",
+      "label": "Volgograd",
+      "regionId": "RU-VGG",
+      "status": "critical",
+      "displayValue": "25 units",
       "detail": "Clustered sample 2, anchor 5."
     },
     {
-      "label": "Yaroslavl",
-      "regionId": "RU-YAR",
-      "status": "improving",
-      "displayValue": "18 units",
+      "label": "Astrakhan",
+      "regionId": "RU-AST",
+      "status": "critical",
+      "displayValue": "15 units",
       "detail": "Clustered sample 2, anchor 6."
     },
     {
-      "label": "Moskva",
-      "regionId": "RU-MOS",
-      "status": "blocked",
-      "displayValue": "11 units",
+      "label": "Ulyanovsk",
+      "regionId": "RU-ULY",
+      "status": "strained",
+      "displayValue": "28 units",
       "detail": "Clustered sample 2, anchor 7."
     },
     {
-      "label": "Moscow City",
-      "regionId": "RU-MOW",
+      "label": "Voronezh",
+      "regionId": "RU-VOR",
       "status": "unknown",
-      "displayValue": "25 units",
+      "displayValue": "35 units",
       "detail": "Clustered sample 2, anchor 8."
     },
     {
-      "label": "Tver",
-      "regionId": "RU-TVE",
+      "label": "Orenburg",
+      "regionId": "RU-ORE",
       "status": "unknown",
-      "displayValue": "22 units",
+      "displayValue": "14 units",
       "detail": "Clustered sample 2, anchor 9."
+    },
+    {
+      "label": "Stavropol",
+      "regionId": "RU-STA",
+      "status": "improving",
+      "displayValue": "7 units",
+      "detail": "Clustered sample 2, anchor 10."
     }
   ],
   "map": {
-    "regionSet": "russia"
+    "regionSet": "russia",
+    "viewport": "all",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports"
   },
   "primaryMetric": {
-    "value": "9 regions",
+    "value": "10 regions",
     "label": "clustered routing sample"
   },
   "supportingFacts": [
     {
-      "value": "1",
+      "value": "3",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
@@ -105,7 +116,7 @@
     "slug": "regional-routing-clustered-02",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "A tight random geographic cluster stresses adjacent polygons and parallel leaders."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial clusters force near-parallel leaders through adjacent polygons."
   }
 }

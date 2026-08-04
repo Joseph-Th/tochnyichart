@@ -1,0 +1,274 @@
+{
+  "generatedAt": "2026-08-04T01:11:55.712Z",
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "viewport": {
+    "width": 1600,
+    "height": 900
+  },
+  "captures": [
+    {
+      "html": "charts\\2026-week-32\\regional-routing-clustered-01.html",
+      "preview": "previews\\regional-routing-clustered-01.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 314100,
+      "sha256": "37f599c0293520a91583b1ec1d73a85b9eb869bbaf921d85f7d8ad13f0fdc293",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 60,
+          "objectsChecked": 14,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-clustered-02.html",
+      "preview": "previews\\regional-routing-clustered-02.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 299070,
+      "sha256": "3230f04772bf828170e72a1e41e6766664b4a70c04f2768132a7ad570bbf54f8",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 51,
+          "objectsChecked": 12,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-clustered-03.html",
+      "preview": "previews\\regional-routing-clustered-03.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 281757,
+      "sha256": "18a96317cf95ce5dd6098cabd50ced7d4661b63142268f5a4a1ae8e736399caa",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 52,
+          "objectsChecked": 12,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-dense-01.html",
+      "preview": "previews\\regional-routing-dense-01.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 310042,
+      "sha256": "880d2cc281563474c520630ee7f4552f549622d515ae79eae8b9d2af3029d238",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 59,
+          "objectsChecked": 14,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-dense-02.html",
+      "preview": "previews\\regional-routing-dense-02.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 322659,
+      "sha256": "6fe0e0358b06168c6c7c279a98f50f4ed52b63fc83b00f039acd1deb3824f64e",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 61,
+          "objectsChecked": 14,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-dense-03.html",
+      "preview": "previews\\regional-routing-dense-03.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 291293,
+      "sha256": "cb53df73001a8299b05ee68ae69eef32a10a13e0e5baebf1d9fc6d6b9764572d",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 60,
+          "objectsChecked": 14,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-edge-01.html",
+      "preview": "previews\\regional-routing-edge-01.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 276095,
+      "sha256": "ed99e8224ff2253e278b94cf0d8dd77f49f3fd1ffeace60ba9034b9f67e059bc",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 52,
+          "objectsChecked": 12,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-edge-02.html",
+      "preview": "previews\\regional-routing-edge-02.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 277269,
+      "sha256": "c4cdb089bff98aff30f845e206c05dd33a5d85bfe1fd30a1eca1330521a4e5be",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 52,
+          "objectsChecked": 12,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-edge-03.html",
+      "preview": "previews\\regional-routing-edge-03.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 277602,
+      "sha256": "66d22509536d0f938f09054245f4d2f4a75b39f02f252e86b6cd8143879dfb99",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 53,
+          "objectsChecked": 12,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-marginal-01.html",
+      "preview": "previews\\regional-routing-marginal-01.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 227908,
+      "sha256": "8c9ec2a82a526a31ee23a377c610d2489db9a6e5db60dd62d8f9372618db246a",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 29,
+          "objectsChecked": 7,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-marginal-02.html",
+      "preview": "previews\\regional-routing-marginal-02.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 216016,
+      "sha256": "bdefc137237865993da4968a5ef2f4b291db835b669d722fcc512c7e48930bb7",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 26,
+          "objectsChecked": 6,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    },
+    {
+      "html": "charts\\2026-week-32\\regional-routing-marginal-03.html",
+      "preview": "previews\\regional-routing-marginal-03.png",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "bytes": 234283,
+      "sha256": "231e7285ca44aa2f503dd303cc32c3ee4c6f347c8d93d63656a68902406915e6",
+      "diagnostics": {
+        "version": "1.0",
+        "status": "pass",
+        "summary": {
+          "labelsChecked": 30,
+          "objectsChecked": 7,
+          "marksChecked": 0,
+          "errors": 0,
+          "warnings": 0
+        },
+        "issues": []
+      }
+    }
+  ]
+}

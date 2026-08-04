@@ -2,52 +2,63 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Marginal 03",
-  "subtitle": "Low-count random coverage checks whether sparse leaders stay short and readable.",
+  "subtitle": "Adversarial sparse sets stress near-card attachments and neighboring polygons.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Saratov",
-      "regionId": "RU-SAR",
-      "status": "critical",
-      "displayValue": "4 units",
+      "label": "Nenets",
+      "regionId": "RU-NEN",
+      "status": "improving",
+      "displayValue": "9 units",
       "detail": "Marginal sample 3, anchor 1."
     },
     {
-      "label": "Chechnya",
-      "regionId": "RU-CE",
-      "status": "critical",
-      "displayValue": "22 units",
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "stable",
+      "displayValue": "32 units",
       "detail": "Marginal sample 3, anchor 2."
     },
     {
-      "label": "St. Petersburg",
-      "regionId": "RU-SPE",
-      "status": "improving",
-      "displayValue": "23 units",
+      "label": "Kamchatka",
+      "regionId": "RU-KAM",
+      "status": "stable",
+      "displayValue": "22 units",
       "detail": "Marginal sample 3, anchor 3."
     },
     {
-      "label": "Amur",
-      "regionId": "RU-AMU",
-      "status": "improving",
-      "displayValue": "17 units",
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "critical",
+      "displayValue": "19 units",
       "detail": "Marginal sample 3, anchor 4."
+    },
+    {
+      "label": "Magadan",
+      "regionId": "RU-MAG",
+      "status": "improving",
+      "displayValue": "7 units",
+      "detail": "Marginal sample 3, anchor 5."
     }
   ],
   "map": {
-    "regionSet": "russia"
+    "regionSet": "russia",
+    "viewport": "all",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "lanes"
   },
   "primaryMetric": {
-    "value": "4 regions",
+    "value": "5 regions",
     "label": "marginal routing sample"
   },
   "supportingFacts": [
     {
-      "value": "2",
+      "value": "1",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
@@ -70,7 +81,7 @@
     "slug": "regional-routing-marginal-03",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "Low-count random coverage checks whether sparse leaders stay short and readable."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial sparse sets stress near-card attachments and neighboring polygons."
   }
 }

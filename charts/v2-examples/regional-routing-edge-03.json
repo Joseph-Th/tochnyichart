@@ -2,77 +2,94 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Edge 03",
-  "subtitle": "Remote random regions stress full-context geography and map-edge routing.",
+  "subtitle": "Adversarial edge sets combine northern and far-eastern boundary regions.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Khabarovsk",
-      "regionId": "RU-KHA",
-      "status": "stable",
-      "displayValue": "8 units",
+      "label": "Zabaykalsky",
+      "regionId": "RU-ZAB",
+      "status": "improving",
+      "displayValue": "2 units",
       "detail": "Edge sample 3, anchor 1."
-    },
-    {
-      "label": "Sakha",
-      "regionId": "RU-SA",
-      "status": "blocked",
-      "displayValue": "16 units",
-      "detail": "Edge sample 3, anchor 2."
     },
     {
       "label": "Chukotka",
       "regionId": "RU-CHU",
       "status": "strained",
-      "displayValue": "10 units",
+      "displayValue": "27 units",
+      "detail": "Edge sample 3, anchor 2."
+    },
+    {
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "unknown",
+      "displayValue": "9 units",
       "detail": "Edge sample 3, anchor 3."
     },
     {
-      "label": "Dagestan",
-      "regionId": "RU-DA",
-      "status": "blocked",
-      "displayValue": "25 units",
+      "label": "Nenets",
+      "regionId": "RU-NEN",
+      "status": "critical",
+      "displayValue": "13 units",
       "detail": "Edge sample 3, anchor 4."
     },
     {
-      "label": "Zabaykalsky",
-      "regionId": "RU-ZAB",
+      "label": "Kamchatka",
+      "regionId": "RU-KAM",
       "status": "critical",
-      "displayValue": "12 units",
+      "displayValue": "23 units",
       "detail": "Edge sample 3, anchor 5."
     },
     {
-      "label": "Amur",
-      "regionId": "RU-AMU",
-      "status": "blocked",
-      "displayValue": "28 units",
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "critical",
+      "displayValue": "7 units",
       "detail": "Edge sample 3, anchor 6."
     },
     {
-      "label": "Krasnodar",
-      "regionId": "RU-KDA",
-      "status": "stable",
-      "displayValue": "16 units",
+      "label": "Sakha",
+      "regionId": "RU-SA",
+      "status": "improving",
+      "displayValue": "20 units",
       "detail": "Edge sample 3, anchor 7."
     },
     {
       "label": "Magadan",
       "regionId": "RU-MAG",
-      "status": "improving",
-      "displayValue": "16 units",
+      "status": "blocked",
+      "displayValue": "5 units",
       "detail": "Edge sample 3, anchor 8."
+    },
+    {
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "improving",
+      "displayValue": "18 units",
+      "detail": "Edge sample 3, anchor 9."
+    },
+    {
+      "label": "Khabarovsk",
+      "regionId": "RU-KHA",
+      "status": "stable",
+      "displayValue": "12 units",
+      "detail": "Edge sample 3, anchor 10."
     }
   ],
   "map": {
     "regionSet": "russia",
     "viewport": "all",
-    "landmass": "continental"
+    "landmass": "continental",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports"
   },
   "primaryMetric": {
-    "value": "8 regions",
+    "value": "10 regions",
     "label": "edge routing sample"
   },
   "supportingFacts": [
@@ -82,7 +99,7 @@
       "tone": "critical"
     },
     {
-      "value": "1",
+      "value": "3",
       "label": "dummy regions improving",
       "tone": "positive"
     }
@@ -100,7 +117,7 @@
     "slug": "regional-routing-edge-03",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "Remote random regions stress full-context geography and map-edge routing."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial edge sets combine northern and far-eastern boundary regions."
   }
 }

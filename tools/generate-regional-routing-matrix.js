@@ -51,12 +51,45 @@ const edgePool = Object.freeze([
   'RU-KHA', 'RU-PRI', 'RU-AMU', 'RU-ZAB', 'RU-KDA', 'RU-DA', 'RU-SA'
 ]);
 
+// Deliberately adversarial fixtures for routing QA. These keep the normal
+// four-category matrix shape while concentrating adjacent polygons, forcing
+// long west/east spans, and preserving the sparse Murmansk/Bryansk/Saratov
+// geometry that exposed the micro-lane and attachment edge cases.
+const adversarialRegionSets = Object.freeze({
+  dense: [
+    ['RU-MOW', 'RU-MOS', 'RU-TUL', 'RU-KLU', 'RU-TVE', 'RU-YAR', 'RU-SMO', 'RU-NGR', 'RU-PSK', 'RU-SPE', 'RU-LEN', 'RU-KRS'],
+    ['RU-VOR', 'RU-SAR', 'RU-ULY', 'RU-PNZ', 'RU-SAM', 'RU-ORE', 'RU-BA', 'RU-STA', 'RU-DA', 'RU-ROS', 'RU-VGG', 'RU-AST'],
+    ['RU-MUR', 'RU-NEN', 'RU-YAN', 'RU-CHU', 'RU-KAM', 'RU-MAG', 'RU-KHA', 'RU-PRI', 'RU-AMU', 'RU-ZAB', 'RU-SA', 'RU-KDA']
+  ],
+  marginal: [
+    ['RU-MUR', 'RU-ULY', 'RU-SAR', 'RU-BRY', 'RU-ME'],
+    ['RU-AD', 'RU-MOS', 'RU-NGR', 'RU-NIZ'],
+    ['RU-NEN', 'RU-MUR', 'RU-YAN', 'RU-KAM', 'RU-MAG']
+  ],
+  clustered: [
+    ['RU-MOW', 'RU-MOS', 'RU-TUL', 'RU-KLU', 'RU-TVE', 'RU-YAR', 'RU-NGR', 'RU-PSK', 'RU-SPE', 'RU-LEN', 'RU-SMO', 'RU-KRS'],
+    ['RU-DA', 'RU-STA', 'RU-ROS', 'RU-VGG', 'RU-AST', 'RU-SAR', 'RU-SAM', 'RU-ULY', 'RU-VOR', 'RU-ORE'],
+    ['RU-CHU', 'RU-KAM', 'RU-MAG', 'RU-PRI', 'RU-KHA', 'RU-AMU', 'RU-YEV', 'RU-ZAB', 'RU-SA', 'RU-YAN']
+  ],
+  edge: [
+    ['RU-MUR', 'RU-NEN', 'RU-YAN', 'RU-CHU', 'RU-KAM', 'RU-MAG', 'RU-KHA', 'RU-PRI', 'RU-AMU', 'RU-ZAB'],
+    ['RU-KDA', 'RU-DA', 'RU-SA', 'RU-CHU', 'RU-MUR', 'RU-MAG', 'RU-KAM', 'RU-YAN', 'RU-NEN', 'RU-KHA'],
+    ['RU-PRI', 'RU-KHA', 'RU-AMU', 'RU-ZAB', 'RU-SA', 'RU-MAG', 'RU-CHU', 'RU-KAM', 'RU-YAN', 'RU-NEN']
+  ]
+});
+
 function parseSeed() {
   const index = process.argv.indexOf('--seed');
   if (index < 0) return defaultSeed;
   const parsed = Number(process.argv[index + 1]);
   if (!Number.isInteger(parsed)) throw new Error('--seed requires an integer.');
   return parsed >>> 0;
+}
+
+function parseDifficulty() {
+  return process.argv.includes('--tough') || process.argv.includes('--adversarial')
+    ? 'adversarial'
+    : 'random';
 }
 
 function createRng(seed) {
@@ -107,7 +140,12 @@ function sampleFromPool(random, pool, count) {
   return shuffled(random, uniqueRegionIds(pool)).slice(0, count);
 }
 
-function categoryRegionIds(random, category) {
+function categoryRegionIds(random, category, sampleIndex, difficulty) {
+  if (difficulty === 'adversarial') {
+    const fixture = adversarialRegionSets[category]?.[sampleIndex];
+    if (!fixture) throw new Error(`Missing adversarial routing fixture for ${category} ${sampleIndex + 1}.`);
+    return shuffled(random, uniqueRegionIds(fixture));
+  }
   if (category === 'dense') {
     return sampleFromBuckets(random, clusterPools, randomInt(random, 9, 12));
   }
@@ -126,7 +164,15 @@ function categoryRegionIds(random, category) {
   throw new Error(`Unknown regional routing category: ${category}`);
 }
 
-function categoryDescription(category) {
+function categoryDescription(category, difficulty) {
+  if (difficulty === 'adversarial') {
+    return {
+      dense: 'Adversarial coverage packs adjacent and remote regions into crowded port lanes.',
+      marginal: 'Adversarial sparse sets stress near-card attachments and neighboring polygons.',
+      clustered: 'Adversarial clusters force near-parallel leaders through adjacent polygons.',
+      edge: 'Adversarial edge sets combine northern and far-eastern boundary regions.'
+    }[category];
+  }
   return {
     dense: 'Broad random coverage stresses balanced columns, ports, and obstacle avoidance.',
     marginal: 'Low-count random coverage checks whether sparse leaders stay short and readable.',
@@ -135,9 +181,9 @@ function categoryDescription(category) {
   }[category];
 }
 
-function buildSpec(random, category, sampleIndex, seed) {
+function buildSpec(random, category, sampleIndex, seed, difficulty) {
   const regionSet = TochnyiMaps.getRegionSet('russia');
-  const regionIds = categoryRegionIds(random, category);
+  const regionIds = categoryRegionIds(random, category, sampleIndex, difficulty);
   const items = regionIds.map((regionId, index) => {
     const name = regionSet.regions[regionId];
     const status = statusValues[randomInt(random, 0, statusValues.length - 1)];
@@ -152,17 +198,27 @@ function buildSpec(random, category, sampleIndex, seed) {
   const criticalCount = items.filter((item) => item.status === 'critical' || item.status === 'blocked').length;
   const improvingCount = items.filter((item) => item.status === 'improving').length;
   const slug = `regional-routing-${category}-${String(sampleIndex + 1).padStart(2, '0')}`;
+  // Keep every matrix case on the same full-country, north-up canvas. A
+  // data-focused viewport can make a compact sample look like the map has
+  // been reoriented, which is misleading when reviewing routing geometry.
   const map = category === 'edge'
-    ? { regionSet: 'russia', viewport: 'all', landmass: 'continental' }
-    : { regionSet: 'russia' };
+    ? { regionSet: 'russia', viewport: 'all', landmass: 'continental', summaryDisplay: 'hide', summaryPosition: 'none' }
+    : { regionSet: 'russia', viewport: 'all', summaryDisplay: 'hide', summaryPosition: 'none' };
+  if (difficulty === 'adversarial') {
+    map.leaderRouting = category === 'marginal'
+      ? sampleIndex === 1 ? 'direct' : 'lanes'
+      : 'ports';
+  }
+  const description = categoryDescription(category, difficulty);
+  const period = difficulty === 'adversarial' ? `Seed ${seed} / adversarial` : `Seed ${seed}`;
 
   return {
     version: '2.0',
     recipe: 'map.regional',
     title: `Synthetic Routing Matrix: ${category[0].toUpperCase()}${category.slice(1)} ${String(sampleIndex + 1).padStart(2, '0')}`,
-    subtitle: categoryDescription(category),
+    subtitle: description,
     date: '2026-08-03',
-    source: { name: 'Seeded synthetic routing matrix', period: `Seed ${seed}` },
+    source: { name: 'Seeded synthetic routing matrix', period },
     data: items,
     map,
     primaryMetric: {
@@ -179,14 +235,15 @@ function buildSpec(random, category, sampleIndex, seed) {
       slug,
       topic: 'synthetic regional routing matrix',
       country: 'Russia',
-      dataPeriod: `Seed ${seed}`,
-      keyFinding: categoryDescription(category)
+      dataPeriod: period,
+      keyFinding: description
     }
   };
 }
 
 function main() {
   const seed = parseSeed();
+  const difficulty = parseDifficulty();
   const categories = ['dense', 'marginal', 'clustered', 'edge'];
   const random = createRng(seed);
   fs.mkdirSync(specDirectory, { recursive: true });
@@ -195,13 +252,14 @@ function main() {
   const manifest = {
     seed,
     sampleCount,
+    difficulty,
     categories,
     charts: []
   };
 
   categories.forEach((category) => {
     for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
-      const spec = buildSpec(random, category, sampleIndex, seed);
+      const spec = buildSpec(random, category, sampleIndex, seed, difficulty);
       const specPath = path.join(specDirectory, `${spec.metadata.slug}.json`);
       const htmlPath = path.join(chartDirectory, `${spec.metadata.slug}.html`);
       fs.writeFileSync(specPath, `${JSON.stringify(spec, null, 2)}\n`, 'utf8');

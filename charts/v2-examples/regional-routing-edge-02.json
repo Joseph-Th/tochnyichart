@@ -2,88 +2,91 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Edge 02",
-  "subtitle": "Remote random regions stress full-context geography and map-edge routing.",
+  "subtitle": "Adversarial edge sets combine northern and far-eastern boundary regions.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Primorsky",
-      "regionId": "RU-PRI",
-      "status": "stable",
-      "displayValue": "6 units",
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "strained",
+      "displayValue": "10 units",
       "detail": "Edge sample 2, anchor 1."
     },
     {
       "label": "Kamchatka",
       "regionId": "RU-KAM",
-      "status": "unknown",
-      "displayValue": "13 units",
+      "status": "critical",
+      "displayValue": "37 units",
       "detail": "Edge sample 2, anchor 2."
     },
     {
-      "label": "Sakha",
-      "regionId": "RU-SA",
+      "label": "Khabarovsk",
+      "regionId": "RU-KHA",
       "status": "stable",
-      "displayValue": "23 units",
+      "displayValue": "11 units",
       "detail": "Edge sample 2, anchor 3."
     },
     {
-      "label": "Zabaykalsky",
-      "regionId": "RU-ZAB",
-      "status": "improving",
-      "displayValue": "29 units",
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "strained",
+      "displayValue": "25 units",
       "detail": "Edge sample 2, anchor 4."
     },
     {
-      "label": "Nenets",
-      "regionId": "RU-NEN",
+      "label": "Magadan",
+      "regionId": "RU-MAG",
       "status": "improving",
-      "displayValue": "3 units",
+      "displayValue": "10 units",
       "detail": "Edge sample 2, anchor 5."
     },
     {
       "label": "Dagestan",
       "regionId": "RU-DA",
-      "status": "blocked",
-      "displayValue": "9 units",
+      "status": "stable",
+      "displayValue": "20 units",
       "detail": "Edge sample 2, anchor 6."
+    },
+    {
+      "label": "Nenets",
+      "regionId": "RU-NEN",
+      "status": "strained",
+      "displayValue": "10 units",
+      "detail": "Edge sample 2, anchor 7."
     },
     {
       "label": "Chukotka",
       "regionId": "RU-CHU",
-      "status": "improving",
-      "displayValue": "19 units",
-      "detail": "Edge sample 2, anchor 7."
-    },
-    {
-      "label": "Amur",
-      "regionId": "RU-AMU",
       "status": "unknown",
-      "displayValue": "22 units",
+      "displayValue": "19 units",
       "detail": "Edge sample 2, anchor 8."
     },
     {
-      "label": "Yamalo-Nenets",
-      "regionId": "RU-YAN",
-      "status": "unknown",
-      "displayValue": "14 units",
+      "label": "Sakha",
+      "regionId": "RU-SA",
+      "status": "stable",
+      "displayValue": "17 units",
       "detail": "Edge sample 2, anchor 9."
     },
     {
       "label": "Krasnodar",
       "regionId": "RU-KDA",
-      "status": "blocked",
-      "displayValue": "10 units",
+      "status": "stable",
+      "displayValue": "14 units",
       "detail": "Edge sample 2, anchor 10."
     }
   ],
   "map": {
     "regionSet": "russia",
     "viewport": "all",
-    "landmass": "continental"
+    "landmass": "continental",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports"
   },
   "primaryMetric": {
     "value": "10 regions",
@@ -91,12 +94,12 @@
   },
   "supportingFacts": [
     {
-      "value": "2",
+      "value": "1",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
     {
-      "value": "3",
+      "value": "1",
       "label": "dummy regions improving",
       "tone": "positive"
     }
@@ -114,7 +117,7 @@
     "slug": "regional-routing-edge-02",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "Remote random regions stress full-context geography and map-edge routing."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial edge sets combine northern and far-eastern boundary regions."
   }
 }

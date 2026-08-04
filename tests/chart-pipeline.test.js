@@ -531,7 +531,7 @@ test('edge-port leaders curve around highlighted-region obstacles when a corrido
   assert.ok(routedCurveCount >= 2 && routedCurveCount <= 3,
     'obstacle detours should use no more than three smooth cubic sections');
   assert.equal((routed.path.match(/\sH\s/g) || []).length, 1);
-  assert.doesNotMatch(routed.path, /\s[LV]\s/);
+  assert.doesNotMatch(routed.path, /\s[LVQ]\s/);
   assert.ok(routed.cardStubLength >= 32);
   const cubicSegments = routed.path.split(' C ').slice(1).map((segment) => {
     const values = segment.split(/\s+/).slice(0, 6).map(Number);
@@ -585,6 +585,8 @@ test('edge-port leaders curve around highlighted-region obstacles when a corrido
   assert.equal(optionalSourceExit.collisionCount, 0);
   assert.equal(optionalSourceExit.sourceExitUsed, false,
     'the router must discard a source-exit waypoint when a simpler clear detour exists');
+  assert.doesNotMatch(optionalSourceExit.path, /\s[LVQ]\s/,
+    'obstacle fallback leaders must keep every visible turn cubic');
   assert.ok((optionalSourceExit.path.match(/\sC\s/g) || []).length <= 3,
     'optional source geometry must not add an extra curve section');
 
@@ -690,7 +692,23 @@ test('indexed regional markers deconflict nearby anchors with short local links'
   assert.ok(markers.some((marker) => marker.markerMoved));
 });
 
-test('regional map leaders use orthogonal geometry without arbitrary diagonals', () => {
+test('regional map leaders use smooth cubic geometry without square elbows', () => {
+  const microLane = TochnyiMaps.buildOrthogonalLeaderPath({
+    side: 'left',
+    point: { x: 320, y: 200 },
+    routeY: 205,
+    routeGap: 18,
+    laneIndex: 1,
+    sideCount: 4
+  }, {
+    mapEdgeX: 240,
+    cardX: 220,
+    endY: 210
+  });
+  assert.equal((microLane.path.match(/\sC\s/g) || []).length, 1,
+    'negligible lane offsets should collapse into one smooth card approach');
+  assert.match(microLane.path, / 220$/);
+
   const leftPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'left',
     point: { x: 520, y: 310 },
@@ -702,10 +720,10 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     cardX: 220,
     endY: 120
   });
-  assert.match(leftPath.path, /^M 520 310 H /);
-  assert.match(leftPath.path, / V 120 H 220$/);
-  assert.doesNotMatch(leftPath.path, /\sL\s/);
-  assert.equal((leftPath.path.match(/\sV\s/g) || []).length, 2);
+  assert.match(leftPath.path, /^M 520 310 C /);
+  assert.match(leftPath.path, / 302 120 H 220$/);
+  assert.doesNotMatch(leftPath.path, /\s[LVQ]\s/);
+  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 3);
   assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
   assert.ok(leftPath.fanX > leftPath.approachX && leftPath.fanX < 520);
   assert.equal(leftPath.routeY, 338);
@@ -721,8 +739,10 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     cardX: 980,
     endY: 450
   });
-  assert.doesNotMatch(rightPath.path, /\sL\s/);
-  assert.equal((rightPath.path.match(/\sV\s/g) || []).length, 2);
+  assert.match(rightPath.path, /^M 610 330 C /);
+  assert.match(rightPath.path, / 880 450 H 980$/);
+  assert.doesNotMatch(rightPath.path, /\s[LVQ]\s/);
+  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 3);
   assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
   assert.ok(rightPath.fanX > 610 && rightPath.fanX < rightPath.approachX);
   assert.equal(rightPath.routeY, 366);
@@ -737,7 +757,9 @@ test('regional map leaders use orthogonal geometry without arbitrary diagonals',
     cardX: 220,
     endY: 120
   });
-  assert.equal((directPath.path.match(/\sV\s/g) || []).length, 1);
+  assert.match(directPath.path, /^M 520 310 C /);
+  assert.doesNotMatch(directPath.path, /\s[LVQ]\s/);
+  assert.equal((directPath.path.match(/\sC\s/g) || []).length, 1);
 });
 
 test('regional map leader rendering preserves separation after routing', () => {
@@ -969,6 +991,35 @@ test('regional map static projection keeps antimeridian regions complete and in 
   assert.match(projection.path(east), /^M /);
 });
 
+test('regional maps are permanently north-up even when legacy orientation options are supplied', () => {
+  const rectangle = (left, bottom, right, top) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]]]
+    }
+  });
+  const features = [rectangle(30, 45, 40, 60)];
+  const baseline = TochnyiMaps.buildStaticProjection(features, { width: 500, height: 300 }, { padding: 10 });
+  const attemptedRotation = TochnyiMaps.buildStaticProjection(features, { width: 500, height: 300 }, {
+    padding: 10,
+    rotation: 90,
+    bearing: 90,
+    pitch: 35,
+    tilt: 35
+  });
+  assert.deepEqual(attemptedRotation.project({ longitude: 35, latitude: 52 }), baseline.project({ longitude: 35, latitude: 52 }));
+  assert.equal(attemptedRotation.rotation, 0);
+  assert.deepEqual(attemptedRotation.orientation, { rotation: 0, bearing: 0, pitch: 0, tilt: 0 });
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /data-map-orientation', 'north-up'/);
+  assert.match(runtime, /data-map-projection-rotation', '0'/);
+  assert.match(runtime, /setProperty\('transform', 'none', 'important'\)/);
+  assert.match(css, /\.tochnyi-map-stage,[\s\S]*?transform:\s*none\s*!important[\s\S]*?rotate:\s*none\s*!important/);
+});
+
 test('regional map continental mode keeps the largest connected landmass and removes islands', () => {
   const ring = (left, bottom, right, top) => [
     [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
@@ -1090,6 +1141,12 @@ test('regional map specs validate known regions and load map tooling', () => {
   result = validateSpec(invalidLeaderRouting);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
+
+  const invalidMapOrientation = loadExample('russia-regional-map.json');
+  invalidMapOrientation.map.rotation = 90;
+  result = validateSpec(invalidMapOrientation);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.rotation is not allowed')));
 
   const indexedLeaderRouting = loadExample('russia-regional-map.json');
   indexedLeaderRouting.map.leaderRouting = 'indexed';

@@ -1,6 +1,7 @@
 {
   "seed": 20260803,
   "sampleCount": 3,
+  "difficulty": "adversarial",
   "categories": [
     "dense",
     "marginal",
@@ -14,16 +15,18 @@
       "specPath": "charts/v2-examples/regional-routing-dense-01.json",
       "htmlPath": "charts/2026-week-32/regional-routing-dense-01.html",
       "regionIds": [
-        "RU-KHM",
-        "RU-SPE",
+        "RU-NGR",
         "RU-TUL",
+        "RU-PSK",
+        "RU-SMO",
+        "RU-MOW",
+        "RU-KRS",
+        "RU-LEN",
+        "RU-SPE",
+        "RU-MOS",
         "RU-YAR",
-        "RU-DA",
-        "RU-AMU",
-        "RU-OMS",
-        "RU-VGG",
-        "RU-PRI",
-        "RU-CHU"
+        "RU-KLU",
+        "RU-TVE"
       ]
     },
     {
@@ -32,18 +35,18 @@
       "specPath": "charts/v2-examples/regional-routing-dense-02.json",
       "htmlPath": "charts/2026-week-32/regional-routing-dense-02.html",
       "regionIds": [
-        "RU-MOS",
+        "RU-VGG",
+        "RU-SAR",
         "RU-VOR",
-        "RU-KGN",
-        "RU-MUR",
-        "RU-IRK",
-        "RU-SPE",
+        "RU-BA",
         "RU-AST",
-        "RU-PRI",
-        "RU-YAN",
+        "RU-PNZ",
+        "RU-STA",
+        "RU-SAM",
+        "RU-ORE",
+        "RU-ULY",
         "RU-DA",
-        "RU-LEN",
-        "RU-MAG"
+        "RU-ROS"
       ]
     },
     {
@@ -52,15 +55,18 @@
       "specPath": "charts/v2-examples/regional-routing-dense-03.json",
       "htmlPath": "charts/2026-week-32/regional-routing-dense-03.html",
       "regionIds": [
-        "RU-KYA",
-        "RU-ZAB",
-        "RU-SAR",
-        "RU-SPE",
-        "RU-TYU",
-        "RU-VOR",
+        "RU-PRI",
+        "RU-KHA",
+        "RU-MAG",
         "RU-CHU",
-        "RU-VGG",
-        "RU-PER"
+        "RU-YAN",
+        "RU-SA",
+        "RU-ZAB",
+        "RU-MUR",
+        "RU-KDA",
+        "RU-AMU",
+        "RU-NEN",
+        "RU-KAM"
       ]
     },
     {
@@ -69,11 +75,11 @@
       "specPath": "charts/v2-examples/regional-routing-marginal-01.json",
       "htmlPath": "charts/2026-week-32/regional-routing-marginal-01.html",
       "regionIds": [
-        "RU-MUR",
-        "RU-ULY",
-        "RU-SAR",
         "RU-BRY",
-        "RU-ME"
+        "RU-ME",
+        "RU-MUR",
+        "RU-SAR",
+        "RU-ULY"
       ]
     },
     {
@@ -82,9 +88,9 @@
       "specPath": "charts/v2-examples/regional-routing-marginal-02.json",
       "htmlPath": "charts/2026-week-32/regional-routing-marginal-02.html",
       "regionIds": [
+        "RU-NGR",
         "RU-AD",
         "RU-MOS",
-        "RU-NGR",
         "RU-NIZ"
       ]
     },
@@ -94,10 +100,11 @@
       "specPath": "charts/v2-examples/regional-routing-marginal-03.json",
       "htmlPath": "charts/2026-week-32/regional-routing-marginal-03.html",
       "regionIds": [
-        "RU-SAR",
-        "RU-CE",
-        "RU-SPE",
-        "RU-AMU"
+        "RU-NEN",
+        "RU-YAN",
+        "RU-KAM",
+        "RU-MUR",
+        "RU-MAG"
       ]
     },
     {
@@ -106,16 +113,18 @@
       "specPath": "charts/v2-examples/regional-routing-clustered-01.json",
       "htmlPath": "charts/2026-week-32/regional-routing-clustered-01.html",
       "regionIds": [
-        "RU-MOW",
-        "RU-MUR",
-        "RU-PSK",
         "RU-TUL",
-        "RU-LEN",
+        "RU-MOW",
+        "RU-PSK",
+        "RU-SPE",
+        "RU-YAR",
+        "RU-KRS",
         "RU-MOS",
-        "RU-KLU",
-        "RU-NGR",
+        "RU-LEN",
         "RU-TVE",
-        "RU-KRS"
+        "RU-NGR",
+        "RU-KLU",
+        "RU-SMO"
       ]
     },
     {
@@ -124,15 +133,16 @@
       "specPath": "charts/v2-examples/regional-routing-clustered-02.json",
       "htmlPath": "charts/2026-week-32/regional-routing-clustered-02.html",
       "regionIds": [
-        "RU-NGR",
-        "RU-PSK",
-        "RU-SPE",
-        "RU-ARK",
-        "RU-SMO",
-        "RU-YAR",
-        "RU-MOS",
-        "RU-MOW",
-        "RU-TVE"
+        "RU-DA",
+        "RU-SAM",
+        "RU-SAR",
+        "RU-ROS",
+        "RU-VGG",
+        "RU-AST",
+        "RU-ULY",
+        "RU-VOR",
+        "RU-ORE",
+        "RU-STA"
       ]
     },
     {
@@ -141,15 +151,16 @@
       "specPath": "charts/v2-examples/regional-routing-clustered-03.json",
       "htmlPath": "charts/2026-week-32/regional-routing-clustered-03.html",
       "regionIds": [
-        "RU-STA",
-        "RU-AST",
-        "RU-ORE",
-        "RU-SAM",
-        "RU-DA",
-        "RU-ROS",
-        "RU-BA",
-        "RU-VGG",
-        "RU-VOR"
+        "RU-CHU",
+        "RU-ZAB",
+        "RU-YEV",
+        "RU-KAM",
+        "RU-MAG",
+        "RU-PRI",
+        "RU-AMU",
+        "RU-SA",
+        "RU-YAN",
+        "RU-KHA"
       ]
     },
     {
@@ -158,16 +169,16 @@
       "specPath": "charts/v2-examples/regional-routing-edge-01.json",
       "htmlPath": "charts/2026-week-32/regional-routing-edge-01.html",
       "regionIds": [
-        "RU-SA",
-        "RU-KAM",
-        "RU-YAN",
-        "RU-ZAB",
-        "RU-MUR",
-        "RU-NEN",
-        "RU-KDA",
         "RU-PRI",
-        "RU-DA",
-        "RU-CHU"
+        "RU-MAG",
+        "RU-NEN",
+        "RU-MUR",
+        "RU-YAN",
+        "RU-KAM",
+        "RU-ZAB",
+        "RU-CHU",
+        "RU-AMU",
+        "RU-KHA"
       ]
     },
     {
@@ -176,15 +187,15 @@
       "specPath": "charts/v2-examples/regional-routing-edge-02.json",
       "htmlPath": "charts/2026-week-32/regional-routing-edge-02.html",
       "regionIds": [
-        "RU-PRI",
-        "RU-KAM",
-        "RU-SA",
-        "RU-ZAB",
-        "RU-NEN",
-        "RU-DA",
-        "RU-CHU",
-        "RU-AMU",
         "RU-YAN",
+        "RU-KAM",
+        "RU-KHA",
+        "RU-MUR",
+        "RU-MAG",
+        "RU-DA",
+        "RU-NEN",
+        "RU-CHU",
+        "RU-SA",
         "RU-KDA"
       ]
     },
@@ -194,14 +205,16 @@
       "specPath": "charts/v2-examples/regional-routing-edge-03.json",
       "htmlPath": "charts/2026-week-32/regional-routing-edge-03.html",
       "regionIds": [
-        "RU-KHA",
-        "RU-SA",
-        "RU-CHU",
-        "RU-DA",
         "RU-ZAB",
+        "RU-CHU",
+        "RU-PRI",
+        "RU-NEN",
+        "RU-KAM",
+        "RU-YAN",
+        "RU-SA",
+        "RU-MAG",
         "RU-AMU",
-        "RU-KDA",
-        "RU-MAG"
+        "RU-KHA"
       ]
     }
   ]

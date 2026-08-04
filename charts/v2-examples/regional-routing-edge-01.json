@@ -2,88 +2,91 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Edge 01",
-  "subtitle": "Remote random regions stress full-context geography and map-edge routing.",
+  "subtitle": "Adversarial edge sets combine northern and far-eastern boundary regions.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Sakha",
-      "regionId": "RU-SA",
-      "status": "stable",
-      "displayValue": "35 units",
+      "label": "Primorsky",
+      "regionId": "RU-PRI",
+      "status": "critical",
+      "displayValue": "29 units",
       "detail": "Edge sample 1, anchor 1."
     },
     {
-      "label": "Kamchatka",
-      "regionId": "RU-KAM",
-      "status": "unknown",
-      "displayValue": "16 units",
+      "label": "Magadan",
+      "regionId": "RU-MAG",
+      "status": "critical",
+      "displayValue": "33 units",
       "detail": "Edge sample 1, anchor 2."
-    },
-    {
-      "label": "Yamalo-Nenets",
-      "regionId": "RU-YAN",
-      "status": "improving",
-      "displayValue": "10 units",
-      "detail": "Edge sample 1, anchor 3."
-    },
-    {
-      "label": "Zabaykalsky",
-      "regionId": "RU-ZAB",
-      "status": "improving",
-      "displayValue": "25 units",
-      "detail": "Edge sample 1, anchor 4."
-    },
-    {
-      "label": "Murmansk",
-      "regionId": "RU-MUR",
-      "status": "improving",
-      "displayValue": "24 units",
-      "detail": "Edge sample 1, anchor 5."
     },
     {
       "label": "Nenets",
       "regionId": "RU-NEN",
+      "status": "stable",
+      "displayValue": "27 units",
+      "detail": "Edge sample 1, anchor 3."
+    },
+    {
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "blocked",
+      "displayValue": "37 units",
+      "detail": "Edge sample 1, anchor 4."
+    },
+    {
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
       "status": "unknown",
-      "displayValue": "21 units",
+      "displayValue": "27 units",
+      "detail": "Edge sample 1, anchor 5."
+    },
+    {
+      "label": "Kamchatka",
+      "regionId": "RU-KAM",
+      "status": "strained",
+      "displayValue": "10 units",
       "detail": "Edge sample 1, anchor 6."
     },
     {
-      "label": "Krasnodar",
-      "regionId": "RU-KDA",
+      "label": "Zabaykalsky",
+      "regionId": "RU-ZAB",
       "status": "strained",
-      "displayValue": "27 units",
+      "displayValue": "10 units",
       "detail": "Edge sample 1, anchor 7."
-    },
-    {
-      "label": "Primorsky",
-      "regionId": "RU-PRI",
-      "status": "blocked",
-      "displayValue": "4 units",
-      "detail": "Edge sample 1, anchor 8."
-    },
-    {
-      "label": "Dagestan",
-      "regionId": "RU-DA",
-      "status": "improving",
-      "displayValue": "11 units",
-      "detail": "Edge sample 1, anchor 9."
     },
     {
       "label": "Chukotka",
       "regionId": "RU-CHU",
-      "status": "unknown",
-      "displayValue": "25 units",
+      "status": "strained",
+      "displayValue": "30 units",
+      "detail": "Edge sample 1, anchor 8."
+    },
+    {
+      "label": "Amur",
+      "regionId": "RU-AMU",
+      "status": "stable",
+      "displayValue": "32 units",
+      "detail": "Edge sample 1, anchor 9."
+    },
+    {
+      "label": "Khabarovsk",
+      "regionId": "RU-KHA",
+      "status": "critical",
+      "displayValue": "9 units",
       "detail": "Edge sample 1, anchor 10."
     }
   ],
   "map": {
     "regionSet": "russia",
     "viewport": "all",
-    "landmass": "continental"
+    "landmass": "continental",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports"
   },
   "primaryMetric": {
     "value": "10 regions",
@@ -91,12 +94,12 @@
   },
   "supportingFacts": [
     {
-      "value": "1",
+      "value": "4",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
     {
-      "value": "4",
+      "value": "0",
       "label": "dummy regions improving",
       "tone": "positive"
     }
@@ -114,7 +117,7 @@
     "slug": "regional-routing-edge-01",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "Remote random regions stress full-context geography and map-edge routing."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial edge sets combine northern and far-eastern boundary regions."
   }
 }

@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-assets="../../lib/" data-assets-version="f205adbc8cf8">
+<html lang="en" data-assets="../../lib/" data-assets-version="fdec1c7550b4">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Remote random regions stress full-context geography and map-edge routing.">
+  <meta name="description" content="Adversarial edge sets combine northern and far-eastern boundary regions.">
   <title>Synthetic Routing Matrix: Edge 02</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../lib/tochnyi.css?v=f205adbc8cf8">
+  <link rel="stylesheet" href="../../lib/tochnyi.css?v=fdec1c7550b4">
   <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
   <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
 
   <script src="https://cdn.amcharts.com/lib/5/geodata/russiaLow.js"></script>
-  <script src="../../lib/tochnyi-maps.js?v=f205adbc8cf8"></script>
-  <script src="../../lib/tochnyi-map-runtime.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-maps.js?v=fdec1c7550b4"></script>
+  <script src="../../lib/tochnyi-map-runtime.js?v=fdec1c7550b4"></script>
   <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-  <script src="../../lib/tochnyi-charts.js?v=f205adbc8cf8"></script>
-  <script src="../../lib/tochnyi-visual-plan.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-charts.js?v=fdec1c7550b4"></script>
+  <script src="../../lib/tochnyi-visual-plan.js?v=fdec1c7550b4"></script>
 </head>
 <body>
   <div id="tochnyi-app"></div>
@@ -26,81 +26,81 @@
   "version": "2.0",
   "recipe": "map.regional",
   "title": "Synthetic Routing Matrix: Edge 02",
-  "subtitle": "Remote random regions stress full-context geography and map-edge routing.",
+  "subtitle": "Adversarial edge sets combine northern and far-eastern boundary regions.",
   "date": "2026-08-03",
   "source": {
     "name": "Seeded synthetic routing matrix",
-    "period": "Seed 20260803"
+    "period": "Seed 20260803 / adversarial"
   },
   "data": [
     {
-      "label": "Primorsky",
-      "regionId": "RU-PRI",
-      "status": "stable",
-      "displayValue": "6 units",
+      "label": "Yamalo-Nenets",
+      "regionId": "RU-YAN",
+      "status": "strained",
+      "displayValue": "10 units",
       "detail": "Edge sample 2, anchor 1."
     },
     {
       "label": "Kamchatka",
       "regionId": "RU-KAM",
-      "status": "unknown",
-      "displayValue": "13 units",
+      "status": "critical",
+      "displayValue": "37 units",
       "detail": "Edge sample 2, anchor 2."
     },
     {
-      "label": "Sakha",
-      "regionId": "RU-SA",
+      "label": "Khabarovsk",
+      "regionId": "RU-KHA",
       "status": "stable",
-      "displayValue": "23 units",
+      "displayValue": "11 units",
       "detail": "Edge sample 2, anchor 3."
     },
     {
-      "label": "Zabaykalsky",
-      "regionId": "RU-ZAB",
-      "status": "improving",
-      "displayValue": "29 units",
+      "label": "Murmansk",
+      "regionId": "RU-MUR",
+      "status": "strained",
+      "displayValue": "25 units",
       "detail": "Edge sample 2, anchor 4."
     },
     {
-      "label": "Nenets",
-      "regionId": "RU-NEN",
+      "label": "Magadan",
+      "regionId": "RU-MAG",
       "status": "improving",
-      "displayValue": "3 units",
+      "displayValue": "10 units",
       "detail": "Edge sample 2, anchor 5."
     },
     {
       "label": "Dagestan",
       "regionId": "RU-DA",
-      "status": "blocked",
-      "displayValue": "9 units",
+      "status": "stable",
+      "displayValue": "20 units",
       "detail": "Edge sample 2, anchor 6."
+    },
+    {
+      "label": "Nenets",
+      "regionId": "RU-NEN",
+      "status": "strained",
+      "displayValue": "10 units",
+      "detail": "Edge sample 2, anchor 7."
     },
     {
       "label": "Chukotka",
       "regionId": "RU-CHU",
-      "status": "improving",
-      "displayValue": "19 units",
-      "detail": "Edge sample 2, anchor 7."
-    },
-    {
-      "label": "Amur",
-      "regionId": "RU-AMU",
       "status": "unknown",
-      "displayValue": "22 units",
+      "displayValue": "19 units",
       "detail": "Edge sample 2, anchor 8."
     },
     {
-      "label": "Yamalo-Nenets",
-      "regionId": "RU-YAN",
-      "status": "unknown",
-      "displayValue": "14 units",
+      "label": "Sakha",
+      "regionId": "RU-SA",
+      "status": "stable",
+      "displayValue": "17 units",
       "detail": "Edge sample 2, anchor 9."
     },
     {
       "label": "Krasnodar",
       "regionId": "RU-KDA",
-      "status": "blocked",
-      "displayValue": "10 units",
+      "status": "stable",
+      "displayValue": "14 units",
       "detail": "Edge sample 2, anchor 10."
     }
   ],
@@ -108,14 +108,14 @@
     "regionSet": "russia",
     "viewport": "all",
     "landmass": "continental",
+    "summaryDisplay": "hide",
+    "summaryPosition": "none",
+    "leaderRouting": "ports",
     "callouts": "auto",
     "calloutDistribution": "auto",
-    "summaryPosition": "auto",
-    "summaryDisplay": "auto",
     "viewportAlignment": "auto",
     "contextFit": "auto",
     "anchorStyle": "auto",
-    "leaderRouting": "auto",
     "excludeRegions": []
   },
   "primaryMetric": {
@@ -124,12 +124,12 @@
   },
   "supportingFacts": [
     {
-      "value": "2",
+      "value": "1",
       "label": "critical or blocked dummy regions",
       "tone": "critical"
     },
     {
-      "value": "3",
+      "value": "1",
       "label": "dummy regions improving",
       "tone": "positive"
     }
@@ -151,8 +151,8 @@
     "slug": "regional-routing-edge-02",
     "topic": "synthetic regional routing matrix",
     "country": "Russia",
-    "dataPeriod": "Seed 20260803",
-    "keyFinding": "Remote random regions stress full-context geography and map-edge routing."
+    "dataPeriod": "Seed 20260803 / adversarial",
+    "keyFinding": "Adversarial edge sets combine northern and far-eastern boundary regions."
   },
   "measure": {
     "decimals": 0,
@@ -161,7 +161,7 @@
   },
   "references": []
 }</script>
-  <script src="../../lib/tochnyi-runtime.js?v=f205adbc8cf8"></script>
-  <script src="../../lib/tochnyi-diagnostics.js?v=f205adbc8cf8"></script>
+  <script src="../../lib/tochnyi-runtime.js?v=fdec1c7550b4"></script>
+  <script src="../../lib/tochnyi-diagnostics.js?v=fdec1c7550b4"></script>
 </body>
 </html>

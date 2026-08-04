@@ -67,6 +67,16 @@ body {
     max-width: 1360px;
 }
 
+/* Synthetic routing review boards use the full export canvas. */
+body.tochnyi-regional-matrix-page {
+    padding: 16px;
+}
+
+.tochnyi-chart.tochnyi-regional-matrix {
+    width: 100%;
+    max-width: 1600px;
+}
+
 /* ===== Header ===== */
 .tochnyi-header {
     display: flex;
@@ -933,6 +943,98 @@ body {
     width: 100%;
     height: 100%;
     overflow: visible;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #dfe5e9;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f6f9fa 0%, #eef3f5 100%);
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-amchart {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: auto;
+    height: auto;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-amchart.tochnyi-map-stage {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-header {
+    position: absolute;
+    top: 14px;
+    right: 20px;
+    left: 20px;
+    z-index: 6;
+    align-items: center;
+    margin: 0;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-header .tochnyi-logo {
+    height: 48px;
+    min-height: 0;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-title {
+    position: absolute;
+    top: 78px;
+    right: 20px;
+    left: 20px;
+    z-index: 6;
+    margin: 0;
+    text-align: left;
+    font-size: 34px;
+    line-height: 1;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-subtitle {
+    position: absolute;
+    top: 120px;
+    right: 20px;
+    left: 20px;
+    z-index: 6;
+    max-width: none;
+    margin: 0;
+    text-align: left;
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-bottom {
+    position: absolute;
+    right: 20px;
+    bottom: 10px;
+    left: 20px;
+    z-index: 6;
+    margin: 0;
+    padding: 0;
+    border-top: 0;
+    font-size: 12px;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-bottom .tochnyi-source,
+.tochnyi-regional-matrix .tochnyi-matrix-stage > .tochnyi-bottom .tochnyi-footer {
+    font-size: 12px;
+}
+
+.tochnyi-regional-matrix .tochnyi-matrix-stage .tochnyi-map-legend {
+    bottom: 40px;
+}
+
+/* Regional maps are always north-up; rotation, bearing, and tilt are forbidden. */
+.tochnyi-map-stage,
+.tochnyi-map-canvas,
+.tochnyi-map-geometry,
+.tochnyi-map-lines {
+    transform: none !important;
+    rotate: none !important;
 }
 
 .tochnyi-map-region {
