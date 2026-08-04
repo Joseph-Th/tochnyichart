@@ -14,14 +14,20 @@
       "value": 10,
       "displayValue": "10 ppm",
       "tone": "positive",
-      "annotation": "Equivalent to the 0.001% sulfur ceiling cited for modern engines."
+      "annotation": "Equivalent to the 0.001% sulfur ceiling cited for modern engines.",
+      "quantity": "sulfur concentration",
+      "scope": "diesel fuel sulfur specification",
+      "period": "July 2026"
     },
     {
       "label": "Fuel offered to farmers",
       "low": 3000,
       "high": 9000,
       "tone": "critical",
-      "annotation": "The proposed 0.3% to 0.9% range is 300 to 900 times the cited limit."
+      "annotation": "The proposed 0.3% to 0.9% range is 300 to 900 times the cited limit.",
+      "quantity": "sulfur concentration",
+      "scope": "diesel fuel sulfur specification",
+      "period": "July 2026"
     }
   ],
   "references": [
@@ -37,7 +43,8 @@
     "axisTitle": "Sulfur concentration",
     "decimals": 0,
     "baseline": "auto",
-    "scale": "logarithmic"
+    "scale": "logarithmic",
+    "quantity": "sulfur concentration"
   },
   "primaryMetric": {
     "value": "300×–900×",

@@ -1,31 +1,31 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.0",
   "recipes": [
     {
       "id": "comparison.change",
-      "purpose": "Show a before-and-after or two-point change.",
-      "data": "Exactly 2 labeled numeric values.",
+      "purpose": "Show a before-and-after change in one named quantity for one shared scope.",
+      "data": "Exactly 2 labeled numeric values with measure.quantity, matching scope, and explicit periods.",
       "bestFor": ["price moves", "year-over-year change", "before versus after"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
     {
       "id": "comparison.scenarios",
-      "purpose": "Compare actual, expected, previous, target, or alternative scenarios.",
-      "data": "2 to 5 labeled numeric values.",
+      "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period.",
+      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period.",
       "bestFor": ["expected versus actual", "policy choices", "benchmark comparisons"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
     {
       "id": "comparison.diverging",
-      "purpose": "Compare positive and negative changes around a visible zero line.",
-      "data": "2 to 10 labeled numeric changes; values may be positive or negative.",
+      "purpose": "Compare positive and negative changes in one named quantity for one shared scope and period.",
+      "data": "2 to 10 labeled numeric changes with measure.quantity and matching scope and period; values may be positive or negative.",
       "bestFor": ["financial metric changes", "gainers and losers", "mixed direction outcomes"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "comparison.range",
-      "purpose": "Show exact values, min-max intervals, and thresholds on one scale.",
-      "data": "2 to 8 items with value or low/high fields; benchmark is optional.",
+      "purpose": "Show exact values, min-max intervals, and thresholds for one named quantity on one scale.",
+      "data": "2 to 8 items with value or low/high fields, measure.quantity, and matching scope and period; benchmark is optional.",
       "bestFor": ["uncertainty ranges", "policy limits", "price ranges", "threshold breaches"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
@@ -72,15 +72,22 @@
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
     },
     {
+      "id": "story.facets",
+      "purpose": "Tell one coherent story with evidence measured in different units, scopes, or stages without pretending the values share an axis.",
+      "data": "2 to 8 facets with label, detail, and displayValue or value; group, icon, direction, status, and tone are optional.",
+      "bestFor": ["mixed-metric evidence", "cause-and-consequence stories", "strategic retreat", "operating model changes"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
+    },
+    {
       "id": "map.regional",
-      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards and complete national context.",
+      "purpose": "Show a geographic breakdown across named continental administrative regions with collision-managed callout cards.",
       "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
       "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
       "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
     },
     {
       "id": "headline.metric",
-      "purpose": "Lead with one primary number and compact supporting context.",
+      "purpose": "Lead with one primary number and a semantic number, progress, or pictogram treatment plus compact supporting context.",
       "data": "Exactly 1 labeled numeric value.",
       "bestFor": ["single decisive metric", "loss or gain", "headline statistic"],
       "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }

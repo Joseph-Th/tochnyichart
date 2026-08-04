@@ -43,7 +43,9 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.ok(orientation.boundary.implementation.includes('renderer/'));
   assert.equal(orientation.sharedContract.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(orientation.sharedContract.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(orientation.sharedContract.resources.storySelection, 'docs/story-selection.md');
   assert.equal(orientation.sharedContract.stages[0].id, 'verify-source');
+  assert.match(orientation.sharedContract.sharedScaleContract.sentenceTest, /Every mark encodes/);
   assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /simple comparison/i);
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
   assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
@@ -61,7 +63,9 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   const standard = standardAgentGuide();
   assert.equal(standard.workflow, 'standard-chart');
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'map.regional'), false);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'story.facets'), true);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
+  assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
   assert.deepEqual(standard.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
   assert.match(standard.waterfallContract.valueStatus, /reported/);
 
@@ -70,6 +74,8 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.deepEqual(regional.requiredDataItem, ['label', 'regionId or regionIds']);
   assert.ok(regional.automaticByDefault.includes('leader routing'));
   assert.ok(regional.neverAuthor.includes('coordinates or pixel positions'));
+  assert.deepEqual(regional.regionSet.nonContinentalRegionIds, ['RU-KGD', 'RU-SAK']);
+  assert.match(regional.authoringRule, /permanently omit Kaliningrad/i);
 });
 
 test('tool API manifest exposes a narrow chart-author surface', () => {
@@ -79,8 +85,10 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.equal(manifest.resources.schema, 'schemas/chart-spec.schema.json');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(manifest.resources.storySelection, 'docs/story-selection.md');
   assert.equal(fs.existsSync(path.join(root, manifest.resources.sourcePolicy)), true);
   assert.equal(fs.existsSync(path.join(root, manifest.resources.batchPolicy)), true);
+  assert.equal(fs.existsSync(path.join(root, manifest.resources.storySelection)), true);
   assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
   assert.equal(manifest.batchWorkflow.input, 'input.txt');
   assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
@@ -98,6 +106,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.escalation, /report an infrastructure issue/i);
   assert.deepEqual(manifest.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
   assert.match(manifest.waterfallContract.reconciliation, /reconcile/i);
+  assert.match(manifest.sharedScaleContract.rejectionRule, /story\.facets/);
 
   const guide = standardAgentGuide('russia');
   guide.selectionRules.forEach((entry) => {
@@ -112,10 +121,11 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.3');
+  assert.equal(manifest.version, '1.4');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(manifest.resources.storySelection, 'docs/story-selection.md');
   assert.equal(manifest.batchWorkflow.input, 'input.txt');
   assert.equal(manifest.batchWorkflow.presentation, 'charts/YYYY-week-WW/tochnyi-charts-YYYY-week-WW.pptx');
   assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);

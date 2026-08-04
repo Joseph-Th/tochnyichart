@@ -14,19 +14,28 @@
       "label": "Headline",
       "value": 0.6,
       "displayValue": "0.60%",
-      "tone": "neutral"
+      "tone": "neutral",
+      "quantity": "July-to-date consumer price increase",
+      "scope": "Russian consumer price basket",
+      "period": "14–20 July 2026"
     },
     {
       "label": "Gasoline",
       "value": 1.66,
       "displayValue": "1.66%",
-      "tone": "warning"
+      "tone": "warning",
+      "quantity": "July-to-date consumer price increase",
+      "scope": "Russian consumer price basket",
+      "period": "14–20 July 2026"
     },
     {
       "label": "Diesel",
       "value": 1.87,
       "displayValue": "1.87%",
-      "tone": "critical"
+      "tone": "critical",
+      "quantity": "July-to-date consumer price increase",
+      "scope": "Russian consumer price basket",
+      "period": "14–20 July 2026"
     }
   ],
   "references": [],
@@ -37,7 +46,8 @@
     "minimum": 0,
     "maximum": 2.3,
     "baseline": "explicit",
-    "scale": "linear"
+    "scale": "linear",
+    "quantity": "July-to-date consumer price increase"
   },
   "supportingFacts": [
     {

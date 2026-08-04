@@ -77,6 +77,7 @@ input.txt
 tool-api/
 docs/batch-workflow.md
 docs/agent-workflows.md
+docs/story-selection.md
 docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
@@ -164,6 +165,10 @@ argument.
 Check that:
 
 - The visual grammar matches the evidence and the selected recipe.
+- Every shared-axis comparison passes this literal sentence test: `Every mark
+  encodes [measure.quantity] for [data.scope] in [data.period].` If the words in
+  the brackets cannot stay the same for every mark, the values do not belong on
+  one scale.
 - Every displayed value is reported or transparently derived from compatible,
   same-scope inputs.
 - Qualifiers such as `more than`, `about`, and ranges remain visible; a bound is
@@ -171,6 +176,25 @@ Check that:
 - The title, labels, annotations, and axis describe what the marks actually
   encode.
 - A simpler recipe would not communicate the finding more honestly.
+- Composition charts retain a tangible absolute amount in `displayValue` when
+  the source provides one; percentages alone are not enough when real amounts
+  are known.
+- A single metric uses progress or pictogram treatment only when there is a real
+  denominator or population to encode. Decorative symbols without semantic
+  meaning are not acceptable.
+
+For `comparison.change`, `comparison.scenarios`, `comparison.diverging`, and
+`comparison.range`, the validator requires `measure.quantity`,
+`data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
+match the measure quantity exactly, scopes must match, and all non-change
+comparisons must share a period. Generic declarations such as `reported change`
+or `metric` are rejected because they hide unlike measures behind one axis.
+
+When several facts with different units, scopes, periods, or operational stages
+jointly carry the main argument, use `story.facets`. When the mixed-unit facts
+are secondary context, keep the primary chart simple and place them in
+`supportingFacts`. Do not normalize unrelated facts into percentages merely to
+make them look comparable.
 
 For `flow.waterfall`, require a real source-supported start-to-end bridge. The
 start, each change, and the ending value must share scope and period, reconcile
@@ -212,17 +236,18 @@ The guide returns recipe selection rules and a validated example path for each r
 
 | Finding shape | Recipe |
 | --- | --- |
-| One decisive number | `headline.metric` |
-| Two values showing change | `comparison.change` |
-| Actual, expected, prior, target, or alternatives | `comparison.scenarios` |
-| Directional changes around zero | `comparison.diverging` |
-| Min-max interval, limit, or threshold | `comparison.range` |
+| One decisive number; optionally a real progress or pictogram denominator | `headline.metric` |
+| Two periods of the same named quantity for the same scope | `comparison.change` |
+| Actual, expected, prior, target, or alternatives for one quantity, scope, and period | `comparison.scenarios` |
+| Positive and negative values of one quantity, scope, and period | `comparison.diverging` |
+| Min-max interval, limit, or threshold for one quantity, scope, and period | `comparison.range` |
 | Ordered time points | `trend.line` |
 | Exact parts of one total | `composition.stacked` |
 | Multi-part composition where shape matters | `composition.donut` |
 | Starting value, additions or losses, ending value | `flow.waterfall` |
 | Ranked categories with long labels | `ranking.horizontal` |
 | Categorical conditions by place or operation | `status.grid` |
+| One argument supported by mixed-unit or mixed-stage evidence | `story.facets` |
 
 Composable semantic features include:
 
@@ -230,6 +255,11 @@ Composable semantic features include:
 - `data[].annotation` for a concise explanation tied to a point.
 - `measure.scale = "logarithmic"` for positive values spanning orders of magnitude.
 - `supportingFacts` for context in a different unit.
+- `story.facets` when mixed-unit evidence is the main story rather than context.
+- `visual.type = "progress"` or `"pictogram"` for a headline metric with a
+  meaningful denominator or counted population.
+- `data[].displayValue` for the tangible amount in composition charts; the
+  renderer shows it together with the calculated share.
 
 Run:
 
@@ -268,7 +298,19 @@ A minimal regional specification contains:
 
 For a status map, `status`, `displayValue`, and `detail` are the clearest combination. Supported statuses are `stable`, `improving`, `strained`, `critical`, `blocked`, and `unknown`.
 
-Keep the map object minimal. Do not author coordinates, card positions, route points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library configuration. Russian regional maps always show the complete national outline, including detached regions. Partial framing, regional exclusion, and data-only zoom are not supported.
+Keep the map object minimal. Do not author coordinates, card positions, route
+points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library
+configuration. Russian regional maps always use the continental mainland
+silhouette. Kaliningrad and island fragments are permanently excluded from the
+map geometry and cannot be active map items. Use `story.facets`, `status.grid`,
+or another non-map recipe for detached-region evidence.
+
+Regional summary cards are permanently disabled. The callout cards carry the
+evidence, while the compact header, smaller watermark, and wide regional canvas
+reserve more room for the map. Automatic sparse routing preserves geographic
+card order and favors direct leaders; dense maps switch to crossing-aware ports.
+Region polygons are not treated as physical obstacles, so a clean direct leader
+may cross the map when that is the shortest readable path.
 
 Use a semantic override only when the story requires it:
 

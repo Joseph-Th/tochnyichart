@@ -106,6 +106,12 @@ correct. Inspect the rendered output and reject it if the visual grammar does
 not match the evidence, qualifiers are lost, values are falsely precise, or a
 reader must mentally reconstruct the takeaway.
 
+Before using any shared-axis comparison, complete this sentence literally:
+`Every mark encodes [measure.quantity] for [data.scope] in [data.period].` The
+validator requires those fields and rejects unlike quantities, scopes, and
+periods. Use `story.facets` when heterogeneous evidence jointly carries the main
+argument instead of forcing it onto one scale.
+
 Use `flow.waterfall` only for a source-supported start-to-end bridge whose
 same-scope values reconcile arithmetically. Do not infer an exact opening value
 from `more than`, `about`, or incomplete charges. When the bridge is uncertain,
@@ -193,7 +199,9 @@ node tool-api/chart.js review charts/<week>/<chart>.html \
 The chart-author contract is documented in
 [`docs/agent-workflows.md`](docs/agent-workflows.md). The source-enrichment,
 safe-derivation, research-order, and relevance rules are in
-[`docs/source-enrichment.md`](docs/source-enrichment.md). Regional routing
+[`docs/source-enrichment.md`](docs/source-enrichment.md). The shared-scale,
+mixed-evidence, composition-value, pictogram, and regional information-economy
+contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional routing
 internals are maintainer-only and documented in `docs/regional-routing.md`.
 
 Final weekly delivery uses `charts/YYYY-week-WW/`. The folder contains the
@@ -223,6 +231,12 @@ interesting, or useful only for making the chart look more complex.
 A simple two-value chart remains correct when the contrast itself is the full
 story. The objective is information density within one claim, not maximum data
 volume or visual novelty.
+
+“Both values are percentages” is not a valid comparison rule. Shared-axis marks
+must measure the same real-world quantity for the same scope. Composition charts
+should retain tangible absolute values in `displayValue`, and single headline
+metrics may use progress or pictogram treatments only when a real denominator
+or counted population exists.
 
 Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 
@@ -254,10 +268,29 @@ Every recipe has a validated fixture under [`specs/examples/`](specs/examples/).
     "period": "July 2026"
   },
   "data": [
-    { "label": "Before", "value": 70000, "displayValue": "70,000 rubles" },
-    { "label": "Latest", "value": 80000, "displayValue": "80,000 rubles", "tone": "critical" }
+    {
+      "label": "Before",
+      "quantity": "AI-95 wholesale price",
+      "scope": "Saint Petersburg commodity exchange AI-95 gasoline",
+      "period": "Before July 2026 spike",
+      "value": 70000,
+      "displayValue": "70,000 rubles"
+    },
+    {
+      "label": "Latest",
+      "quantity": "AI-95 wholesale price",
+      "scope": "Saint Petersburg commodity exchange AI-95 gasoline",
+      "period": "July 2026 peak",
+      "value": 80000,
+      "displayValue": "80,000 rubles",
+      "tone": "critical"
+    }
   ],
-  "measure": { "unit": "RUB/ton", "decimals": 0 },
+  "measure": {
+    "quantity": "AI-95 wholesale price",
+    "unit": "RUB/ton",
+    "decimals": 0
+  },
   "metadata": { "slug": "russia-ai95-price-spike-2026" }
 }
 ```
@@ -289,6 +322,9 @@ Regional data items need `label` and `regionId` or `regionIds`, plus at least on
 of `status`, `displayValue`, `detail`, or `value`. Author stable IDs, not
 coordinates. Leave automatic map layout and routing fields out of the spec;
 use only the documented semantic overrides when the story requires them.
+Russian regional maps use the continental mainland silhouette only. Kaliningrad
+and island fragments are excluded from the geometry and cannot be active map
+items; detached-region evidence must use a non-map recipe.
 
 ## Verification
 

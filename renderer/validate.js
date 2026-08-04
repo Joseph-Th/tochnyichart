@@ -26,22 +26,28 @@ const MAP_SUMMARY_DISPLAYS = new Set(['auto', 'show', 'hide']);
 const MAP_CALLOUT_DISTRIBUTIONS = new Set(['auto', 'geographic', 'balanced']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
 const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed']);
+const ICONS = new Set(['person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
+const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
+const SHARED_SCALE_RECIPES = new Set([
+  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range'
+]);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
-  'emphasis', 'primaryMetric', 'supportingFacts', 'note', 'narrative', 'options', 'metadata', 'map'
+  'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const DATA_KEYS = new Set([
-  'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'value', 'low', 'high',
+  'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
   'benchmark', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope'
 ]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
-const MEASURE_KEYS = new Set(['unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale']);
+const MEASURE_KEYS = new Set(['quantity', 'unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale']);
 const EMPHASIS_KEYS = new Set(['direction', 'value', 'displayValue', 'label', 'position']);
 const METRIC_KEYS = new Set(['value', 'label']);
 const FACT_KEYS = new Set(['value', 'label', 'tone']);
+const VISUAL_KEYS = new Set(['type', 'icon', 'total', 'filled', 'columns']);
 const NARRATIVE_KEYS = new Set(['frame', 'density', 'emphasis']);
 const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'animate', 'labelMode']);
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
@@ -166,6 +172,8 @@ function normalizeSpec(input) {
     ? spec.data.map((item) => isObject(item) ? ({
         ...item,
         label: typeof item.label === 'string' ? item.label.trim() : item.label,
+        ...(item.quantity !== undefined ? { quantity: typeof item.quantity === 'string' ? item.quantity.trim() : item.quantity } : {}),
+        ...(item.group !== undefined ? { group: typeof item.group === 'string' ? item.group.trim() : item.group } : {}),
         ...(item.id !== undefined ? { id: typeof item.id === 'string' ? item.id.trim() : item.id } : {}),
         ...(item.regionId !== undefined ? { regionId: typeof item.regionId === 'string' ? item.regionId.trim().toUpperCase() : item.regionId } : {}),
         ...(item.regionIds !== undefined ? {
@@ -227,6 +235,7 @@ function validateStructure(input, errors) {
   if (Array.isArray(input.supportingFacts)) {
     input.supportingFacts.forEach((fact, index) => rejectUnknownKeys(fact, FACT_KEYS, `supportingFacts[${index}]`, errors));
   }
+  if (isObject(input.visual)) rejectUnknownKeys(input.visual, VISUAL_KEYS, 'visual', errors);
   if (isObject(input.narrative)) rejectUnknownKeys(input.narrative, NARRATIVE_KEYS, 'narrative', errors);
   if (isObject(input.options)) rejectUnknownKeys(input.options, OPTION_KEYS, 'options', errors);
   if (isObject(input.metadata)) rejectUnknownKeys(input.metadata, METADATA_KEYS, 'metadata', errors);
@@ -256,6 +265,14 @@ function validateData(spec, errors, warnings) {
     if (item.displayValue !== undefined && (typeof item.displayValue !== 'string' || item.displayValue.length > 50)) {
       errors.push(`${path}.displayValue must be a string of 50 characters or fewer.`);
     }
+    if (item.group !== undefined && (typeof item.group !== 'string' || item.group.trim() === '' || item.group.length > 60)) {
+      errors.push(`${path}.group must be a non-empty string of 60 characters or fewer.`);
+    }
+    if (item.quantity !== undefined && (typeof item.quantity !== 'string' || item.quantity.trim().length < 3 || item.quantity.length > 80)) {
+      errors.push(`${path}.quantity must be a specific string of 3 to 80 characters.`);
+    }
+    if (item.icon !== undefined && !ICONS.has(item.icon)) errors.push(`${path}.icon is not supported.`);
+    if (item.direction !== undefined && !DIRECTIONS.has(item.direction)) errors.push(`${path}.direction is not supported.`);
     if (item.detail !== undefined && (typeof item.detail !== 'string' || item.detail.length > 180)) errors.push(`${path}.detail must be a string of 180 characters or fewer.`);
     if (item.annotation !== undefined && (typeof item.annotation !== 'string' || item.annotation.length > 120)) errors.push(`${path}.annotation must be a string of 120 characters or fewer.`);
     for (const key of ['period', 'scope']) {
@@ -382,6 +399,48 @@ function requireNumericValues(spec, errors) {
   });
 }
 
+const GENERIC_QUANTITY = /^(?:reported\s+)?(?:change|value|amount|metric|rate|level|index|percent(?:age)?|comparison|result|outcome)(?:\s+change)?$/i;
+
+function validateSharedScaleSemantics(spec, errors) {
+  if (!SHARED_SCALE_RECIPES.has(spec.recipe)) return;
+  const quantity = typeof spec.measure?.quantity === 'string' ? spec.measure.quantity.trim() : '';
+  if (!quantity) {
+    errors.push(`measure.quantity is required for ${spec.recipe}; name the single real-world quantity encoded by the shared scale.`);
+  } else if (GENERIC_QUANTITY.test(quantity) || /^(?:reported|h\d|q\d|annual|weekly|monthly)\s+change$/i.test(quantity)) {
+    errors.push('measure.quantity is too generic. Name the measured quantity, such as "net income", "seller registrations", or "share of grain exports".');
+  }
+
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  const scopes = [];
+  data.forEach((item, index) => {
+    if (typeof item?.quantity !== 'string' || !item.quantity.trim()) {
+      errors.push(`data[${index}].quantity is required for ${spec.recipe}.`);
+    } else if (quantity && normalizeEditorialValue(item.quantity) !== normalizeEditorialValue(quantity)) {
+      errors.push(`data[${index}].quantity must match measure.quantity exactly. Use story.facets when items measure different things.`);
+    }
+    if (typeof item?.scope !== 'string' || !item.scope.trim()) {
+      errors.push(`data[${index}].scope is required for ${spec.recipe}; use the exact population, denominator, or measured system, not the chart topic.`);
+    } else {
+      scopes.push(normalizeEditorialValue(item.scope));
+    }
+    if (typeof item?.period !== 'string' || !item.period.trim()) {
+      errors.push(`data[${index}].period is required for ${spec.recipe}.`);
+    }
+  });
+  if (new Set(scopes).size > 1) {
+    errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Use story.facets or supportingFacts for evidence measured on a different population, denominator, or system.`);
+  }
+
+  if (spec.recipe !== 'comparison.change') {
+    const periods = data
+      .map((item) => typeof item?.period === 'string' ? normalizeEditorialValue(item.period) : '')
+      .filter(Boolean);
+    if (new Set(periods).size > 1) {
+      errors.push(`${spec.recipe} requires one shared period. Use comparison.change for before-and-after values or story.facets for mixed-period evidence.`);
+    }
+  }
+}
+
 function validateRecipe(spec, errors, warnings) {
   const count = Array.isArray(spec.data) ? spec.data.length : 0;
   const data = Array.isArray(spec.data) ? spec.data : [];
@@ -445,6 +504,15 @@ function validateRecipe(spec, errors, warnings) {
         if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for status.grid.`);
       });
       break;
+    case 'story.facets':
+      if (count < 2 || count > 8) errors.push('story.facets requires 2 to 8 evidence facets.');
+      data.forEach((item, index) => {
+        if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for story.facets.`);
+        if (item?.displayValue === undefined && (typeof item?.value !== 'number' || !Number.isFinite(item.value))) {
+          errors.push(`data[${index}] requires displayValue or value for story.facets.`);
+        }
+      });
+      break;
     case 'map.regional': {
       if (count < 1 || count > 12) errors.push('map.regional requires 1 to 12 data items.');
       const regionSet = TochnyiMaps.getRegionSet(spec.map?.regionSet);
@@ -500,18 +568,45 @@ function validateMeasure(spec, errors, warnings) {
   if (measure.axisTitle !== undefined && (typeof measure.axisTitle !== 'string' || measure.axisTitle.length > 80)) {
     errors.push('measure.axisTitle must be a string of 80 characters or fewer.');
   }
+  if (measure.quantity !== undefined && (typeof measure.quantity !== 'string' || measure.quantity.trim().length < 3 || measure.quantity.length > 80)) {
+    errors.push('measure.quantity must be a specific string of 3 to 80 characters.');
+  }
   for (const [key, max] of [['unit', 40], ['prefix', 12], ['suffix', 20]]) {
     if (measure[key] !== undefined && (typeof measure[key] !== 'string' || measure[key].length > max)) {
       errors.push(`measure.${key} must be a string of ${max} characters or fewer.`);
     }
   }
-  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'map.regional'].includes(spec.recipe)) {
+  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.facets', 'map.regional'].includes(spec.recipe)) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
     const data = Array.isArray(spec.data) ? spec.data : [];
     const values = data.flatMap((item) => [item?.value, item?.low, item?.high, item?.benchmark]).filter((value) => typeof value === 'number');
     if (values.some((value) => value <= 0)) errors.push('Logarithmic scale requires all plotted values to be greater than zero.');
+  }
+}
+
+function validateVisual(spec, errors) {
+  if (spec.visual === undefined) return;
+  if (!isObject(spec.visual)) {
+    errors.push('visual must be an object.');
+    return;
+  }
+  if (!VISUAL_TYPES.has(spec.visual.type)) errors.push('visual.type is not supported.');
+  if (spec.visual.icon !== undefined && !ICONS.has(spec.visual.icon)) errors.push('visual.icon is not supported.');
+  for (const key of ['total', 'filled', 'columns']) {
+    if (spec.visual[key] !== undefined && !Number.isInteger(spec.visual[key])) errors.push(`visual.${key} must be an integer.`);
+  }
+  if (spec.visual.total !== undefined && (spec.visual.total < 2 || spec.visual.total > 100)) errors.push('visual.total must be from 2 to 100.');
+  if (spec.visual.filled !== undefined && (spec.visual.filled < 0 || spec.visual.filled > 100)) errors.push('visual.filled must be from 0 to 100.');
+  if (spec.visual.columns !== undefined && (spec.visual.columns < 2 || spec.visual.columns > 20)) errors.push('visual.columns must be from 2 to 20.');
+  if (spec.visual.type === 'pictogram') {
+    if (spec.recipe !== 'headline.metric') errors.push('visual.type pictogram is only supported by headline.metric.');
+    if (!spec.visual.icon) errors.push('visual.icon is required for a pictogram.');
+    if (!spec.visual.total) errors.push('visual.total is required for a pictogram.');
+    if (spec.visual.filled !== undefined && spec.visual.total !== undefined && spec.visual.filled > spec.visual.total) {
+      errors.push('visual.filled cannot exceed visual.total.');
+    }
   }
 }
 
@@ -607,21 +702,31 @@ function validateMap(spec, errors) {
   if (!TochnyiMaps.getRegionSet(spec.map.regionSet)) errors.push(`map.regionSet must be one of: ${TochnyiMaps.regionSetIds.join(', ')}.`);
   if (!MAP_CALLOUTS.has(spec.map.callouts)) errors.push('map.callouts is not supported.');
   if (!MAP_CALLOUT_DISTRIBUTIONS.has(spec.map.calloutDistribution)) errors.push('map.calloutDistribution is not supported.');
-  if (!MAP_SUMMARY_POSITIONS.has(spec.map.summaryPosition)) errors.push('map.summaryPosition is not supported.');
-  if (!MAP_SUMMARY_DISPLAYS.has(spec.map.summaryDisplay)) errors.push('map.summaryDisplay is not supported.');
+  if (spec.map.summaryPosition !== 'none') errors.push('map.summaryPosition is renderer-owned and must be none; regional callout cards carry the evidence without a competing summary card.');
+  if (spec.map.summaryDisplay !== 'hide') errors.push('map.summaryDisplay is renderer-owned and must be hide.');
   if (!MAP_ANCHOR_STYLES.has(spec.map.anchorStyle)) errors.push('map.anchorStyle is not supported.');
   if (!MAP_LEADER_ROUTING.has(spec.map.leaderRouting)) errors.push('map.leaderRouting is not supported.');
   if (
     spec.map.viewport !== 'all' ||
     spec.map.viewportAlignment !== 'context' ||
     spec.map.contextFit !== 'all' ||
-    spec.map.landmass !== 'all'
+    spec.map.landmass !== 'continental'
   ) {
-    errors.push('map.regional must retain the complete national context; viewport, context fitting, and landmass selection are renderer-owned.');
+    errors.push('map.regional uses the renderer-owned continental national context; detached regions and island fragments are excluded by policy.');
   }
   if (!Array.isArray(spec.map.excludeRegions) || spec.map.excludeRegions.length !== 0) {
     errors.push('map.regional cannot exclude administrative regions from the national outline.');
   }
+  const regionSet = TochnyiMaps.getRegionSet(spec.map.regionSet);
+  const nonContinental = new Set(regionSet?.nonContinentalRegionIds || []);
+  (spec.data || []).forEach((item, index) => {
+    const regionIds = Array.isArray(item?.regionIds) ? item.regionIds : item?.regionId ? [item.regionId] : [];
+    regionIds.forEach((regionId) => {
+      if (nonContinental.has(regionId)) {
+        errors.push(`data[${index}] references ${regionId}, which is outside the supported continental regional map. Use a non-map story format for detached-region evidence.`);
+      }
+    });
+  });
 }
 
 function validateMetadata(spec, errors, warnings) {
@@ -723,7 +828,9 @@ function validateSpec(input) {
 
   validateData(spec, errors, warnings);
   validateRecipe(spec, errors, warnings);
+  validateSharedScaleSemantics(spec, errors);
   validateMeasure(spec, errors, warnings);
+  validateVisual(spec, errors);
   validateReferences(spec, errors, warnings);
   validateEmphasis(spec, errors);
   validateSupportingFacts(spec, errors, warnings);

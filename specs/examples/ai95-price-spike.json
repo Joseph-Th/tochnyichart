@@ -13,20 +13,27 @@
       "label": "Before the spike",
       "value": 70000,
       "displayValue": "70,000 rubles",
-      "tone": "primary"
+      "tone": "primary",
+      "quantity": "AI-95 wholesale price",
+      "scope": "St Petersburg commodity exchange AI-95 gasoline",
+      "period": "Before July 2026 spike"
     },
     {
       "label": "Current peak",
       "value": 80000,
       "displayValue": "over 80,000 rubles",
-      "tone": "critical"
+      "tone": "critical",
+      "quantity": "AI-95 wholesale price",
+      "scope": "St Petersburg commodity exchange AI-95 gasoline",
+      "period": "July 2026 peak"
     }
   ],
   "measure": {
     "unit": "RUB/ton",
     "axisTitle": "Rubles per ton of Ai-95 gasoline",
     "decimals": 0,
-    "baseline": "zero"
+    "baseline": "zero",
+    "quantity": "AI-95 wholesale price"
   },
   "emphasis": {
     "direction": "up",

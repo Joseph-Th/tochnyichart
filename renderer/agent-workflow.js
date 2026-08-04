@@ -10,6 +10,7 @@ const TOOL_API_RESOURCES = Object.freeze({
   schema: 'schemas/chart-spec.schema.json',
   catalog: 'recipes/catalog.json',
   examples: 'specs/examples/',
+  storySelection: 'docs/story-selection.md',
   batchPolicy: 'docs/batch-workflow.md',
   sourcePolicy: 'docs/source-enrichment.md'
 });
@@ -66,18 +67,30 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
 });
 
 const STANDARD_SELECTION_RULES = Object.freeze([
-  Object.freeze({ when: 'One decisive number', use: 'headline.metric', example: 'specs/examples/headline-metric.json' }),
-  Object.freeze({ when: 'Two values showing change', use: 'comparison.change', example: 'specs/examples/ai95-price-spike.json' }),
-  Object.freeze({ when: 'Actual, expected, prior, target, or alternatives', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
-  Object.freeze({ when: 'Changes need a visible zero line', use: 'comparison.diverging', example: 'specs/examples/severstal-diverging.json' }),
-  Object.freeze({ when: 'Values include a min-max interval or threshold', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
+  Object.freeze({ when: 'One decisive number; use progress or pictogram treatment when the denominator or counted population is meaningful', use: 'headline.metric', example: 'specs/examples/headline-metric.json' }),
+  Object.freeze({ when: 'Two values showing change in the same named quantity for the same scope', use: 'comparison.change', example: 'specs/examples/ai95-price-spike.json' }),
+  Object.freeze({ when: 'Actual, expected, prior, target, or alternatives for the same named quantity, scope, and period', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
+  Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
+  Object.freeze({ when: 'Values include a min-max interval or threshold for the same named quantity, scope, and period', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
   Object.freeze({ when: 'Ordered time points', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
   Object.freeze({ when: 'Exact parts of one total', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
   Object.freeze({ when: 'A source-supported exact start-to-end bridge with same-period, same-scope steps', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
   Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' }),
-  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' })
+  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' }),
+  Object.freeze({ when: 'One story is supported by evidence with different units, scopes, periods, or operational stages', use: 'story.facets', example: 'specs/examples/mixed-evidence-facets.json' })
 ]);
+
+const SHARED_SCALE_CONTRACT = Object.freeze({
+  sentenceTest: 'Before selecting a shared-axis comparison, complete this sentence: Every mark encodes [measure.quantity] for [data.scope] in [data.period].',
+  requiredFields: Object.freeze(['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']),
+  sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
+  sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
+  periodRule: 'Scenario, diverging, and range comparisons use one period. comparison.change may use two periods because time is the intended contrast.',
+  rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Use story.facets, supportingFacts, status.grid, composition, or separate charts.',
+  genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
+});
+
 
 const WATERFALL_CONTRACT = Object.freeze({
   useWhen: 'Only for one exact quantity changing through mutually exclusive, same-period, same-scope steps into a reported ending value.',
@@ -97,7 +110,10 @@ const COMPOSABLE_FEATURES = Object.freeze([
   Object.freeze({ need: 'Target, average, legal limit, or benchmark', add: 'references' }),
   Object.freeze({ need: 'Explain a specific point', add: 'data[].annotation' }),
   Object.freeze({ need: 'Values span orders of magnitude', add: 'measure.scale = logarithmic' }),
-  Object.freeze({ need: 'Important context uses different units', add: 'supportingFacts instead of another axis' })
+  Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts instead of another axis' }),
+  Object.freeze({ need: 'Several mixed-unit facts jointly carry the main story', add: 'story.facets instead of a shared axis' }),
+  Object.freeze({ need: 'A headline percentage has a meaningful denominator', add: 'visual.type = progress or pictogram' }),
+  Object.freeze({ need: 'A composition is expressed as percentages', add: 'data[].displayValue with the tangible absolute amount as well' })
 ]);
 
 const SHARED_AUTHORING_RULES = Object.freeze([
@@ -106,6 +122,10 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Treat input notes as routing information and read the full primary source before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
   'Search beyond the primary source only to fill a named material evidence gap, and reject adjacent context that does not strengthen the central claim.',
   'Do not add data or complexity merely to make the chart more visually interesting; a simple comparison may be the correct result.',
+  'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison recipe.',
+  'When mixed evidence carries the main story, use story.facets. When it is secondary context, use supportingFacts.',
+  'For composition charts, preserve both the share and the tangible absolute amount whenever the source provides both.',
+  'For a single percentage or count, prefer progress or pictogram treatment when it communicates a real denominator or population; otherwise use a plain number.',
   'Use flow.waterfall only when the strict waterfall contract is satisfied: every step is exact and reported, period and scope match, and the bridge reconciles.',
   'Keep the title, subtitle, labels, and details concise enough to survive responsive layouts.',
   'Revise the ChartSpec for data, copy, recipe, or semantic errors.',
@@ -183,6 +203,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
+    sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     composableFeatures: clone(COMPOSABLE_FEATURES),
     waterfallContract: clone(WATERFALL_CONTRACT),
@@ -224,7 +245,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] --no-diagnose`,
       screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
     },
-    authoringRule: 'Specify editorial content and stable region IDs. Russian maps always retain the complete national outline, including detached regions; framing and exclusion controls are not authorable.',
+    authoringRule: 'Specify editorial content and stable continental region IDs. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
     requiredDataItem: ['label', 'regionId or regionIds'],
     recommendedDataItem: ['status', 'displayValue', 'detail'],
@@ -244,6 +265,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       id: regionSet.id,
       label: regionSet.label,
       detachedRegionIds: regionSet.detachedRegionIds,
+      nonContinentalRegionIds: regionSet.nonContinentalRegionIds,
       regionCount: Object.keys(regionSet.regions).length
     }
   };
@@ -252,7 +274,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.3',
+    version: '1.4',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -280,6 +302,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       specPath: AUTHOR_SPEC_PATH,
       resources: clone(TOOL_API_RESOURCES),
       sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
+      sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
       waterfallContract: clone(WATERFALL_CONTRACT),
       stages: clone(SHARED_STAGES),
       authorOwns: [
@@ -308,7 +331,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     authoringRules: [...SHARED_AUTHORING_RULES],
     boundary: {
-      publicSurface: ['input.txt', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/YYYY-week-WW/', 'charts/', 'previews/'],
+      publicSurface: ['input.txt', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/YYYY-week-WW/', 'charts/', 'previews/'],
       implementation: ['renderer/', 'lib/', 'tests/', 'tools/'],
       rule: 'Chart authors stay on the public surface. Implementation directories are maintainer-only unless the user explicitly requests infrastructure work.'
     }
@@ -319,7 +342,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.3',
+    version: '1.4',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -340,6 +363,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     resources: clone(TOOL_API_RESOURCES),
     batchWorkflow: clone(BATCH_WORKFLOW),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
+    sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     waterfallContract: clone(WATERFALL_CONTRACT),
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
@@ -371,6 +395,7 @@ module.exports = {
   TOOL_API_RESOURCES,
   BATCH_WORKFLOW,
   SOURCE_ENRICHMENT_POLICY,
+  SHARED_SCALE_CONTRACT,
   WATERFALL_CONTRACT,
   toolApiManifest,
   agentWorkflowOrientation,

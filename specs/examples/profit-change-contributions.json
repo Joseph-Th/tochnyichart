@@ -1,0 +1,72 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.diverging",
+  "title": "Profit Drivers Pulled in Opposite Directions",
+  "subtitle": "Each bar measures its contribution to the same company-wide change in operating profit.",
+  "date": "2026-08-04",
+  "data": [
+    {
+      "label": "Higher prices",
+      "quantity": "contribution to operating profit change",
+      "scope": "company-wide operating profit bridge",
+      "period": "H1 2026",
+      "value": 18,
+      "displayValue": "+18bn RUB",
+      "tone": "positive"
+    },
+    {
+      "label": "Lower volume",
+      "quantity": "contribution to operating profit change",
+      "scope": "company-wide operating profit bridge",
+      "period": "H1 2026",
+      "value": -11,
+      "displayValue": "−11bn RUB",
+      "tone": "critical"
+    },
+    {
+      "label": "Higher costs",
+      "quantity": "contribution to operating profit change",
+      "scope": "company-wide operating profit bridge",
+      "period": "H1 2026",
+      "value": -8,
+      "displayValue": "−8bn RUB",
+      "tone": "warning"
+    },
+    {
+      "label": "FX effect",
+      "quantity": "contribution to operating profit change",
+      "scope": "company-wide operating profit bridge",
+      "period": "H1 2026",
+      "value": 4,
+      "displayValue": "+4bn RUB",
+      "tone": "primary"
+    }
+  ],
+  "measure": {
+    "quantity": "contribution to operating profit change",
+    "unit": "billion RUB",
+    "axisTitle": "Contribution to operating profit change",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "profit-change-contributions",
+    "topic": "same-unit diverging contributions",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "Positive and negative drivers are comparable because every bar is a contribution to the same profit bridge."
+  }
+}

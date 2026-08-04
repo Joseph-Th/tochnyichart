@@ -13,19 +13,28 @@
       "label": "Previous rate",
       "value": 14.5,
       "displayValue": "14.50%",
-      "tone": "neutral"
+      "tone": "neutral",
+      "quantity": "policy interest rate",
+      "scope": "Bank of Russia June 2026 rate decision",
+      "period": "June 2026 decision"
     },
     {
       "label": "Market expectation",
       "value": 14,
       "displayValue": "14.00%",
-      "tone": "secondary"
+      "tone": "secondary",
+      "quantity": "policy interest rate",
+      "scope": "Bank of Russia June 2026 rate decision",
+      "period": "June 2026 decision"
     },
     {
       "label": "Actual decision",
       "value": 14.25,
       "displayValue": "14.25%",
-      "tone": "primary"
+      "tone": "primary",
+      "quantity": "policy interest rate",
+      "scope": "Bank of Russia June 2026 rate decision",
+      "period": "June 2026 decision"
     }
   ],
   "measure": {
@@ -34,7 +43,8 @@
     "decimals": 2,
     "minimum": 13,
     "maximum": 15,
-    "baseline": "explicit"
+    "baseline": "explicit",
+    "quantity": "policy interest rate"
   },
   "emphasis": {
     "direction": "down",

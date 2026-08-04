@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "recipe": "comparison.diverging",
+  "recipe": "story.facets",
   "title": "Revenue Fell by a Seventh, Profit by Nine Tenths",
   "subtitle": "Severstal preserved most of its sales in the first half of 2026, but earnings deteriorated much faster as margins and cash generation collapsed.",
   "date": "2026-07-26",
@@ -13,27 +13,27 @@
       "label": "Revenue",
       "value": -14,
       "tone": "warning",
-      "annotation": "Sales declined, but the operating structure deteriorated much faster."
+      "direction": "down",
+      "icon": "trend",
+      "detail": "Sales declined, but the operating structure deteriorated much faster."
     },
     {
       "label": "EBITDA",
       "value": -46,
-      "tone": "critical"
+      "tone": "critical",
+      "direction": "down",
+      "icon": "trend",
+      "detail": "Reported result for ebitda."
     },
     {
       "label": "Net profit",
       "value": -89,
       "tone": "critical",
-      "annotation": "Net profit fell to 4.2 billion rubles."
+      "direction": "down",
+      "icon": "trend",
+      "detail": "Net profit fell to 4.2 billion rubles."
     }
   ],
-  "measure": {
-    "unit": "%",
-    "axisTitle": "Year-over-year change",
-    "decimals": 0,
-    "baseline": "zero",
-    "scale": "linear"
-  },
   "supportingFacts": [
     {
       "value": "−29.8 billion rubles",
@@ -49,7 +49,7 @@
   "narrative": {
     "frame": "divergence",
     "density": "editorial",
-    "emphasis": "direction"
+    "emphasis": "status"
   },
   "options": {
     "height": "standard",

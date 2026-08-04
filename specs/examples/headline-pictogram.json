@@ -1,0 +1,58 @@
+{
+  "version": "2.0",
+  "recipe": "headline.metric",
+  "title": "One in Ten Head-Office Roles Will Be Removed",
+  "subtitle": "The repeated-person denominator makes the planned staffing reduction tangible without inventing a second metric.",
+  "date": "2026-08-04",
+  "data": [
+    {
+      "label": "Planned head-office reduction",
+      "value": 10,
+      "displayValue": "10%",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "%",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "visual": {
+    "type": "pictogram",
+    "icon": "person",
+    "total": 10,
+    "filled": 1,
+    "columns": 10
+  },
+  "primaryMetric": {
+    "value": "10%",
+    "label": "planned head-office reduction"
+  },
+  "supportingFacts": [
+    {
+      "value": "1 of 10",
+      "label": "The pictogram encodes the same denominator as the headline percentage.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "headline-pictogram-example",
+    "topic": "staff reduction pictogram",
+    "dataPeriod": "2026",
+    "keyFinding": "The planned reduction affects one in every ten head-office roles."
+  }
+}

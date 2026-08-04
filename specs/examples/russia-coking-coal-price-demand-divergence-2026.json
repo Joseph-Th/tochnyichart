@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "recipe": "comparison.range",
+  "recipe": "story.facets",
   "title": "Coal Prices Rose While Steel Demand Fell",
   "subtitle": "Russian coking-coal prices rose across domestic and export markets as steel demand contracted, indicating an energy shortage rather than an industrial recovery.",
   "date": "2026-07-26",
@@ -14,7 +14,9 @@
       "value": 57.6,
       "displayValue": "+57.6%",
       "tone": "critical",
-      "annotation": "Year-over-year export-price increase from Russia's eastern ports."
+      "direction": "up",
+      "icon": "trend",
+      "detail": "Year-over-year export-price increase from Russia's eastern ports."
     },
     {
       "label": "Domestic market",
@@ -22,14 +24,18 @@
       "high": 31,
       "displayValue": "+21% to +31%",
       "tone": "warning",
-      "annotation": "Reported increase across the domestic coking-coal market."
+      "direction": "neutral",
+      "icon": "trend",
+      "detail": "Reported increase across the domestic coking-coal market."
     },
     {
       "label": "Gulf of Finland exports",
       "value": 25.8,
       "displayValue": "+25.8%",
       "tone": "warning",
-      "annotation": "Year-over-year export-price increase through the Gulf of Finland."
+      "direction": "up",
+      "icon": "trend",
+      "detail": "Year-over-year export-price increase through the Gulf of Finland."
     },
     {
       "label": "Key steel regions",
@@ -37,40 +43,29 @@
       "high": 20,
       "displayValue": "+16% to +20%",
       "tone": "secondary",
-      "annotation": "Reported price increase in Russia's main metallurgical regions."
+      "direction": "neutral",
+      "icon": "trend",
+      "detail": "Reported price increase in Russia's main metallurgical regions."
     },
     {
       "label": "Steel demand, Q2",
       "value": -3.5,
       "displayValue": "−3.5%",
       "tone": "neutral",
-      "annotation": "Demand remained below the previous year despite a slight construction revival."
+      "direction": "down",
+      "icon": "trend",
+      "detail": "Demand remained below the previous year despite a slight construction revival."
     },
     {
       "label": "Steel demand, H1",
       "value": -7.5,
       "displayValue": "−7.5%",
       "tone": "critical",
-      "annotation": "First-half steel demand contracted while coal prices moved sharply higher."
+      "direction": "down",
+      "icon": "trend",
+      "detail": "First-half steel demand contracted while coal prices moved sharply higher."
     }
   ],
-  "references": [
-    {
-      "value": 0,
-      "label": "No change",
-      "tone": "neutral",
-      "lineStyle": "line"
-    }
-  ],
-  "measure": {
-    "unit": "% change",
-    "axisTitle": "Reported change",
-    "decimals": 1,
-    "minimum": -12,
-    "maximum": 65,
-    "baseline": "explicit",
-    "scale": "linear"
-  },
   "primaryMetric": {
     "value": "+57.6%",
     "label": "eastern-port export prices year over year"
@@ -96,7 +91,7 @@
   "narrative": {
     "frame": "divergence",
     "density": "detailed",
-    "emphasis": "range"
+    "emphasis": "status"
   },
   "options": {
     "height": "tall",

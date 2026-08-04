@@ -56,19 +56,107 @@ test('numbered causal sequences are not an available chart recipe', () => {
   assert.ok(result.errors.some((message) => message.includes('Unknown recipe')));
 });
 
-test('Russian regional maps reject partial framing controls and normalize to full context', () => {
+test('shared-axis comparisons reject unlike quantities, scopes, and periods', () => {
+  const valid = loadExample('profit-change-contributions.json');
+  assert.equal(validateSpec(valid).valid, true);
+
+  const unlikeQuantity = structuredClone(valid);
+  unlikeQuantity.data[1].quantity = 'revenue growth';
+  let result = validateSpec(unlikeQuantity);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('must match measure.quantity exactly')));
+
+  const unlikeScope = structuredClone(valid);
+  unlikeScope.data[1].scope = 'one business unit';
+  result = validateSpec(unlikeScope);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('cannot place unlike scopes on one scale')));
+
+  const unlikePeriod = structuredClone(valid);
+  unlikePeriod.data[1].period = 'H2 2026';
+  result = validateSpec(unlikePeriod);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('requires one shared period')));
+
+  const genericQuantity = structuredClone(valid);
+  genericQuantity.measure.quantity = 'reported change';
+  genericQuantity.data.forEach((item) => { item.quantity = 'reported change'; });
+  result = validateSpec(genericQuantity);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('measure.quantity is too generic')));
+});
+
+test('mixed evidence uses story facets instead of a fake shared axis', () => {
+  const facets = loadExample('mixed-evidence-facets.json');
+  const result = validateSpec(facets);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.recipe, 'story.facets');
+  assert.equal(result.normalized.measure.quantity, undefined);
+  assert.equal(result.normalized.measure.unit, undefined);
+  const html = renderHtml(result.normalized);
+  assert.equal(reviewHtml(html).valid, true);
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /function renderStoryFacets\(/);
+  assert.match(runtime, /case 'story\.facets'/);
+  assert.match(runtime, /semanticIcon\(item\.icon \|\| 'document'/);
+  assert.match(css, /\.tochnyi-facet-grid\s*\{/);
+  assert.match(css, /\.tochnyi-facet-icon\s*\{/);
+});
+
+test('composition segments retain tangible values alongside calculated shares', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /normalizedCopy\(item\.display\) !== normalizedCopy\(percentText\(share\)\)/);
+  assert.doesNotMatch(runtime, /!compact && normalizedCopy\(item\.display\)/);
+});
+
+test('headline metrics support semantic progress and pictogram treatments', () => {
+  const pictogram = loadExample('headline-metric.json');
+  pictogram.data[0] = {
+    label: 'Head-office roles affected',
+    value: 10,
+    displayValue: '10%',
+    tone: 'critical'
+  };
+  pictogram.measure = { unit: '%', decimals: 0, baseline: 'zero' };
+  pictogram.primaryMetric = { value: '10%', label: 'planned head-office reduction' };
+  pictogram.visual = { type: 'pictogram', icon: 'person', total: 10, filled: 1, columns: 10 };
+  let result = validateSpec(pictogram);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  const invalid = structuredClone(pictogram);
+  invalid.visual.filled = 11;
+  result = validateSpec(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('cannot exceed visual.total')));
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /visualType === 'pictogram'/);
+  assert.match(runtime, /tochnyi-pictogram-icon/);
+  assert.match(runtime, /visualType === 'progress'/);
+  assert.match(css, /\.tochnyi-pictogram\s*\{/);
+  assert.match(css, /\.tochnyi-headline-progress\s*\{/);
+});
+
+test('Russian regional maps normalize to continental context and reject detached framing controls', () => {
   const base = loadExample('russia-regional-map.json');
   const valid = validateSpec(base);
   assert.equal(valid.valid, true, valid.errors.join('; '));
   assert.equal(valid.normalized.map.viewport, 'all');
   assert.equal(valid.normalized.map.contextFit, 'all');
-  assert.equal(valid.normalized.map.landmass, 'all');
+  assert.equal(valid.normalized.map.landmass, 'continental');
+  assert.equal(valid.normalized.map.summaryDisplay, 'hide');
+  assert.equal(valid.normalized.map.summaryPosition, 'none');
   assert.deepEqual(valid.normalized.map.excludeRegions, []);
 
   for (const mapPatch of [
     { viewport: 'data' },
     { contextFit: 'focus' },
-    { landmass: 'continental' },
+    { landmass: 'all' },
+    { summaryDisplay: 'show' },
+    { summaryPosition: 'right' },
     { excludeRegions: ['RU-KGD'] }
   ]) {
     const input = structuredClone(base);
@@ -76,7 +164,9 @@ test('Russian regional maps reject partial framing controls and normalize to ful
     const result = validateSpec(input);
     assert.equal(result.valid, false, JSON.stringify(mapPatch));
     assert.ok(result.errors.some((message) =>
-      message.includes('complete national context') ||
+      message.includes('continental national context') ||
+      message.includes('must be hide') ||
+      message.includes('must be none') ||
       message.includes('cannot exclude administrative regions')
     ));
   }
@@ -246,7 +336,7 @@ test('regional maps suppress centroid dots unless explicitly requested', () => {
   assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'dot');
 });
 
-test('regional maps suppress redundant dense summaries but preserve informative ones', () => {
+test('regional maps permanently suppress competing summary cards', () => {
   const data = [
     ...new Array(1).fill(null).map((_, index) => ({ label: `Improving ${index}`, status: 'improving' })),
     ...new Array(5).fill(null).map((_, index) => ({ label: `Critical ${index}`, status: 'critical' })),
@@ -254,7 +344,7 @@ test('regional maps suppress redundant dense summaries but preserve informative 
     ...new Array(2).fill(null).map((_, index) => ({ label: `Strained ${index}`, status: 'strained' }))
   ];
   const redundant = TochnyiMaps.resolveSummaryPlan({
-    map: { summaryDisplay: 'auto', summaryPosition: 'below' },
+    map: { summaryDisplay: 'hide', summaryPosition: 'none' },
     data,
     primaryMetric: { value: '10 regions', label: 'regional conditions tracked' },
     supportingFacts: [
@@ -263,50 +353,55 @@ test('regional maps suppress redundant dense summaries but preserve informative 
     ]
   });
   assert.equal(redundant.show, false);
-  assert.equal(redundant.reason, 'redundant-dense-summary');
+  assert.equal(redundant.reason, 'regional-summary-disabled');
 
   const informative = TochnyiMaps.resolveSummaryPlan({
-    map: { summaryDisplay: 'auto', summaryPosition: 'below' },
+    map: { summaryDisplay: 'hide', summaryPosition: 'none' },
     data,
     primaryMetric: { value: '₽86.5bn', label: 'total investment at risk' },
     supportingFacts: [{ value: '₽126bn', label: 'estimated rebuild cost', tone: 'critical' }]
   });
-  assert.equal(informative.show, true);
-  assert.equal(informative.reason, 'informative');
+  assert.equal(informative.show, false);
+  assert.equal(informative.reason, 'regional-summary-disabled');
   assert.equal(TochnyiMaps.resolveSummaryPlan({
     map: { summaryDisplay: 'show' }, data, primaryMetric: { value: '10 regions', label: 'tracked' }
-  }).show, true);
+  }).show, false);
 });
 
-test('regional map callouts use balanced columns when a dense summary is hidden', () => {
+test('regional map callouts preserve geographic order by default', () => {
   const entries = new Array(5).fill(null).map((_, index) => ({ index }));
-  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, false, entries), 'balanced');
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, false, entries), 'geographic');
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, true, entries), 'geographic');
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'geographic' }, false, entries), 'geographic');
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'balanced' }, false, entries), 'balanced');
 });
 
-test('regional map leader routing separates clustered callouts into traceable lanes', () => {
+test('regional map leader routing stays direct unless lanes are explicitly requested', () => {
   const entries = [100, 104, 109, 113, 119].map((y, index) => ({
     index,
     side: 'left',
     point: { x: 500 + index * 20, y }
   }));
-  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries), 'lanes');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries), 'direct');
   const planned = TochnyiMaps.planLeaderRoutes(entries, {
     routing: 'auto', top: 80, bottom: 180, gap: 16
   });
-  assert.equal(planned.routing, 'lanes');
-  assert.deepEqual(planned.map((entry) => entry.laneIndex).sort((a, b) => a - b), [0, 1, 2, 3, 4]);
-  assert.ok(planned.every((entry) => entry.sideCount === entries.length));
-  const routeYs = planned.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
+  assert.equal(planned.routing, 'direct');
+  assert.ok(planned.every((entry) => entry.laneIndex === 0 && entry.sideCount === 1));
+  assert.deepEqual(planned.map((entry) => entry.routeY), entries.map((entry) => entry.point.y));
+
+  const lanePlan = TochnyiMaps.planLeaderRoutes(entries, {
+    routing: 'lanes', top: 80, bottom: 180, gap: 16
+  });
+  assert.equal(lanePlan.routing, 'lanes');
+  assert.deepEqual(lanePlan.map((entry) => entry.laneIndex).sort((a, b) => a - b), [0, 1, 2, 3, 4]);
+  assert.ok(lanePlan.every((entry) => entry.sideCount === entries.length));
+  const routeYs = lanePlan.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
   for (let index = 1; index < routeYs.length; index += 1) {
-    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9, 'lane corridors must retain visible vertical separation');
+    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9, 'explicit lane corridors must retain visible separation');
   }
-  const pointMean = entries.reduce((sum, entry) => sum + entry.point.y, 0) / entries.length;
-  const routeMean = routeYs.reduce((sum, value) => sum + value, 0) / routeYs.length;
-  assert.ok(Math.abs(pointMean - routeMean) < 8, 'lane expansion should remain centered unless constrained by route bounds');
-  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries.slice(0, 2)), 'direct');
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'lanes' }, entries), 'lanes');
 });
 
 test('dense regional maps switch to ordered edge ports', () => {
@@ -391,14 +486,14 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   const dense = TochnyiMaps.getRegionalBreakdownPolicy({ count: 10 });
   const standard = TochnyiMaps.getRegionalBreakdownPolicy({ count: 4 });
   assert.equal(dense.dense, true);
-  assert.equal(dense.cardWidth, 210);
+  assert.equal(dense.cardWidth, 190);
   assert.equal(dense.cardGap, 7);
   assert.equal(dense.attachmentInset, 14);
   assert.equal(dense.portGap, 18);
   assert.equal(dense.minimumCardStub, 36);
   assert.equal(dense.shapeClearance, 2);
   assert.equal(standard.dense, false);
-  assert.equal(standard.cardWidth, 226);
+  assert.equal(standard.cardWidth, 204);
   assert.equal(standard.cardGap, 10);
   assert.equal(standard.portGap, 22);
   assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 8);
@@ -416,7 +511,7 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
     map: { leaderRouting: 'auto', calloutDistribution: 'auto' },
     dense: false,
     width: 1190,
-    cardWidth: 226,
+    cardWidth: 204,
     topLeft: 10,
     topRight: 10,
     bottom: 620,
@@ -427,8 +522,8 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
   assert.equal(plan.placementMode, 'crossing-optimized');
   assert.equal(plan.sides.left.length, 4);
   assert.equal(plan.sides.right.length, 4);
-  assert.equal(plan.leftDistribution, 'balanced');
-  assert.equal(plan.rightDistribution, 'balanced');
+  assert.equal(plan.leftDistribution, 'geographic');
+  assert.equal(plan.rightDistribution, 'geographic');
   assert.ok(plan.placement.assignmentEvaluations > 0);
 });
 
@@ -868,7 +963,7 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(maps, /portRoutingThreshold:\s*8/);
   assert.match(maps, /function planRegionalBreakdown\(/);
   assert.match(maps, /optimizeCalloutPlacement\(all, placementOptions\)/);
-  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'editorial'/);
+  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'geographic'/);
   assert.match(runtime, /data-map-callout-placement',/);
   assert.match(runtime, /data-map-callout-predicted-crossings/);
   assert.match(runtime, /data-map-callout-assignment-evaluations/);
@@ -896,6 +991,9 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-card-stub-length/);
   assert.match(runtime, /projectedFeatureBounds\(/);
   assert.match(runtime, /data-map-port-obstacle-avoidance/);
+  assert.match(runtime, /obstacles:\s*\[\]/);
+  assert.match(runtime, /sourceObstacles:\s*\[\]/);
+  assert.match(runtime, /leader-lines-only/);
   assert.match(runtime, /data-map-port-avoided-routes/);
   assert.match(runtime, /data-map-port-grid-routes/);
   assert.match(runtime, /data-map-port-fallback-routes/);
@@ -919,47 +1017,14 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.doesNotMatch(css, /\.tochnyi-map-port-anchor/);
 });
 
-test('regional map planning always preserves the complete Russian national context', () => {
+test('regional map planning enforces continental Russian context', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
-  const rectangle = (left, bottom, right, top) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Polygon',
-      coordinates: [[
-        [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
-      ]]
-    }
-  });
-  const featureById = {
-    'RU-BRY': rectangle(31, 51, 35, 54),
-    'RU-ZAB': rectangle(107, 49, 122, 58),
-    'RU-CHU': rectangle(170, 61, 180, 69),
-    'RU-KGD': rectangle(19, 54, 23, 55)
-  };
-  const plan = TochnyiMaps.resolveMapPlan(
-    { viewport: 'auto', contextFit: 'focus', excludeRegions: [] },
-    regionSet,
-    [{ regionId: 'RU-BRY' }, { regionId: 'RU-ZAB' }],
-    featureById
-  );
-  assert.equal(plan.viewportMode, 'all');
-  assert.deepEqual(plan.excludedRegionIds, []);
-  assert.equal(plan.geoBounds, null);
-  assert.equal(plan.viewportAlignment, 'context');
-  assert.equal(plan.contextFit, 'all');
-  assert.equal(plan.visualCentering, false);
-  assert.equal(plan.centerShiftLongitude, 0);
-  assert.equal(plan.centerShiftLatitude, 0);
-  assert.deepEqual(plan.contextRegionIds.sort(), Object.keys(featureById).sort());
-
-  const kaliningradPlan = TochnyiMaps.resolveMapPlan(
-    { viewport: 'auto', excludeRegions: [] },
-    regionSet,
-    [{ regionId: 'RU-KGD' }],
-    featureById
-  );
-  assert.deepEqual(kaliningradPlan.excludedRegionIds, []);
-  assert.ok(kaliningradPlan.contextRegionIds.includes('RU-KGD'));
+  assert.equal(regionSet.defaultLandmass, 'continental');
+  assert.deepEqual(regionSet.nonContinentalRegionIds, ['RU-KGD', 'RU-SAK']);
+  assert.equal(regionSet.requireFullContext, false);
+  assert.equal(TochnyiMaps.regionalMapDefaults.landmass, 'continental');
+  assert.equal(TochnyiMaps.regionalMapDefaults.summaryDisplay, 'hide');
+  assert.equal(TochnyiMaps.regionalMapDefaults.summaryPosition, 'none');
 });
 
 test('regional map viewport centering balances data and surrounding geography', () => {
@@ -1139,7 +1204,7 @@ test('regional map continental mode keeps the largest connected landmass and rem
   assert.deepEqual(result.features[0].geometry.coordinates, mainWithEnclave);
 });
 
-test('regional map automatic landmass mode preserves active island regions', () => {
+test('regional map automatic landmass mode removes islands even when referenced', () => {
   const rectangle = (left, bottom, right, top) => [[
     [left, bottom], [right, bottom], [right, top], [left, top], [left, bottom]
   ]];
@@ -1159,9 +1224,10 @@ test('regional map automatic landmass mode preserves active island regions', () 
   const island = TochnyiMaps.resolveLandmassPlan(
     { landmass: 'auto' }, regionSet, [{ regionId: 'ISLAND' }], features
   );
-  assert.equal(island.mode, 'all');
-  assert.equal(island.reason, 'active-detached-region');
-  assert.equal(island.features.length, 3);
+  assert.equal(island.mode, 'continental');
+  assert.equal(island.reason, 'region-set-default');
+  assert.deepEqual(island.removedRegionIds, ['ISLAND']);
+  assert.equal(island.features.length, 2);
 });
 
 test('regional map visual centering ignores negligible edge fragments', () => {
@@ -1254,25 +1320,35 @@ test('regional map specs validate known regions and load map tooling', () => {
   invalidViewportAlignment.map.viewportAlignment = 'left';
   result = validateSpec(invalidViewportAlignment);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('complete national context')));
+  assert.ok(result.errors.some((error) => error.includes('continental national context')));
 
   const invalidContextFit = loadExample('russia-regional-map.json');
   invalidContextFit.map.contextFit = 'crop-randomly';
   result = validateSpec(invalidContextFit);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('complete national context')));
+  assert.ok(result.errors.some((error) => error.includes('continental national context')));
 
   const invalidLandmass = loadExample('russia-regional-map.json');
   invalidLandmass.map.landmass = 'northern-islands-only';
   result = validateSpec(invalidLandmass);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('complete national context')));
+  assert.ok(result.errors.some((error) => error.includes('continental national context')));
 
   const invalidSummaryDisplay = loadExample('russia-regional-map.json');
   invalidSummaryDisplay.map.summaryDisplay = 'sometimes';
   result = validateSpec(invalidSummaryDisplay);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('map.summaryDisplay is not supported')));
+  assert.ok(result.errors.some((error) => error.includes('must be hide')));
+
+  for (const regionId of ['RU-KGD', 'RU-SAK']) {
+    const detachedRegion = loadExample('russia-regional-map.json');
+    detachedRegion.data[0].regionId = regionId;
+    result = validateSpec(detachedRegion);
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((error) =>
+      error.includes(regionId) && error.includes('outside the supported continental regional map')
+    ));
+  }
 
   const invalidCalloutDistribution = loadExample('russia-regional-map.json');
   invalidCalloutDistribution.map.calloutDistribution = 'bottom-heavy';
@@ -1420,8 +1496,12 @@ test('regional map watermark stays behind geography and within restrained size a
   assert.match(runtime, /watermark\.classList\.add\('watermark-map', 'watermark-map-behind'\)/);
   assert.match(runtime, /data-watermark-layer', 'behind-map'/);
   assert.match(css, /--tochnyi-map-watermark-opacity:\s*0\.075/);
-  assert.match(css, /--tochnyi-map-watermark-height:\s*min\(58%, 390px\)/);
+  assert.match(css, /--tochnyi-map-watermark-height:\s*min\(46%, 280px\)/);
   assert.match(css, /--tochnyi-map-watermark-height-compact:\s*220px/);
+  assert.match(css, /\.tochnyi-chart\.recipe-map-regional\s*\{[^}]*max-width:\s*1480px/gs);
+  assert.match(css, /\.tochnyi-v2\.recipe-map-regional \.tochnyi-logo\s*\{[^}]*height:\s*48px/gs);
+  assert.match(css, /\.tochnyi-v2\.recipe-map-regional \.tochnyi-title\s*\{[^}]*font-size:\s*34px/gs);
+  assert.match(css, /\.tochnyi-map-stage\.has-callouts \.tochnyi-map-canvas\s*\{[^}]*right:\s*214px[^}]*left:\s*214px/gs);
   assert.match(css, /\.tochnyi-map-stage > \.tochnyi-watermark\.watermark-map\s*\{[^}]*z-index:\s*0/gs);
   assert.match(css, /\.tochnyi-map-stage > \.tochnyi-watermark\.watermark-map\s*\{[^}]*filter:\s*none/gs);
   assert.match(css, /\.tochnyi-map-canvas\s*\{[^}]*z-index:\s*1/gs);
@@ -1431,7 +1511,7 @@ test('regional map watermark stays behind geography and within restrained size a
   const mapWatermark = {
     id: 'map-watermark', role: 'watermark', loaded: true, occluded: true,
     opacity: 0.075, watermarkLayer: 'behind-map',
-    rect: normalizeRect({ left: 0, top: 0, right: 390, bottom: 390 })
+    rect: normalizeRect({ left: 0, top: 0, right: 280, bottom: 280 })
   };
   assert.equal(diagnoseWatermark([mapWatermark]).length, 0);
   assert.ok(diagnoseWatermark([{ ...mapWatermark, opacity: 0.11 }])

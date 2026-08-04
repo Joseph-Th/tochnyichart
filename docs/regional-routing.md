@@ -17,11 +17,14 @@ The regional policy is centralized in `lib/tochnyi-maps.js`:
 - Dense layout begins at nine callouts.
 - Standard and dense layouts use different card widths, gaps, attachment insets,
   port spacing, minimum card stubs, and obstacle clearances.
-- Automatic callout distribution uses geographic packing when a summary is
-  present and balanced packing when a dense map has no useful summary.
+- Automatic callout distribution preserves geographic packing. Balanced packing
+  is an explicit exception rather than the default.
 - The default anchor style is no centroid dot; the filled region is already the
   geographic mark.
 - Regional maps are north-up and use a deterministic static projection.
+- Russian maps use the continental mainland silhouette. Kaliningrad and island
+  fragments are removed before projection and cannot be active map items.
+- Summary cards are disabled; callouts are the sole evidence cards.
 
 The policy is intentionally not part of ChartSpec. This keeps the authoring
 surface small and lets renderer fixes improve existing specs consistently.
@@ -32,13 +35,13 @@ The semantic `map.leaderRouting` field accepts these values:
 
 | Mode | Use |
 | --- | --- |
-| `auto` | Choose direct, lane, or port routing from callout count and spacing. |
+| `auto` | Use direct routing for sparse maps and port routing for dense maps. |
 | `direct` | Sparse callouts with readable independent leaders. |
 | `lanes` | Orthogonal leaders with separated vertical corridors. |
 | `ports` | Dense maps with ordered card-edge attachments and crossing-aware side assignment. |
 | `indexed` | Explicit legacy/local marker routing; use only for a verified special case. |
 
-In automatic mode, sparse maps use direct or lane routing. Dense maps use port
+In automatic mode, sparse maps use direct routing. Dense maps use port
 routing, enumerate balanced side assignments, and score the candidates before
 committing to card placement. Fixed `data[].calloutSide` values remain fixed;
 automatic entries can move to the side that produces a clearer result.
@@ -46,37 +49,40 @@ automatic entries can move to the side that produces a clearer result.
 Port leaders use a smooth curve from the geographic anchor to a dedicated
 card-edge port, followed by a visible horizontal terminal stub. The planner
 preserves geographic order within each card column, separates ports, and scores
-crossings, attachment sharpness, route length, and side displacement. It uses
-the actual region shape as a collision obstacle after a projected-bounds
-prefilter.
+crossings, attachment sharpness, route length, and side displacement. Region
+polygons are evidence rather than physical barriers: leaders may cross
+geography. Only leader-to-leader and card collisions trigger detours.
 
-If a route intersects an active region, the runtime first tries bounded
-in-envelope corridors. It only expands outside the endpoint vertical envelope
-when no collision-free route exists inside it. Detours may use bounded grid
-search, then simplify and smooth the resulting path. A source-exit segment is
-kept only when removing it would cause a collision.
+If leaders collide, the runtime first tries bounded in-envelope corridors. It
+only expands outside the endpoint vertical envelope when no collision-free
+route exists inside it. Detours may use bounded grid search, then simplify and
+smooth the resulting path. A source-exit segment is kept only when removing it
+would cause a collision.
 
 ## Map framing
 
-Russian regional maps use one framing contract: the complete national outline
-is always visible, including detached regions. The projection fits complete
-GeoJSON features with explicit padding. It does not use data-only zoom, local
-focus, continental-only selection, or region exclusions. Callout routing must
-adapt to the national context rather than narrowing the geography to make the
-layout easier.
+Russian regional maps use one framing contract: the continental mainland
+silhouette is always visible. Kaliningrad and island fragments are removed from
+the feature collection before projection. `RU-KGD` and `RU-SAK` are rejected as
+active map items, making detached geometry impossible to reintroduce through a
+ChartSpec. Use a non-map recipe for detached-region evidence.
+
+The regional page reserves more width for the map than standard charts. It uses
+a compact logo, date, title, subtitle, and watermark; narrower callout columns;
+and a shorter desktop map stage. These are renderer-owned regional defaults.
 
 ## Summary and information economy
 
-`primaryMetric` and `supportingFacts` form an optional summary panel. Automatic
-summary logic hides a dense panel when it only repeats region counts, statuses,
-or labels already visible in the map and cards. It keeps summaries that add a
-different unit or material context. `map.summaryDisplay` can explicitly be
-`show` or `hide` when the editorial decision is intentional.
+Regional summary panels are permanently disabled. `map.summaryDisplay` is
+renderer-owned as `hide`, and `map.summaryPosition` is `none`. Any essential
+regional fact must live in a callout. Material non-geographic context belongs in
+a separate standard chart or `story.facets`, not in a competing blue card over
+the map.
 
-When a dense summary is hidden, automatic callout distribution can spread cards
-through the available height instead of leaving an unused lower corner. Use
-`map.calloutDistribution = "geographic"` for point-aligned packing or
-`"balanced"` for space-filling packing.
+Automatic callout distribution uses geographic packing. The explicit
+`balanced` mode remains available for a verified special case, but it should not
+be used merely to fill empty space because it can create unnecessary leader
+motion.
 
 ## Diagnostic contract
 
