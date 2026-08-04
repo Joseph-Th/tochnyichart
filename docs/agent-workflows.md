@@ -223,7 +223,6 @@ The guide returns recipe selection rules and a validated example path for each r
 | Starting value, additions or losses, ending value | `flow.waterfall` |
 | Ranked categories with long labels | `ranking.horizontal` |
 | Categorical conditions by place or operation | `status.grid` |
-| Trigger, transmission, consequence | `story.sequence` |
 
 Composable semantic features include:
 
@@ -269,14 +268,10 @@ A minimal regional specification contains:
 
 For a status map, `status`, `displayValue`, and `detail` are the clearest combination. Supported statuses are `stable`, `improving`, `strained`, `critical`, `blocked`, and `unknown`.
 
-Keep the map object minimal. Do not author coordinates, card positions, route points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library configuration.
+Keep the map object minimal. Do not author coordinates, card positions, route points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library configuration. Russian regional maps always show the complete national outline, including detached regions. Partial framing, regional exclusion, and data-only zoom are not supported.
 
 Use a semantic override only when the story requires it:
 
-- `map.viewport`
-- `map.contextFit`
-- `map.landmass`
-- `map.excludeRegions`
 - `data[].calloutSide`
 
 Run:

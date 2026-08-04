@@ -21,7 +21,6 @@
         "ranking.horizontal",
         "status.grid",
         "map.regional",
-        "story.sequence",
         "headline.metric"
       ]
     },
@@ -94,17 +93,16 @@
         "calloutDistribution": { "type": "string", "enum": ["auto", "geographic", "balanced"] },
         "summaryPosition": { "type": "string", "enum": ["auto", "right", "below", "none"] },
         "summaryDisplay": { "type": "string", "enum": ["auto", "show", "hide"] },
-        "viewport": { "type": "string", "enum": ["auto", "all", "data"] },
-        "viewportAlignment": { "type": "string", "enum": ["auto", "data", "context"] },
-        "contextFit": { "type": "string", "enum": ["auto", "all", "focus"] },
-        "landmass": { "type": "string", "enum": ["auto", "all", "continental"] },
+        "viewport": { "type": "string", "const": "all" },
+        "viewportAlignment": { "type": "string", "const": "context" },
+        "contextFit": { "type": "string", "const": "all" },
+        "landmass": { "type": "string", "const": "all" },
         "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
         "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes", "ports", "indexed"] },
         "excludeRegions": {
           "type": "array",
-          "maxItems": 12,
-          "uniqueItems": true,
-          "items": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{2,3}$" }
+          "maxItems": 0,
+          "items": { "type": "string" }
         }
       }
     },

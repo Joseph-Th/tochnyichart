@@ -38,6 +38,50 @@ test('every recipe has a valid example ChartSpec', () => {
   assert.deepEqual([...covered].sort(), [...recipeIds].sort());
 });
 
+test('numbered causal sequences are not an available chart recipe', () => {
+  assert.equal(recipeIds.includes('story.sequence'), false);
+  const result = validateSpec({
+    version: '2.0',
+    recipe: 'story.sequence',
+    title: 'Unsupported sequence',
+    subtitle: 'Numbered process cards are intentionally unavailable.',
+    date: '2026-08-04',
+    data: [
+      { label: 'One', detail: 'First' },
+      { label: 'Two', detail: 'Second' },
+      { label: 'Three', detail: 'Third' }
+    ]
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('Unknown recipe')));
+});
+
+test('Russian regional maps reject partial framing controls and normalize to full context', () => {
+  const base = loadExample('russia-regional-map.json');
+  const valid = validateSpec(base);
+  assert.equal(valid.valid, true, valid.errors.join('; '));
+  assert.equal(valid.normalized.map.viewport, 'all');
+  assert.equal(valid.normalized.map.contextFit, 'all');
+  assert.equal(valid.normalized.map.landmass, 'all');
+  assert.deepEqual(valid.normalized.map.excludeRegions, []);
+
+  for (const mapPatch of [
+    { viewport: 'data' },
+    { contextFit: 'focus' },
+    { landmass: 'continental' },
+    { excludeRegions: ['RU-KGD'] }
+  ]) {
+    const input = structuredClone(base);
+    Object.assign(input.map, mapPatch);
+    const result = validateSpec(input);
+    assert.equal(result.valid, false, JSON.stringify(mapPatch));
+    assert.ok(result.errors.some((message) =>
+      message.includes('complete national context') ||
+      message.includes('cannot exclude administrative regions')
+    ));
+  }
+});
+
 test('generated shells contain no chart implementation or inline styles', () => {
   for (const file of exampleFiles) {
     const validated = validateSpec(loadExample(file));
@@ -105,6 +149,35 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.ok(plan.chartHeight < 550, 'five-row rankings should not use a fixed tall canvas');
   assert.equal(VisualPlan.rankingHeight(12, 'detailed'), 700);
   assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
+});
+
+test('trend labels are limited and positioned away from line geometry', () => {
+  const data = [20, 15, 25, 22, 31, 17, 17, 4].map((value, index) => ({
+    label: String(index + 1),
+    value
+  }));
+  const plan = VisualPlan.trendLabelPlan(data);
+  const visible = plan.map((item, index) => item.showLabel ? index : -1).filter((index) => index >= 0);
+  assert.ok(visible.length <= 6);
+  assert.ok(visible.includes(0));
+  assert.ok(visible.includes(data.length - 1));
+  assert.ok(visible.includes(4), 'global peak should retain a label');
+  assert.notEqual(plan[4].dy, 0);
+  assert.notEqual(plan[7].dx, 0, 'edge labels should be pulled inward');
+});
+
+test('context planning compacts secondary layers when the information budget is exceeded', () => {
+  const plan = VisualPlan.contextLayoutPlan({
+    narrative: { density: 'editorial' },
+    supportingFacts: new Array(4).fill(null).map((_, index) => ({ value: String(index), label: 'Fact' })),
+    references: [{ value: 1, label: 'Reference' }],
+    primaryMetric: { value: '10', label: 'Primary' },
+    emphasis: { direction: 'up', label: 'Change' },
+    note: 'Note'
+  }, new Array(3).fill(null).map((_, index) => ({ label: String(index), annotation: 'Annotation' })));
+  assert.ok(plan.contextLoad > plan.budget);
+  assert.equal(plan.annotationMode, 'compact');
+  assert.equal(plan.compactFacts, true);
 });
 
 test('column labels fall outside when an inside label cannot physically fit', () => {
@@ -846,7 +919,7 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.doesNotMatch(css, /\.tochnyi-map-port-anchor/);
 });
 
-test('regional map planning focuses on active data and omits inactive detached regions', () => {
+test('regional map planning always preserves the complete Russian national context', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   const rectangle = (left, bottom, right, top) => ({
     type: 'Feature',
@@ -869,16 +942,15 @@ test('regional map planning focuses on active data and omits inactive detached r
     [{ regionId: 'RU-BRY' }, { regionId: 'RU-ZAB' }],
     featureById
   );
-  assert.equal(plan.viewportMode, 'data');
-  assert.ok(plan.excludedRegionIds.includes('RU-KGD'));
-  assert.ok(plan.geoBounds.left < 31);
-  assert.ok(plan.geoBounds.right > 122);
-  assert.equal(plan.viewportAlignment, 'auto');
-  assert.equal(plan.contextFit, 'focus');
-  assert.equal(plan.visualCentering, true);
+  assert.equal(plan.viewportMode, 'all');
+  assert.deepEqual(plan.excludedRegionIds, []);
+  assert.equal(plan.geoBounds, null);
+  assert.equal(plan.viewportAlignment, 'context');
+  assert.equal(plan.contextFit, 'all');
+  assert.equal(plan.visualCentering, false);
   assert.equal(plan.centerShiftLongitude, 0);
   assert.equal(plan.centerShiftLatitude, 0);
-  assert.ok(plan.excludedRegionIds.includes('RU-CHU'));
+  assert.deepEqual(plan.contextRegionIds.sort(), Object.keys(featureById).sort());
 
   const kaliningradPlan = TochnyiMaps.resolveMapPlan(
     { viewport: 'auto', excludeRegions: [] },
@@ -886,7 +958,8 @@ test('regional map planning focuses on active data and omits inactive detached r
     [{ regionId: 'RU-KGD' }],
     featureById
   );
-  assert.equal(kaliningradPlan.excludedRegionIds.includes('RU-KGD'), false);
+  assert.deepEqual(kaliningradPlan.excludedRegionIds, []);
+  assert.ok(kaliningradPlan.contextRegionIds.includes('RU-KGD'));
 });
 
 test('regional map viewport centering balances data and surrounding geography', () => {
@@ -1135,13 +1208,13 @@ test('regional map specs validate known regions and load map tooling', () => {
   hiddenActive.map.excludeRegions = [hiddenActive.data[0].regionId];
   result = validateSpec(hiddenActive);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('cannot hide active data region')));
+  assert.ok(result.errors.some((error) => error.includes('cannot exclude administrative regions')));
 
   const invalidExclusions = loadExample('russia-regional-map.json');
   invalidExclusions.map.excludeRegions = 'RU-KGD';
   result = validateSpec(invalidExclusions);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('map.excludeRegions must be an array')));
+  assert.ok(result.errors.some((error) => error.includes('cannot exclude administrative regions')));
 
   const invalidAnchorStyle = loadExample('russia-regional-map.json');
   invalidAnchorStyle.map.anchorStyle = 'capital';
@@ -1181,19 +1254,19 @@ test('regional map specs validate known regions and load map tooling', () => {
   invalidViewportAlignment.map.viewportAlignment = 'left';
   result = validateSpec(invalidViewportAlignment);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('map.viewportAlignment is not supported')));
+  assert.ok(result.errors.some((error) => error.includes('complete national context')));
 
   const invalidContextFit = loadExample('russia-regional-map.json');
   invalidContextFit.map.contextFit = 'crop-randomly';
   result = validateSpec(invalidContextFit);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('map.contextFit is not supported')));
+  assert.ok(result.errors.some((error) => error.includes('complete national context')));
 
   const invalidLandmass = loadExample('russia-regional-map.json');
   invalidLandmass.map.landmass = 'northern-islands-only';
   result = validateSpec(invalidLandmass);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => error.includes('map.landmass is not supported')));
+  assert.ok(result.errors.some((error) => error.includes('complete national context')));
 
   const invalidSummaryDisplay = loadExample('russia-regional-map.json');
   invalidSummaryDisplay.map.summaryDisplay = 'sometimes';
@@ -1252,6 +1325,29 @@ test('semantic cards do not use thick colored border highlights', () => {
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\{[^}]*border-top:\s*(?:[2-9]|\d{2,})px/gs);
   assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\[[^\]]+\][^{]*\{[^}]*border-top-color/gs);
+});
+
+test('emphasis labels occupy a dedicated layout rail instead of overlaying graph geometry', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /tochnyi-emphasis-rail/);
+  assert.match(css, /\.tochnyi-chart-container\.has-emphasis\s*\{[^}]*display:\s*grid[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\)/s);
+  assert.match(css, /\.tochnyi-change-badge\s*\{[^}]*position:\s*relative/s);
+  assert.doesNotMatch(css, /\.tochnyi-change-badge\s*\{[^}]*position:\s*absolute/s);
+});
+
+test('PNG capture expands the canvas and refuses any remaining clipped output', () => {
+  const capture = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'capture.js'), 'utf8');
+  const diagnostics = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-diagnostics.js'), 'utf8');
+  assert.match(capture, /adaptiveAttempts < 6/);
+  assert.match(capture, /horizontalOverflow > 0 \|\| verticalOverflow > 0/);
+  assert.match(capture, /requiredWidth \+ 24/);
+  assert.match(capture, /requiredHeight \+ 24/);
+  assert.match(capture, /PNG capture refused because content still exceeds the canvas/);
+  assert.match(capture, /dimensions\.width !== inspection\.viewport\.width/);
+  assert.match(diagnostics, /requiredWidth/);
+  assert.match(diagnostics, /requiredHeight/);
+  assert.match(diagnostics, /viewportFit:\s*viewportFit/);
 });
 
 test('shared branding keeps the logo legible after export scaling', () => {

@@ -24,10 +24,6 @@ const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
 const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
 const MAP_SUMMARY_DISPLAYS = new Set(['auto', 'show', 'hide']);
 const MAP_CALLOUT_DISTRIBUTIONS = new Set(['auto', 'geographic', 'balanced']);
-const MAP_VIEWPORTS = new Set(['auto', 'all', 'data']);
-const MAP_VIEWPORT_ALIGNMENTS = new Set(['auto', 'data', 'context']);
-const MAP_CONTEXT_FITS = new Set(['auto', 'all', 'focus']);
-const MAP_LANDMASSES = new Set(['auto', 'all', 'continental']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
 const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed']);
 
@@ -469,12 +465,6 @@ function validateRecipe(spec, errors, warnings) {
       });
       break;
     }
-    case 'story.sequence':
-      if (count < 3 || count > 6) errors.push('story.sequence requires 3 to 6 data items.');
-      data.forEach((item, index) => {
-        if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for story.sequence.`);
-      });
-      break;
     case 'headline.metric':
       if (count !== 1) errors.push('headline.metric requires exactly 1 data item.');
       requireNumericValues(spec, errors);
@@ -515,7 +505,7 @@ function validateMeasure(spec, errors, warnings) {
       errors.push(`measure.${key} must be a string of ${max} characters or fewer.`);
     }
   }
-  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.sequence', 'map.regional'].includes(spec.recipe)) {
+  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'map.regional'].includes(spec.recipe)) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
@@ -619,33 +609,19 @@ function validateMap(spec, errors) {
   if (!MAP_CALLOUT_DISTRIBUTIONS.has(spec.map.calloutDistribution)) errors.push('map.calloutDistribution is not supported.');
   if (!MAP_SUMMARY_POSITIONS.has(spec.map.summaryPosition)) errors.push('map.summaryPosition is not supported.');
   if (!MAP_SUMMARY_DISPLAYS.has(spec.map.summaryDisplay)) errors.push('map.summaryDisplay is not supported.');
-  if (!MAP_VIEWPORTS.has(spec.map.viewport)) errors.push('map.viewport is not supported.');
-  if (!MAP_VIEWPORT_ALIGNMENTS.has(spec.map.viewportAlignment)) errors.push('map.viewportAlignment is not supported.');
-  if (!MAP_CONTEXT_FITS.has(spec.map.contextFit)) errors.push('map.contextFit is not supported.');
-  if (!MAP_LANDMASSES.has(spec.map.landmass)) errors.push('map.landmass is not supported.');
   if (!MAP_ANCHOR_STYLES.has(spec.map.anchorStyle)) errors.push('map.anchorStyle is not supported.');
   if (!MAP_LEADER_ROUTING.has(spec.map.leaderRouting)) errors.push('map.leaderRouting is not supported.');
-  if (!Array.isArray(spec.map.excludeRegions) || spec.map.excludeRegions.length > 12) {
-    errors.push('map.excludeRegions must be an array of no more than 12 region identifiers.');
-    return;
+  if (
+    spec.map.viewport !== 'all' ||
+    spec.map.viewportAlignment !== 'context' ||
+    spec.map.contextFit !== 'all' ||
+    spec.map.landmass !== 'all'
+  ) {
+    errors.push('map.regional must retain the complete national context; viewport, context fitting, and landmass selection are renderer-owned.');
   }
-  const regionSet = TochnyiMaps.getRegionSet(spec.map.regionSet);
-  const activeRegions = new Set((Array.isArray(spec.data) ? spec.data : []).flatMap((item) => (
-    Array.isArray(item?.regionIds)
-      ? item.regionIds
-      : (typeof item?.regionId === 'string' ? [item.regionId] : [])
-  )));
-  const excludedRegions = new Set();
-  spec.map.excludeRegions.forEach((regionId, index) => {
-    if (typeof regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(regionId)) {
-      errors.push(`map.excludeRegions[${index}] must be an ISO-style region identifier.`);
-      return;
-    }
-    if (regionSet && !regionSet.regions[regionId]) errors.push(`map.excludeRegions[${index}] references ${regionId}, which is not in map.regionSet ${spec.map.regionSet}.`);
-    if (excludedRegions.has(regionId)) errors.push(`map.excludeRegions cannot contain duplicate region ${regionId}.`);
-    if (activeRegions.has(regionId)) errors.push(`map.excludeRegions cannot hide active data region ${regionId}.`);
-    excludedRegions.add(regionId);
-  });
+  if (!Array.isArray(spec.map.excludeRegions) || spec.map.excludeRegions.length !== 0) {
+    errors.push('map.regional cannot exclude administrative regions from the national outline.');
+  }
 }
 
 function validateMetadata(spec, errors, warnings) {
@@ -697,6 +673,31 @@ function validateEditorialEconomy(spec, warnings) {
   }
 }
 
+function validateInformationDensity(spec, warnings) {
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  const annotations = data.filter((item) => typeof item?.annotation === 'string' && item.annotation.trim()).length;
+  const facts = Array.isArray(spec.supportingFacts) ? spec.supportingFacts.length : 0;
+  const references = Array.isArray(spec.references) ? spec.references.length : 0;
+  const density = spec.narrative?.density || 'editorial';
+  const budget = density === 'minimal' ? 5 : density === 'detailed' ? 10 : 8;
+  const contextLoad = annotations + facts + references +
+    (spec.primaryMetric ? 1 : 0) +
+    (spec.note ? 1 : 0) +
+    (spec.emphasis ? 1 : 0);
+
+  if (contextLoad > budget) {
+    warnings.push(
+      `Persistent context load is ${contextLoad} against a ${budget}-item ${density} budget; ` +
+      'the renderer will compact secondary annotations and supporting facts.'
+    );
+  }
+  if (annotations > 2 && facts > 2) {
+    warnings.push(
+      'Point annotations and supporting facts are both dense; keep one layer primary and use the other only for non-redundant context.'
+    );
+  }
+}
+
 function validateSpec(input) {
   const errors = [];
   const warnings = [];
@@ -732,6 +733,7 @@ function validateSpec(input) {
   validateMap(spec, errors);
   validateMetadata(spec, errors, warnings);
   validateEditorialEconomy(spec, warnings);
+  validateInformationDensity(spec, warnings);
 
   if (spec.note !== undefined && (typeof spec.note !== 'string' || spec.note.length > 240)) {
     errors.push('note must be a string of 240 characters or fewer.');

@@ -18,16 +18,46 @@ function candidateBrowsers() {
   const localAppData = process.env.LOCALAPPDATA || '';
   return [
     process.env.TOCHNYI_BROWSER,
-    path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
-    path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
     path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
     path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    localAppData ? path.join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe') : null
+    localAppData ? path.join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
+    path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+    path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe')
   ].filter(Boolean);
 }
 
+const browserCapabilityCache = new Map();
+
+function browserSupportsHeadless(candidate) {
+  if (browserCapabilityCache.has(candidate)) return browserCapabilityCache.get(candidate);
+  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-probe-'));
+  let supported = false;
+  try {
+    const result = spawnSync(candidate, [
+      '--headless=new',
+      '--no-first-run',
+      '--disable-gpu',
+      '--disable-extensions',
+      `--user-data-dir=${profileDir}`,
+      '--dump-dom',
+      'data:text/html,<html><body>tochnyi-browser-probe</body></html>'
+    ], {
+      encoding: 'utf8',
+      timeout: 10000,
+      windowsHide: true
+    });
+    supported = !result.error && result.status === 0 && result.stdout.includes('tochnyi-browser-probe');
+  } finally {
+    fs.rmSync(profileDir, { recursive: true, force: true });
+  }
+  browserCapabilityCache.set(candidate, supported);
+  return supported;
+}
+
 function findBrowser() {
-  return candidateBrowsers().find((candidate) => fs.existsSync(candidate)) || null;
+  return candidateBrowsers().find((candidate) =>
+    fs.existsSync(candidate) && browserSupportsHeadless(candidate)
+  ) || null;
 }
 
 function pngDimensions(filePath) {
@@ -103,7 +133,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   });
   if (options.requireViewportFit) {
     query.set('checkFit', '1');
-    if (options.autoFit !== false) query.set('fit', '1');
+    if (options.autoFit === true) query.set('fit', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -168,27 +198,48 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
 function captureHtml(htmlPath, outputPath, options = {}) {
   const requireViewportFit = options.requireViewportFit !== false;
   const viewport = options.viewport || { width: 1200, height: 900 };
-  const inspection = diagnoseHtml(htmlPath, { ...options, viewport, requireViewportFit });
+  const inspection = diagnoseHtml(htmlPath, {
+    ...options,
+    viewport,
+    requireViewportFit,
+    autoFit: options.autoFit === true
+  });
   const overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
   const adaptiveAttempts = options._adaptiveAttempts || 0;
   if (
     requireViewportFit &&
+    options.adaptiveCanvas !== false &&
     options.adaptiveHeight !== false &&
     overflowIssue &&
-    adaptiveAttempts < 4
+    adaptiveAttempts < 6
   ) {
-    const overflow = Number(overflowIssue.overflowPixels?.vertical) || 0;
-    if (overflow > 0) {
+    const requiredCanvas = inspection.diagnostics?.viewportFit || overflowIssue.requiredCanvas || {};
+    const requiredWidth = Math.ceil(Number(requiredCanvas.requiredWidth || requiredCanvas.width) || viewport.width);
+    const requiredHeight = Math.ceil(Number(requiredCanvas.requiredHeight || requiredCanvas.height) || viewport.height);
+    const horizontalOverflow = Number(overflowIssue.overflowPixels?.horizontal) || Math.max(0, requiredWidth - viewport.width);
+    const verticalOverflow = Number(overflowIssue.overflowPixels?.vertical) || Math.max(0, requiredHeight - viewport.height);
+    if (horizontalOverflow > 0 || verticalOverflow > 0) {
       return captureHtml(htmlPath, outputPath, {
         ...options,
         viewport: {
-          width: viewport.width,
-          height: Math.ceil(viewport.height + overflow + 32)
+          width: horizontalOverflow > 0
+            ? Math.max(viewport.width + 1, requiredWidth + 24)
+            : viewport.width,
+          height: verticalOverflow > 0
+            ? Math.max(viewport.height + 1, requiredHeight + 24)
+            : viewport.height
         },
         autoFit: false,
         _adaptiveAttempts: adaptiveAttempts + 1
       });
     }
+  }
+  if (requireViewportFit && overflowIssue) {
+    const horizontal = Number(overflowIssue.overflowPixels?.horizontal) || 0;
+    const vertical = Number(overflowIssue.overflowPixels?.vertical) || 0;
+    throw new Error(
+      `PNG capture refused because content still exceeds the canvas by ${horizontal}px horizontally and ${vertical}px vertically.`
+    );
   }
   const browser = inspection.browser;
   const absoluteHtml = inspection.htmlPath;
@@ -201,7 +252,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
   });
   if (requireViewportFit) {
     query.set('checkFit', '1');
-    if (options.autoFit !== false) query.set('fit', '1');
+    if (options.autoFit === true) query.set('fit', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -227,11 +278,19 @@ function captureHtml(htmlPath, outputPath, options = {}) {
   if (result.status !== 0 || !fs.existsSync(absoluteOutput)) {
     throw new Error(`Browser screenshot failed: ${result.stderr || result.stdout || `exit ${result.status}`}`);
   }
+  const dimensions = pngDimensions(absoluteOutput);
+  if (dimensions.width !== inspection.viewport.width || dimensions.height !== inspection.viewport.height) {
+    fs.rmSync(absoluteOutput, { force: true });
+    throw new Error(
+      `Browser screenshot dimensions ${dimensions.width}x${dimensions.height} do not match the approved canvas ` +
+      `${inspection.viewport.width}x${inspection.viewport.height}.`
+    );
+  }
   return {
     browser,
     outputPath: absoluteOutput,
     bytes: fs.statSync(absoluteOutput).size,
-    dimensions: pngDimensions(absoluteOutput),
+    dimensions,
     diagnostics: inspection.diagnostics
   };
 }

@@ -76,8 +76,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
   Object.freeze({ when: 'A source-supported exact start-to-end bridge with same-period, same-scope steps', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
   Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' }),
-  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' }),
-  Object.freeze({ when: 'Trigger, transmission, and consequence form a chain', use: 'story.sequence', example: 'specs/examples/wildberries-impact-sequence.json' })
+  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' })
 ]);
 
 const WATERFALL_CONTRACT = Object.freeze({
@@ -134,10 +133,6 @@ const REGIONAL_STATUSES = Object.freeze([
 ]);
 
 const REGIONAL_OVERRIDES = Object.freeze([
-  'map.viewport',
-  'map.contextFit',
-  'map.landmass',
-  'map.excludeRegions',
   'data[].calloutSide'
 ]);
 
@@ -229,7 +224,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] --no-diagnose`,
       screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
     },
-    authoringRule: 'Specify editorial content and stable region IDs. The map object normally needs only regionSet; omit automatic layout and routing fields.',
+    authoringRule: 'Specify editorial content and stable region IDs. Russian maps always retain the complete national outline, including detached regions; framing and exclusion controls are not authorable.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
     requiredDataItem: ['label', 'regionId or regionIds'],
     recommendedDataItem: ['status', 'displayValue', 'detail'],
@@ -274,7 +269,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`
       },
       {
-        if: 'The story is a number, comparison, ranking, status list, composition, trend, flow, or sequence without a map.',
+        if: 'The story is a number, comparison, ranking, status list, composition, trend, or flow without a map.',
         workflow: STANDARD_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} guide`,
         renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`

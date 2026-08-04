@@ -53,9 +53,7 @@
     }
   ],
   "map": {
-    "regionSet": "russia",
-    "viewport": "data",
-    "excludeRegions": ["RU-KGD"]
+    "regionSet": "russia"
   },
   "primaryMetric": {
     "value": "6 regions",

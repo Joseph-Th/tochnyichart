@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -73,17 +73,10 @@
     },
     {
       "id": "map.regional",
-      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards and an adaptive viewport.",
+      "purpose": "Show a geographic breakdown across named administrative regions with collision-managed callout cards and complete national context.",
       "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
       "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
       "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
-    },
-    {
-      "id": "story.sequence",
-      "purpose": "Show a causal or operational chain from trigger to downstream consequence.",
-      "data": "3 to 6 ordered items with label and detail; displayValue is optional.",
-      "bestFor": ["cause and effect", "policy transmission", "supply-chain failure", "multi-stage impact"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
     },
     {
       "id": "headline.metric",

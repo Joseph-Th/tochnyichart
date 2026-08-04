@@ -216,16 +216,12 @@ A regional item needs:
 - `regionId` or `regionIds`
 - At least one of `status`, `displayValue`, `detail`, or `value`
 
-For a status map, use `status`, `displayValue`, and `detail`. The map normally needs only `{ "regionSet": "russia" }`.
+For a status map, use `status`, `displayValue`, and `detail`. The map normally needs only `{ "regionSet": "russia" }`. Russian maps always retain the complete national outline, including detached regions.
 
-Do not author coordinates, card positions, route points, manual lanes, SVG paths, layout configuration, HTML, CSS, JavaScript, or chart-library configuration.
+Do not author coordinates, card positions, route points, manual lanes, partial framing, region exclusions, SVG paths, layout configuration, HTML, CSS, JavaScript, or chart-library configuration.
 
 Use these semantic overrides only when the story requires them:
 
-- `map.viewport`
-- `map.contextFit`
-- `map.landmass`
-- `map.excludeRegions`
 - `data[].calloutSide`
 
 Run:

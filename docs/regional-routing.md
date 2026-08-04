@@ -58,24 +58,12 @@ kept only when removing it would cause a collision.
 
 ## Map framing
 
-Framing has independent semantic controls:
-
-- `map.viewport`: `auto`, `all`, or `data`.
-- `map.viewportAlignment`: `auto`, `data`, or `context`.
-- `map.contextFit`: `auto`, `all`, or `focus`.
-- `map.landmass`: `auto`, `all`, or `continental`.
-- `map.excludeRegions`: explicit irrelevant region IDs.
-
-The projection fits complete GeoJSON features with explicit padding. The
-runtime does not solve layout by clipping a region at the canvas edge. A broad
-story normally keeps national context; a narrow story can use a local focus.
-Continental mode selects the largest connected landmass from the included
-features. Automatic mode restores an active detached region when a context
-choice would otherwise hide it.
-
-Use these fields only when the semantic story requires a different context.
-Do not use them to compensate for callout geometry or to force a screenshot to
-look acceptable.
+Russian regional maps use one framing contract: the complete national outline
+is always visible, including detached regions. The projection fits complete
+GeoJSON features with explicit padding. It does not use data-only zoom, local
+focus, continental-only selection, or region exclusions. Callout routing must
+adapt to the national context rather than narrowing the geography to make the
+layout easier.
 
 ## Summary and information economy
 

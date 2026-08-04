@@ -208,18 +208,30 @@ body.tochnyi-regional-matrix-page {
 }
 
 /* ===== Change Badge ===== */
+.tochnyi-emphasis-rail {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    min-height: 66px;
+    padding: 8px 18px 2px;
+}
+
+.tochnyi-emphasis-rail.position-between { justify-content: center; }
+.tochnyi-emphasis-rail.position-corner { justify-content: flex-end; }
+.tochnyi-emphasis-rail.position-left { justify-content: flex-start; }
+
 .tochnyi-change-badge {
-    position: absolute;
-    top: 50%;
-    right: 380px;
-    transform: translateY(-50%);
+    position: relative;
     font-family: var(--tochnyi-font);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
-    padding: 10px 20px;
+    line-height: 1.05;
+    max-width: min(560px, 100%);
+    padding: 9px 17px;
     border-radius: 8px;
-    z-index: 100;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
 }
 
 .tochnyi-change-badge.down {
@@ -232,21 +244,6 @@ body.tochnyi-regional-matrix-page {
     color: #008844;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid #d9dde1;
-}
-
-/* Corner position - for line charts or when default position interferes */
-.tochnyi-change-badge.corner {
-    top: 20px;
-    right: 20px;
-    transform: none;
-}
-
-/* Left position - for donut charts with big numbers on the left */
-.tochnyi-change-badge.left {
-    top: 130px;
-    left: 20px;
-    right: auto;
-    transform: none;
 }
 
 /* ===== Big Number (for pie/donut charts) ===== */
@@ -376,14 +373,26 @@ body.tochnyi-regional-matrix-page {
 
 .tochnyi-v2 .tochnyi-change-badge {
     z-index: 4;
-    white-space: nowrap;
+    white-space: normal;
 }
 
-.tochnyi-v2 .tochnyi-change-badge:not(.corner):not(.left) {
-    top: 42%;
-    left: 50%;
-    right: auto;
-    transform: translate(-50%, -50%);
+.tochnyi-v2 .tochnyi-chart-container.has-emphasis {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.tochnyi-v2 .tochnyi-chart-container.has-emphasis > .tochnyi-watermark {
+    grid-row: 1 / -1;
+}
+
+.tochnyi-v2 .tochnyi-chart-container.has-emphasis > .tochnyi-emphasis-rail {
+    grid-row: 1;
+}
+
+.tochnyi-v2 .tochnyi-chart-container.has-emphasis > .tochnyi-amchart {
+    grid-row: 2;
+    min-height: 0;
+    height: auto;
 }
 
 .tochnyi-change-badge.neutral {
@@ -439,6 +448,21 @@ body.tochnyi-regional-matrix-page {
 
 .tochnyi-stat:last-child {
     border-right: 0;
+}
+
+.tochnyi-stat-grid.compact .tochnyi-stat {
+    min-height: 76px;
+    padding: 11px 13px 12px;
+}
+
+.tochnyi-stat-grid.compact .tochnyi-stat-value {
+    font-size: 22px;
+}
+
+.tochnyi-stat-grid.compact .tochnyi-stat-label {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.18;
 }
 
 
@@ -582,6 +606,30 @@ body.tochnyi-regional-matrix-page {
     line-height: 1.25;
 }
 
+
+.tochnyi-annotation-strip.compact-list {
+    display: block;
+    overflow: hidden;
+    border: 1px solid #e5e8eb;
+    border-radius: 7px;
+    background: #f7f8f9;
+}
+
+.tochnyi-annotation-strip.compact-list .tochnyi-annotation {
+    grid-template-columns: minmax(120px, 0.28fr) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid #e5e8eb;
+    border-radius: 0;
+    background: transparent;
+    font-size: 13px;
+}
+
+.tochnyi-annotation-strip.compact-list .tochnyi-annotation:last-child {
+    border-bottom: 0;
+}
 
 .tochnyi-svg-stage {
     display: grid;
@@ -1267,71 +1315,6 @@ body.tochnyi-regional-matrix-page {
 .tochnyi-map-legend-item i { width: 9px; height: 9px; border-radius: 2px; background: var(--tochnyi-map-accent); }
 .tochnyi-map-legend-item b { font-size: 10px; line-height: 1; text-transform: uppercase; }
 
-.tochnyi-sequence-stage {
-    position: relative;
-    z-index: 3;
-    display: grid;
-    place-items: center;
-    padding: 28px 20px;
-}
-
-.tochnyi-sequence {
-    display: flex;
-    align-items: stretch;
-    width: 100%;
-}
-
-.tochnyi-sequence-node {
-    position: relative;
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 19px 16px 16px;
-    border: 1px solid #dfe3e6;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.97);
-}
-
-.tochnyi-sequence-step {
-    position: absolute;
-    top: -15px;
-    left: 12px;
-    display: grid;
-    place-items: center;
-    width: 29px;
-    height: 29px;
-    border-radius: 50%;
-    background: var(--tochnyi-black);
-    color: var(--tochnyi-white);
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.tochnyi-sequence-node[data-tone="primary"] .tochnyi-sequence-step { background: var(--tochnyi-blue); }
-.tochnyi-sequence-node[data-tone="secondary"] .tochnyi-sequence-step { background: #a56f00; }
-.tochnyi-sequence-node[data-tone="warning"] .tochnyi-sequence-step { background: #b45309; }
-.tochnyi-sequence-node[data-tone="critical"] .tochnyi-sequence-step { background: #b00000; }
-.tochnyi-sequence-node[data-tone="positive"] .tochnyi-sequence-step { background: #00733a; }
-
-.tochnyi-sequence-value {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--tochnyi-blue);
-    font-size: 25px;
-    line-height: 1;
-}
-
-.tochnyi-sequence-node h3 { font-size: 18px; line-height: 1.15; }
-.tochnyi-sequence-node p { margin-top: 8px; color: #555; font-size: 14px; font-weight: 500; line-height: 1.25; }
-
-.tochnyi-sequence-arrow {
-    display: grid;
-    place-items: center;
-    flex: 0 0 32px;
-    color: var(--tochnyi-blue);
-    font-size: 27px;
-    font-weight: 700;
-}
-
 @media (max-width: 760px) {
     body { padding: 20px; }
     .tochnyi-logo { height: var(--tochnyi-logo-height-compact); }
@@ -1345,9 +1328,7 @@ body.tochnyi-regional-matrix-page {
         text-align: center;
         white-space: normal;
     }
-    .tochnyi-v2 .tochnyi-change-badge:not(.corner):not(.left) {
-        top: 22px;
-    }
+    .tochnyi-emphasis-rail { min-height: 58px; padding: 6px 8px 0; }
     .tochnyi-v2 .tochnyi-chart-container.standard { height: 480px; }
     .tochnyi-v2 .tochnyi-chart-container.tall { height: 620px; }
     .tochnyi-v2 .tochnyi-bottom { flex-direction: column; align-items: stretch; }
@@ -1391,8 +1372,6 @@ body.tochnyi-regional-matrix-page {
         max-width: none;
         transform: none;
     }
-    .tochnyi-sequence { display: grid; gap: 18px; }
-    .tochnyi-sequence-arrow { display: none; }
     .tochnyi-stacked-stage { padding: 22px 14px; }
     .tochnyi-chart-container.short.recipe-composition-stacked { height: 320px; }
     .tochnyi-stacked-stage.tochnyi-stacked-compact { padding: 12px 12px 16px; }
