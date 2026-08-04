@@ -13,3 +13,7 @@ node_modules/
 
 # Logs
 *.log
+
+# Generated chart and screenshot output
+/charts/
+/previews/

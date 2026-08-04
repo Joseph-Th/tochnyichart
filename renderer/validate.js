@@ -108,7 +108,7 @@ function pushLengthIssue(value, field, max, errors, warnings, warningAt = max) {
 function normalizeEditorialValue(value) {
   return String(value || '')
     .toLowerCase()
-    .replace(/[−–—]/g, '-')
+    .replace(/[\u2012\u2013\u2014\u2212]/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -283,7 +283,9 @@ function validateData(spec, errors, warnings) {
 }
 
 function requireNumericValues(spec, errors) {
-  spec.data.forEach((item, index) => {
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  data.forEach((item, index) => {
+    if (!isObject(item)) return;
     if (typeof item?.value !== 'number' || !Number.isFinite(item.value)) {
       errors.push(`data[${index}].value is required for ${spec.recipe}.`);
     }
@@ -292,6 +294,7 @@ function requireNumericValues(spec, errors) {
 
 function validateRecipe(spec, errors, warnings) {
   const count = Array.isArray(spec.data) ? spec.data.length : 0;
+  const data = Array.isArray(spec.data) ? spec.data : [];
   switch (spec.recipe) {
     case 'comparison.change':
       if (count !== 2) errors.push('comparison.change requires exactly 2 data items.');
@@ -308,9 +311,9 @@ function validateRecipe(spec, errors, warnings) {
       break;
     case 'comparison.range':
       if (count < 2 || count > 8) errors.push('comparison.range requires 2 to 8 data items.');
-      spec.data.forEach((item, index) => {
-        const hasValue = typeof item.value === 'number' && Number.isFinite(item.value);
-        const hasRange = typeof item.low === 'number' && Number.isFinite(item.low) && typeof item.high === 'number' && Number.isFinite(item.high);
+      data.forEach((item, index) => {
+        const hasValue = typeof item?.value === 'number' && Number.isFinite(item.value);
+        const hasRange = typeof item?.low === 'number' && Number.isFinite(item.low) && typeof item?.high === 'number' && Number.isFinite(item.high);
         if (!hasValue && !hasRange) errors.push(`data[${index}] requires value or both low and high for comparison.range.`);
         if (hasRange && item.low > item.high) errors.push(`data[${index}].low must not exceed high.`);
       });
@@ -323,32 +326,30 @@ function validateRecipe(spec, errors, warnings) {
     case 'composition.donut': {
       if (count < 2 || count > 6) errors.push('composition.donut requires 2 to 6 data items.');
       requireNumericValues(spec, errors);
-      if (Array.isArray(spec.data) && spec.data.some((item) => item?.value <= 0)) {
+      if (data.some((item) => item?.value <= 0)) {
         errors.push('composition.donut values must all be greater than zero.');
       }
-      const sum = Array.isArray(spec.data)
-        ? spec.data.reduce((total, item) => total + (typeof item?.value === 'number' ? item.value : 0), 0)
-        : 0;
+      const sum = data.reduce((total, item) => total + (typeof item?.value === 'number' ? item.value : 0), 0);
       if (spec.measure?.unit === '%' && Math.abs(sum - 100) > 0.5) warnings.push(`Donut percentages total ${sum}, not 100.`);
       break;
     }
     case 'composition.stacked': {
       if (count < 2 || count > 6) errors.push('composition.stacked requires 2 to 6 data items.');
       requireNumericValues(spec, errors);
-      if (spec.data.some((item) => typeof item.value === 'number' && item.value <= 0)) errors.push('composition.stacked values must all be greater than zero.');
-      const sum = spec.data.reduce((total, item) => total + (typeof item.value === 'number' ? item.value : 0), 0);
+      if (data.some((item) => typeof item?.value === 'number' && item.value <= 0)) errors.push('composition.stacked values must all be greater than zero.');
+      const sum = data.reduce((total, item) => total + (typeof item?.value === 'number' ? item.value : 0), 0);
       if (spec.measure?.unit === '%' && Math.abs(sum - 100) > 0.5) warnings.push(`Stacked percentages total ${sum}, not 100.`);
       break;
     }
     case 'flow.waterfall':
       if (count < 2 || count > 8) errors.push('flow.waterfall requires 2 to 8 data items.');
       requireNumericValues(spec, errors);
-      spec.data.forEach((item, index) => {
-        if (!ROLES.has(item.role)) errors.push(`data[${index}].role is required for flow.waterfall.`);
+      data.forEach((item, index) => {
+        if (!ROLES.has(item?.role)) errors.push(`data[${index}].role is required for flow.waterfall.`);
       });
-      if (spec.data[0]?.role !== 'start') errors.push('flow.waterfall must begin with a start item.');
-      if (!['end', 'subtotal'].includes(spec.data[count - 1]?.role)) errors.push('flow.waterfall must end with an end or subtotal item.');
-      if (!spec.data.some((item) => item.role === 'change')) warnings.push('flow.waterfall should contain at least one change item.');
+      if (data[0]?.role !== 'start') errors.push('flow.waterfall must begin with a start item.');
+      if (!['end', 'subtotal'].includes(data[count - 1]?.role)) errors.push('flow.waterfall must end with an end or subtotal item.');
+      if (!data.some((item) => item?.role === 'change')) warnings.push('flow.waterfall should contain at least one change item.');
       break;
     case 'ranking.horizontal':
       if (count < 3 || count > 12) errors.push('ranking.horizontal requires 3 to 12 data items.');
@@ -356,19 +357,21 @@ function validateRecipe(spec, errors, warnings) {
       break;
     case 'status.grid':
       if (count < 3 || count > 12) errors.push('status.grid requires 3 to 12 data items.');
-      spec.data.forEach((item, index) => {
-        if (!STATUSES.has(item.status)) errors.push(`data[${index}].status is required for status.grid.`);
-        if (typeof item.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for status.grid.`);
+      data.forEach((item, index) => {
+        if (!STATUSES.has(item?.status)) errors.push(`data[${index}].status is required for status.grid.`);
+        if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for status.grid.`);
       });
       break;
     case 'map.regional': {
       if (count < 1 || count > 12) errors.push('map.regional requires 1 to 12 data items.');
       const regionSet = TochnyiMaps.getRegionSet(spec.map?.regionSet);
       const usedRegions = new Set();
-      spec.data.forEach((item, index) => {
-        const regionIds = item.regionIds || (item.regionId ? [item.regionId] : []);
+      data.forEach((item, index) => {
+        const regionIds = Array.isArray(item?.regionIds)
+          ? item.regionIds
+          : (typeof item?.regionId === 'string' ? [item.regionId] : []);
         if (!regionIds.length) errors.push(`data[${index}] requires regionId or regionIds for map.regional.`);
-        if (!item.detail && !item.displayValue && item.value === undefined && !item.status) {
+        if (!item?.detail && !item?.displayValue && item?.value === undefined && !item?.status) {
           warnings.push(`data[${index}] has no detail, displayValue, numeric value, or status; its callout may be uninformative.`);
         }
         regionIds.forEach((regionId) => {
@@ -381,8 +384,8 @@ function validateRecipe(spec, errors, warnings) {
     }
     case 'story.sequence':
       if (count < 3 || count > 6) errors.push('story.sequence requires 3 to 6 data items.');
-      spec.data.forEach((item, index) => {
-        if (typeof item.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for story.sequence.`);
+      data.forEach((item, index) => {
+        if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for story.sequence.`);
       });
       break;
     case 'headline.metric':
@@ -429,7 +432,8 @@ function validateMeasure(spec, errors, warnings) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
-    const values = spec.data.flatMap((item) => [item.value, item.low, item.high, item.benchmark]).filter((value) => typeof value === 'number');
+    const data = Array.isArray(spec.data) ? spec.data : [];
+    const values = data.flatMap((item) => [item?.value, item?.low, item?.high, item?.benchmark]).filter((value) => typeof value === 'number');
     if (values.some((value) => value <= 0)) errors.push('Logarithmic scale requires all plotted values to be greater than zero.');
   }
 }
@@ -539,7 +543,11 @@ function validateMap(spec, errors) {
     return;
   }
   const regionSet = TochnyiMaps.getRegionSet(spec.map.regionSet);
-  const activeRegions = new Set((Array.isArray(spec.data) ? spec.data : []).flatMap((item) => item?.regionIds || (item?.regionId ? [item.regionId] : [])));
+  const activeRegions = new Set((Array.isArray(spec.data) ? spec.data : []).flatMap((item) => (
+    Array.isArray(item?.regionIds)
+      ? item.regionIds
+      : (typeof item?.regionId === 'string' ? [item.regionId] : [])
+  )));
   const excludedRegions = new Set();
   spec.map.excludeRegions.forEach((regionId, index) => {
     if (typeof regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(regionId)) {
@@ -574,28 +582,30 @@ function validateEditorialEconomy(spec, warnings) {
     warnings.push('source.name looks like an internal working reference; use the underlying publication or dataset when available.');
   }
 
-  spec.data.forEach((item, index) => {
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  data.forEach((item, index) => {
+    if (!isObject(item)) return;
     if (/[0-9]+(?:[.][0-9]+)?m[ 	]+m(?:2|²)/i.test(item.displayValue || '')) {
       warnings.push(`data[${index}].displayValue uses an ambiguous repeated unit abbreviation; prefer a fully written unit.`);
     }
   });
 
-  if (spec.recipe !== 'composition.stacked' || spec.data.length < 2) return;
-  const total = spec.data.reduce((sum, item) => sum + (typeof item.value === 'number' ? item.value : 0), 0);
+  if (spec.recipe !== 'composition.stacked' || data.length < 2) return;
+  const total = data.reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0);
   if (!(total > 0)) return;
 
   const repeated = new Set();
-  spec.data.forEach((item) => {
-    repeated.add(normalizeEditorialValue(item.displayValue));
-    repeated.add(normalizeEditorialValue(percentageText(item.value / total * 100)));
+  data.forEach((item) => {
+    repeated.add(normalizeEditorialValue(item?.displayValue));
+    repeated.add(normalizeEditorialValue(percentageText(item?.value / total * 100)));
   });
   const duplicateFacts = spec.supportingFacts.filter((fact) => repeated.has(normalizeEditorialValue(fact.value)));
   if (duplicateFacts.length) {
     warnings.push('Supporting facts repeat values already encoded in the stacked composition; keep only facts that add a different unit, cause, or consequence.');
   }
 
-  const allAnnotated = spec.data.every((item) => typeof item.annotation === 'string' && item.annotation.trim());
-  if (spec.data.length === 2 && spec.options.showLabels && spec.options.showLegend && allAnnotated && spec.supportingFacts.length >= 2) {
+  const allAnnotated = data.every((item) => typeof item?.annotation === 'string' && item.annotation.trim());
+  if (data.length === 2 && spec.options.showLabels && spec.options.showLegend && allAnnotated && spec.supportingFacts.length >= 2) {
     warnings.push('This two-part composition repeats the same categories across segment labels, legend, annotations, and supporting facts. The renderer will collapse redundant layers.');
   }
 }

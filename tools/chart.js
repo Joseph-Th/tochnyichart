@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('node:fs');
 const path = require('node:path');
 const { listRecipes } = require('../renderer/catalog');
 const { validateSpec } = require('../renderer/validate');
-const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtml, diagnoseHtmlResponsive } = require('../renderer/capture');
 const { renderRegionalBreakdown, regionalAgentGuide } = require('../renderer/regional-workflow');
+const { DEFAULT_REGION_SET_ID, agentWorkflowOrientation, standardAgentGuide } = require('../renderer/agent-workflow');
+const { readSpecFile, renderStandardChart } = require('../renderer/workflow');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 
 function usage(exitCode = 0) {
@@ -17,7 +17,8 @@ function usage(exitCode = 0) {
 Usage:
   node tools/chart.js catalog
   node tools/chart.js regions [region-set]
-  node tools/chart.js guide
+  node tools/chart.js orient [region-set]
+  node tools/chart.js guide [region-set]
   node tools/chart.js regional-guide [region-set]
   node tools/chart.js validate <spec.json>
   node tools/chart.js render <spec.json> [output.html]
@@ -29,10 +30,6 @@ The model-facing artifact is a ChartSpec JSON file. The renderer owns HTML, CSS,
 AMCharts configuration, branding, layout, and export behavior.`;
   console.log(text);
   process.exit(exitCode);
-}
-
-function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(path.resolve(filePath), 'utf8'));
 }
 
 function printResult(result) {
@@ -73,42 +70,24 @@ function main() {
     return;
   }
 
+  if (command === 'orient') {
+    printResult(agentWorkflowOrientation(args[1] || DEFAULT_REGION_SET_ID));
+    return;
+  }
+
   if (command === 'guide') {
-    printResult({
-      selectionRules: [
-        { when: 'One decisive number', use: 'headline.metric' },
-        { when: 'Two values showing change', use: 'comparison.change' },
-        { when: 'Actual, expected, prior, target, or alternatives', use: 'comparison.scenarios' },
-        { when: 'Changes need a visible zero line', use: 'comparison.diverging' },
-        { when: 'Values include a min-max interval or threshold', use: 'comparison.range' },
-        { when: 'Ordered time points', use: 'trend.line' },
-        { when: 'Exact parts of one total', use: 'composition.stacked' },
-        { when: 'Multi-part composition where shape matters', use: 'composition.donut' },
-        { when: 'Start, additions or losses, and an ending value', use: 'flow.waterfall' },
-        { when: 'Ranked categories with long labels', use: 'ranking.horizontal' },
-        { when: 'Places or operations have categorical conditions', use: 'status.grid' },
-        { when: 'Administrative regions need a geographic breakdown with callouts', use: 'map.regional' },
-        { when: 'Trigger, transmission, and consequence form a chain', use: 'story.sequence' }
-      ],
-      composableFeatures: [
-        { need: 'Target, average, legal limit, or benchmark', add: 'references' },
-        { need: 'Explain a specific point', add: 'data[].annotation' },
-        { need: 'Values span orders of magnitude', add: 'measure.scale = logarithmic' },
-        { need: 'Important context uses different units', add: 'supportingFacts instead of another axis' }
-      ],
-      defaultRule: 'Choose the story structure before the chart geometry. Do not default to bars merely because values are numeric.'
-    });
+    printResult(standardAgentGuide(args[1] || DEFAULT_REGION_SET_ID));
     return;
   }
 
   if (command === 'regional-guide') {
-    printResult(regionalAgentGuide(args[1] || 'russia'));
+    printResult(regionalAgentGuide(args[1] || DEFAULT_REGION_SET_ID));
     return;
   }
 
   if (command === 'validate') {
     if (!args[1]) usage(1);
-    const result = validateSpec(readJson(args[1]));
+    const result = validateSpec(readSpecFile(args[1]).spec);
     printResult(result);
     if (!result.valid) process.exit(1);
     return;
@@ -116,16 +95,7 @@ function main() {
 
   if (command === 'render') {
     if (!args[1]) usage(1);
-    const result = renderSpecFile(args[1], args[2]);
-    const review = reviewFile(result.htmlPath);
-    printResult({
-      htmlPath: result.htmlPath,
-      recipe: result.recipe,
-      bytes: result.bytes,
-      warnings: [...new Set([...result.warnings, ...review.warnings.map((warning) => warning.replace(/^ChartSpec: /, ''))])],
-      review: { valid: review.valid, errors: review.errors }
-    });
-    if (!review.valid) process.exit(1);
+    printResult(renderStandardChart(args[1], args[2]));
     return;
   }
 

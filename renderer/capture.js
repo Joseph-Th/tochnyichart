@@ -107,12 +107,16 @@ function diagnoseHtml(htmlPath, options = {}) {
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
-  const result = spawnSync(browser, [...commonBrowserArgs(profileDir, viewport), '--dump-dom', url], {
-    encoding: 'utf8',
-    timeout: options.timeout || 30000,
-    windowsHide: true
-  });
-  fs.rmSync(profileDir, { recursive: true, force: true });
+  let result;
+  try {
+    result = spawnSync(browser, [...commonBrowserArgs(profileDir, viewport), '--dump-dom', url], {
+      encoding: 'utf8',
+      timeout: options.timeout || 30000,
+      windowsHide: true
+    });
+  } finally {
+    fs.rmSync(profileDir, { recursive: true, force: true });
+  }
   if (result.error?.code === 'ETIMEDOUT' && !options._retried) {
     return diagnoseHtml(htmlPath, { ...options, _retried: true, timeout: Math.max(options.timeout || 30000, 60000) });
   }
@@ -206,12 +210,16 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     `--screenshot=${absoluteOutput}`,
     url
   ];
-  const result = spawnSync(browser, args, {
-    encoding: 'utf8',
-    timeout: options.timeout || 30000,
-    windowsHide: true
-  });
-  fs.rmSync(profileDir, { recursive: true, force: true });
+  let result;
+  try {
+    result = spawnSync(browser, args, {
+      encoding: 'utf8',
+      timeout: options.timeout || 30000,
+      windowsHide: true
+    });
+  } finally {
+    fs.rmSync(profileDir, { recursive: true, force: true });
+  }
   if (result.error?.code === 'ETIMEDOUT' && !options._captureRetried) {
     return captureHtml(htmlPath, outputPath, { ...options, _captureRetried: true, timeout: Math.max(options.timeout || 30000, 60000) });
   }

@@ -1,7 +1,7 @@
 ---
 name: chart
-description: Turn sourced statistics into a validated Tochnyi ChartSpec and render it with the standard chart system
-version: 2.5.0
+description: Turn sourced statistics into a validated Tochnyi ChartSpec through the standard or regional workflow
+version: 3.0.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -10,141 +10,152 @@ triggers:
 
 # Tochnyi Chart Generator
 
-Create charts through the declarative v2 pipeline. Do not generate or edit chart HTML, CSS, JavaScript, or AMCharts code.
+Create charts through the declarative v2 pipeline. The model owns editorial
+meaning; the renderer owns implementation. Never generate or edit chart HTML,
+CSS, JavaScript, AMCharts code, coordinates, or pixel geometry.
 
-## Model responsibility
+## Start here
 
-Focus on editorial and analytical decisions:
+Choose the workflow before writing a specification:
+
+```bash
+node tools/chart.js orient
+```
+
+Use the regional workflow only when geography is part of the finding and the
+highlighted regions need map callout cards. Use the standard workflow for every
+other story, including a status comparison that does not need a map.
+
+For the full routing contract and failure-handling rules, use
+`docs/agent-workflows.md`. For regional planner behavior and diagnostic fields,
+use `docs/regional-routing.md`.
+
+## Shared authoring rules
 
 - Extract exact values, categories, dates, units, ranges, benchmarks, and source.
-- Calculate only values directly implied by the supplied data.
-- Identify the main finding and the story structure that best supports it.
-- Choose one recipe from `recipes/catalog.json`.
-- Add references, annotations, or supporting facts only when they improve interpretation.
-- Produce a `ChartSpec` JSON file conforming to `schemas/chart-spec.schema.json`.
+- Do not invent missing dates, sources, values, endpoints, or regional statuses.
+- Choose the story structure before the chart geometry.
+- Keep the specification as small and semantic as possible.
+- Use the underlying publication or dataset as `source.name`, not `input.txt`.
+- Revise the ChartSpec or shared renderer after a failed check; never patch generated HTML.
 
-The renderer owns layout, typography, axes, colors, branding, labels, responsiveness, and export behavior. Semantic colors and mark opacity are renderer-owned; do not request saturated fills or add color/opacity fields to a ChartSpec.
+## Standard chart workflow
 
-## Required information
-
-Do not invent a date, year, data source, unit, range endpoint, or geographic status.
-
-If the material does not establish the applicable date or year, ask for it.
-If the material does not identify a source, ask for it.
-If a value is ambiguous, do not silently infer it.
-
-## Choose the story structure first
-
-Run the compact decision guide when needed:
+Use the compact recipe guide:
 
 ```bash
 node tools/chart.js guide
 ```
 
-Use the full catalog only when recipe constraints are needed:
+Select one of the standard recipes: `headline.metric`, `comparison.change`,
+`comparison.scenarios`, `comparison.diverging`, `comparison.range`, `trend.line`,
+`composition.stacked`, `composition.donut`, `flow.waterfall`,
+`ranking.horizontal`, `status.grid`, or `story.sequence`.
+
+Then:
+
+1. Analyze the source and identify the central finding.
+2. Write the ChartSpec to `specs/YYYY-week-WW/[slug].json`.
+3. Validate it:
+
+   ```bash
+   node tools/chart.js validate specs/YYYY-week-WW/[slug].json
+   ```
+
+4. Render it:
+
+   ```bash
+   node tools/chart.js render specs/YYYY-week-WW/[slug].json
+   ```
+
+5. Diagnose the generated chart:
+
+   ```bash
+   node tools/chart.js diagnose charts/YYYY-week-WW/[slug].html
+   ```
+
+6. Resolve error-level overlap, clipping, or mark-style issues. Capture a PNG
+   only when editorial visual review is useful:
+
+   ```bash
+   node tools/chart.js review charts/YYYY-week-WW/[slug].html \
+     --screenshot --output previews/[slug].png
+   ```
+
+If the story needs administrative regions on a map, stop this workflow. Do not
+use the generic `render` command for `map.regional`; it will direct you to the
+regional workflow.
+
+## Regional breakdown workflow
+
+Start with the dedicated contract and region registry:
 
 ```bash
-node tools/chart.js catalog
+node tools/chart.js regional-guide russia
+node tools/chart.js regions russia
 ```
 
-Available recipes:
+Author only the semantic content. A minimal regional item has:
 
-- `headline.metric`: one decisive metric.
-- `comparison.change`: exactly two values showing change.
-- `comparison.scenarios`: actual, expected, prior, target, or alternatives.
-- `comparison.diverging`: directional changes around a visible zero line.
-- `comparison.range`: exact values, min-max intervals, and thresholds.
-- `trend.line`: ordered time points; five or more preferred.
-- `composition.stacked`: exact parts of one total, especially two-part splits.
-- `composition.donut`: multi-part composition where the overall shape matters.
-- `flow.waterfall`: start, additions or losses, and ending value.
-- `ranking.horizontal`: ranked categories with long labels.
-- `status.grid`: named places or operating areas with categorical status.
-- `story.sequence`: a trigger-to-consequence or operational chain.
+- `label`
+- `regionId` or `regionIds`
+- at least one of `status`, `displayValue`, `detail`, or `value`
 
-Do not default to bars simply because the source contains numbers. First decide whether the story is a change, threshold, range, composition, flow, ranking, status comparison, or causal sequence.
+For a status map, `status`, `displayValue`, and `detail` are the clearest
+combination. The map normally needs only `{ "regionSet": "russia" }`.
+
+Do not author `leaderRouting`, `calloutDistribution`, `summaryDisplay`,
+`summaryPosition`, `anchorStyle`, coordinates, card positions, route points, or
+other implementation details. Only override `viewport`, `contextFit`,
+`landmass`, `excludeRegions`, or `data[].calloutSide` when the story itself
+requires that semantic constraint.
+
+Run the consolidated regional workflow:
+
+```bash
+node tools/chart.js regional \
+  specs/YYYY-week-WW/[slug].json \
+  charts/YYYY-week-WW/[slug].html
+```
+
+This validates the regional recipe, renders the shell, reviews the generated
+artifact, and runs responsive diagnostics at desktop, tablet, and mobile sizes.
+Use `--no-diagnose` only when no browser is available. Use the generic
+`review --screenshot` command for optional human visual review.
+
+The renderer automatically owns map projection, landmass/context fitting,
+callout placement, column ordering, leader routing, obstacle avoidance, summary
+visibility, and responsive behavior. Agents should read the returned diagnostics
+as a pass/fail signal, not tune the routing internals.
 
 ## Composable features
 
-Use these without creating a new chart type:
+Use these only when they add information without changing the story structure:
 
-- `references`: target, legal limit, prior norm, average, or other benchmark line.
-- `data[].annotation`: one concise explanation tied to a specific item.
-- `measure.scale: "logarithmic"`: only for positive values spanning orders of magnitude.
-- `supportingFacts`: context in different units that should not be forced onto the same axis.
+- `references`: target, legal limit, average, or other benchmark.
+- `data[].annotation`: one concise explanation tied to a point.
+- `measure.scale: "logarithmic"`: positive values spanning orders of magnitude.
+- `supportingFacts`: context in a different unit that should not share the axis.
 - `data[].low` and `data[].high`: uncertainty or policy ranges.
-- `data[].status` and `data[].detail`: categorical operational or regional conditions.
-- `data[].role`: waterfall semantics using `start`, `change`, `subtotal`, and `end`.
 
-Before finalizing the specification, enforce information economy:
+## Delivery checklist
 
-- Do not repeat the same percentage or value in segment labels, a legend, annotations, supporting facts, and a note.
-- Supporting facts must add a different unit, cause, consequence, threshold, or comparison.
-- Use the underlying publication or dataset as `source.name`, not `input.txt` or an internal working label.
-- Avoid ambiguous compact units such as `5.60m m²`; prefer `5.60 million m²`.
-- In a two-part composition, identify the editorially important segment with its semantic tone. The renderer will promote it and subordinate the total.
-
-Use a zero baseline for ordinary magnitude comparisons. Use an explicit or automatic nonzero baseline only when the editorial comparison requires it and the scale remains clearly labeled.
-
-## Workflow
-
-1. Analyze the supplied material and identify the main finding.
-2. Classify the story structure.
-3. Select a recipe and optional composable features.
-4. Write the specification to `specs/YYYY-week-WW/[slug].json`.
-5. Validate it:
-
-```bash
-node tools/chart.js validate specs/YYYY-week-WW/[slug].json
-```
-
-6. Correct the specification until validation passes.
-7. Render it:
-
-```bash
-node tools/chart.js render specs/YYYY-week-WW/[slug].json
-```
-
-8. Run automatic layout and mark-style diagnostics:
-
-```bash
-node tools/chart.js diagnose charts/YYYY-week-WW/[slug].html
-```
-
-Read the structured `issues` array. Correct error-level overlap, clipping, and mark-style
-issues before continuing. Prefer specification-level changes such as shorter
-labels, `options.labelMode`, `emphasis.position`, a taller layout, annotations,
-or a recipe with more label space.
-
-9. Capture a PNG when editorial visual review is needed:
-
-```bash
-node tools/chart.js review charts/YYYY-week-WW/[slug].html --screenshot --output previews/[slug].png
-```
-
-Only revise the ChartSpec. Never patch generated HTML to fix a chart.
-Ordinary label-overlap checks do not require direct screenshot comparison.
-
-## Output to the user
-
-Report:
-
-- The selected recipe and why it fits the story
-- The key data, range, benchmark, or calculation used
-- The ChartSpec path
-- The generated HTML path
-- The PNG path when screenshot review was run
-- The layout diagnostic status and any remaining warning
-
-Keep the explanation brief. Do not include generated implementation code.
+Report the selected workflow and recipe, the ChartSpec path, generated HTML path,
+optional PNG path, diagnostic status, and any remaining warning. Do not include
+generated implementation code in the response.
 
 ## Sources of truth
 
-1. `schemas/chart-spec.schema.json`: allowed ChartSpec structure
-2. `recipes/catalog.json`: available recipes and feature catalog
-3. `renderer/validate.js`: enforced constraints
-4. `lib/tochnyi-runtime.js`: deterministic visual implementation
-5. `lib/tochnyi-diagnostics.js`: measured overlap and clipping analysis
-6. `lib/tochnyi.css`: shared design system
+1. `node tools/chart.js orient`: workflow routing
+2. `schemas/chart-spec.schema.json`: allowed ChartSpec structure
+3. `recipes/catalog.json`: recipe purposes and constraints
+4. `renderer/validate.js`: enforced validation
+5. `renderer/agent-workflow.js`: agent-facing workflow contract
+6. `lib/tochnyi-runtime.js` and `lib/tochnyi-map-runtime.js`: rendering behavior
+7. `lib/tochnyi-diagnostics.js`: measured overlap and clipping analysis
 
-`reference.html` is legacy documentation. Do not read it before generating a chart.
+Testing guidance lives in `docs/testing.md`; the complete automated gate is
+`npm run test:all`.
+
+Generated HTML and PNG files are disposable outputs; the ChartSpec and renderer
+are the sources of truth.

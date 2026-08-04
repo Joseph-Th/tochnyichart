@@ -122,6 +122,27 @@ function defaultOutputPath(projectRoot, spec) {
   return path.join(projectRoot, 'charts', week, `${slug}.html`);
 }
 
+function renderValidatedSpecFile(specPath, normalized, outputPath, options = {}) {
+  const projectRoot = path.resolve(options.projectRoot || path.join(__dirname, '..'));
+  const absoluteSpecPath = path.resolve(specPath);
+  const targetPath = path.resolve(outputPath || defaultOutputPath(projectRoot, normalized));
+  const targetDir = path.dirname(targetPath);
+  fs.mkdirSync(targetDir, { recursive: true });
+  const assetPrefix = ensureTrailingSlash(path.relative(targetDir, path.join(projectRoot, 'lib')).replace(/\\/g, '/') || '.');
+  const version = options.assetVersion || assetFingerprint(projectRoot);
+  const html = renderHtml(normalized, { assetPrefix, assetVersion: version });
+  fs.writeFileSync(targetPath, html, 'utf8');
+
+  return {
+    specPath: absoluteSpecPath,
+    htmlPath: targetPath,
+    recipe: normalized.recipe,
+    bytes: Buffer.byteLength(html),
+    warnings: options.warnings || [],
+    normalized
+  };
+}
+
 function renderSpecFile(specPath, outputPath, options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.join(__dirname, '..'));
   const absoluteSpecPath = path.resolve(specPath);
@@ -133,26 +154,16 @@ function renderSpecFile(specPath, outputPath, options = {}) {
     throw error;
   }
 
-  const targetPath = path.resolve(outputPath || defaultOutputPath(projectRoot, result.normalized));
-  const targetDir = path.dirname(targetPath);
-  fs.mkdirSync(targetDir, { recursive: true });
-  const assetPrefix = ensureTrailingSlash(path.relative(targetDir, path.join(projectRoot, 'lib')).replace(/\\/g, '/') || '.');
-  const version = options.assetVersion || assetFingerprint(projectRoot);
-  const html = renderHtml(result.normalized, { assetPrefix, assetVersion: version });
-  fs.writeFileSync(targetPath, html, 'utf8');
-
-  return {
-    specPath: absoluteSpecPath,
-    htmlPath: targetPath,
-    recipe: result.normalized.recipe,
-    bytes: Buffer.byteLength(html),
-    warnings: result.warnings,
-    normalized: result.normalized
-  };
+  return renderValidatedSpecFile(absoluteSpecPath, result.normalized, outputPath, {
+    ...options,
+    projectRoot,
+    warnings: result.warnings
+  });
 }
 
 module.exports = {
   renderHtml,
+  renderValidatedSpecFile,
   renderSpecFile,
   defaultOutputPath,
   assetFingerprint,

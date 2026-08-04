@@ -1,221 +1,167 @@
-# Tochnyi Charts v2.15.0
+# Tochnyi Charts
 
-Tochnyi Charts is a declarative chart system for producing consistent, publication-ready visuals from compact JSON specifications.
+Tochnyi Charts turns a compact, validated `ChartSpec` JSON file into a branded,
+responsive chart. Agents choose the story structure and provide the evidence;
+the renderer owns HTML, CSS, chart configuration, typography, layout, maps, and
+export behavior.
 
-The model decides what the chart should communicate. The renderer owns HTML, CSS, AMCharts configuration, typography, spacing, branding, accessibility, and export behavior.
+Generated HTML is an output artifact. Do not edit it directly.
 
-## Core contract
+## Start here
 
-A chart is authored as a `ChartSpec` JSON file. Generated HTML is an output artifact and should not be edited directly.
+Ask the tool to orient the work before authoring a specification:
 
-```text
-source material
-    ↓
-editorial analysis
-    ↓
-ChartSpec JSON
-    ↓
-validation
-    ↓
-deterministic renderer
-    ↓
-HTML + optional PNG review
+```bash
+node tools/chart.js orient
 ```
 
-Chart specifications cannot contain HTML, JavaScript, CSS, templates, or inline styles. The validator rejects implementation fields.
+There are two intentionally separate workflows:
+
+| Story | Workflow | First command | Render command |
+| --- | --- | --- | --- |
+| Number, comparison, ranking, status list, composition, trend, flow, or sequence without a map | `standard-chart` | `node tools/chart.js guide` | `node tools/chart.js render <spec.json> [output.html]` |
+| Administrative regions are part of the finding and need map callouts | `regional-breakdown` | `node tools/chart.js regional-guide russia` | `node tools/chart.js regional <spec.json> [output.html]` |
+
+Choose one workflow before writing the spec. A `map.regional` spec is rejected by
+the standard render command and redirected to the regional workflow.
+
+The shared lifecycle is:
+
+```text
+source and evidence
+        |
+        v
+semantic ChartSpec JSON
+        |
+        v
+validation -> selected renderer -> shell review
+                                      |
+                                      v
+                         browser diagnostics -> optional screenshot
+```
 
 ## Requirements
 
-- Node.js 20 or newer
-- A modern browser to view charts
-- Microsoft Edge or Google Chrome for automated screenshots
-- Internet access when viewing or capturing charts because AMCharts and Mukta are loaded from CDNs
+- Node.js 20 or newer.
+- A modern browser to view charts.
+- Microsoft Edge or Google Chrome for browser diagnostics and screenshots.
+- Internet access when loading a chart, because AMCharts and Mukta are loaded from CDNs.
 
-There are no npm runtime dependencies.
+There are no npm runtime dependencies. Set `TOCHNYI_BROWSER` when the browser
+executable is installed in a nonstandard location.
 
-## Commands
+## Workflow commands
 
-List the available chart recipes:
+### Orientation and contracts
 
 ```bash
+node tools/chart.js orient [region-set]
+node tools/chart.js guide [region-set]
+node tools/chart.js regional-guide [region-set]
 node tools/chart.js catalog
+node tools/chart.js regions [region-set]
 ```
 
-List reusable map region sets and their region identifiers:
+These commands return machine-readable JSON. `orient` is the routing decision;
+`guide` and `regional-guide` are the detailed authoring contracts.
 
-```bash
-node tools/chart.js regions russia
-```
+### Standard chart
 
-Get the compact story-to-recipe decision guide:
-
-```bash
-node tools/chart.js guide
-```
-
-Get the agent-facing regional breakdown contract and supported statuses:
-
-```bash
-node tools/chart.js regional-guide russia
-```
-
-Validate a specification:
+Use the standard workflow when geography is not the primary visual structure:
 
 ```bash
 node tools/chart.js validate specs/examples/ai95-price-spike.json
-```
-
-Render a specification. When no output path is supplied, the renderer creates a file under `charts/YYYY-week-WW/` using the specification date and slug.
-
-```bash
 node tools/chart.js render specs/examples/ai95-price-spike.json
+node tools/chart.js diagnose charts/2026-week-30/russia-ai95-price-spike-2026.html
 ```
 
-Render to a specific path:
+`render` performs validation and shell review. `diagnose` launches the browser
+at the default responsive viewports and exits nonzero when error-level layout
+issues are found. Use `--single` for a targeted viewport or `--fit` when strict
+viewport containment is part of the check.
+
+### Regional breakdown
+
+Use the regional workflow only for geographic findings with highlighted regions:
 
 ```bash
-node tools/chart.js render specs/examples/ai95-price-spike.json charts/v2-examples/ai95-price-spike.html
+node tools/chart.js regional-guide russia
+node tools/chart.js regions russia
+node tools/chart.js validate specs/examples/russia-regional-map.json
+node tools/chart.js regional specs/examples/russia-regional-map.json
 ```
 
-For a regional breakdown, use the consolidated workflow command. It validates,
-renders, reviews, and runs browser diagnostics at the canonical desktop, tablet,
-and mobile viewports. It does not generate a screenshot.
+The regional command validates, renders, performs shell review, and runs the
+desktop/tablet/mobile diagnostics used by the regional workflow. It reports the
+resolved routing mode, placement mode, crossings, collisions, fallback routes,
+and source-exit routes for every viewport. It does not create a screenshot.
+
+Use `--no-diagnose` only when a browser is unavailable. Use the generic review
+command for human visual inspection:
 
 ```bash
-node tools/chart.js regional \
-  specs/week31/08-russia-fuel-shortage-regional-status.json \
-  charts/2026-week-31/08-russia-fuel-shortage-regional-status-2026.html
+node tools/chart.js review charts/<week>/<chart>.html \
+  --screenshot --output previews/<chart>.png
 ```
 
-Use `--no-diagnose` only when a browser is unavailable. The normal command
-returns routing mode, placement mode, predicted crossings, final region
-collisions, fallback count, and source-exit count for each viewport.
+The regional authoring contract and routing policy are documented in
+[`docs/agent-workflows.md`](docs/agent-workflows.md) and
+[`docs/regional-routing.md`](docs/regional-routing.md).
 
-Review the generated shell and capture a 1200 × 900 PNG:
+## Authoring contract
 
-```bash
-node tools/chart.js review charts/v2-examples/ai95-price-spike.html \
-  --screenshot \
-  --output previews/ai95-price-spike.png
-```
+The model or agent owns:
 
-Run automatic layout diagnostics without producing or inspecting an image:
+- Source, date, period, and evidence.
+- Calculations that are not directly derivable by the renderer.
+- The finding, title, subtitle, recipe, labels, statuses, and concise details.
+- Stable region identifiers for regional maps.
 
-```bash
-node tools/chart.js diagnose charts/v2-examples/ai95-price-spike.html
-```
+The renderer owns:
 
-The command checks measured browser layout and returns structured JSON. It exits
-with a nonzero status when an error-level collision is found.
+- HTML, CSS, AMCharts configuration, and JavaScript.
+- Scales, axes, colors, typography, spacing, animation, and branding.
+- Responsive layout, label placement, map projection, callout placement, and leader routing.
 
-Run the test suite and regenerate all examples:
+ChartSpec files cannot contain HTML, JavaScript, CSS, templates, inline styles,
+coordinates, pixel geometry, or generated SVG paths. The validator rejects
+implementation fields and unknown schema fields.
 
-```bash
-npm test
-npm run examples
-npm run visual
-```
+The formal schema is [`schemas/chart-spec.schema.json`](schemas/chart-spec.schema.json).
+The machine-readable recipe catalog is [`recipes/catalog.json`](recipes/catalog.json).
+Every recipe has a validated fixture under [`specs/examples/`](specs/examples/).
 
-Render the editorial samples extracted from `input.txt`, run responsive diagnostics
-at 1200, 768, and 480 pixels, and capture review PNGs:
-
-```bash
-npm run samples
-```
-
-The sample specifications live in `specs/samples/`. Their generated HTML is written
-to the date-derived `charts/YYYY-week-WW/` directory and their PNGs and manifest are
-written to `previews/new-workflow/`.
-
-`npm run visual` renders every recipe fixture, verifies that the browser runtime
-reports success, captures the previews, and writes `previews/manifest.json` with
-dimensions and SHA-256 hashes.
-
-## Recipes
-
-The machine-readable catalog is `recipes/catalog.json`.
-
-| Recipe | Use |
-|---|---|
-| `comparison.change` | Exactly two values showing a change |
-| `comparison.scenarios` | Actual, expected, previous, target, or alternatives |
-| `comparison.diverging` | Directional changes around a visible zero line |
-| `comparison.range` | Exact values, min-max intervals, limits, and thresholds |
-| `trend.line` | Ordered time series |
-| `composition.donut` | Two to six parts of a whole |
-| `composition.stacked` | Exact parts of one total, especially two-part splits |
-| `flow.waterfall` | Starting value, additions or losses, and ending value |
-| `ranking.horizontal` | Ranked categories with longer labels |
-| `status.grid` | Places or operations with categorical conditions |
-| `map.regional` | Administrative regions with highlighted geography, callout cards, and an optional summary panel |
-| `story.sequence` | Trigger-to-consequence or operational chain |
-| `headline.metric` | One decisive number with supporting context |
-
-Each recipe owns its chart geometry, axes, label placement, color assignment, watermark behavior, responsive rules, and animation.
-
-## ChartSpec
-
-The formal schema is `schemas/chart-spec.schema.json`.
-
-A minimal comparison specification:
+### Minimal standard spec
 
 ```json
 {
   "version": "2.0",
   "recipe": "comparison.change",
-  "title": "Ten Thousand Rubles a Ton in One Week",
-  "subtitle": "Ai-95 prices moved above 80,000 rubles per ton.",
+  "title": "Ai-95 prices moved above 80,000 rubles per ton",
+  "subtitle": "The latest exchange price is 10,000 rubles above the prior reading.",
   "date": "2026-07-26",
   "source": {
     "name": "Saint Petersburg International Mercantile Exchange",
     "period": "July 2026"
   },
   "data": [
-    {
-      "label": "Before the spike",
-      "value": 70000,
-      "displayValue": "70,000 rubles",
-      "tone": "primary"
-    },
-    {
-      "label": "Current peak",
-      "value": 80000,
-      "displayValue": "over 80,000 rubles",
-      "tone": "critical"
-    }
+    { "label": "Before", "value": 70000, "displayValue": "70,000 rubles" },
+    { "label": "Latest", "value": 80000, "displayValue": "80,000 rubles", "tone": "critical" }
   ],
-  "measure": {
-    "unit": "RUB/ton",
-    "axisTitle": "Rubles per ton",
-    "decimals": 0,
-    "baseline": "zero"
-  },
-  "emphasis": {
-    "direction": "up",
-    "displayValue": "10,000",
-    "label": "rubles per ton"
-  },
-  "metadata": {
-    "slug": "russia-ai95-price-spike-2026"
-  }
+  "measure": { "unit": "RUB/ton", "decimals": 0 },
+  "metadata": { "slug": "russia-ai95-price-spike-2026" }
 }
 ```
 
-See `specs/examples/` for a validated example of every recipe.
-
-### Regional breakdown agent workflow
-
-Agents should author the smallest semantic specification possible. For the
-standard regional breakdown, the map object normally contains only the region
-set. The renderer owns all placement and routing behavior.
+### Minimal regional spec
 
 ```json
 {
   "version": "2.0",
   "recipe": "map.regional",
-  "title": "Regional Conditions",
+  "title": "Regional fuel conditions",
   "date": "2026-08-02",
-  "source": { "name": "Source", "period": "Reporting period" },
+  "source": { "name": "Underlying publication", "period": "July 2026" },
   "data": [
     {
       "label": "Omsk region",
@@ -226,377 +172,74 @@ set. The renderer owns all placement and routing behavior.
     }
   ],
   "map": { "regionSet": "russia" },
-  "metadata": { "slug": "regional-conditions" }
+  "metadata": { "slug": "regional-fuel-conditions" }
 }
 ```
 
-Do not add `leaderRouting`, `calloutDistribution`, `summaryDisplay`,
-`summaryPosition`, `anchorStyle`, or other `"auto"` values. Normalization supplies
-them. Add map overrides only when the story requires a different geographic
-frame, such as `viewport`, `contextFit`, `landmass`, or `excludeRegions`. Use
-`data[].calloutSide` only for a genuine editorial constraint; it is not a manual
-layout tool.
+Regional data items need `label` and `regionId` or `regionIds`, plus at least one
+of `status`, `displayValue`, `detail`, or `value`. Author stable IDs, not
+coordinates. Leave automatic map layout and routing fields out of the spec;
+use only the documented semantic overrides when the story requires them.
 
-The shared regional planner owns the dense-map threshold, card dimensions,
-column assignment, curve-aware crossing score, obstacle clearance, port spacing,
-card-attachment smoothing, and responsive policy. The browser workflow reports
-these decisions through `data-map-*` diagnostics, so agents do not need to tune
-geometry or inspect generated SVG paths.
+## Verification
 
-Regional maps use stable region identifiers rather than coordinates. For Russia,
-use `map.regionSet = "russia"` and assign `data[].regionId`, such as `RU-OMS` or
-`RU-VGG`. One callout can cover several regions with `data[].regionIds`. The
-renderer calculates geographic anchors, assigns cards between the two sides,
-packs them to avoid collisions, and draws leader lines. Dense port-routed maps
-evaluate every balanced assignment of automatic callouts. Assignments are scored
-by intersections between sampled smooth leader curves first, then total route length, vertical travel,
-attachment sharpness, and the number of regions moved away from their nearest
-side. Attachment sharpness measures vertical displacement against the horizontal
-curve width available before the card. This prevents a zero-crossing assignment
-from winning when it would force an abrupt near-right-angle turn at the box.
-Cards on each side remain in geographic vertical order, preventing same-column
-inversions. Explicit
-`data[].calloutSide` values remain fixed. `primaryMetric` and
-`supportingFacts` become an optional map summary panel. `map.summaryDisplay =
-"auto"` hides that panel when a dense regional map only repeats the number of
-regions and status counts already visible in the cards and legend. Monetary,
-percentage, capacity, and other non-derivable summaries remain visible. Use
-`"show"` or `"hide"` to override the decision. When the panel is hidden,
-`map.calloutDistribution = "auto"` spreads dense callout columns through the
-available height to avoid a large unused lower corner. Use `"geographic"` to
-keep point-aligned packing or `"balanced"` to force the space-filling layout.
-`map.viewport` controls
-whether the renderer shows the complete region set (`all`), fits the highlighted
-regions (`data`), or chooses automatically (`auto`). `map.excludeRegions` removes
-irrelevant polygons from the display. Region registries can also identify detached
-areas, which are omitted automatically unless they are part of the data. Regional
-status maps use a restrained teal, ochre, brick, plum, and slate palette rather
-than saturated red-green signaling. Region callouts do not show centroid dots by
-default because the filled polygon already identifies the area. Set
-`map.anchorStyle = "dot"` only when an explicit point marker is useful.
-Leader lines use automatic lane routing when several callouts would otherwise
-share nearly the same path. The router preserves geographic order, separates
-parallel segments, adds a light halo, and colors each line to match its region.
-All leader geometry is orthogonal and uses a single vertical adjustment between
-the region and its card. Dense layouts stagger that one bend across separate
-columns, avoiding both arbitrary diagonals and double-step routes.
-Use `map.leaderRouting = "direct"` for sparse maps, `"lanes"` for orthogonal
-leaders, or `"ports"` for dense regional breakdowns. Port routing uses the
-crossing-optimized side assignment, assigns each line a dedicated map-side
-attachment in the selected column order, and uses a
-bounded tangent-continuous spline followed by a clearly visible horizontal card
-connection. Dense layouts reserve at least 36 pixels for that final horizontal
-run on both sides, so left-column routes do not have to finish their bend inside
-the narrow card-to-map gutter. The terminal Bézier handle also grows with
-vertical displacement, giving steep connectors a longer horizontal tangent and
-a gradual transition into that straight run instead of a compressed corner.
-Card attachments use the nearest safe vertical
-point on the card edge, rather than one fixed offset, so leaders take the most
-direct readable trajectory. When the region itself is already close to the card,
-the straight attachment is reduced proportionally to give the curve more room.
-When that close anchor is also vertically aligned with its callout, the router
-skips the spline entirely and uses one direct horizontal segment rather than
-introducing a short reversal or kink. Before
-drawing, the router samples each curve against the actual rendered SVG fill of
-every other highlighted region, using projected bounds only as a fast prefilter.
-A colliding route first tries clear corridors above and below the obstruction.
-When those are insufficient, bounded A* pathfinding searches the map stage and
-rounds the resulting collision-free path. Each detour tests simplified waypoint
-sets, including versions that omit optional source-exit points, and keeps the
-shortest collision-free tangent-continuous spline. A source-exit point is retained
-only when removing it would cause a collision, preventing unnecessary extra bends
-near the highlighted region. The router
-uses a strict two-pass vertical-envelope rule between the region anchor and its
-card. It first searches only inside that endpoint envelope and accepts an
-outside detour only when no collision-free in-envelope route exists. This
-prevents unforced U-shaped reversals while preserving an escape route for
-genuinely blocked regions. The same rule applies to both spline candidates and
-grid pathfinding. Detours
-preserve attachment order and never share the old horizontal corridor trunks. A
-direct overlap is retained only when
-no route exists inside the available stage. `"auto"` selects port routing for
-maps with eight or more callouts. `"indexed"` remains available only as an
-explicit alternative.
+The test layers are intentionally separate:
 
-Regional maps use a deterministic static Mercator projection fitted directly to
-the included GeoJSON features. Longitudes are unwrapped around the selected map
-center before fitting, so countries crossing the antimeridian remain continuous.
-The fitted footprint is centered on both axes and kept inside explicit padding;
-leader anchors use the same projection. `map.viewportAlignment = "auto"` uses
-this visual fit, while `"data"` and `"context"` remain available as semantic
-viewport choices.
-Use `"data"` for mathematically exact data-bound centering or `"context"` to
-center fully on the region-set footprint.
+```bash
+npm test                  # deterministic unit and workflow tests
+npm run test:workflow     # agent orientation and CLI route tests
+npm run test:browser      # browser-backed standard/regional comparison
+npm run test:performance  # dense regional planner budget
+npm run test:comparison   # workflow contract plus browser comparison
+npm run test:all          # all automated layers
+```
 
-Context fitting is separate from centering. `map.contextFit = "auto"` preserves
-the complete national silhouette for broad regional breakdowns and uses a local
-focus for narrow stories. Local focus excludes whole out-of-frame regions rather
-than displaying polygons cut in half. `"all"` forces the complete region set;
-`"focus"` forces the local view. Every included region is projected in full, so
-the renderer never solves layout by cutting a polygon at the canvas edge.
+Additional checks and fixture generators:
 
-Landmass selection is also independent. `map.landmass = "continental"` builds a
-boundary-connectivity graph from the GeoJSON polygon components and keeps the
-largest connected landmass. This removes archipelagos, offshore islands, and
-island-only regions without relying on latitude cutoffs or country-specific
-polygon lists. `"all"` preserves every component. `"auto"` uses the region-set
-default but automatically falls back to `"all"` when an active data region would
-otherwise disappear. Russia defaults to continental context, while a story about
-Sakhalin or another detached region retains its islands automatically.
+```bash
+npm run diagnostics       # diagnostics self-test
+npm run examples          # render every recipe fixture
+npm run visual            # render fixtures and capture preview manifest
+npm run samples           # render editorial samples from input.txt
+npm run layout            # synthetic label-layout regression
+npm run quality           # full automated and visual quality pipeline
+```
+
+The browser test skips with a clear reason when Edge or Chrome is unavailable.
+The full testing strategy, comparison contract, and performance budget are in
+[`docs/testing.md`](docs/testing.md).
 
 ## Project structure
 
 ```text
-stanichart_2/
-├── schemas/
-│   └── chart-spec.schema.json
-├── recipes/
-│   └── catalog.json
-├── renderer/
-│   ├── catalog.js
-│   ├── validate.js
-│   ├── render.js
-│   ├── review.js
-│   └── capture.js
-├── tools/
-│   ├── chart.js
-│   └── render-examples.js
-├── specs/
-│   └── examples/
-├── tests/
-│   └── chart-pipeline.test.js
-├── lib/
-│   ├── tochnyi.css
-│   ├── tochnyi-charts.js
-│   ├── tochnyi-maps.js
-│   ├── tochnyi-map-runtime.js
-│   ├── tochnyi-runtime.js
-│   ├── tochnyi-logo.png
-│   └── watermark.svg
-├── charts/
-└── previews/
+schemas/                  ChartSpec schema
+recipes/                  Recipe catalog
+specs/examples/           One validated fixture per recipe
+specs/samples/             Editorial sample specs
+renderer/                 Validation, workflows, rendering, review, capture
+lib/                      Shared runtime, visual plan, maps, styles, diagnostics
+tools/chart.js             Agent-facing CLI
+tests/                    Unit, workflow, browser, and performance tests
+docs/                     Agent workflow, routing, and testing guidance
+charts/                   Generated HTML artifacts grouped by ISO week
+previews/                 Generated screenshots and manifests
 ```
-
-## Responsibilities
-
-The model is responsible for:
-
-- Extracting and checking the data
-- Calculating explicitly derivable comparison values
-- Choosing the strongest editorial story
-- Selecting a recipe
-- Writing the title and subtitle
-- Choosing the primary comparison and supporting facts
-- Providing the date and source
-
-The renderer is responsible for:
-
-- Chart implementation
-- Axes and scales
-- Typography and spacing
-- Colors and contrast
-- Label placement
-- Watermarks and branding
-- Supporting-card layout
-- Responsive behavior
-- Animation and static export mode
-
-## Validation and visual review
-
-`validate` checks:
-
-- Required date and source
-- Recipe-specific item counts
-- Numeric values
-- Numeric ranges, benchmarks, and logarithmic scale constraints
-- Label and copy lengths
-- Donut composition constraints
-- Waterfall roles and endpoints
-- Regional status and sequence requirements
-- Region-set membership and regional map callout requirements
-- Explicit axis bounds
-- Semantic emphasis direction
-- Unsupported fields
-- Attempts to include implementation code or styling
-
-`review` checks:
-
-- Valid embedded ChartSpec
-- Shared stylesheet and runtime usage
-- Absence of inline styles
-- Absence of direct AMCharts code
-- Recipe-specific layout risks
-
-Screenshot review launches Edge or Chrome with a clean temporary profile, waits for the runtime to report a successful render, and then captures a fixed-size PNG. Set `TOCHNYI_BROWSER` to use a nonstandard browser path.
-
-## Automatic overlap diagnostics
-
-Generated charts load `lib/tochnyi-diagnostics.js`. The diagnostic layer reads
-the resolved AMCharts sprite tree and ordinary DOM layout after fonts and chart
-layout settle. It does not use OCR or compare screenshots.
-
-It checks:
-
-- Text-to-text overlap
-- Text crossing unrelated columns or reference lines
-- Labels extending outside the chart or page boundary
-- HTML overlays colliding with canvas-rendered labels
-- Intentional labels inside their own data column, which are excluded by matching
-  AMCharts data-item identities
-- Quantitative columns that are too opaque or too faint
-- Translucent columns with insufficient outline contrast
-- AMCharts columns and CSS-rendered stacked segments against the same shared mark policy
-
-The report is embedded in the rendered page as
-`#tochnyi-layout-diagnostics` and includes:
-
-- Exact label text and role
-- Bounding rectangles
-- Overlap percentage
-- Warning or error severity
-- A specification-level remedy
-
-Example result:
-
-```json
-{
-  "status": "fail",
-  "summary": {
-    "labelsChecked": 28,
-    "objectsChecked": 4,
-    "errors": 1,
-    "warnings": 0
-  },
-  "issues": [
-    {
-      "code": "text-text-overlap",
-      "severity": "error",
-      "message": "The emphasis badge overlaps the current-value label.",
-      "overlapPercent": 100,
-      "remedy": "Shorten the badge or move it using emphasis.position."
-    }
-  ]
-}
-```
-
-Agents should run `diagnose` after every render and revise only the ChartSpec or
-shared recipe implementation. Screenshot comparison remains useful for editorial
-judgment, but it is no longer required to discover ordinary label collisions.
-
-## Shared visual components
-
-The design system includes reusable components for:
-
-- Change badges
-- Statistic grids
-- Notes
-- Headline metrics
-- Reference lines and data annotations
-- Range and threshold plots
-- Exact stacked compositions
-- Waterfalls
-- Regional status grids
-- Causal sequences
-- Sources and attribution
-- Full, small, and corner watermarks
-
-## Visual planning
-
-Before a recipe is rendered, `lib/tochnyi-visual-plan.js` resolves a deterministic
-visual plan from the ChartSpec, item count, and viewport width. This layer controls
-layout decisions that should not be authored as CSS or pixel values in the spec:
-
-- Item-count-aware chart height
-- Editorial or minimal title alignment
-- Responsive category-label width
-- Axis-title and grid density
-- Ranking focus colors and secondary emphasis
-- Automatic inside or outside value-label placement
-- Watermark prominence
-
-For `ranking.horizontal`, the requested sort order is preserved at the top of the
-chart, rank numbers are added to category labels, and five-row rankings no longer
-inherit the same canvas height as twelve-row rankings. `narrative.density`,
-`narrative.emphasis`, and `options.labelMode` now affect the rendered result rather
-than serving only as validation metadata.
-
-Semantic tones are used instead of one-off classes:
-
-- `primary`
-- `secondary`
-- `warning`
-- `critical`
-- `neutral`
-- `positive`
-
-The runtime derives arrows, badge classes, and colors from the specification, preventing combinations such as an upward arrow with a decline style.
-
-
-
-## Quantitative mark styling
-
-Bar-like marks use one renderer-owned visual policy rather than recipe-specific fill settings. The policy preserves the project’s semantic brand hues as outlines while using translucent fills for a calmer editorial result.
-
-The shared defaults are:
-
-- Column fill opacity: `0.66`
-- Column outline opacity: `0.90`
-- Column outline width: `1.5px`
-- Hover fill opacity: `0.78`
-- Watermark opacity behind quantitative charts: `0.14`
-
-The policy applies to vertical comparisons, horizontal rankings, diverging bars, waterfalls, the shared legacy column helper, and CSS-rendered stacked compositions. Labels use dark text because translucent fills no longer guarantee sufficient contrast for white text. ChartSpec authors cannot override these implementation values.
-
-## Existing charts
-
-Files already present under the dated `charts/` directories remain valid legacy artifacts. New charts should use the v2 specification pipeline. `reference.html` remains available as a historical visual reference but is no longer a machine-readable source of truth and should not be loaded before chart generation.
 
 ## Extending the system
 
 To add a recipe:
 
-1. Add it to `recipes/catalog.json`.
-2. Add its constraints to `renderer/validate.js`.
-3. Add its deterministic implementation to `lib/tochnyi-runtime.js`.
+1. Add the recipe to `recipes/catalog.json`.
+2. Add schema constraints to `renderer/validate.js`.
+3. Add the deterministic implementation to the shared runtime.
 4. Add a fixture under `specs/examples/`.
-5. Add or update tests.
-6. Run `npm test`, `npm run examples`, and screenshot review.
+5. Add unit, workflow, and browser coverage where the recipe changes layout behavior.
+6. Run `npm run test:all`, then the relevant fixture and visual commands.
 
-Do not add recipe implementation instructions to the model skill. The skill should remain limited to editorial decisions and ChartSpec production.
+Keep implementation guidance in the renderer and technical docs. Keep the
+agent skill focused on editorial decisions, semantic ChartSpec authoring, and
+the correct workflow route.
 
-
-## Automatic label placement
-
-The diagnostic result includes:
-
-- The two elements involved
-- Their semantic roles and visible text
-- Measured bounding rectangles
-- Overlap percentage
-- Error or warning severity
-- A specification-level remedy
-
-`diagnose` runs at 1200, 768, and 480 pixel widths by default. Use `--single` only for targeted debugging.
-
-For custom SVG recipes, the renderer registers labels and marks with semantic groups, measures text after fonts load, and tries approved placements around each anchor. A range is represented by one consolidated interval label rather than two independent endpoint labels. If no collision-free placement exists, the label is marked unresolved and diagnostics fail instead of silently accepting the chart.
-
-A synthetic regression fixture exercises narrow ranges and a central reference line:
-
-```bash
-npm run layout
-```
-
-
-## Information economy
-
-The renderer and validator now treat redundancy as a review failure mode separate from geometric overlap. For two-part stacked compositions, the renderer automatically:
-
-- Promotes the strongest semantic segment as the headline metric
-- Uses exact percentage precision consistently
-- Removes the legend when both segment labels fit inside the bar
-- Suppresses annotation strips when supporting facts already provide the context
-- Removes supporting facts whose values simply repeat a segment value or share
-- Renders one remaining supporting fact as a compact callout
-- Subordinates derived totals and calculation notes
-
-Validation warns when source names reference internal files, display values contain ambiguous repeated unit abbreviations, or composition facts repeat values already encoded visually.
+Generated HTML and PNG output under `charts/` and `previews/` is intentionally
+ignored. Recreate it with the documented render, sample, or visual commands;
+the ChartSpec files remain the source of truth.
