@@ -17,7 +17,11 @@ const {
   regionalAgentGuide,
   validateRegionalSpec
 } = require('../renderer/regional-workflow');
-const { agentWorkflowOrientation, standardAgentGuide } = require('../renderer/agent-workflow');
+const {
+  agentWorkflowOrientation,
+  standardAgentGuide,
+  toolApiManifest
+} = require('../renderer/agent-workflow');
 const { renderSpecFile } = require('../renderer/render');
 
 const root = path.join(__dirname, '..');
@@ -33,6 +37,18 @@ function tempDirectory(prefix) {
 
 test('agent orientation keeps standard and regional workflows distinct', () => {
   const orientation = agentWorkflowOrientation('russia');
+  assert.equal(orientation.interface.type, 'tool-api');
+  assert.equal(orientation.interface.role, 'chart-author');
+  assert.match(orientation.interface.entrypoint, /tool-api\/chart\.js/);
+  assert.ok(orientation.boundary.implementation.includes('renderer/'));
+  assert.equal(orientation.sharedContract.resources.sourcePolicy, 'docs/source-enrichment.md');
+  assert.equal(orientation.sharedContract.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(orientation.sharedContract.stages[0].id, 'verify-source');
+  assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /simple comparison/i);
+  assert.equal(orientation.batchWorkflow.input, 'input.txt');
+  assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
+  assert.match(orientation.batchWorkflow.presentation, /tochnyi-charts-YYYY-week-WW\.pptx$/);
+  assert.match(orientation.batchWorkflow.boundary, /LLM agent owns input parsing/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
     ['regional-breakdown', 'standard-chart']
@@ -46,12 +62,63 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.workflow, 'standard-chart');
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'map.regional'), false);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
+  assert.deepEqual(standard.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
+  assert.match(standard.waterfallContract.valueStatus, /reported/);
 
   const regional = regionalAgentGuide('russia');
   assert.equal(regional.workflow, 'regional-breakdown');
   assert.deepEqual(regional.requiredDataItem, ['label', 'regionId or regionIds']);
   assert.ok(regional.automaticByDefault.includes('leader routing'));
   assert.ok(regional.neverAuthor.includes('coordinates or pixel positions'));
+});
+
+test('tool API manifest exposes a narrow chart-author surface', () => {
+  const manifest = toolApiManifest('russia');
+  assert.equal(manifest.role, 'chart-author');
+  assert.match(manifest.entrypoint, /tool-api\/chart\.js/);
+  assert.equal(manifest.resources.schema, 'schemas/chart-spec.schema.json');
+  assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
+  assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(fs.existsSync(path.join(root, manifest.resources.sourcePolicy)), true);
+  assert.equal(fs.existsSync(path.join(root, manifest.resources.batchPolicy)), true);
+  assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
+  assert.equal(manifest.batchWorkflow.input, 'input.txt');
+  assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
+  assert.ok(manifest.batchWorkflow.steps.some((step) => step.includes('PowerPoint')));
+  assert.ok(manifest.allowedWork.some((entry) => entry.includes('PowerPoint')));
+  assert.deepEqual(
+    manifest.sourceEnrichment.evidenceRoles,
+    ['magnitude', 'comparison', 'mechanism', 'consequence']
+  );
+  assert.match(manifest.sourceEnrichment.coreRule, /full primary source/i);
+  assert.match(manifest.sourceEnrichment.complexityRule, /visually interesting/i);
+  assert.match(manifest.sourceEnrichment.attributionRule, /omit source/i);
+  assert.match(manifest.sourceEnrichment.attributionRule, /presentation copy/i);
+  assert.ok(manifest.excludedWork.some((entry) => entry.includes('renderer/')));
+  assert.match(manifest.escalation, /report an infrastructure issue/i);
+  assert.deepEqual(manifest.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
+  assert.match(manifest.waterfallContract.reconciliation, /reconcile/i);
+
+  const guide = standardAgentGuide('russia');
+  guide.selectionRules.forEach((entry) => {
+    assert.ok(entry.example, `Missing example for ${entry.use}`);
+    assert.equal(fs.existsSync(path.join(root, entry.example)), true, `Missing ${entry.example}`);
+  });
+});
+
+test('public Tool API entrypoint returns the machine-readable manifest', () => {
+  const cliPath = path.join(root, 'tool-api', 'chart.js');
+  const result = spawnSync(process.execPath, [cliPath, 'api'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const manifest = JSON.parse(result.stdout);
+  assert.equal(manifest.name, 'Tochnyi Charts Tool API');
+  assert.equal(manifest.version, '1.3');
+  assert.equal(manifest.role, 'chart-author');
+  assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
+  assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
+  assert.equal(manifest.batchWorkflow.input, 'input.txt');
+  assert.equal(manifest.batchWorkflow.presentation, 'charts/YYYY-week-WW/tochnyi-charts-YYYY-week-WW.pptx');
+  assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);
 });
 
 test('workflow validation reports the correct route for each recipe family', () => {

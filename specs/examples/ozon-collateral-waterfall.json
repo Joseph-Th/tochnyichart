@@ -2,7 +2,7 @@
   "version": "2.0",
   "recipe": "flow.waterfall",
   "title": "The Collateral Lost Forty-Eight Billion Rubles",
-  "subtitle": "AFK Sistema pledged Ozon shares worth 320 billion rubles to VTB. A market decline reduced the estimated collateral value to roughly 272 billion.",
+  "subtitle": "AFK Sistema pledged Ozon shares worth 320 billion rubles to VTB. A market decline reduced the reported collateral estimate by 48 billion rubles to 272 billion.",
   "date": "2026-07-26",
   "source": {
     "name": "Ozon share performance and AFK Sistema collateral described in the weekly source text",
@@ -13,6 +13,9 @@
       "label": "Pledged value",
       "value": 320,
       "role": "start",
+      "valueStatus": "reported",
+      "period": "30 June to late July 2026",
+      "scope": "Ozon pledged collateral value",
       "displayValue": "320 billion rubles",
       "tone": "primary"
     },
@@ -20,14 +23,20 @@
       "label": "Market-value loss",
       "value": -48,
       "role": "change",
+      "valueStatus": "reported",
+      "period": "30 June to late July 2026",
+      "scope": "Ozon pledged collateral value",
       "displayValue": "−48 billion rubles",
       "tone": "critical",
-      "annotation": "The estimate follows a decline of more than 15% in Ozon shares."
+      "annotation": "The estimate follows the reported Ozon share-price decline."
     },
     {
       "label": "Estimated value now",
       "value": 272,
       "role": "end",
+      "valueStatus": "reported",
+      "period": "30 June to late July 2026",
+      "scope": "Ozon pledged collateral value",
       "displayValue": "272 billion rubles",
       "tone": "secondary"
     }

@@ -1,5 +1,9 @@
 # Testing and verification
 
+This is infrastructure-maintainer documentation. Normal chart authors use the
+validation and diagnostic commands exposed by `tool-api/chart.js` and do not
+need the internal test strategy.
+
 The project uses Node's built-in test runner and keeps deterministic checks,
 browser checks, and performance checks as separate layers. This makes a fast
 local loop possible while preserving a full delivery gate.

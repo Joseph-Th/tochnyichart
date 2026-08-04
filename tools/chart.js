@@ -7,7 +7,12 @@ const { validateSpec } = require('../renderer/validate');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtml, diagnoseHtmlResponsive } = require('../renderer/capture');
 const { renderRegionalBreakdown, regionalAgentGuide } = require('../renderer/regional-workflow');
-const { DEFAULT_REGION_SET_ID, agentWorkflowOrientation, standardAgentGuide } = require('../renderer/agent-workflow');
+const {
+  DEFAULT_REGION_SET_ID,
+  agentWorkflowOrientation,
+  standardAgentGuide,
+  toolApiManifest
+} = require('../renderer/agent-workflow');
 const { readSpecFile, renderStandardChart } = require('../renderer/workflow');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 
@@ -15,19 +20,27 @@ function usage(exitCode = 0) {
   const text = `Tochnyi Charts v2
 
 Usage:
-  node tools/chart.js catalog
-  node tools/chart.js regions [region-set]
-  node tools/chart.js orient [region-set]
-  node tools/chart.js guide [region-set]
-  node tools/chart.js regional-guide [region-set]
-  node tools/chart.js validate <spec.json>
-  node tools/chart.js render <spec.json> [output.html]
-  node tools/chart.js regional <spec.json> [output.html] [--no-diagnose]
-  node tools/chart.js diagnose <chart.html> [--single] [--fit]
-  node tools/chart.js review <chart.html> [--screenshot] [--output preview.png]
+  node tool-api/chart.js api [region-set]
+  node tool-api/chart.js catalog
+  node tool-api/chart.js regions [region-set]
+  node tool-api/chart.js orient [region-set]
+  node tool-api/chart.js guide [region-set]
+  node tool-api/chart.js regional-guide [region-set]
+  node tool-api/chart.js validate <spec.json>
+  node tool-api/chart.js render <spec.json> [output.html]
+  node tool-api/chart.js regional <spec.json> [output.html] [--no-diagnose]
+  node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
+  node tool-api/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
 The model-facing artifact is a ChartSpec JSON file. The renderer owns HTML, CSS,
-AMCharts configuration, branding, layout, and export behavior.`;
+AMCharts configuration, branding, layout, and export behavior.
+
+The public chart-author entrypoint is node tool-api/chart.js. The tools/chart.js
+path remains available for backward compatibility and infrastructure work.
+
+This CLI produces individual chart artifacts. The LLM agent owns the weekly
+input.txt batch, story selection, final PNG capture, PowerPoint assembly, and
+delivery to charts/YYYY-week-WW/. See docs/batch-workflow.md.`;
   console.log(text);
   process.exit(exitCode);
 }
@@ -51,6 +64,11 @@ function main() {
   const args = process.argv.slice(2);
   const command = args[0];
   if (!command || command === 'help' || command === '--help' || command === '-h') usage(0);
+
+  if (command === 'api') {
+    printResult(toolApiManifest(args[1] || DEFAULT_REGION_SET_ID));
+    return;
+  }
 
   if (command === 'catalog') {
     printResult({ recipes: listRecipes() });

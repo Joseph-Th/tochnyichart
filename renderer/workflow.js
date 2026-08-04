@@ -84,7 +84,7 @@ function validateStandardSpec(specPath) {
   if (checked.validation.normalized.recipe === 'map.regional') {
     const regionSet = checked.validation.normalized.map?.regionSet || DEFAULT_REGION_SET_ID;
     throw workflowError(
-      `This is a regional breakdown. Start with \`node tools/chart.js regional-guide ${regionSet}\`, then use \`node tools/chart.js regional <spec.json> [output.html]\`.`,
+      `This is a regional breakdown. Start with \`node tool-api/chart.js regional-guide ${regionSet}\`, then use \`node tool-api/chart.js regional <spec.json> [output.html]\`.`,
       validationForWorkflow(
         'a non-map recipe',
         STANDARD_WORKFLOW,

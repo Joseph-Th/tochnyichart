@@ -4,7 +4,7 @@
   "title": "Tochnyi ChartSpec",
   "type": "object",
   "additionalProperties": false,
-  "required": ["recipe", "title", "subtitle", "date", "source", "data"],
+  "required": ["recipe", "title", "subtitle", "date", "data"],
   "properties": {
     "version": { "type": "string", "const": "2.0" },
     "recipe": {
@@ -60,6 +60,9 @@
           "calloutOrder": { "type": "integer", "minimum": 0, "maximum": 99 },
           "label": { "type": "string", "minLength": 1, "maxLength": 80 },
           "value": { "type": "number" },
+          "valueStatus": { "type": "string", "enum": ["reported", "derived", "bound", "approximate"] },
+          "period": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "scope": { "type": "string", "minLength": 1, "maxLength": 80 },
           "low": { "type": "number" },
           "high": { "type": "number" },
           "benchmark": { "type": "number" },
@@ -215,5 +218,24 @@
         "keyFinding": { "type": "string", "maxLength": 240 }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "recipe": { "const": "flow.waterfall" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "items": {
+              "required": ["value", "role", "valueStatus", "period", "scope"],
+              "properties": {
+                "valueStatus": { "const": "reported" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

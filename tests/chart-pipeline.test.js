@@ -53,6 +53,19 @@ test('generated shells contain no chart implementation or inline styles', () => 
   }
 });
 
+test('source attribution is optional and omitted sources remain renderable', () => {
+  const spec = loadExample('ai95-price-spike.json');
+  delete spec.source;
+  const result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.source, undefined);
+  const html = renderHtml(result.normalized);
+  assert.equal(reviewHtml(html).valid, true);
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /if \(spec\.source && spec\.source\.name\)/);
+});
+
 test('generated chart shells version local assets to invalidate browser caches', () => {
   const validated = validateSpec(loadExample('russia-regional-map.json'));
   const html = renderHtml(validated.normalized, {
@@ -1274,6 +1287,19 @@ test('watermark opacity is controlled once by CSS rather than compounded inside 
   assert.doesNotMatch(svg, /opacity\s*:\s*\.(?:0[0-9]|1[0-9])/);
 });
 
+test('standard charts keep the watermark large and centered across recipes', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'recipes', 'catalog.json'), 'utf8'));
+  const standardRecipes = catalog.recipes.filter((recipe) => recipe.id !== 'map.regional');
+
+  assert.match(css, /\.tochnyi-watermark\s*\{[^}]*top:\s*50%[^}]*left:\s*50%[^}]*height:\s*100%[^}]*max-width:\s*100%/s);
+  assert.match(runtime, /watermark\.classList\.add\('watermark-' \+ plan\.watermark\)/);
+  assert.doesNotMatch(runtime, /watermark\.classList\.add\('(?:corner|small)'\)/);
+  assert.ok(standardRecipes.every((recipe) => recipe.defaults.watermark === 'full'));
+  assert.equal(catalog.recipes.find((recipe) => recipe.id === 'map.regional').defaults.watermark, 'corner');
+});
+
 test('watermark diagnostics reject missing, faint, unloaded, and undersized marks', () => {
   assert.ok(diagnoseWatermark([]).some((issue) => issue.code === 'watermark-missing'));
 
@@ -1521,6 +1547,76 @@ test('range, status, and waterfall semantics are enforced', () => {
   result = validateSpec(waterfall);
   assert.equal(result.valid, false);
   assert.ok(result.errors.includes('flow.waterfall must begin with a start item.'));
+});
+
+test('waterfall contract rejects inferred, uncertain, mixed-period, and non-reconciling bridges', () => {
+  const base = loadExample('ozon-collateral-waterfall.json');
+
+  const missingProvenance = JSON.parse(JSON.stringify(base));
+  delete missingProvenance.data[0].valueStatus;
+  let result = validateSpec(missingProvenance);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes('data[0].valueStatus is required for flow.waterfall; use reported only for exact source values.'));
+
+  const inferredStart = JSON.parse(JSON.stringify(base));
+  inferredStart.data[0].valueStatus = 'derived';
+  inferredStart.data[0].annotation = 'Derived from the ending value and the disclosed loss.';
+  result = validateSpec(inferredStart);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('derived, bounded, approximate, or inferred values cannot form an exact bridge')));
+  assert.ok(result.errors.some((error) => error.includes('uses approximate, bounded, or derived language')));
+
+  const mixedPeriod = JSON.parse(JSON.stringify(base));
+  mixedPeriod.data[1].period = 'H1 2025';
+  result = validateSpec(mixedPeriod);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('cannot mix reporting periods')));
+
+  const unreconciled = JSON.parse(JSON.stringify(base));
+  unreconciled.data[2].value = 271;
+  result = validateSpec(unreconciled);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('must reconcile with the running flow')));
+});
+
+test('inferred state-leasing losses use a headline metric instead of an invented waterfall', () => {
+  const spec = loadExample('headline-metric.json');
+  spec.title = 'The State Leasing Company Exceeded 14.2 Billion Rubles in Losses';
+  spec.subtitle = 'The reported first-half result is presented as a headline metric rather than an inferred bridge.';
+  spec.date = '2026-08-02';
+  spec.source = {
+    name: 'State Transport Leasing Company first-half 2026 results',
+    period: 'H1 2026'
+  };
+  spec.data = [{
+    label: 'Reported H1 loss',
+    value: 14.2,
+    displayValue: 'more than 14.2 billion rubles',
+    tone: 'critical'
+  }];
+  spec.measure = {
+    unit: 'billion rubles',
+    decimals: 1,
+    baseline: 'zero'
+  };
+  spec.primaryMetric = {
+    value: 'more than 14.2 billion rubles',
+    label: 'Reported H1 loss'
+  };
+  spec.note = 'Prior-year context is separate from the reported result and does not imply an invented bridge.';
+  spec.metadata = {
+    slug: 'state-leasing-h1-loss',
+    topic: 'state leasing company results',
+    country: 'Russia',
+    dataPeriod: 'H1 2026',
+    keyFinding: 'The state leasing company reported more than 14.2 billion rubles in losses.'
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.recipe, 'headline.metric');
+  assert.match(result.normalized.title, /exceeded 14\.2/i);
+  assert.match(result.normalized.primaryMetric.value, /more than 14\.2/i);
+  assert.match(result.normalized.note, /prior-year context/i);
 });
 
 test('semantic reference lineStyle is allowed while implementation style remains forbidden', () => {

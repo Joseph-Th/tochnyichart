@@ -1,161 +1,263 @@
 ---
 name: chart
-description: Turn sourced statistics into a validated Tochnyi ChartSpec through the standard or regional workflow
-version: 3.0.0
+description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
+version: 4.3.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
   - pattern: "graph"
 ---
 
-# Tochnyi Chart Generator
+# Tochnyi Chart Author
 
-Create charts through the declarative v2 pipeline. The model owns editorial
-meaning; the renderer owns implementation. Never generate or edit chart HTML,
-CSS, JavaScript, AMCharts code, coordinates, or pixel geometry.
+Use the public Tool API to turn sourced evidence into a validated chart. Treat the deterministic engine as a tool, not as implementation context.
 
-## Start here
+The chart author owns evidence, calculations, editorial meaning, copy, recipe choice, and semantic `ChartSpec` fields. The engine owns HTML, CSS, JavaScript, chart-library configuration, typography, color policy, layout, responsiveness, map projection, callout placement, and leader routing.
 
-Choose the workflow before writing a specification:
+## Primary assignment
 
-```bash
-node tools/chart.js orient
+The normal assignment begins with `input.txt` at the project root. Treat the
+file as a weekly queue containing multiple possible data stories.
+
+The agent must:
+
+1. Read the complete `input.txt`.
+2. Separate it into distinct stories and merge duplicates.
+3. Verify and enrich each accepted story.
+4. Decide which production tool and chart workflow each story requires.
+5. Produce, validate, render, and diagnose each accepted chart.
+6. Capture one final PNG for every accepted chart.
+7. Assemble the final PNGs into one PowerPoint presentation.
+8. Save the HTML files, final PNGs, and PowerPoint deck in
+   `charts/YYYY-week-WW/`.
+
+The canonical deck filename is
+`tochnyi-charts-YYYY-week-WW.pptx`. The chart Tool API handles individual chart
+production. PowerPoint assembly is a separate agent responsibility.
+
+Use `docs/batch-workflow.md` as the complete weekly orchestration contract.
+
+## Boundary
+
+Use only the public authoring surface during normal chart production:
+
+```text
+input.txt
+tool-api/
+docs/batch-workflow.md
+docs/agent-workflows.md
+docs/source-enrichment.md
+schemas/chart-spec.schema.json
+recipes/catalog.json
+specs/examples/
+specs/YYYY-week-WW/
+charts/
+previews/
 ```
 
-Use the regional workflow only when geography is part of the finding and the
-highlighted regions need map callout cards. Use the standard workflow for every
-other story, including a status comparison that does not need a map.
+Do not inspect or modify these implementation directories unless the user explicitly requests infrastructure work:
 
-For the full routing contract and failure-handling rules, use
-`docs/agent-workflows.md`. For regional planner behavior and diagnostic fields,
-use `docs/regional-routing.md`.
+```text
+renderer/
+lib/
+tests/
+tools/
+```
+
+Never edit generated HTML or PNG output.
+
+If a valid ChartSpec still produces a rendering, layout, planner, or diagnostic failure, report it as an infrastructure issue with the command output and artifact path. Do not investigate the machinery under the chart-author role.
+
+## Start
+
+```bash
+node tool-api/chart.js api
+node tool-api/chart.js orient
+```
+
+Choose exactly one workflow before writing a specification.
+
+Route by the explanatory role of geography, not by the chart type. Use
+`regional-breakdown` when administrative locations are part of the evidence and
+where something happens changes the finding through spatial distribution,
+concentration, adjacency, regional contrast, or location-specific callouts.
+This includes stories that look like status lists, rankings, or comparisons.
+Use `standard-chart` only when place names are labels or categories and a map
+adds no explanatory value.
+
+Before authoring any ChartSpec, perform a geography-first routing preflight for
+every accepted story:
+
+1. Record the story, its geographic evidence, whether geography changes the
+   finding, the selected workflow, and a one-sentence rationale in a routing
+   matrix.
+2. For every regional candidate, run `regional-guide` and `regions`, then use
+   `recipe: "map.regional"`, `map.regionSet`, and stable `regionId` or
+   `regionIds`.
+3. If a story contains geographic names but is routed to `standard-chart`, the
+   rationale must explicitly explain why location is not explanatory.
+4. Do not use missing coordinates, a status-list shape, a ranking shape, or an
+   existing draft spec as a reason to choose the standard workflow.
+5. Do not write or render specs until every accepted story has exactly one
+   recorded workflow decision.
 
 ## Shared authoring rules
 
 - Extract exact values, categories, dates, units, ranges, benchmarks, and source.
-- Do not invent missing dates, sources, values, endpoints, or regional statuses.
-- Choose the story structure before the chart geometry.
-- Keep the specification as small and semantic as possible.
-- Use the underlying publication or dataset as `source.name`, not `input.txt`.
-- Revise the ChartSpec or shared renderer after a failed check; never patch generated HTML.
+- Treat an input note, excerpt, headline, or `input.txt` entry as routing information, not the complete dataset.
+- Verify that each supplied URL matches the entity, event, period, and finding before using it.
+- Read and exhaust the full primary source before selecting a recipe.
+- Extract relevant comparators, components, causes, consequences, forecasts, scale, denominators, and underlying datasets when they strengthen the same central claim.
+- Search beyond the primary source only to fill a named material evidence gap.
+- Prefer an underlying official dataset, company filing, or named report before another article from the same publisher.
+- Use only context that materially clarifies magnitude, comparison, mechanism, or consequence.
+- Do not add facts or select a complex recipe merely to make the output more visually interesting.
+- Keep a simple two-value chart when the contrast itself is the complete story.
+- Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
+- Choose the story structure before chart geometry.
+- Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
+- Keep the specification small and semantic.
+- Keep presentation copy separate from production context: never mention `input.txt`, internal provenance, verification status, diagnostics, or workflow commentary in a chart or slide.
+- Write new specifications to `specs/YYYY-week-WW/[slug].json`.
+- Correct semantic failures in the ChartSpec and rerun the Tool API commands.
 
-## Standard chart workflow
+Safe derivations include absolute change, percentage change, percentage-point change, ratio, share, coverage rate, implied shortfall, and combined amount when the inputs are sourced and period-compatible. Preserve qualifiers such as `about`, `almost`, `more than`, and ranges rather than introducing false precision.
 
-Use the compact recipe guide:
+The full source-enrichment and relevance policy is in `docs/source-enrichment.md`.
+
+## Standard workflow
 
 ```bash
-node tools/chart.js guide
+node tool-api/chart.js guide
 ```
 
-Select one of the standard recipes: `headline.metric`, `comparison.change`,
-`comparison.scenarios`, `comparison.diverging`, `comparison.range`, `trend.line`,
-`composition.stacked`, `composition.donut`, `flow.waterfall`,
-`ranking.horizontal`, `status.grid`, or `story.sequence`.
+The guide returns the standard recipes and a validated example path for each recipe.
 
 Then:
 
-1. Analyze the source and identify the central finding.
-2. Write the ChartSpec to `specs/YYYY-week-WW/[slug].json`.
-3. Validate it:
+1. Verify and read the full source.
+2. Extract the evidence spine and safe derivations.
+3. Fill only material evidence gaps with targeted research.
+4. Identify one central finding and select the recipe.
+5. Author the ChartSpec.
+6. Validate:
 
    ```bash
-   node tools/chart.js validate specs/YYYY-week-WW/[slug].json
+   node tool-api/chart.js validate specs/YYYY-week-WW/[slug].json
    ```
 
-4. Render it:
+7. Render:
 
    ```bash
-   node tools/chart.js render specs/YYYY-week-WW/[slug].json
+   node tool-api/chart.js render specs/YYYY-week-WW/[slug].json
    ```
 
-5. Diagnose the generated chart:
+8. Diagnose:
 
    ```bash
-   node tools/chart.js diagnose charts/YYYY-week-WW/[slug].html
+   node tool-api/chart.js diagnose charts/YYYY-week-WW/[slug].html
    ```
 
-6. Resolve error-level overlap, clipping, or mark-style issues. Capture a PNG
-   only when editorial visual review is useful:
+9. Perform semantic QA on the rendered output. State the intended reader
+   takeaway in one sentence and accept the chart only if a reader can recover
+   it without mentally reconstructing the argument. Check that the visual
+   grammar matches the evidence, derived values are transparent, qualifiers
+   remain visible, and the title and labels describe the marks accurately.
+
+10. Correct semantic errors or report an infrastructure defect. For the weekly
+   batch, capture the final PNG into the weekly delivery folder:
 
    ```bash
-   node tools/chart.js review charts/YYYY-week-WW/[slug].html \
-     --screenshot --output previews/[slug].png
-   ```
+     node tool-api/chart.js review charts/YYYY-week-WW/[slug].html \
+     --screenshot --output charts/YYYY-week-WW/[slug].png
+     ```
 
-If the story needs administrative regions on a map, stop this workflow. Do not
-use the generic `render` command for `map.regional`; it will direct you to the
-regional workflow.
+### Branding and watermark gate
 
-## Regional breakdown workflow
+Use the shared watermark in its large, centered mode for every standard chart.
+Do not infer a small or corner watermark from the recipe, card layout, or label
+density. The renderer's layout rules must absorb those constraints while the
+watermark stays centered and export-legible. `map.regional` is the only
+exception; its watermark is deliberately repositioned as a restrained
+background behind the geography. Reject a standard chart whose watermark is
+missing, unloaded, undersized, corner-positioned, or visually absent.
 
-Start with the dedicated contract and region registry:
+If the standard command identifies `map.regional`, stop and use the regional workflow.
+
+### Waterfall-specific gate
+
+Use `flow.waterfall` only when the source supports a real start-to-end bridge.
+The start, each change, and the ending value must share scope and period and
+must reconcile arithmetically. Do not infer an exact opening value from charges
+described as `more than`, `about`, or otherwise incomplete. If the bridge is
+inferred, not mutually exclusive, or visually ambiguous, reject the waterfall
+and use `comparison.change`, `headline.metric`, or a simpler chart with
+supporting facts. A valid JSON spec is not evidence that a waterfall is an
+honest or intelligible visual.
+
+The Tool API enforces this gate. Every waterfall item must declare
+`valueStatus: "reported"`, the same `period`, and the same `scope`; the renderer
+rejects missing, derived, bounded, approximate, or non-reconciling steps. A
+reported operating profit is not a reported pre-charge net result, and a prior-
+period expense is not a current-period bridge step. Never construct an opening
+profit by adding incomplete charges to a loss. If those facts are the story,
+use a headline or comparison and keep the charges as supporting facts.
+
+## Regional workflow
 
 ```bash
-node tools/chart.js regional-guide russia
-node tools/chart.js regions russia
+node tool-api/chart.js regional-guide russia
+node tool-api/chart.js regions russia
 ```
 
-Author only the semantic content. A minimal regional item has:
+A regional item needs:
 
 - `label`
 - `regionId` or `regionIds`
-- at least one of `status`, `displayValue`, `detail`, or `value`
+- At least one of `status`, `displayValue`, `detail`, or `value`
 
-For a status map, `status`, `displayValue`, and `detail` are the clearest
-combination. The map normally needs only `{ "regionSet": "russia" }`.
+For a status map, use `status`, `displayValue`, and `detail`. The map normally needs only `{ "regionSet": "russia" }`.
 
-Do not author `leaderRouting`, `calloutDistribution`, `summaryDisplay`,
-`summaryPosition`, `anchorStyle`, coordinates, card positions, route points, or
-other implementation details. Only override `viewport`, `contextFit`,
-`landmass`, `excludeRegions`, or `data[].calloutSide` when the story itself
-requires that semantic constraint.
+Do not author coordinates, card positions, route points, manual lanes, SVG paths, layout configuration, HTML, CSS, JavaScript, or chart-library configuration.
 
-Run the consolidated regional workflow:
+Use these semantic overrides only when the story requires them:
+
+- `map.viewport`
+- `map.contextFit`
+- `map.landmass`
+- `map.excludeRegions`
+- `data[].calloutSide`
+
+Run:
 
 ```bash
-node tools/chart.js regional \
-  specs/YYYY-week-WW/[slug].json \
-  charts/YYYY-week-WW/[slug].html
+node tool-api/chart.js validate specs/YYYY-week-WW/[slug].json
+node tool-api/chart.js regional specs/YYYY-week-WW/[slug].json
 ```
 
-This validates the regional recipe, renders the shell, reviews the generated
-artifact, and runs responsive diagnostics at desktop, tablet, and mobile sizes.
-Use `--no-diagnose` only when no browser is available. Use the generic
-`review --screenshot` command for optional human visual review.
+The regional command includes responsive diagnostics. Use `--no-diagnose` only when a browser is unavailable.
 
-The renderer automatically owns map projection, landmass/context fitting,
-callout placement, column ordering, leader routing, obstacle avoidance, summary
-visibility, and responsive behavior. Agents should read the returned diagnostics
-as a pass/fail signal, not tune the routing internals.
+After the regional chart passes diagnostics, capture its final PNG with the same
+weekly output convention:
 
-## Composable features
+```bash
+node tool-api/chart.js review charts/YYYY-week-WW/[slug].html \
+  --screenshot --output charts/YYYY-week-WW/[slug].png
+```
 
-Use these only when they add information without changing the story structure:
+## Delivery
 
-- `references`: target, legal limit, average, or other benchmark.
-- `data[].annotation`: one concise explanation tied to a point.
-- `measure.scale: "logarithmic"`: positive values spanning orders of magnitude.
-- `supportingFacts`: context in a different unit that should not share the axis.
-- `data[].low` and `data[].high`: uncertainty or policy ranges.
+For each chart, report the workflow, recipe, ChartSpec path, generated HTML path,
+final PNG path, validation and diagnostic status, and remaining warnings or
+infrastructure defects.
 
-## Delivery checklist
+For the weekly batch, confirm that the HTML files, final PNGs, and
+`tochnyi-charts-YYYY-week-WW.pptx` are present in `charts/YYYY-week-WW/`. Report
+stories that were omitted because they were duplicate, weak, unverifiable, or
+failed validation or diagnostics.
 
-Report the selected workflow and recipe, the ChartSpec path, generated HTML path,
-optional PNG path, diagnostic status, and any remaining warning. Do not include
-generated implementation code in the response.
+Use `previews/` only for temporary review. Final PNGs used in the deck belong in
+the weekly chart folder. Do not include generated implementation code.
 
-## Sources of truth
-
-1. `node tools/chart.js orient`: workflow routing
-2. `schemas/chart-spec.schema.json`: allowed ChartSpec structure
-3. `recipes/catalog.json`: recipe purposes and constraints
-4. `renderer/validate.js`: enforced validation
-5. `renderer/agent-workflow.js`: agent-facing workflow contract
-6. `lib/tochnyi-runtime.js` and `lib/tochnyi-map-runtime.js`: rendering behavior
-7. `lib/tochnyi-diagnostics.js`: measured overlap and clipping analysis
-
-Testing guidance lives in `docs/testing.md`; the complete automated gate is
-`npm run test:all`.
-
-Generated HTML and PNG files are disposable outputs; the ChartSpec and renderer
-are the sources of truth.
+The public contract is documented in `tool-api/README.md`,
+`docs/batch-workflow.md`, and `docs/agent-workflows.md`.

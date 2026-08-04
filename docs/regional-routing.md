@@ -1,11 +1,12 @@
 # Regional routing and layout
 
+This is infrastructure-maintainer documentation. Chart-author agents should use
+`node tool-api/chart.js regional-guide` and treat diagnostics as structured
+pass/fail output without inspecting routing internals.
+
 Regional layout is renderer-owned. A ChartSpec supplies semantic facts and
 stable region IDs; the shared map runtime resolves projection, framing, card
 placement, and leaders at render time.
-
-Agents should read this document to understand diagnostic output and safe
-semantic overrides, not to copy geometry into a spec.
 
 ## Renderer-owned policy
 

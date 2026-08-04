@@ -5,7 +5,7 @@
   "description": "Declarative, validated chart rendering for Tochnyi visuals",
   "type": "commonjs",
   "scripts": {
-    "chart": "node tools/chart.js",
+    "chart": "node tool-api/chart.js",
     "test": "npm run test:unit",
     "test:unit": "node --test tests/chart-pipeline.test.js tests/workflow.test.js",
     "test:workflow": "node --test tests/workflow.test.js",

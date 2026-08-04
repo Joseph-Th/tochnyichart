@@ -152,6 +152,7 @@ body.tochnyi-regional-matrix-page {
     left: 50%;
     transform: translate(-50%, -50%);
     height: 100%;
+    max-width: 100%;
     width: auto;
     pointer-events: none;
     z-index: 9999;
@@ -1349,7 +1350,8 @@ body.tochnyi-regional-matrix-page {
     }
     .tochnyi-v2 .tochnyi-chart-container.standard { height: 480px; }
     .tochnyi-v2 .tochnyi-chart-container.tall { height: 620px; }
-    .tochnyi-bottom { flex-direction: column; }
+    .tochnyi-v2 .tochnyi-bottom { flex-direction: column; align-items: stretch; }
+    .tochnyi-v2 .tochnyi-source { max-width: 100%; overflow-wrap: anywhere; }
     .tochnyi-stat { border-right: 0; }
     .tochnyi-headline-metric { padding: 40px 24px; }
     .tochnyi-status-grid { grid-template-columns: 1fr 1fr; }

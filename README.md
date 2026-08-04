@@ -1,34 +1,95 @@
 # Tochnyi Charts
 
-Tochnyi Charts turns a compact, validated `ChartSpec` JSON file into a branded,
-responsive chart. Agents choose the story structure and provide the evidence;
-the renderer owns HTML, CSS, chart configuration, typography, layout, maps, and
-export behavior.
+Tochnyi Charts is a deterministic chart engine with a constrained Tool API for
+LLM and human chart authors. Authors provide evidence and editorial meaning in a
+compact `ChartSpec` JSON file. The engine owns HTML, CSS, chart configuration,
+typography, layout, maps, diagnostics, and export behavior.
 
 Generated HTML is an output artifact. Do not edit it directly.
+
+The repository has two explicit roles:
+
+- **Chart author:** uses `tool-api/`, the schema, catalog, and examples.
+- **Infrastructure maintainer:** works on rendering, validation, diagnostics,
+  tests, and Tool API implementation only when that work is explicitly requested.
+
+See [`docs/architecture.md`](docs/architecture.md) for the boundary.
+
+## Primary weekly workflow
+
+The normal job begins with one user-supplied file:
+
+```text
+input.txt
+```
+
+The LLM agent is the batch orchestrator. It reads the complete file, separates it
+into distinct data stories, verifies and enriches the sources, decides which
+production tool and chart workflow each story requires, renders the accepted
+charts, captures final PNG images, assembles those images into a PowerPoint
+presentation, and saves the complete delivery in the weekly chart folder.
+
+```text
+input.txt
+    -> parsed and verified data stories
+    -> selected chart or slide treatment
+    -> ChartSpec files
+    -> rendered HTML charts
+    -> final PNG images
+    -> PowerPoint presentation
+    -> charts/YYYY-week-WW/
+```
+
+The chart Tool API produces individual chart artifacts. PowerPoint assembly and
+weekly batch coordination belong to the LLM orchestration layer.
+
+The complete batch contract is in
+[`docs/batch-workflow.md`](docs/batch-workflow.md).
 
 ## Start here
 
 Ask the tool to orient the work before authoring a specification:
 
 ```bash
-node tools/chart.js orient
+node tool-api/chart.js api
+node tool-api/chart.js orient
 ```
 
 There are two intentionally separate workflows:
 
 | Story | Workflow | First command | Render command |
 | --- | --- | --- | --- |
-| Number, comparison, ranking, status list, composition, trend, flow, or sequence without a map | `standard-chart` | `node tools/chart.js guide` | `node tools/chart.js render <spec.json> [output.html]` |
-| Administrative regions are part of the finding and need map callouts | `regional-breakdown` | `node tools/chart.js regional-guide russia` | `node tools/chart.js regional <spec.json> [output.html]` |
+| Number, comparison, ranking, status list, composition, trend, flow, or sequence without a map | `standard-chart` | `node tool-api/chart.js guide` | `node tool-api/chart.js render <spec.json> [output.html]` |
+| Administrative regions are part of the finding and need map callouts | `regional-breakdown` | `node tool-api/chart.js regional-guide russia` | `node tool-api/chart.js regional <spec.json> [output.html]` |
 
-Choose one workflow before writing the spec. A `map.regional` spec is rejected by
-the standard render command and redirected to the regional workflow.
+Verify and read the full primary source before choosing the workflow and recipe.
+Then choose one workflow before writing the spec. A `map.regional` spec is
+rejected by the standard render command and redirected to the regional workflow.
 
-The shared lifecycle is:
+Route by meaning, not by chart type. A regional status list, ranking, or
+comparison still belongs to `regional-breakdown` when the distribution across
+administrative regions changes the finding. Use `standard-chart` only when
+place names are labels or categories and geography adds no explanatory value.
+For batch work, record this decision for every story in a routing matrix before
+authoring specs; any standard-chart decision involving place names needs an
+explicit rationale.
+
+The per-chart lifecycle inside that batch is:
 
 ```text
-source and evidence
+input note or assignment
+        |
+        v
+source verification and full-source review
+        |
+        v
+evidence extraction and safe derivations
+        |
+        v
+conditional gap-filling research
+        |
+        v
+central finding, workflow, and recipe
         |
         v
 semantic ChartSpec JSON
@@ -37,8 +98,24 @@ semantic ChartSpec JSON
 validation -> selected renderer -> shell review
                                       |
                                       v
-                         browser diagnostics -> optional screenshot
+                         browser diagnostics -> semantic QA -> final PNG
 ```
+
+Validation and responsive diagnostics do not prove that a chart is editorially
+correct. Inspect the rendered output and reject it if the visual grammar does
+not match the evidence, qualifiers are lost, values are falsely precise, or a
+reader must mentally reconstruct the takeaway.
+
+Use `flow.waterfall` only for a source-supported start-to-end bridge whose
+same-scope values reconcile arithmetically. Do not infer an exact opening value
+from `more than`, `about`, or incomplete charges. When the bridge is uncertain,
+prefer a simpler comparison or headline with supporting facts.
+
+The Tool API makes this a hard contract: every waterfall item must declare
+`valueStatus: "reported"`, the same `period`, and the same `scope`. Missing,
+derived, bounded, approximate, or non-reconciling steps are rejected. Operating
+profit is not automatically a pre-charge net result, and a prior-period expense
+cannot be inserted into a current-period bridge.
 
 ## Requirements
 
@@ -55,11 +132,12 @@ executable is installed in a nonstandard location.
 ### Orientation and contracts
 
 ```bash
-node tools/chart.js orient [region-set]
-node tools/chart.js guide [region-set]
-node tools/chart.js regional-guide [region-set]
-node tools/chart.js catalog
-node tools/chart.js regions [region-set]
+node tool-api/chart.js api [region-set]
+node tool-api/chart.js orient [region-set]
+node tool-api/chart.js guide [region-set]
+node tool-api/chart.js regional-guide [region-set]
+node tool-api/chart.js catalog
+node tool-api/chart.js regions [region-set]
 ```
 
 These commands return machine-readable JSON. `orient` is the routing decision;
@@ -70,9 +148,11 @@ These commands return machine-readable JSON. `orient` is the routing decision;
 Use the standard workflow when geography is not the primary visual structure:
 
 ```bash
-node tools/chart.js validate specs/examples/ai95-price-spike.json
-node tools/chart.js render specs/examples/ai95-price-spike.json
-node tools/chart.js diagnose charts/2026-week-30/russia-ai95-price-spike-2026.html
+node tool-api/chart.js validate specs/examples/ai95-price-spike.json
+node tool-api/chart.js render \
+  specs/examples/ai95-price-spike.json \
+  previews/examples/russia-ai95-price-spike-2026.html
+node tool-api/chart.js diagnose previews/examples/russia-ai95-price-spike-2026.html
 ```
 
 `render` performs validation and shell review. `diagnose` launches the browser
@@ -85,11 +165,17 @@ viewport containment is part of the check.
 Use the regional workflow only for geographic findings with highlighted regions:
 
 ```bash
-node tools/chart.js regional-guide russia
-node tools/chart.js regions russia
-node tools/chart.js validate specs/examples/russia-regional-map.json
-node tools/chart.js regional specs/examples/russia-regional-map.json
+node tool-api/chart.js regional-guide russia
+node tool-api/chart.js regions russia
+node tool-api/chart.js validate specs/examples/russia-regional-map.json
+node tool-api/chart.js regional \
+  specs/examples/russia-regional-map.json \
+  previews/examples/russia-regional-map.html
 ```
+
+Example and smoke-test renders must use an explicit path under `previews/`.
+Do not allow fixtures to use their default dated output path because that mixes
+test artifacts into a weekly delivery folder.
 
 The regional command validates, renders, performs shell review, and runs the
 desktop/tablet/mobile diagnostics used by the regional workflow. It reports the
@@ -100,13 +186,20 @@ Use `--no-diagnose` only when a browser is unavailable. Use the generic review
 command for human visual inspection:
 
 ```bash
-node tools/chart.js review charts/<week>/<chart>.html \
+node tool-api/chart.js review charts/<week>/<chart>.html \
   --screenshot --output previews/<chart>.png
 ```
 
-The regional authoring contract and routing policy are documented in
-[`docs/agent-workflows.md`](docs/agent-workflows.md) and
-[`docs/regional-routing.md`](docs/regional-routing.md).
+The chart-author contract is documented in
+[`docs/agent-workflows.md`](docs/agent-workflows.md). The source-enrichment,
+safe-derivation, research-order, and relevance rules are in
+[`docs/source-enrichment.md`](docs/source-enrichment.md). Regional routing
+internals are maintainer-only and documented in `docs/regional-routing.md`.
+
+Final weekly delivery uses `charts/YYYY-week-WW/`. The folder contains the
+rendered HTML files, the final PNG images used in the deck, and
+`tochnyi-charts-YYYY-week-WW.pptx`. The `previews/` directory remains available
+for temporary or ad hoc review images.
 
 ## Authoring contract
 
@@ -116,6 +209,22 @@ The model or agent owns:
 - Calculations that are not directly derivable by the renderer.
 - The finding, title, subtitle, recipe, labels, statuses, and concise details.
 - Stable region identifiers for regional maps.
+
+An input note, headline, excerpt, or `input.txt` entry is routing information,
+not the complete chart dataset. The chart author must verify supplied links,
+read the full primary source, and extract all evidence that materially supports
+the same central claim before selecting a recipe.
+
+Search beyond the primary source only to fill a named material evidence gap.
+Prefer the underlying official dataset, company filing, or named report before
+another article from the same publisher. Reject context that is merely adjacent,
+interesting, or useful only for making the chart look more complex.
+
+A simple two-value chart remains correct when the contrast itself is the full
+story. The objective is information density within one claim, not maximum data
+volume or visual novelty.
+
+Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 
 The renderer owns:
 
@@ -212,20 +321,25 @@ The full testing strategy, comparison contract, and performance budget are in
 ## Project structure
 
 ```text
+tool-api/                 Public chart-author CLI and boundary documentation
 schemas/                  ChartSpec schema
 recipes/                  Recipe catalog
 specs/examples/           One validated fixture per recipe
 specs/samples/             Editorial sample specs
 renderer/                 Validation, workflows, rendering, review, capture
 lib/                      Shared runtime, visual plan, maps, styles, diagnostics
-tools/chart.js             Agent-facing CLI
+tools/                    Internal scripts and compatibility CLI implementation
 tests/                    Unit, workflow, browser, and performance tests
-docs/                     Agent workflow, routing, and testing guidance
-charts/                   Generated HTML artifacts grouped by ISO week
-previews/                 Generated screenshots and manifests
+docs/                     Architecture, author, maintainer, routing, and testing guidance
+charts/                   Weekly delivery: HTML, final PNG, and PPTX by ISO week
+previews/                 Temporary review screenshots and manifests
 ```
 
 ## Extending the system
+
+Extension is infrastructure-maintainer work. Normal chart-author agents should
+report engine defects rather than entering implementation directories. See
+[`docs/maintainer-workflows.md`](docs/maintainer-workflows.md).
 
 To add a recipe:
 
@@ -236,9 +350,9 @@ To add a recipe:
 5. Add unit, workflow, and browser coverage where the recipe changes layout behavior.
 6. Run `npm run test:all`, then the relevant fixture and visual commands.
 
-Keep implementation guidance in the renderer and technical docs. Keep the
-agent skill focused on editorial decisions, semantic ChartSpec authoring, and
-the correct workflow route.
+Keep implementation guidance in maintainer documentation. Keep the chart-author
+skill and Tool API focused on editorial decisions, semantic ChartSpec authoring,
+structured checks, and the correct workflow route.
 
 Generated HTML and PNG output under `charts/` and `previews/` is intentionally
 ignored. Recreate it with the documented render, sample, or visual commands;

@@ -13,6 +13,7 @@ const HEIGHTS = new Set(['short', 'standard', 'tall']);
 const SORTS = new Set(['none', 'ascending', 'descending']);
 const STATUSES = new Set(['stable', 'improving', 'strained', 'critical', 'blocked', 'unknown']);
 const ROLES = new Set(['start', 'change', 'subtotal', 'end']);
+const VALUE_STATUSES = new Set(['reported', 'derived', 'bound', 'approximate']);
 const SCALES = new Set(['linear', 'logarithmic']);
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
@@ -37,7 +38,8 @@ const ROOT_KEYS = new Set([
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'value', 'low', 'high',
-  'benchmark', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role'
+  'benchmark', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
+  'period', 'scope'
 ]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const MEASURE_KEYS = new Set(['unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale']);
@@ -179,7 +181,9 @@ function normalizeSpec(input) {
           ? { displayValue: typeof item.displayValue === 'string' ? item.displayValue.trim() : item.displayValue }
           : {}),
         ...(item.detail !== undefined ? { detail: typeof item.detail === 'string' ? item.detail.trim() : item.detail } : {}),
-        ...(item.annotation !== undefined ? { annotation: typeof item.annotation === 'string' ? item.annotation.trim() : item.annotation } : {})
+        ...(item.annotation !== undefined ? { annotation: typeof item.annotation === 'string' ? item.annotation.trim() : item.annotation } : {}),
+        ...(item.period !== undefined ? { period: typeof item.period === 'string' ? item.period.trim() : item.period } : {}),
+        ...(item.scope !== undefined ? { scope: typeof item.scope === 'string' ? item.scope.trim() : item.scope } : {})
       }) : item)
     : spec.data;
 
@@ -212,8 +216,8 @@ function validateStructure(input, errors) {
   rejectUnknownKeys(input, ROOT_KEYS, '$', errors);
   if (input.version !== undefined && input.version !== '2.0') errors.push('version must be "2.0".');
 
-  if (!isObject(input.source)) errors.push('source must be an object with a name.');
-  else rejectUnknownKeys(input.source, SOURCE_KEYS, 'source', errors);
+  if (input.source !== undefined && !isObject(input.source)) errors.push('source must be an object with a name when provided.');
+  else if (isObject(input.source)) rejectUnknownKeys(input.source, SOURCE_KEYS, 'source', errors);
 
   if (Array.isArray(input.data)) {
     input.data.forEach((item, index) => rejectUnknownKeys(item, DATA_KEYS, `data[${index}]`, errors));
@@ -258,6 +262,12 @@ function validateData(spec, errors, warnings) {
     }
     if (item.detail !== undefined && (typeof item.detail !== 'string' || item.detail.length > 180)) errors.push(`${path}.detail must be a string of 180 characters or fewer.`);
     if (item.annotation !== undefined && (typeof item.annotation !== 'string' || item.annotation.length > 120)) errors.push(`${path}.annotation must be a string of 120 characters or fewer.`);
+    for (const key of ['period', 'scope']) {
+      if (item[key] !== undefined && (typeof item[key] !== 'string' || item[key].trim() === '' || item[key].length > 80)) {
+        errors.push(`${path}.${key} must be a non-empty string of 80 characters or fewer.`);
+      }
+    }
+    if (item.valueStatus !== undefined && !VALUE_STATUSES.has(item.valueStatus)) errors.push(`${path}.valueStatus is not supported.`);
     if (item.id !== undefined && (typeof item.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id))) errors.push(`${path}.id must use lowercase letters, numbers, and single hyphens.`);
     if (item.regionId !== undefined && (typeof item.regionId !== 'string' || !/^[A-Z]{2}-[A-Z0-9]{2,3}$/.test(item.regionId))) errors.push(`${path}.regionId must be an ISO-style region identifier such as RU-OMS.`);
     if (item.regionId !== undefined && item.regionIds !== undefined) errors.push(`${path} cannot define both regionId and regionIds.`);
@@ -280,6 +290,90 @@ function validateData(spec, errors, warnings) {
 
   const labels = spec.data.map((item) => item?.label).filter(Boolean);
   if (new Set(labels).size !== labels.length) warnings.push('Data labels are duplicated; labels should identify distinct points.');
+}
+
+const WATERFALL_UNCERTAIN_TEXT = /\b(?:about|approximately|approximate(?:ly)?|roughly|more than|less than|at least|at most|almost|nearly|derived|inferred|implied|calculated|reconstructed)\b|[<>≈~]/i;
+
+function validateWaterfall(spec, data, errors) {
+  if (data.length < 2 || data.length > 8) errors.push('flow.waterfall requires 2 to 8 data items.');
+  requireNumericValues(spec, errors);
+
+  const startIndexes = [];
+  const endIndexes = [];
+  data.forEach((item, index) => {
+    if (!ROLES.has(item?.role)) errors.push(`data[${index}].role is required for flow.waterfall.`);
+    if (item?.role === 'start') startIndexes.push(index);
+    if (item?.role === 'end') endIndexes.push(index);
+
+    if (!item?.valueStatus) {
+      errors.push(`data[${index}].valueStatus is required for flow.waterfall; use reported only for exact source values.`);
+    } else if (item.valueStatus !== 'reported') {
+      errors.push(`data[${index}].valueStatus must be reported for flow.waterfall; derived, bounded, approximate, or inferred values cannot form an exact bridge.`);
+    }
+    for (const key of ['period', 'scope']) {
+      if (!item?.[key]) errors.push(`data[${index}].${key} is required for flow.waterfall so every step can be checked for compatible scope.`);
+    }
+  });
+
+  if (data[0]?.role !== 'start') errors.push('flow.waterfall must begin with a start item.');
+  if (startIndexes.length !== 1 || startIndexes[0] !== 0) errors.push('flow.waterfall must contain exactly one start item, and it must be first.');
+  if (endIndexes.some((index) => index !== data.length - 1)) errors.push('flow.waterfall end items must be last.');
+  if (!['end', 'subtotal'].includes(data[data.length - 1]?.role)) errors.push('flow.waterfall must end with an end or subtotal item.');
+  if (!data.some((item) => item?.role === 'change')) errors.push('flow.waterfall requires at least one change item; use a comparison for start and end values without a bridge.');
+
+  const firstPeriod = data[0]?.period;
+  const firstScope = data[0]?.scope;
+  data.forEach((item, index) => {
+    if (item?.period && firstPeriod && item.period !== firstPeriod) {
+      errors.push(`data[${index}].period must match data[0].period for flow.waterfall; a bridge cannot mix reporting periods.`);
+    }
+    if (item?.scope && firstScope && item.scope !== firstScope) {
+      errors.push(`data[${index}].scope must match data[0].scope for flow.waterfall; a bridge cannot mix unlike measures.`);
+    }
+  });
+
+  const textFields = [
+    ['title', spec.title],
+    ['subtitle', spec.subtitle],
+    ['note', spec.note],
+    ['metadata.keyFinding', spec.metadata?.keyFinding]
+  ];
+  data.forEach((item, index) => {
+    textFields.push(
+      [`data[${index}].label`, item?.label],
+      [`data[${index}].displayValue`, item?.displayValue],
+      [`data[${index}].annotation`, item?.annotation]
+    );
+  });
+  textFields.forEach(([field, value]) => {
+    if (typeof value === 'string' && WATERFALL_UNCERTAIN_TEXT.test(value)) {
+      errors.push(`${field} uses approximate, bounded, or derived language; flow.waterfall requires exact reported bridge values.`);
+    }
+  });
+
+  const decimals = Number.isInteger(spec.measure?.decimals) ? spec.measure.decimals : 0;
+  const tolerance = Math.max(1e-9, 0.5 * (10 ** -decimals));
+  let current = null;
+  data.forEach((item, index) => {
+    if (typeof item?.value !== 'number' || !Number.isFinite(item.value)) return;
+    if (item.role === 'start') {
+      current = item.value;
+      return;
+    }
+    if (current === null) return;
+    if (item.role === 'change') {
+      current += item.value;
+      return;
+    }
+    if (item.role === 'subtotal' || item.role === 'end') {
+      if (Math.abs(item.value - current) > tolerance) {
+        const kind = item.role === 'end' ? 'ending value' : 'subtotal';
+        errors.push(`data[${index}].value must reconcile with the running flow; expected ${current} for the ${kind}, received ${item.value}.`);
+      }
+      current = item.value;
+    }
+  });
+
 }
 
 function requireNumericValues(spec, errors) {
@@ -342,14 +436,7 @@ function validateRecipe(spec, errors, warnings) {
       break;
     }
     case 'flow.waterfall':
-      if (count < 2 || count > 8) errors.push('flow.waterfall requires 2 to 8 data items.');
-      requireNumericValues(spec, errors);
-      data.forEach((item, index) => {
-        if (!ROLES.has(item?.role)) errors.push(`data[${index}].role is required for flow.waterfall.`);
-      });
-      if (data[0]?.role !== 'start') errors.push('flow.waterfall must begin with a start item.');
-      if (!['end', 'subtotal'].includes(data[count - 1]?.role)) errors.push('flow.waterfall must end with an end or subtotal item.');
-      if (!data.some((item) => item?.role === 'change')) warnings.push('flow.waterfall should contain at least one change item.');
+      validateWaterfall(spec, data, errors);
       break;
     case 'ranking.horizontal':
       if (count < 3 || count > 12) errors.push('ranking.horizontal requires 3 to 12 data items.');
