@@ -360,7 +360,8 @@ body.tochnyi-regional-matrix-page {
 }
 
 .tochnyi-v2 .tochnyi-watermark {
-    z-index: 0;
+    /* Keep the watermark above opaque chart pixels, below semantic overlays. */
+    z-index: 2;
     opacity: var(--tochnyi-watermark-opacity);
 }
 
