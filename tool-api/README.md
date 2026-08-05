@@ -26,9 +26,9 @@ docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/YYYY-week-WW/
-charts/
-previews/
+specs/runs/<run-id>/
+charts/<run-id>/
+.work/<run-id>/
 ```
 
 The normal authoring lifecycle is:
@@ -52,23 +52,33 @@ select the central finding, workflow, and recipe
 semantic ChartSpec JSON
     |
     v
-validate -> render -> diagnose or regional diagnostics -> final PNG for weekly batch
+validate -> render -> diagnose or regional diagnostics -> final PNG for the batch run
 ```
 
-## Weekly batch orchestration
+## Batch orchestration
 
 The normal user assignment is `input.txt`, which may contain multiple data
 stories. The LLM agent, not the chart engine, owns the complete batch:
 
 ```text
-input.txt
+initialize .work/<run-id>/
+    -> input.txt
     -> parse stories and preserve expert claims
     -> choose the appropriate tool and chart workflow for each accepted story
     -> render and diagnose chart HTML
     -> capture final PNG images
     -> assemble one PowerPoint presentation
-    -> save HTML, PNG, and PPTX files in charts/YYYY-week-WW/
+    -> save ChartSpecs and final delivery artifacts
+    -> finalize and purge transient run data
 ```
+
+Use `npm run run:init -- <run-id>` before production. Store research,
+downloads, helper scripts, logs, review captures, and package staging only under
+the created `.work/<run-id>/` tree. After delivery, run
+`npm run run:finalize -- <run-id>`; it preserves
+`specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
+material and the consumed input. Both retained production paths are ignored by
+Git.
 
 The Tool API is used once per accepted chart story. PowerPoint creation is a
 separate agent capability and must use the final generated PNGs rather than
@@ -77,7 +87,7 @@ recreating the charts manually.
 The canonical presentation filename is:
 
 ```text
-tochnyi-charts-YYYY-week-WW.pptx
+tochnyi-charts-<run-id>.pptx
 ```
 
 See [`docs/batch-workflow.md`](../docs/batch-workflow.md) for the complete batch
@@ -146,13 +156,16 @@ node tool-api/chart.js regional-guide [region-set]
 node tool-api/chart.js catalog
 node tool-api/chart.js regions [region-set]
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js render <spec.json> [output.html]
-node tool-api/chart.js regional <spec.json> [output.html] [--no-diagnose]
+node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
+node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
 node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
-node tool-api/chart.js review <chart.html> [--screenshot] [--output preview.png]
+node tool-api/chart.js review <chart.html> [--screenshot] [--output .work/<run-id>/review/<chart>.png]
 ```
 
 The older `node tools/chart.js` entrypoint remains available for compatibility, but it is not the documented chart-author surface.
 
-Final PNGs used in the weekly deck belong beside the rendered HTML and PPTX in
-`charts/YYYY-week-WW/`. Use `previews/` only for temporary or ad hoc review.
+Final PNGs used in the run presentation belong beside the rendered HTML and PPTX in
+`charts/<run-id>/`. Temporary or ad hoc review belongs in
+`.work/<run-id>/review/` and is removed during finalization.
+Production input, generated specifications, chart output, previews, and run
+workspaces are ignored by Git and checked by `npm run check:repo`.

@@ -80,6 +80,7 @@ function renderRegionalBreakdown(specPath, outputPath, options = {}) {
   const rendered = renderValidatedSpecFile(checked.specPath, checked.validation.normalized, outputPath, {
     projectRoot,
     assetVersion,
+    runId: options.runId,
     warnings: checked.validation.warnings
   });
   const review = reviewRenderedChart(rendered, {

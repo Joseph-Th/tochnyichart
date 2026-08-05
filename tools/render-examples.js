@@ -5,11 +5,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
+const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'examples');
-const outputDir = path.join(root, 'charts', 'v2-examples');
-fs.mkdirSync(outputDir, { recursive: true });
+const runId = 'example-render';
+initializeRunWorkspace(root, runId, { createOutputs: false });
+const outputDir = workspacePath(root, runId, 'rendered');
 
 const results = [];
 for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.json')).sort()) {

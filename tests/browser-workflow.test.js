@@ -75,6 +75,13 @@ test('trend value labels clear measured plot points at every responsive viewport
       assert.equal(run.trendAttributes?.['data-trend-label-layout'], 'measured');
       assert.equal(Number(run.trendAttributes?.['data-trend-label-line-overlaps']), 0);
       assert.ok(Number(run.trendAttributes?.['data-trend-label-visible-count']) >= 3);
+      const visibleIndices = String(
+        run.trendAttributes?.['data-trend-label-visible-indices'] || ''
+      ).split(',').filter(Boolean).map(Number);
+      assert.ok(visibleIndices.includes(0),
+        'the first endpoint label must be repositioned rather than suppressed');
+      assert.ok(visibleIndices.includes(7),
+        'the final endpoint label must be repositioned rather than suppressed');
       assert.equal(
         run.diagnostics?.issues?.some((issue) =>
           issue.code === 'text-object-overlap' &&

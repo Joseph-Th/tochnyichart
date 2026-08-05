@@ -1,6 +1,6 @@
-# Weekly batch workflow
+# Batch workflow
 
-This is the primary end-to-end workflow for producing a weekly chart presentation.
+This is the primary end-to-end workflow for producing a chart presentation from a batch of data stories.
 
 ## Input
 
@@ -20,11 +20,14 @@ independent corroboration is not grounds to weaken or replace it.
 
 The LLM agent is the batch orchestrator. It owns the sequence across source research, chart production, image capture, and presentation assembly.
 
-The deterministic chart engine is one tool used by the agent. It does not parse the entire weekly assignment or build the PowerPoint deck by itself.
+The deterministic chart engine is one tool used by the agent. It does not parse the entire batch assignment or build the PowerPoint deck by itself.
 
 ## Required sequence
 
 ```text
+initialize .work/<run-id>/
+    |
+    v
 input.txt
     |
     v
@@ -52,8 +55,29 @@ capture one final PNG image per accepted chart
 assemble the accepted images into a PowerPoint presentation
     |
     v
-save the complete weekly delivery in charts/YYYY-week-WW/
+save the complete run delivery in charts/<run-id>/
+    |
+    v
+finalize the run and purge transient material
 ```
+
+## 0. Initialize isolated transient storage
+
+Before reading the assignment, create the run workspace:
+
+```bash
+npm run run:init -- <run-id>
+```
+
+Store every non-retained artifact under `.work/<run-id>/`, including
+research notes, downloaded sources, helper scripts, logs, diagnostic dumps,
+review screenshots, and package staging. Do not create run-specific scripts or
+data files at the repository root. Do not use `previews/` for new work.
+
+Production input, generated ChartSpecs, chart output, previews, and workspaces
+are local artifacts. Git ignores `input.txt`, `specs/runs/`, `charts/`,
+`previews/`, and `.work/`. Run `npm run check:repo` before committing; it fails
+if any production or transient artifact is tracked, including force-added files.
 
 ## 1. Parse the assignment
 
@@ -142,7 +166,7 @@ each accepted story has exactly one recorded workflow decision.
 
 For every accepted chart story:
 
-1. Write a semantic `ChartSpec` to `specs/YYYY-week-WW/[slug].json`.
+1. Write a semantic `ChartSpec` to `specs/runs/<run-id>/[slug].json`.
 2. Validate the specification.
 3. Render it through the selected standard or regional workflow.
 4. Run the required diagnostics.
@@ -175,11 +199,11 @@ bounded, approximate, mixed-period, mixed-scope, or non-reconciling steps. In
 particular, an operating-profit figure is not a pre-charge net-result figure,
 and a prior-period expense cannot be used as a current-period change.
 
-Use the weekly delivery path for the final image:
+Use the run delivery path for the final image:
 
 ```bash
-node tool-api/chart.js review charts/YYYY-week-WW/[slug].html \
-  --screenshot --output charts/YYYY-week-WW/[slug].png
+node tool-api/chart.js review charts/<run-id>/[slug].html \
+  --screenshot --output charts/<run-id>/[slug].png
 ```
 
 The HTML and PNG are generated artifacts. Do not edit them directly.
@@ -200,34 +224,54 @@ The presentation should:
 
 PowerPoint assembly belongs to the LLM orchestration layer. It is not an implementation responsibility of the chart renderer.
 
-## 6. Weekly delivery folder
+## 6. Run delivery folder
 
 The canonical delivery folder is:
 
 ```text
-charts/YYYY-week-WW/
+charts/<run-id>/
 ```
 
-Use the ISO year and zero-padded ISO week already used by the chart renderer.
+Use a caller-supplied run ID. It may be a date, publication identifier, client slug, issue number, or another stable label; the workflow does not infer one from chart data.
 
 The completed folder should contain:
 
 ```text
-charts/YYYY-week-WW/
+charts/<run-id>/
 ├── [slug-1].html
 ├── [slug-1].png
 ├── [slug-2].html
 ├── [slug-2].png
-└── tochnyi-charts-YYYY-week-WW.pptx
+└── tochnyi-charts-<run-id>.pptx
 ```
 
 The exact number of chart files depends on the number of accepted stories.
 
-`previews/` may still be used for temporary or ad hoc visual review. Final PNGs used in the deck belong in the weekly `charts/YYYY-week-WW/` delivery folder beside the HTML files and PowerPoint presentation.
+Temporary or ad hoc review output belongs in
+`.work/<run-id>/review/`. Final PNGs used in the deck belong in the local
+`charts/<run-id>/` delivery folder beside the HTML files and PowerPoint
+presentation.
+
+## 7. Finalize and flush
+
+After the retained specifications and delivery folder are complete, run:
+
+```bash
+npm run run:finalize -- <run-id>
+```
+
+This deletes `.work/<run-id>/`, removes the legacy `previews/` tree, and
+truncates the consumed `input.txt`. It does not delete
+`specs/runs/<run-id>/` or `charts/<run-id>/`.
+
+Use `npm run run:flush -- <run-id>` when transient files should be removed
+but the input must remain. Use `npm run run:reset` before a cold-agent test to
+remove every transient workspace, legacy previews, and input while retaining all
+specification and chart folders.
 
 ## Completion condition
 
-The weekly job is complete only when:
+The batch run is complete only when:
 
 - `input.txt` has been fully parsed.
 - Each included story preserves the expert input claim and has a clear central finding.
@@ -235,5 +279,9 @@ The weekly job is complete only when:
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
 - The PowerPoint deck has been assembled from those final images.
-- The HTML files, final PNGs, and `.pptx` file are present in `charts/YYYY-week-WW/`.
+- The HTML files, final PNGs, and `.pptx` file are present in `charts/<run-id>/`.
+- The ChartSpecs are present in `specs/runs/<run-id>/`.
+- The run has been finalized, leaving no run-specific notes, scripts, logs,
+  downloads, review files, package staging, or consumed input outside the
+  retained `specs/` and `charts/` folders.
 - Remaining omissions, direct source conflicts, source mismatches, warnings, or infrastructure defects are reported.

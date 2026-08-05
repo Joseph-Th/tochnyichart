@@ -14,6 +14,18 @@ node_modules/
 # Logs
 *.log
 
-# Generated chart and screenshot output
+# User input and generated run data
+/input.txt
 /charts/
 /previews/
+/.work/
+/nul
+
+# Generated ChartSpecs are local run artifacts. Keep only curated fixtures.
+/specs/*
+!/specs/examples/
+!/specs/examples/**
+!/specs/samples/
+!/specs/samples/**
+!/specs/stress/
+!/specs/stress/**

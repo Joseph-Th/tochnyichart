@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.4.0
+version: 4.5.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -17,25 +17,30 @@ The chart author owns evidence, calculations, editorial meaning, copy, recipe ch
 ## Primary assignment
 
 The normal assignment begins with `input.txt` at the project root. Treat the
-file as a weekly queue containing multiple possible data stories.
+file as a batch queue containing multiple possible data stories. The caller
+supplies an opaque run ID; it may be a date, client slug, issue number, or any
+other stable label. Never derive storage paths from chart dates.
 
 The agent must:
 
-1. Read the complete `input.txt`.
-2. Separate it into distinct stories and merge duplicates.
-3. Preserve each expert claim and enrich it with reputable sources.
-4. Decide which production tool and chart workflow each story requires.
-5. Produce, validate, render, and diagnose each accepted chart.
-6. Capture one final PNG for every accepted chart.
-7. Assemble the final PNGs into one PowerPoint presentation.
-8. Save the HTML files, final PNGs, and PowerPoint deck in
-   `charts/YYYY-week-WW/`.
+1. Run `npm run run:init -- <run-id>`.
+2. Read the complete `input.txt`.
+3. Separate it into distinct stories and merge duplicates.
+4. Preserve each expert claim and enrich it with reputable sources.
+5. Decide which production tool and chart workflow each story requires.
+6. Produce, validate, render, and diagnose each accepted chart.
+7. Capture one final PNG for every accepted chart.
+8. Assemble the final PNGs into one PowerPoint presentation.
+9. Save local production specs in `specs/runs/<run-id>/` and delivery artifacts
+   in `charts/<run-id>/`.
+10. Run `npm run run:finalize -- <run-id>` after delivery.
 
-The canonical deck filename is
-`tochnyi-charts-YYYY-week-WW.pptx`. The chart Tool API handles individual chart
-production. PowerPoint assembly is a separate agent responsibility.
+The canonical deck filename is `tochnyi-charts-<run-id>.pptx`. Production
+specifications and chart outputs are local artifacts ignored by Git. The chart
+Tool API handles individual chart production; PowerPoint assembly is a separate
+agent responsibility.
 
-Use `docs/batch-workflow.md` as the complete weekly orchestration contract.
+Use `docs/batch-workflow.md` as the complete batch orchestration contract.
 
 ## Boundary
 
@@ -50,9 +55,9 @@ docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/YYYY-week-WW/
-charts/
-previews/
+specs/runs/<run-id>/
+charts/<run-id>/
+.work/<run-id>/
 ```
 
 Do not inspect or modify these implementation directories unless the user explicitly requests infrastructure work:
@@ -121,7 +126,7 @@ every accepted story:
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
 - Keep the specification small and semantic.
 - Keep presentation copy separate from production context: never mention `input.txt`, internal provenance, verification status, diagnostics, or workflow commentary in a chart or slide.
-- Write new specifications to `specs/YYYY-week-WW/[slug].json`.
+- Write new specifications to `specs/runs/<run-id>/[slug].json`.
 - Correct semantic failures in the ChartSpec and rerun the Tool API commands.
 
 Safe derivations include absolute change, percentage change, percentage-point change, ratio, share, coverage rate, implied shortfall, and combined amount when the inputs are sourced and period-compatible. Preserve qualifiers such as `about`, `almost`, `more than`, and ranges rather than introducing false precision.
@@ -146,19 +151,19 @@ Then:
 6. Validate:
 
    ```bash
-   node tool-api/chart.js validate specs/YYYY-week-WW/[slug].json
+   node tool-api/chart.js validate specs/runs/<run-id>/[slug].json
    ```
 
 7. Render:
 
    ```bash
-   node tool-api/chart.js render specs/YYYY-week-WW/[slug].json
+   node tool-api/chart.js render specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].html --run-id <run-id>
    ```
 
 8. Diagnose:
 
    ```bash
-   node tool-api/chart.js diagnose charts/YYYY-week-WW/[slug].html
+   node tool-api/chart.js diagnose charts/<run-id>/[slug].html
    ```
 
 9. Perform semantic QA on the rendered output. State the intended reader
@@ -167,12 +172,12 @@ Then:
    grammar matches the evidence, derived values are transparent, qualifiers
    remain visible, and the title and labels describe the marks accurately.
 
-10. Correct semantic errors or report an infrastructure defect. For the weekly
-   batch, capture the final PNG into the weekly delivery folder:
+10. Correct semantic errors or report an infrastructure defect. For the batch
+   run, capture the final PNG into the run delivery folder:
 
    ```bash
-     node tool-api/chart.js review charts/YYYY-week-WW/[slug].html \
-     --screenshot --output charts/YYYY-week-WW/[slug].png
+     node tool-api/chart.js review charts/<run-id>/[slug].html \
+     --screenshot --output charts/<run-id>/[slug].png
      ```
 
 ### Branding and watermark gate
@@ -235,7 +240,10 @@ A regional item needs:
 - `regionId` or `regionIds`
 - At least one of `status`, `displayValue`, `detail`, or `value`
 
-For a status map, use `status`, `displayValue`, and `detail`. The map normally needs only `{ "regionSet": "russia" }`. Russian maps always retain the complete national outline, including detached regions.
+For a status map, use `status`, `displayValue`, and `detail`. The map normally
+needs only `{ "regionSet": "russia" }`. Russian maps use the supported
+continental mainland geometry; detached-region evidence must use a non-map
+chart.
 
 Do not author coordinates, card positions, route points, manual lanes, partial framing, region exclusions, SVG paths, layout configuration, HTML, CSS, JavaScript, or chart-library configuration.
 
@@ -246,18 +254,18 @@ Use these semantic overrides only when the story requires them:
 Run:
 
 ```bash
-node tool-api/chart.js validate specs/YYYY-week-WW/[slug].json
-node tool-api/chart.js regional specs/YYYY-week-WW/[slug].json
+node tool-api/chart.js validate specs/runs/<run-id>/[slug].json
+node tool-api/chart.js regional specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].html --run-id <run-id>
 ```
 
 The regional command includes responsive diagnostics. Use `--no-diagnose` only when a browser is unavailable.
 
 After the regional chart passes diagnostics, capture its final PNG with the same
-weekly output convention:
+run output convention:
 
 ```bash
-node tool-api/chart.js review charts/YYYY-week-WW/[slug].html \
-  --screenshot --output charts/YYYY-week-WW/[slug].png
+node tool-api/chart.js review charts/<run-id>/[slug].html \
+  --screenshot --output charts/<run-id>/[slug].png
 ```
 
 ## Delivery
@@ -266,13 +274,17 @@ For each chart, report the workflow, recipe, ChartSpec path, generated HTML path
 final PNG path, validation and diagnostic status, and remaining warnings or
 infrastructure defects.
 
-For the weekly batch, confirm that the HTML files, final PNGs, and
-`tochnyi-charts-YYYY-week-WW.pptx` are present in `charts/YYYY-week-WW/`. Report
+For the completed batch run, confirm that the HTML files, final PNGs, and
+`tochnyi-charts-<run-id>.pptx` are present in `charts/<run-id>/`. Report
 stories that were omitted because they were duplicate, weak, non-visual, directly conflicted, or
 failed validation or diagnostics.
 
-Use `previews/` only for temporary review. Final PNGs used in the deck belong in
-the weekly chart folder. Do not include generated implementation code.
+Use `.work/<run-id>/review/` only for temporary review. Final PNGs used in the deck belong in
+the local run delivery folder. Do not include generated implementation code.
+
+`input.txt`, production specs, chart output, previews, and `.work/` are ignored
+by Git. Run `npm run check:repo` before committing; it must report no tracked
+production or transient files.
 
 The public contract is documented in `tool-api/README.md`,
 `docs/batch-workflow.md`, and `docs/agent-workflows.md`.

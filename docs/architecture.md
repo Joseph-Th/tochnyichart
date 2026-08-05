@@ -4,9 +4,12 @@ Tochnyi Charts has three deliberately separate operational layers.
 
 ## 1. LLM batch orchestration
 
-The LLM agent receives `input.txt` and owns the complete weekly production job.
+The LLM agent receives `input.txt` and owns the complete batch production job.
 
 ```text
+initialize .work/<run-id>/
+    |
+    v
 input.txt
     |
     v
@@ -19,7 +22,10 @@ individual chart production through the Tool API
 final PNG capture and PowerPoint assembly
     |
     v
-charts/YYYY-week-WW/
+charts/<run-id>/
+    |
+    v
+finalize and purge transient run data
 ```
 
 The orchestrator decides which stories are accepted, merged, omitted, rendered
@@ -43,7 +49,7 @@ tool-api/chart.js + ChartSpec contract
 deterministic chart engine
     |
     v
-HTML, diagnostics, and final PNG for weekly batch
+HTML, diagnostics, and final PNG for the batch run
 ```
 
 The Tool API exposes:
@@ -55,7 +61,7 @@ The Tool API exposes:
 - Validation, rendering, diagnostics, and review commands.
 - Structured JSON results and failure signals.
 
-The Tool API does not parse the complete weekly `input.txt` or assemble the
+The Tool API does not parse the complete batch `input.txt` or assemble the
 PowerPoint deck. It also does not expose implementation decisions. Chart authors
 do not choose chart-library configuration, HTML structure, CSS, typography,
 color policy, coordinates, responsive geometry, map projection, callout
@@ -101,13 +107,19 @@ input.txt
 docs/batch-workflow.md
 docs/agent-workflows.md
 docs/source-enrichment.md
-specs/YYYY-week-WW/
-charts/YYYY-week-WW/
+specs/runs/<run-id>/
+charts/<run-id>/
+.work/<run-id>/
 ```
 
 It parses the assignment, conducts source work, invokes the Tool API for each
 accepted chart, captures final PNGs, assembles
-`tochnyi-charts-YYYY-week-WW.pptx`, and reports omissions or failures.
+`tochnyi-charts-<run-id>.pptx`, finalizes the run workspace, and reports
+omissions or failures.
+
+`input.txt`, `.work/`, `charts/`, `previews/`, and production specifications
+outside the curated fixture directories are ignored by Git. The repository
+hygiene check rejects them if they are force-added.
 
 ### Chart author
 
@@ -121,9 +133,9 @@ docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/YYYY-week-WW/
-charts/
-previews/
+specs/runs/<run-id>/
+charts/<run-id>/
+.work/<run-id>/
 ```
 
 A chart author verifies and enriches source evidence, corrects semantic inputs, and reports infrastructure defects. It does not investigate implementation code during normal chart production.
@@ -153,7 +165,7 @@ Failures are classified before files are changed.
 | --- | --- | --- |
 | Duplicate, weak, or non-visual story in `input.txt` | Batch orchestrator | Merge or omit it and report the decision. Do not omit an expert-authored claim merely because external search is silent. |
 | Reputable source directly contradicts a material input claim | Batch orchestrator | Preserve both positions in working notes and escalate for editorial resolution. Do not silently rewrite the expert report. |
-| Accepted charts are complete but no deck exists | Batch orchestrator | Capture final PNGs, assemble the PowerPoint, and save it in the weekly chart folder. |
+| Accepted charts are complete but no deck exists | Batch orchestrator | Capture final PNGs, assemble the PowerPoint, and save it in the run delivery folder. |
 | Supplied URL does not match the input note | Chart author | Resolve or report the mismatch. Do not silently combine the sources. |
 | Primary source lacks a material comparator, denominator, scale, or explanation | Chart author | Research only the named evidence gap using the documented source order. |
 | Additional context is adjacent but does not strengthen the central claim | Chart author | Exclude it. Do not add noise for visual complexity. |

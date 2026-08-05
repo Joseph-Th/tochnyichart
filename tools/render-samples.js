@@ -7,27 +7,32 @@ const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtmlResponsive, findBrowser } = require('../renderer/capture');
+const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'samples');
-const previewsDir = path.join(root, 'previews', 'new-workflow');
+const runId = 'sample-review';
+initializeRunWorkspace(root, runId, { createOutputs: false });
+const renderedDir = workspacePath(root, runId, 'rendered');
+const reviewDir = workspacePath(root, runId, 'review');
 const browser = findBrowser();
 
 if (!browser) {
   throw new Error('No Edge or Chrome installation was found. Set TOCHNYI_BROWSER to render samples.');
 }
 
-fs.mkdirSync(previewsDir, { recursive: true });
+fs.mkdirSync(renderedDir, { recursive: true });
 
 const captures = [];
 for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.json')).sort()) {
   const specPath = path.join(specsDir, file);
-  const rendered = renderSpecFile(specPath, null, { projectRoot: root });
+  const slug = path.basename(file, '.json');
+  const rendered = renderSpecFile(specPath, path.join(renderedDir, `${slug}.html`), { projectRoot: root });
   const review = reviewFile(rendered.htmlPath);
   if (!review.valid) throw new Error(`${file}: ${review.errors.join('; ')}`);
 
-  const slug = rendered.normalized.metadata?.slug || path.basename(file, '.json');
-  const pngPath = path.join(previewsDir, `${slug}.png`);
+  const outputSlug = rendered.normalized.metadata?.slug || slug;
+  const pngPath = path.join(reviewDir, `${outputSlug}.png`);
   const responsive = diagnoseHtmlResponsive(rendered.htmlPath, { browser });
   if (responsive.status === 'fail') {
     throw new Error(`${file}: responsive diagnostics failed.`);
@@ -59,7 +64,7 @@ const manifest = {
 };
 
 fs.writeFileSync(
-  path.join(previewsDir, 'manifest.json'),
+  path.join(reviewDir, 'manifest.json'),
   `${JSON.stringify(manifest, null, 2)}\n`,
   'utf8'
 );

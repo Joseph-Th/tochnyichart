@@ -27,8 +27,8 @@ Usage:
   node tool-api/chart.js guide [region-set]
   node tool-api/chart.js regional-guide [region-set]
   node tool-api/chart.js validate <spec.json>
-  node tool-api/chart.js render <spec.json> [output.html]
-  node tool-api/chart.js regional <spec.json> [output.html] [--no-diagnose]
+  node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
+  node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
   node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
   node tool-api/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
@@ -38,9 +38,9 @@ AMCharts configuration, branding, layout, and export behavior.
 The public chart-author entrypoint is node tool-api/chart.js. The tools/chart.js
 path remains available for backward compatibility and infrastructure work.
 
-This CLI produces individual chart artifacts. The LLM agent owns the weekly
-input.txt batch, story selection, final PNG capture, PowerPoint assembly, and
-delivery to charts/YYYY-week-WW/. See docs/batch-workflow.md.`;
+This CLI produces individual chart artifacts. The orchestration layer owns the
+input batch, story selection, final PNG capture, presentation assembly, and
+delivery to charts/<run-id>/. See docs/batch-workflow.md.`;
   console.log(text);
   process.exit(exitCode);
 }
@@ -58,6 +58,19 @@ function fail(error) {
 function optionValue(args, name) {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : null;
+}
+
+function commandPositionals(args, valueOptions = []) {
+  const positionals = [];
+  for (let index = 1; index < args.length; index += 1) {
+    const value = args[index];
+    if (valueOptions.includes(value)) {
+      index += 1;
+      continue;
+    }
+    if (!value.startsWith('--')) positionals.push(value);
+  }
+  return positionals;
 }
 
 function main() {
@@ -112,15 +125,19 @@ function main() {
   }
 
   if (command === 'render') {
-    if (!args[1]) usage(1);
-    printResult(renderStandardChart(args[1], args[2]));
+    const positionals = commandPositionals(args, ['--run-id']);
+    if (!positionals[0]) usage(1);
+    printResult(renderStandardChart(positionals[0], positionals[1], {
+      runId: optionValue(args, '--run-id') || undefined
+    }));
     return;
   }
 
   if (command === 'regional') {
-    if (!args[1]) usage(1);
-    const outputPath = args[2] && !args[2].startsWith('--') ? args[2] : undefined;
-    const result = renderRegionalBreakdown(args[1], outputPath, {
+    const positionals = commandPositionals(args, ['--run-id']);
+    if (!positionals[0]) usage(1);
+    const result = renderRegionalBreakdown(positionals[0], positionals[1], {
+      runId: optionValue(args, '--run-id') || undefined,
       diagnose: !args.includes('--no-diagnose')
     });
     printResult(result);

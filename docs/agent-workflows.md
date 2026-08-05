@@ -4,24 +4,34 @@ This document defines the public Tool API contract for agents producing charts. 
 
 A chart-author agent should treat the deterministic engine as a tool. It supplies source fidelity, calculations, editorial meaning, and a semantic `ChartSpec`. It does not inspect rendering machinery.
 
-## Weekly batch workflow
+## Batch workflow
 
 The normal assignment is one user-supplied `input.txt` containing multiple data
 stories. The LLM agent owns the complete batch orchestration:
 
 ```text
-input.txt
+initialize .work/<run-id>/
+    -> input.txt
     -> parse distinct stories
     -> preserve expert claims and enrich sources
     -> decide the appropriate production tool for each story
     -> create and render accepted charts
     -> capture final PNG images
     -> assemble one PowerPoint presentation
-    -> save all final artifacts in charts/YYYY-week-WW/
+    -> save retained specs and final artifacts
+    -> finalize and purge transient run data
 ```
 
+Start each batch with `npm run run:init -- <run-id>`. Keep research notes,
+downloads, helper scripts, logs, review captures, and package staging under the
+created `.work/<run-id>/` tree. End with
+`npm run run:finalize -- <run-id>`, which preserves
+`specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
+material and the consumed input. Both retained production paths are ignored by
+Git.
+
 The Tool API described below handles individual chart production. It does not
-parse the complete weekly assignment or assemble the PowerPoint deck. Those are
+parse the complete batch assignment or assemble the PowerPoint deck. Those are
 agent responsibilities.
 
 The full batch contract is in [`docs/batch-workflow.md`](batch-workflow.md).
@@ -82,9 +92,9 @@ docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/YYYY-week-WW/
-charts/
-previews/
+specs/runs/<run-id>/
+charts/<run-id>/
+.work/<run-id>/
 ```
 
 During normal chart production, do not inspect or modify:
@@ -152,13 +162,14 @@ Every route follows the same semantic stages:
 6. Validate the JSON.
 7. Render through the selected workflow.
 8. Correct semantic errors and rerun the checks.
-9. For a weekly batch, capture the final PNG into `charts/YYYY-week-WW/` after
-   diagnostics pass. Use `previews/` only for temporary or ad hoc review.
+9. For a batch run, capture the final PNG into `charts/<run-id>/` after
+   diagnostics pass. Use `.work/<run-id>/review/` only for temporary or ad
+   hoc review.
 
 Write new specifications to:
 
 ```text
-specs/YYYY-week-WW/[slug].json
+specs/runs/<run-id>/[slug].json
 ```
 
 The chart author owns source fidelity, calculations, copy, statuses, region IDs, and recipe choice. The engine owns HTML, CSS, chart-library configuration, geometry, typography, colors, responsive layout, map projection, callout placement, and leader routing.
@@ -284,7 +295,7 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js render <spec.json> [output.html]
+node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
 node tool-api/chart.js diagnose <output.html>
 ```
 
@@ -293,7 +304,7 @@ command to capture the inspected artifact:
 
 ```bash
 node tool-api/chart.js review <output.html> \
-  --screenshot --output <preview.png>
+  --screenshot --output .work/<run-id>/review/<chart>.png
 ```
 
 If the standard render command identifies a regional specification, stop and use the regional workflow. Do not remove `map.regional` merely to pass the command.
@@ -328,8 +339,9 @@ Regional summary cards are permanently disabled. The callout cards carry the
 evidence, while the compact header, smaller watermark, and wide regional canvas
 reserve more room for the map. Automatic sparse routing preserves geographic
 card order and favors direct leaders; dense maps switch to crossing-aware ports.
-Region polygons are not treated as physical obstacles, so a clean direct leader
-may cross the map when that is the shortest readable path.
+A leader may exit its own highlighted region, but every other highlighted
+region is a routing obstacle. The planner prefers one continuous spline and
+only adds detours when another highlighted region or leader requires them.
 
 Use a semantic override only when the story requires it:
 
@@ -339,7 +351,7 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js regional <spec.json> [output.html]
+node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>]
 ```
 
 The regional command performs validation, rendering, shell review, and responsive diagnostics. Use `--no-diagnose` only when a browser is unavailable.
@@ -374,15 +386,20 @@ For an individual chart, report:
 
 Do not include generated implementation code in the response.
 
-For a completed weekly batch, the agent must also:
+For a completed batch run, the agent must also:
 
 - Capture one final PNG for every accepted chart.
 - Assemble the accepted images into one PowerPoint presentation.
 - Save the rendered HTML files, final PNGs, and
-  `tochnyi-charts-YYYY-week-WW.pptx` in `charts/YYYY-week-WW/`.
+  `tochnyi-charts-<run-id>.pptx` in `charts/<run-id>/`.
+- Save authored ChartSpecs in `specs/runs/<run-id>/`.
+- Run `npm run run:finalize -- <run-id>` after delivery.
 - Report omitted, duplicate, non-visual, directly conflicted, or failed stories.
 
-`previews/` is for temporary or ad hoc review. Final images used in the deck
-belong in the weekly `charts/YYYY-week-WW/` folder.
+Temporary review belongs in `.work/<run-id>/review/`. Final images used in
+the deck belong in the local `charts/<run-id>/` folder. No run-specific
+notes, scripts, logs, downloads, or staging files should remain elsewhere.
+Production input, generated specifications, chart output, previews, and run
+workspaces must remain untracked; `npm run check:repo` enforces that boundary.
 
 Infrastructure architecture and maintenance are documented separately in `docs/architecture.md` and `docs/maintainer-workflows.md`.

@@ -12,18 +12,25 @@
   "data": [
     {
       "label": "One year earlier",
+      "quantity": "coworking vacancy rate",
+      "scope": "Moscow flexible-office inventory",
+      "period": "July 2025",
       "value": 4.9,
       "displayValue": "4.9%",
       "tone": "neutral"
     },
     {
       "label": "Current vacancy",
+      "quantity": "coworking vacancy rate",
+      "scope": "Moscow flexible-office inventory",
+      "period": "July 2026",
       "value": 17.9,
       "displayValue": "17.9%",
       "tone": "critical"
     }
   ],
   "measure": {
+    "quantity": "coworking vacancy rate",
     "unit": "%",
     "axisTitle": "Share of vacant coworking space",
     "decimals": 1,

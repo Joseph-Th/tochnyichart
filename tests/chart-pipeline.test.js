@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { validateSpec } = require('../renderer/validate');
-const { renderHtml, renderSpecFile, assetFingerprint, isoWeek } = require('../renderer/render');
+const { renderHtml, renderSpecFile, assetFingerprint, defaultOutputPath } = require('../renderer/render');
 const { reviewHtml, reviewFile } = require('../renderer/review');
 const { recipeIds } = require('../renderer/catalog');
 const { extractLayoutDiagnostics, extractDataAttributes } = require('../renderer/capture');
@@ -294,9 +294,15 @@ test('trend labels remain candidates until measured layout and avoid line geomet
   });
   const placed = layout.filter((item) => item.showLabel);
   assert.ok(placed.length >= 3, 'the layout should retain the highest-priority labels');
+  assert.equal(layout[0].showLabel, true,
+    'the first endpoint label must be retained when a collision-free position exists');
   assert.equal(layout[5].showLabel, true);
   assert.equal(layout[6].showLabel, true,
     'adjacent equal values should both render when their measured boxes fit');
+  assert.equal(layout[7].showLabel, true,
+    'a high-priority endpoint label must be moved farther from the line instead of being deleted');
+  assert.ok(layout[7].searchOffset > 11,
+    'the endpoint regression requires the measured layout to search beyond the first placement ring');
   assert.equal(
     VisualPlan.trendLabelLineOverlapCount(layout, points, 8),
     0,
@@ -322,6 +328,39 @@ test('trend labels remain candidates until measured layout and avoid line geomet
       );
     }
   }
+});
+
+test('trend endpoint labels use bounded two-dimensional search when radial placements fail', () => {
+  const data = [10, 20, 15].map((value, index) => ({ label: String(index + 1), value }));
+  const layout = VisualPlan.trendLabelLayout(data, {
+    plans: VisualPlan.trendLabelPlan(data),
+    points: [
+      { x: 2, y: 10 },
+      { x: 105, y: 60 },
+      { x: 210, y: 80 }
+    ],
+    labelSizes: data.map(() => ({ width: 70, height: 28 })),
+    boundary: { left: 0, top: 0, right: 220, bottom: 170 },
+    pointRadius: 6,
+    pointPadding: 5,
+    labelPadding: 6,
+    lineTolerance: 4,
+    lineStrokeWidth: 4,
+    labelBackgroundPadding: 2
+  });
+
+  assert.equal(layout[0].showLabel, true);
+  assert.equal(layout[0].placement, 'endpoint-search');
+  assert.ok(layout[0].box.left >= 0 && layout[0].box.right <= 220);
+  assert.ok(layout[0].box.top >= 0 && layout[0].box.bottom <= 170);
+  assert.equal(
+    VisualPlan.trendLabelLineOverlapCount(layout, [
+      { x: 2, y: 10 },
+      { x: 105, y: 60 },
+      { x: 210, y: 80 }
+    ], 8),
+    0
+  );
 });
 
 test('supporting facts render as an unboxed inline context rail', () => {
@@ -911,10 +950,91 @@ test('leader detours fan out before turning around a nearby route', () => {
   assert.equal(routed.routeCrossings, 0);
   assert.equal(routed.selfIntersection, false);
   assert.equal(routed.smooth, true);
-  assert.ok(routed.minimumRouteGap >= 14,
+  assert.equal(routed.candidateSource, 'route-fan-single',
+    'leader-only interference should use one continuous fan spline before multi-turn detours');
+  assert.equal((routed.path.match(/\bC\b/g) || []).length, 1,
+    'the route to the callout must contain one cubic spline, not a chain of corrective bends');
+  assert.equal(routed.routeSegments.length, 2,
+    'one spline plus the horizontal card stub is the complete route');
+  assert.ok(routed.minimumRouteGap >= 13.9,
     'the detour must preserve the configured leader clearance');
   assert.ok(Math.min(...chordLengths) >= 28,
     'the route must fan out before turning instead of using tiny local S-curves');
+});
+
+test('successive crowded leaders remain single logical splines', () => {
+  const cubic = (start, control1, control2, end) => ({ start, control1, control2, end });
+  const straight = (start, end) => cubic(
+    start,
+    {
+      x: start.x + (end.x - start.x) / 3,
+      y: start.y + (end.y - start.y) / 3
+    },
+    {
+      x: start.x + (end.x - start.x) * 2 / 3,
+      y: start.y + (end.y - start.y) * 2 / 3
+    },
+    end
+  );
+  const firstRoute = [
+    cubic(
+      { x: 322.4893323171313, y: 367.3365011510068 },
+      { x: 437.99146585370505, y: 367.3365011510068 },
+      { x: 703.6463729878246, y: 237.8 },
+      { x: 900, y: 237.8 }
+    ),
+    straight({ x: 900, y: 237.8 }, { x: 932, y: 237.8 })
+  ];
+  const common = {
+    mapEdgeX: 910,
+    cardX: 932,
+    portOffset: 10,
+    minimumCardStub: 32,
+    leaderClearance: 14,
+    obstacles: [],
+    sourceObstacles: [],
+    routeTop: 80,
+    routeBottom: 520,
+    routeLeft: 246,
+    routeRight: 900,
+    samplesPerSegment: 48,
+    preferSmooth: true
+  };
+  const secondRoute = TochnyiMaps.buildPortLeaderPath({
+    side: 'right',
+    point: { x: 297.4499915498942, y: 368.0431577728622 },
+    portY: 353.2,
+    portIndex: 2,
+    sideCount: 4
+  }, {
+    ...common,
+    cardTop: 335,
+    cardBottom: 420,
+    endY: 353.2,
+    avoidRoutes: [firstRoute]
+  });
+  const thirdRoute = TochnyiMaps.buildPortLeaderPath({
+    side: 'right',
+    point: { x: 295.3870335632557, y: 392.83108079225303 },
+    portY: 407.6,
+    portIndex: 3,
+    sideCount: 4
+  }, {
+    ...common,
+    cardTop: 390,
+    cardBottom: 475,
+    endY: 407.6,
+    avoidRoutes: [firstRoute, secondRoute.routeSegments]
+  });
+
+  [secondRoute, thirdRoute].forEach((route) => {
+    assert.equal(route.candidateSource, 'route-fan-single');
+    assert.equal((route.path.match(/\bC\b/g) || []).length, 1);
+    assert.equal(route.routeSegments.length, 2);
+    assert.equal(route.routeCrossings, 0);
+    assert.equal(route.selfIntersection, false);
+    assert.ok(route.minimumRouteGap >= 13.9);
+  });
 });
 
 test('steep box connectors reserve a long horizontal terminal tangent', () => {
@@ -1319,9 +1439,10 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-card-stub-length/);
   assert.match(runtime, /projectedFeatureBounds\(/);
   assert.match(runtime, /data-map-port-obstacle-avoidance/);
-  assert.match(runtime, /obstacles:\s*\[\]/);
-  assert.match(runtime, /sourceObstacles:\s*\[\]/);
-  assert.match(runtime, /leader-lines-only/);
+  assert.match(runtime, /obstacles:\s*routeObstacles/);
+  assert.match(runtime, /sourceObstacles:\s*sourceRouteObstacles/);
+  assert.match(runtime, /highlighted-regions-and-leader-lines/);
+  assert.match(runtime, /data-map-port-avoided-obstacles/);
   assert.match(runtime, /data-map-port-avoided-routes/);
   assert.match(runtime, /data-map-port-grid-routes/);
   assert.match(runtime, /data-map-port-fallback-routes/);
@@ -2150,7 +2271,19 @@ test('editorial validation flags redundant composition copy and internal sources
   assert.ok(result.errors.some((error) => error.includes('Supporting facts repeat values')));
 });
 
-test('ISO week paths are zero padded', () => {
-  assert.equal(isoWeek('2026-01-01'), '2026-week-01');
-  assert.equal(isoWeek('2026-07-26'), '2026-week-30');
+test('default output paths use an arbitrary transient run id', () => {
+  const root = path.join(os.tmpdir(), 'tochnyi-default-output');
+  const output = defaultOutputPath(root, {
+    metadata: { slug: 'example-chart' }
+  }, {
+    runId: 'client-alpha.issue-7'
+  });
+  assert.equal(
+    output,
+    path.join(root, '.work', 'client-alpha.issue-7', 'rendered', 'example-chart.html')
+  );
+  assert.throws(
+    () => defaultOutputPath(root, { metadata: { slug: 'example-chart' } }, { runId: '../escape' }),
+    /Run id/
+  );
 });

@@ -30,10 +30,6 @@
     "decimals": 0,
     "baseline": "zero"
   },
-  "primaryMetric": {
-    "value": "820bn RUB",
-    "label": "minimum identified exposure"
-  },
   "supportingFacts": [
     {
       "value": "1.3tn RUB",

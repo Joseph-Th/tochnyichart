@@ -15,7 +15,7 @@ The repository has two explicit roles:
 
 See [`docs/architecture.md`](docs/architecture.md) for the boundary.
 
-## Primary weekly workflow
+## Primary batch workflow
 
 The normal job begins with one user-supplied file:
 
@@ -27,7 +27,30 @@ The LLM agent is the batch orchestrator. It reads the complete file, separates i
 into distinct data stories, verifies and enriches the sources, decides which
 production tool and chart workflow each story requires, renders the accepted
 charts, captures final PNG images, assembles those images into a PowerPoint
-presentation, and saves the complete delivery in the weekly chart folder.
+presentation, and saves the complete delivery in the run delivery folder.
+
+Initialize a disposable run workspace before reading the input:
+
+```bash
+npm run run:init -- <run-id>
+```
+
+The run ID is an opaque caller-supplied label. It may be a date, issue number,
+client slug, or another stable identifier. The renderer never derives storage
+paths from chart dates.
+
+All research notes, downloads, helper scripts, logs, review captures, and package
+staging must stay under `.work/<run-id>/`. Only `specs/runs/<run-id>/` and
+`charts/<run-id>/` are retained locally. `input.txt`, generated specifications,
+charts, previews, and workspaces are ignored by Git. After delivery, finalize
+the run:
+
+```bash
+npm run run:finalize -- <run-id>
+```
+
+Finalization removes the run workspace, legacy `previews/`, and the consumed
+contents of `input.txt`. It never deletes `specs/` or `charts/`.
 
 ```text
 input.txt
@@ -37,11 +60,11 @@ input.txt
     -> rendered HTML charts
     -> final PNG images
     -> PowerPoint presentation
-    -> charts/YYYY-week-WW/
+    -> charts/<run-id>/
 ```
 
 The chart Tool API produces individual chart artifacts. PowerPoint assembly and
-weekly batch coordination belong to the LLM orchestration layer.
+batch coordination belong to the LLM orchestration layer.
 
 The complete batch contract is in
 [`docs/batch-workflow.md`](docs/batch-workflow.md).
@@ -157,10 +180,8 @@ Use the standard workflow when geography is not the primary visual structure:
 
 ```bash
 node tool-api/chart.js validate specs/examples/ai95-price-spike.json
-node tool-api/chart.js render \
-  specs/examples/ai95-price-spike.json \
-  previews/examples/russia-ai95-price-spike-2026.html
-node tool-api/chart.js diagnose previews/examples/russia-ai95-price-spike-2026.html
+node tool-api/chart.js render specs/examples/ai95-price-spike.json --run-id examples
+node tool-api/chart.js diagnose .work/examples/rendered/russia-ai95-price-spike-2026.html
 ```
 
 `render` performs validation and shell review. `diagnose` launches the browser
@@ -176,14 +197,13 @@ Use the regional workflow only for geographic findings with highlighted regions:
 node tool-api/chart.js regional-guide russia
 node tool-api/chart.js regions russia
 node tool-api/chart.js validate specs/examples/russia-regional-map.json
-node tool-api/chart.js regional \
-  specs/examples/russia-regional-map.json \
-  previews/examples/russia-regional-map.html
+node tool-api/chart.js regional specs/examples/russia-regional-map.json \
+  --run-id examples
 ```
 
-Example and smoke-test renders must use an explicit path under `previews/`.
-Do not allow fixtures to use their default dated output path because that mixes
-test artifacts into a weekly delivery folder.
+Example and smoke-test renders must use an explicit path under `.work/`.
+Pass an explicit `--run-id`; otherwise the renderer uses the isolated
+`.work/default/` workspace. It never writes default output into `charts/`.
 
 The regional command validates, renders, performs shell review, and runs the
 desktop/tablet/mobile diagnostics used by the regional workflow. It reports the
@@ -194,8 +214,8 @@ Use `--no-diagnose` only when a browser is unavailable. Use the generic review
 command for human visual inspection:
 
 ```bash
-node tool-api/chart.js review charts/<week>/<chart>.html \
-  --screenshot --output previews/<chart>.png
+node tool-api/chart.js review charts/<run-id>/<chart>.html \
+  --screenshot --output .work/<run-id>/review/<chart>.png
 ```
 
 The chart-author contract is documented in
@@ -206,10 +226,10 @@ mixed-evidence, composition-value, pictogram, and regional information-economy
 contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional routing
 internals are maintainer-only and documented in `docs/regional-routing.md`.
 
-Final weekly delivery uses `charts/YYYY-week-WW/`. The folder contains the
+Final run delivery uses `charts/<run-id>/`. The folder contains the
 rendered HTML files, the final PNG images used in the deck, and
-`tochnyi-charts-YYYY-week-WW.pptx`. The `previews/` directory remains available
-for temporary or ad hoc review images.
+`tochnyi-charts-<run-id>.pptx`. Temporary review images belong under the
+matching `.work/<run-id>/review/` directory and are deleted at finalization.
 
 ## Authoring contract
 
@@ -347,9 +367,14 @@ Additional checks and fixture generators:
 npm run diagnostics       # diagnostics self-test
 npm run examples          # render every recipe fixture
 npm run visual            # render fixtures and capture preview manifest
-npm run samples           # render editorial samples from input.txt
+npm run samples           # render curated editorial sample fixtures
 npm run layout            # synthetic label-layout regression
 npm run quality           # full automated and visual quality pipeline
+npm run check:repo        # reject tracked inputs, generated specs, charts, and other run data
+npm run run:init -- <id>  # create one isolated transient workspace
+npm run run:flush -- <id> # remove one transient workspace, preserving input
+npm run run:finalize -- <id> # remove workspace, legacy previews, and consumed input
+npm run run:reset         # cold reset all transient work and input
 ```
 
 The browser test skips with a clear reason when Edge or Chrome is unavailable.
@@ -364,13 +389,14 @@ schemas/                  ChartSpec schema
 recipes/                  Recipe catalog
 specs/examples/           One validated fixture per recipe
 specs/samples/             Editorial sample specs
+specs/runs/               Local production ChartSpecs, ignored by Git
 renderer/                 Validation, workflows, rendering, review, capture
 lib/                      Shared runtime, visual plan, maps, styles, diagnostics
 tools/                    Internal scripts and compatibility CLI implementation
 tests/                    Unit, workflow, browser, and performance tests
 docs/                     Architecture, author, maintainer, routing, and testing guidance
-charts/                   Weekly delivery: HTML, final PNG, and PPTX by ISO week
-previews/                 Temporary review screenshots and manifests
+charts/                   Local run delivery: HTML, final PNG, and presentation by run ID
+.work/                    Disposable research, scripts, logs, review, and staging by run id
 ```
 
 ## Extending the system
@@ -392,6 +418,7 @@ Keep implementation guidance in maintainer documentation. Keep the chart-author
 skill and Tool API focused on editorial decisions, semantic ChartSpec authoring,
 structured checks, and the correct workflow route.
 
-Generated HTML and PNG output under `charts/` and `previews/` is intentionally
-ignored. Recreate it with the documented render, sample, or visual commands;
-the ChartSpec files remain the source of truth.
+Generated delivery output under `charts/` and transient output under `.work/`
+is intentionally ignored. Production ChartSpecs under `specs/runs/` and the
+user-supplied `input.txt` are also ignored. Curated fixtures under
+`specs/examples/`, `specs/samples/`, and `specs/stress/` remain tracked.

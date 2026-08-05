@@ -4,7 +4,7 @@ const TochnyiMaps = require('../lib/tochnyi-maps');
 const { STANDARD_WORKFLOW, REGIONAL_WORKFLOW } = require('./workflow-contract');
 const DEFAULT_REGION_SET_ID = 'russia';
 const TOOL_API_ENTRYPOINT = 'node tool-api/chart.js';
-const AUTHOR_SPEC_PATH = 'specs/YYYY-week-WW/[slug].json';
+const AUTHOR_SPEC_PATH = 'specs/runs/<run-id>/[slug].json';
 
 const TOOL_API_RESOURCES = Object.freeze({
   schema: 'schemas/chart-spec.schema.json',
@@ -19,8 +19,9 @@ const BATCH_WORKFLOW = Object.freeze({
   owner: 'llm-agent',
   input: 'input.txt',
   inputAuthority: 'Expert-authored editorial evidence. Presume claims and datapoints are correct; external silence is not contradiction.',
-  purpose: 'Produce the weekly chart presentation from multiple candidate data stories.',
+  purpose: 'Produce a chart presentation from multiple candidate data stories.',
   steps: Object.freeze([
+    'initialize .work/<run-id>/ and keep all research notes, downloads, helper scripts, logs, review captures, and package staging inside it',
     'read the complete input.txt and parse distinct data stories',
     'preserve each expert-authored claim and enrich it from reputable sources',
     'merge duplicates and omit weak, irrelevant, or non-visual stories',
@@ -29,17 +30,25 @@ const BATCH_WORKFLOW = Object.freeze({
     'author, validate, render, and diagnose one ChartSpec per accepted chart story',
     'capture one final PNG image per accepted chart',
     'assemble the final PNG images into one PowerPoint presentation',
-    'save the HTML files, final PNGs, and PowerPoint deck in the weekly delivery folder'
+    'save the ChartSpecs, HTML files, final PNGs, and presentation in the retained local run folders',
+    'finalize the run to remove .work/<run-id>/, legacy previews, and input.txt while preserving specs/runs/<run-id>/ and charts/<run-id>/'
   ]),
-  deliveryFolder: 'charts/YYYY-week-WW/',
-  presentation: 'charts/YYYY-week-WW/tochnyi-charts-YYYY-week-WW.pptx',
+  initializeCommand: 'npm run run:init -- <run-id>',
+  deliveryFolder: 'charts/<run-id>/',
+  specificationFolder: 'specs/runs/<run-id>/',
+  presentation: 'charts/<run-id>/tochnyi-charts-<run-id>.pptx',
   finalArtifacts: Object.freeze([
+    'authored ChartSpec JSON files',
     'rendered chart HTML files',
     'final chart PNG images used in the presentation',
     'one PowerPoint presentation'
   ]),
-  temporaryReviewFolder: 'previews/',
-  boundary: 'The Tool API produces individual chart artifacts. The LLM agent owns input parsing, story selection, image capture, presentation assembly, and weekly delivery.'
+  temporaryWorkspace: '.work/<run-id>/',
+  temporaryReviewFolder: '.work/<run-id>/review/',
+  finalizeCommand: 'npm run run:finalize -- <run-id>',
+  coldResetCommand: 'npm run run:reset',
+  retentionRule: 'Only specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. Both paths are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, legacy previews, and the consumed input are transient.',
+  boundary: 'The Tool API produces individual chart artifacts. The orchestration layer owns input parsing, story selection, image capture, presentation assembly, and run delivery.'
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
@@ -157,7 +166,7 @@ const SHARED_STAGES = Object.freeze([
   Object.freeze({ id: 'author', action: 'Write the smallest semantic ChartSpec that expresses that story.' }),
   Object.freeze({ id: 'validate', command: `${TOOL_API_ENTRYPOINT} validate <spec.json>` }),
   Object.freeze({ id: 'render', action: 'Run the Tool API render command for the selected workflow.' }),
-  Object.freeze({ id: 'review', action: 'Resolve errors before delivery. For a weekly batch, capture the final PNG into charts/YYYY-week-WW/ after diagnostics pass; previews remain optional for ad hoc review.' })
+  Object.freeze({ id: 'review', action: 'Resolve errors before delivery. Capture the final PNG into charts/<run-id>/ after diagnostics pass; temporary review belongs in .work/<run-id>/review/.' })
 ]);
 
 const REGIONAL_STATUSES = Object.freeze([
@@ -206,7 +215,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
       'Classify the enriched evidence with the selection rules below.',
       'Write a semantic ChartSpec using the selected recipe.',
-      'Validate, render, and diagnose the chart; for a weekly batch, capture the final PNG into the weekly delivery folder.'
+      'Validate, render, and diagnose the chart; capture the final PNG into charts/<run-id>/.'
     ],
     authoringSurface: {
       role: 'chart-author',
@@ -216,9 +225,9 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     commands: {
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`,
+      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
-      review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
+      review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
     authoringRules: [...SHARED_AUTHORING_RULES],
@@ -242,14 +251,14 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
   return {
     workflow: REGIONAL_WORKFLOW,
     recipe: 'map.regional',
-    command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`,
+    command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
     startHere: 'Use this path only when geography is part of the finding and each highlighted region needs a map callout.',
     steps: [
       'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
       'Author editorial content and region IDs; leave layout and routing to the renderer.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
-      'For a weekly batch, use the generic review command with --screenshot to capture the final PNG into the weekly delivery folder.'
+      'Use the generic review command with --screenshot to capture the final PNG into charts/<run-id>/.'
     ],
     authoringSurface: {
       role: 'chart-author',
@@ -261,9 +270,9 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     commands: {
       regions: `${TOOL_API_ENTRYPOINT} regions ${regionSet.id}`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      render: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`,
-      renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] --no-diagnose`,
-      screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
+      render: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
+      renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>] --no-diagnose`,
+      screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
     },
     authoringRule: 'Specify editorial content and stable continental region IDs. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
@@ -294,27 +303,27 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.6',
+    version: '1.8',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
       entrypoint: TOOL_API_ENTRYPOINT,
       manifestCommand: `${TOOL_API_ENTRYPOINT} api`
     },
-    startHere: 'For a weekly job, treat input.txt as expert-authored editorial evidence, preserve its claims by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
+    startHere: 'For a batch run, treat input.txt as expert-authored editorial evidence, preserve its claims by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
     batchWorkflow: clone(BATCH_WORKFLOW),
     decision: [
       {
         if: 'The story needs a map of administrative regions with callout cards.',
         workflow: REGIONAL_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`
       },
       {
         if: 'The story has at least two quantitative marks and is a comparison, ranking, composition, trend, or flow without a map.',
         workflow: STANDARD_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} guide`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`
       }
     ],
     sharedContract: {
@@ -342,17 +351,17 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         regionCount: Object.keys(regionSet.regions).length
       },
       guideCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`
+      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`
     },
     standard: {
       workflow: STANDARD_WORKFLOW,
       guideCommand: `${TOOL_API_ENTRYPOINT} guide`,
-      renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`,
+      renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
       diagnoseCommand: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`
     },
     authoringRules: [...SHARED_AUTHORING_RULES],
     boundary: {
-      publicSurface: ['input.txt', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/YYYY-week-WW/', 'charts/', 'previews/'],
+      publicSurface: ['input.txt', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/runs/<run-id>/', 'charts/<run-id>/', '.work/<run-id>/'],
       implementation: ['renderer/', 'lib/', 'tests/', 'tools/'],
       rule: 'Chart authors stay on the public surface. Implementation directories are maintainer-only unless the user explicitly requests infrastructure work.'
     }
@@ -363,7 +372,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.6',
+    version: '1.8',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -376,10 +385,10 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
       catalog: `${TOOL_API_ENTRYPOINT} catalog`,
       regions: `${TOOL_API_ENTRYPOINT} regions [region-set]`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`,
-      regional: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`,
+      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
+      regional: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <chart.html>`,
-      review: `${TOOL_API_ENTRYPOINT} review <chart.html> [--screenshot] [--output preview.png]`
+      review: `${TOOL_API_ENTRYPOINT} review <chart.html> [--screenshot] [--output .work/<run-id>/review/<chart>.png]`
     },
     resources: clone(TOOL_API_RESOURCES),
     batchWorkflow: clone(BATCH_WORKFLOW),
@@ -389,13 +398,14 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     waterfallContract: clone(WATERFALL_CONTRACT),
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
+      'initialize and finalize the isolated run workspace',
       'parse input.txt into distinct data stories',
       'preserve expert input evidence and analyze supplemental sources',
-      'select, merge, or omit stories for the weekly presentation',
+      'select, merge, or omit stories for the presentation',
       'choose a workflow and recipe',
       'author and revise ChartSpec JSON',
       'run validation, rendering, diagnostics, and review',
-      'capture final PNG images and assemble the weekly PowerPoint presentation',
+      'capture final PNG images and assemble the PowerPoint presentation',
       'report output paths, warnings, and infrastructure defects'
     ],
     excludedWork: [

@@ -7,11 +7,14 @@ const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, findBrowser } = require('../renderer/capture');
+const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'examples');
-const chartsDir = path.join(root, 'charts', 'v2-examples');
-const previewsDir = path.join(root, 'previews');
+const runId = 'example-visual-review';
+initializeRunWorkspace(root, runId, { createOutputs: false });
+const chartsDir = workspacePath(root, runId, 'rendered');
+const reviewDir = workspacePath(root, runId, 'review');
 const browser = findBrowser();
 
 if (!browser) {
@@ -19,14 +22,13 @@ if (!browser) {
 }
 
 fs.mkdirSync(chartsDir, { recursive: true });
-fs.mkdirSync(previewsDir, { recursive: true });
 
 const captures = [];
 for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.json')).sort()) {
   const base = file.replace(/\.json$/i, '');
   const specPath = path.join(specsDir, file);
   const htmlPath = path.join(chartsDir, `${base}.html`);
-  const pngPath = path.join(previewsDir, `${base}.png`);
+  const pngPath = path.join(reviewDir, `${base}.png`);
   const rendered = renderSpecFile(specPath, htmlPath, { projectRoot: root });
   const review = reviewFile(htmlPath);
   if (!review.valid) throw new Error(`${file}: ${review.errors.join('; ')}`);
@@ -54,5 +56,5 @@ const manifest = {
   viewport: { width: 1200, height: 900 },
   captures
 };
-fs.writeFileSync(path.join(previewsDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+fs.writeFileSync(path.join(reviewDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 console.log(JSON.stringify(manifest, null, 2));

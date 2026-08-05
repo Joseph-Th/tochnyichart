@@ -5,11 +5,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 const { renderRegionalBreakdown } = require('../renderer/regional-workflow');
+const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
 
 const projectRoot = path.resolve(__dirname, '..');
-const specDirectory = path.join(projectRoot, 'charts', 'v2-examples');
-const chartDirectory = path.join(projectRoot, 'charts', '2026-week-32');
-const defaultSeed = 20260803;
+const runId = 'regional-routing-matrix';
+initializeRunWorkspace(projectRoot, runId, { createOutputs: false });
+const specDirectory = workspacePath(projectRoot, runId, 'specs');
+const chartDirectory = workspacePath(projectRoot, runId, 'rendered');
+const defaultSeed = 0x5eedc0de;
+const syntheticDate = '2000-01-01';
 const sampleCount = 3;
 
 const detachedRegionIds = new Set(['RU-KGD', 'RU-SAK']);
@@ -217,7 +221,7 @@ function buildSpec(random, category, sampleIndex, seed, difficulty) {
     recipe: 'map.regional',
     title: `Synthetic Routing Matrix: ${category[0].toUpperCase()}${category.slice(1)} ${String(sampleIndex + 1).padStart(2, '0')}`,
     subtitle: description,
-    date: '2026-08-03',
+    date: syntheticDate,
     source: { name: 'Seeded synthetic routing matrix', period },
     data: items,
     map,

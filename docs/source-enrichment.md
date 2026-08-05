@@ -10,7 +10,7 @@ Treat `input.txt` as expert-authored editorial evidence. Assume its factual
 claims, values, comparisons, and causal interpretation are correct unless a
 reputable source directly contradicts a material point.
 
-External research is enrichment, not an adversarial fact-check of the weekly
+External research is enrichment, not an adversarial fact-check of the batch
 report. Use it to add attribution, comparators, denominators, historical series,
 mechanisms, consequences, or current status. Failure to find the same fact in a
 second source is not a contradiction and must not cause an agent to delete,

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { validateSpec } = require('./validate');
+const { normalizeRunId, workspacePath } = require('./run-workspace');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 
 const SHARED_ASSET_FILES = Object.freeze([
@@ -26,15 +27,6 @@ function slugify(value) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 90) || 'chart';
-}
-
-function isoWeek(dateString) {
-  const date = new Date(`${dateString}T00:00:00Z`);
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-  return `${date.getUTCFullYear()}-week-${String(week).padStart(2, '0')}`;
 }
 
 function jsonForHtml(value) {
@@ -116,16 +108,16 @@ ${mapScripts}
 `;
 }
 
-function defaultOutputPath(projectRoot, spec) {
-  const week = isoWeek(spec.date);
+function defaultOutputPath(projectRoot, spec, options = {}) {
+  const runId = normalizeRunId(options.runId || process.env.TOCHNYI_RUN_ID || 'default');
   const slug = spec.metadata?.slug || slugify(spec.title);
-  return path.join(projectRoot, 'charts', week, `${slug}.html`);
+  return workspacePath(projectRoot, runId, 'rendered', `${slug}.html`);
 }
 
 function renderValidatedSpecFile(specPath, normalized, outputPath, options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.join(__dirname, '..'));
   const absoluteSpecPath = path.resolve(specPath);
-  const targetPath = path.resolve(outputPath || defaultOutputPath(projectRoot, normalized));
+  const targetPath = path.resolve(outputPath || defaultOutputPath(projectRoot, normalized, options));
   const targetDir = path.dirname(targetPath);
   fs.mkdirSync(targetDir, { recursive: true });
   const assetPrefix = ensureTrailingSlash(path.relative(targetDir, path.join(projectRoot, 'lib')).replace(/\\/g, '/') || '.');
@@ -167,6 +159,5 @@ module.exports = {
   renderSpecFile,
   defaultOutputPath,
   assetFingerprint,
-  slugify,
-  isoWeek
+  slugify
 };

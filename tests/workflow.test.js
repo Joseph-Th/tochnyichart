@@ -59,9 +59,10 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
   assert.match(orientation.batchWorkflow.inputAuthority, /expert-authored editorial evidence/i);
   assert.match(orientation.batchWorkflow.inputAuthority, /external silence is not contradiction/i);
-  assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
-  assert.match(orientation.batchWorkflow.presentation, /tochnyi-charts-YYYY-week-WW\.pptx$/);
-  assert.match(orientation.batchWorkflow.boundary, /LLM agent owns input parsing/i);
+  assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/<run-id>/');
+  assert.equal(orientation.batchWorkflow.specificationFolder, 'specs/runs/<run-id>/');
+  assert.equal(orientation.batchWorkflow.presentation, 'charts/<run-id>/tochnyi-charts-<run-id>.pptx');
+  assert.match(orientation.batchWorkflow.boundary, /orchestration layer owns input parsing/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
     ['regional-breakdown', 'standard-chart']
@@ -107,7 +108,8 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
   assert.equal(manifest.batchWorkflow.input, 'input.txt');
   assert.match(manifest.batchWorkflow.inputAuthority, /presume claims and datapoints are correct/i);
-  assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
+  assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/<run-id>/');
+  assert.equal(manifest.batchWorkflow.specificationFolder, 'specs/runs/<run-id>/');
   assert.ok(manifest.batchWorkflow.steps.some((step) => step.includes('PowerPoint')));
   assert.ok(manifest.allowedWork.some((entry) => entry.includes('PowerPoint')));
   assert.deepEqual(
@@ -138,13 +140,17 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.6');
+  assert.equal(manifest.version, '1.8');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(manifest.resources.storySelection, 'docs/story-selection.md');
   assert.equal(manifest.batchWorkflow.input, 'input.txt');
-  assert.equal(manifest.batchWorkflow.presentation, 'charts/YYYY-week-WW/tochnyi-charts-YYYY-week-WW.pptx');
+  assert.equal(manifest.batchWorkflow.presentation, 'charts/<run-id>/tochnyi-charts-<run-id>.pptx');
+  assert.equal(manifest.batchWorkflow.temporaryWorkspace, '.work/<run-id>/');
+  assert.equal(manifest.batchWorkflow.finalizeCommand, 'npm run run:finalize -- <run-id>');
+  assert.match(manifest.batchWorkflow.retentionRule, /specs\/runs\/<run-id>\/ and charts\/<run-id>\/ are retained locally/i);
+  assert.match(manifest.batchWorkflow.retentionRule, /ignored by Git/i);
   assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);
 });
 
