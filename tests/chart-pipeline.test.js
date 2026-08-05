@@ -259,17 +259,20 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
 });
 
-test('trend labels are limited and positioned away from line geometry', () => {
+test('trend labels remain candidates until measured layout and avoid line geometry', () => {
   const data = [20, 15, 25, 22, 31, 17, 17, 4].map((value, index) => ({
     label: String(index + 1),
     value
   }));
   const plan = VisualPlan.trendLabelPlan(data);
   const visible = plan.map((item, index) => item.showLabel ? index : -1).filter((index) => index >= 0);
-  assert.ok(visible.length <= 6);
+  assert.equal(visible.length, data.length,
+    'candidate planning must leave fit decisions to the measured layout');
   assert.ok(visible.includes(0));
   assert.ok(visible.includes(data.length - 1));
   assert.ok(visible.includes(4), 'global peak should retain a label');
+  assert.ok(visible.includes(5));
+  assert.ok(visible.includes(6), 'consecutive equal values must remain independent label candidates');
   assert.notEqual(plan[4].dy, 0);
   assert.notEqual(plan[7].dx, 0, 'edge labels should be pulled inward');
 
@@ -289,6 +292,9 @@ test('trend labels are limited and positioned away from line geometry', () => {
   });
   const placed = layout.filter((item) => item.showLabel);
   assert.ok(placed.length >= 3, 'the layout should retain the highest-priority labels');
+  assert.equal(layout[5].showLabel, true);
+  assert.equal(layout[6].showLabel, true,
+    'adjacent equal values should both render when their measured boxes fit');
   for (const item of placed) {
     for (const point of points) {
       assert.equal(
@@ -577,7 +583,7 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(standard.cardGap, 10);
   assert.equal(standard.portGap, 22);
   assert.equal(standard.leaderClearance, 14);
-  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 8);
+  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 6);
 });
 
 test('supporting context switches prose values to a stacked text treatment', () => {
@@ -687,6 +693,37 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
   assert.equal(plan.leftDistribution, 'geographic');
   assert.equal(plan.rightDistribution, 'geographic');
   assert.ok(plan.placement.assignmentEvaluations > 0);
+});
+
+test('medium regional maps use the bounded port spline before direct lanes become visually unstable', () => {
+  const entries = new Array(7).fill(null).map((_, index) => ({
+    index,
+    item: {},
+    point: { x: 330 + index * 48, y: 180 + index * 31 },
+    height: 86,
+    side: index < 4 ? 'left' : 'right'
+  }));
+  const plan = TochnyiMaps.planRegionalBreakdown(entries, {
+    map: { leaderRouting: 'auto', calloutDistribution: 'balanced' },
+    dense: false,
+    width: 1190,
+    cardWidth: 204,
+    topLeft: 10,
+    topRight: 10,
+    bottom: 620,
+    summaryShown: false,
+    summaryOnRight: false
+  });
+  assert.equal(plan.usePortRouting, true);
+  assert.equal(plan.placementMode, 'crossing-optimized-ports');
+  const routed = TochnyiMaps.planLeaderRoutes(plan.sides.left.concat(plan.sides.right), {
+    routing: 'auto',
+    top: 20,
+    bottom: 590,
+    gap: 22
+  });
+  assert.equal(routed.routing, 'ports',
+    'placement and route construction must use the same centralized threshold');
 });
 
 test('sparse regional maps optimize callout order before drawing direct leaders', () => {
@@ -1113,6 +1150,22 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
   assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
   assert.ok(leftPath.fanX > leftPath.approachX && leftPath.fanX < 520);
   assert.equal(leftPath.routeY, 338);
+  for (let index = 0; index < leftPath.routeSegments.length - 1; index += 1) {
+    const first = leftPath.routeSegments[index];
+    const second = leftPath.routeSegments[index + 1];
+    const incoming = {
+      x: first.end.x - first.control2.x,
+      y: first.end.y - first.control2.y
+    };
+    const outgoing = {
+      x: second.control1.x - second.start.x,
+      y: second.control1.y - second.start.y
+    };
+    const cross = incoming.x * outgoing.y - incoming.y * outgoing.x;
+    const dot = incoming.x * outgoing.x + incoming.y * outgoing.y;
+    assert.ok(Math.abs(cross) < 0.001, 'adjacent cubic sections must share one tangent');
+    assert.ok(dot > 0, 'adjacent cubic tangents must point in the same direction');
+  }
 
   const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'right',
@@ -1166,7 +1219,7 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /planRegionalBreakdown\(entries/);
   assert.match(runtime, /data-map-workflow', 'regional-breakdown'/);
-  assert.match(maps, /portRoutingThreshold:\s*8/);
+  assert.match(maps, /portRoutingThreshold:\s*6/);
   assert.match(maps, /function planRegionalBreakdown\(/);
   assert.match(maps, /optimizeCalloutPlacement\(all, placementOptions\)/);
   assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'geographic'/);
