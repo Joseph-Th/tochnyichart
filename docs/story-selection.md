@@ -68,8 +68,26 @@ Use one of these alternatives:
 - Separate ChartSpecs when multiple measures jointly carry the main argument.
 - `supportingFacts` as an unboxed inline rail when mixed-unit evidence is
   secondary context.
-- `status.grid` when the point is categorical operating condition rather than
-  magnitude.
+- `map.regional` when geography is itself the explanatory structure.
+- Omit the story when the source does not provide a real visual comparison.
+
+## The visual-evidence gate
+
+Every production chart must carry its main argument through geometry tied to
+data. A wall of prose, a set of status cards, or one oversized number is not a
+chart.
+
+- A non-map chart requires at least two quantitative marks.
+- A lone value must be enriched with a source-supported prior value, target,
+  benchmark, denominator, remainder, peer, range, or time series.
+- Categorical operating states must be quantified on one common dimension or
+  mapped when place explains the finding.
+- When no valid comparison exists, omit the story rather than manufacture a
+  decorative output.
+
+`status.grid` and `headline.metric` are disabled in the production catalog,
+schema, and validator. Legacy generated HTML may still contain those renderers,
+but the Tool API will not accept new ChartSpecs using them.
 
 ## Comparison recipe contracts
 
@@ -112,23 +130,11 @@ renderer shows both the calculated share and the tangible value.
 This should render as both `62.5%` and `500bn RUB`, not as an abstract percentage
 alone.
 
-## Headline metrics
-
-`headline.metric` supports these visual treatments:
-
-- `number`: a plain primary value.
-- `progress`: a percentage or bounded value with a meaningful 0–100 scale.
-- `pictogram`: a real counted population or denominator represented by repeated
-  semantic icons.
-- `auto`: progress for a 0–100 percentage, otherwise number.
-
-A pictogram requires `visual.icon` and `visual.total`. Use `visual.filled` when
-the highlighted count is not derived directly from a percentage.
-
-Use pictograms for interpretable denominators such as 1 in 10 workers, 7 of 12
-regions, or 34 of 100 consumers. Do not use them for unbounded currency,
-continuous prices, or arbitrary large counts where repeated icons imply false
-precision.
+For `composition.stacked`, the proportional bar is always the first and dominant
+visual. Two-part compositions receive direct labels for both segments. The
+validator rejects `primaryMetric` and supporting facts that merely restate a
+segment value or calculated share, preventing the composition from collapsing
+into a single-number card with bullet points.
 
 ## Regional maps
 
@@ -142,7 +148,8 @@ Regional maps also enforce these information-economy rules:
 - Compact logo, title, subtitle, date, and watermark.
 - A wider canvas and narrower callout columns to protect the map’s aspect ratio.
 - Direct leaders for sparse maps unless an explicit routing mode is required.
-- Geographic card order by default.
+- Card side assignment and order are optimized together for crossings, route
+  length, attachment slope, and geographic coherence before leaders are drawn.
 - Region polygons are not obstacles; a leader may cross geography if the route
   is clearer and does not collide with another leader.
 - Dense maps use crossing-aware edge ports.
@@ -157,6 +164,8 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
 4. Does every icon or visual treatment encode a real quantity, denominator, or
    status?
 5. Is the broader story visible without mixing unrelated evidence on one axis?
+6. Does a non-map visual contain at least two data-driven marks rather than a
+   prose list or one headline number?
 
 If any answer is no, change the recipe or evidence structure before changing the
 styling.

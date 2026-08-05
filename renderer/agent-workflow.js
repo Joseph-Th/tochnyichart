@@ -23,6 +23,7 @@ const BATCH_WORKFLOW = Object.freeze({
     'read the complete input.txt and parse distinct data stories',
     'verify and enrich each story from its sources',
     'merge duplicates and omit weak, irrelevant, or unverifiable stories',
+    'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'decide the appropriate production tool and chart workflow for each accepted story',
     'author, validate, render, and diagnose one ChartSpec per accepted chart story',
     'capture one final PNG image per accepted chart',
@@ -62,12 +63,21 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
     'broader high-quality external research'
   ]),
   relevanceRule: 'Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.',
-  complexityRule: 'Do not add facts or choose a complex recipe merely to make the chart more visually interesting. Keep a simple comparison when the contrast itself is the complete story.',
+  complexityRule: 'Do not add irrelevant facts or choose a complex recipe merely for decoration. A chart still needs a genuine visual comparison: enrich a one-point or text-only story with a source-supported comparator, denominator, benchmark, composition, or time series; otherwise omit it.',
   attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable; never substitute input.txt, internal provenance, verification status, or workflow commentary into presentation copy.'
 });
 
+const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
+  coreRule: 'Every production chart must communicate its main claim through geometry tied to data, not through a wall of prose, status cards, or one oversized number.',
+  minimumMarks: 'A non-map chart requires at least two quantitative marks. A regional map may use one or more geographic marks because location is itself an encoding.',
+  onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, remainder, peer, range, or time series. If none exists, omit the story.',
+  categoricalRule: 'Categorical operating states cannot use a text grid. Quantify a common dimension, use map.regional when place explains the finding, or do not chart the story.',
+  compositionRule: 'A composition must lead with proportional marks and direct segment labels. It cannot collapse into a primaryMetric or use supporting facts to restate segment values.',
+  supportingFactsRule: 'supportingFacts may explain cause or consequence only after the primary visual already carries the argument. They cannot substitute for marks.',
+  rejectedRecipes: Object.freeze(['status.grid', 'headline.metric'])
+});
+
 const STANDARD_SELECTION_RULES = Object.freeze([
-  Object.freeze({ when: 'One decisive number; use progress or pictogram treatment when the denominator or counted population is meaningful', use: 'headline.metric', example: 'specs/examples/headline-metric.json' }),
   Object.freeze({ when: 'Two values showing change in the same named quantity for the same scope', use: 'comparison.change', example: 'specs/examples/ai95-price-spike.json' }),
   Object.freeze({ when: 'Actual, expected, prior, target, or alternatives for the same named quantity, scope, and period', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
   Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
@@ -76,8 +86,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Exact parts of one total', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
   Object.freeze({ when: 'A source-supported exact start-to-end bridge with same-period, same-scope steps', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
-  Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' }),
-  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' })
+  Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
 ]);
 
 const SHARED_SCALE_CONTRACT = Object.freeze({
@@ -102,16 +111,16 @@ const WATERFALL_CONTRACT = Object.freeze({
     'the opening value is reconstructed from incomplete charges',
     'the steps are unlike facts rather than additive components of one measure'
   ]),
-  fallback: 'Use headline.metric, comparison.change, comparison.scenarios, or a separate chart when the bridge cannot be proven.'
+  fallback: 'Use comparison.change, comparison.scenarios, comparison.range, or a separate chart when the bridge cannot be proven. Omit the story if only one unsupported value remains.'
 });
 
 const COMPOSABLE_FEATURES = Object.freeze([
   Object.freeze({ need: 'Target, average, legal limit, or benchmark', add: 'references' }),
   Object.freeze({ need: 'Explain a specific point', add: 'data[].annotation' }),
   Object.freeze({ need: 'Values span orders of magnitude', add: 'measure.scale = logarithmic' }),
-  Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts as an unboxed inline context rail' }),
+  Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts after a primary visual with at least two marks' }),
   Object.freeze({ need: 'Several mixed-unit facts jointly carry the main story', add: 'split them into separate ChartSpecs; do not use a card or facet grid' }),
-  Object.freeze({ need: 'A headline percentage has a meaningful denominator', add: 'visual.type = progress or pictogram' }),
+  Object.freeze({ need: 'A lone percentage has a meaningful denominator', add: 'encode numerator and remainder with composition.stacked rather than a headline number' }),
   Object.freeze({ need: 'A composition is expressed as percentages', add: 'data[].displayValue with the tangible absolute amount as well' })
 ]);
 
@@ -120,11 +129,11 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Use the underlying publication or dataset as the source when available; otherwise omit source attribution.',
   'Treat input notes as routing information and read the full primary source before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
   'Search beyond the primary source only to fill a named material evidence gap, and reject adjacent context that does not strengthen the central claim.',
-  'Do not add data or complexity merely to make the chart more visually interesting; a simple comparison may be the correct result.',
+  'Do not add irrelevant data or decorative complexity. Do require a real visual comparison: a one-point or prose-only story must be enriched with source-supported structure or omitted.',
   'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison recipe.',
-  'Never use card or facet grids as a substitute for a chart. If mixed evidence jointly carries the story, split it into separate ChartSpecs. If it is secondary, use the unboxed supportingFacts context rail.',
-  'For composition charts, preserve both the share and the tangible absolute amount whenever the source provides both.',
-  'For a single percentage or count, prefer progress or pictogram treatment when it communicates a real denominator or population; otherwise use a plain number.',
+  'Never use status, card, bullet, or facet grids as a substitute for a chart. Quantify a common dimension, use a regional map when geography matters, split the evidence, or omit the story.',
+  'Never create a chart from one numeric item. Find a comparator, denominator, benchmark, remainder, peer, range, or time series in the source; otherwise omit it.',
+  'For composition charts, preserve both the share and tangible absolute amount, lead with proportional marks, and do not use primaryMetric or repeated supporting facts.',
   'Use flow.waterfall only when the strict waterfall contract is satisfied: every step is exact and reported, period and scope match, and the bridge reconciles.',
   'Keep the title, subtitle, labels, and details concise enough to survive responsive layouts.',
   'Revise the ChartSpec for data, copy, recipe, or semantic errors.',
@@ -185,6 +194,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     startHere: 'Use this path when geography is not the primary visual structure. If the story needs a map with regional callouts, stop and use regional-guide plus regional instead.',
     steps: [
       'Verify and exhaust the full primary source; fill only material evidence gaps.',
+      'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
       'Classify the enriched evidence with the selection rules below.',
       'Write a semantic ChartSpec using the selected recipe.',
       'Validate, render, and diagnose the chart; for a weekly batch, capture the final PNG into the weekly delivery folder.'
@@ -203,6 +213,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
     authoringRules: [...SHARED_AUTHORING_RULES],
+    visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     composableFeatures: clone(COMPOSABLE_FEATURES),
@@ -274,7 +285,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.4',
+    version: '1.5',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -291,7 +302,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`
       },
       {
-        if: 'The story is a number, comparison, ranking, status list, composition, trend, or flow without a map.',
+        if: 'The story has at least two quantitative marks and is a comparison, ranking, composition, trend, or flow without a map.',
         workflow: STANDARD_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} guide`,
         renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html]`
@@ -302,6 +313,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       specPath: AUTHOR_SPEC_PATH,
       resources: clone(TOOL_API_RESOURCES),
       sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
+      visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
       sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
       waterfallContract: clone(WATERFALL_CONTRACT),
       stages: clone(SHARED_STAGES),
@@ -342,7 +354,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.4',
+    version: '1.5',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -363,6 +375,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     resources: clone(TOOL_API_RESOURCES),
     batchWorkflow: clone(BATCH_WORKFLOW),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
+    visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     waterfallContract: clone(WATERFALL_CONTRACT),
     regionSet: { id: regionSet.id, label: regionSet.label },
@@ -395,6 +408,7 @@ module.exports = {
   TOOL_API_RESOURCES,
   BATCH_WORKFLOW,
   SOURCE_ENRICHMENT_POLICY,
+  VISUAL_EVIDENCE_CONTRACT,
   SHARED_SCALE_CONTRACT,
   WATERFALL_CONTRACT,
   toolApiManifest,

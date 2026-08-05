@@ -1,5 +1,5 @@
 {
-  "version": "2.4.0",
+  "version": "2.5.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -65,25 +65,11 @@
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 0 }
     },
     {
-      "id": "status.grid",
-      "purpose": "Compare named places or operating areas in an unboxed categorical status list with concise evidence.",
-      "data": "3 to 12 items with label, status, and detail; numeric value is optional.",
-      "bestFor": ["regional shortages", "service availability", "operational disruption", "risk monitoring"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
-    },
-    {
       "id": "map.regional",
       "purpose": "Show a geographic breakdown across named continental administrative regions with collision-managed callout cards.",
       "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
       "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
       "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
-    },
-    {
-      "id": "headline.metric",
-      "purpose": "Lead with one primary number and a semantic number, progress, or pictogram treatment plus compact supporting context.",
-      "data": "Exactly 1 labeled numeric value.",
-      "bestFor": ["single decisive metric", "loss or gain", "headline statistic"],
-      "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }
     }
   ],
   "composableFeatures": [
@@ -101,7 +87,7 @@
     },
     {
       "id": "supportingFacts",
-      "purpose": "Add up to four contextual facts in an unboxed inline rail after the primary visual instead of forcing unlike measures onto one axis."
+      "purpose": "Add up to four genuinely secondary contextual facts after a primary visual that already contains at least two quantitative or geographic marks. Supporting facts cannot be the chart."
     }
   ]
 }

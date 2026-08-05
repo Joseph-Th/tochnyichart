@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { validateSpec } = require('../renderer/validate');
 const { renderSpecFile } = require('../renderer/render');
 const {
   diagnoseHtmlResponsive,
@@ -84,19 +85,20 @@ test('trend value labels clear measured plot points at every responsive viewport
   }
 });
 
-test('categorical status evidence renders as an unboxed list without responsive collisions', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-status-list-'));
-  try {
-    const outputPath = path.join(tempDir, 'status-list.html');
-    renderSpecFile(path.join(examplesDir, 'fuel-shortage-status.json'), outputPath, { projectRoot: root });
-    const diagnostics = diagnoseHtmlResponsive(outputPath, {
-      browser,
-      viewports: REGIONAL_WORKFLOW_VIEWPORTS
-    });
-    assert.equal(diagnostics.status, 'pass');
-    assert.ok(diagnostics.runs.every((run) => run.diagnostics?.summary?.errors === 0));
-    assert.ok(diagnostics.runs.every((run) => run.diagnostics?.summary?.warnings === 0));
-  } finally {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  }
+test('categorical status evidence is rejected before browser rendering', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'status.grid',
+    title: 'Categorical status wall',
+    subtitle: 'Text-only status rows are not an accepted chart form.',
+    date: '2026-08-04',
+    data: [
+      { label: 'A', status: 'blocked', detail: 'Closed.' },
+      { label: 'B', status: 'strained', detail: 'Paused.' },
+      { label: 'C', status: 'unknown', detail: 'Disputed.' }
+    ]
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('text-only status list is not a chart')));
 });

@@ -120,35 +120,42 @@ test('composition segments retain tangible values alongside calculated shares', 
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   assert.match(runtime, /normalizedCopy\(item\.display\) !== normalizedCopy\(percentText\(share\)\)/);
   assert.doesNotMatch(runtime, /!compact && normalizedCopy\(item\.display\)/);
+  assert.match(runtime, /tochnyi-stacked-binary-labels/);
+  assert.doesNotMatch(runtime, /tochnyi-stacked-focus/);
 });
 
-test('headline metrics support semantic progress and pictogram treatments', () => {
-  const pictogram = loadExample('headline-metric.json');
-  pictogram.data[0] = {
-    label: 'Head-office roles affected',
-    value: 10,
-    displayValue: '10%',
-    tone: 'critical'
+test('production workflow rejects text-only status walls and single-number charts', () => {
+  assert.equal(recipeIds.includes('status.grid'), false);
+  assert.equal(recipeIds.includes('headline.metric'), false);
+
+  const status = {
+    version: '2.0',
+    recipe: 'status.grid',
+    title: 'Operations changed',
+    subtitle: 'A prose grid must not be accepted as a chart.',
+    date: '2026-08-04',
+    data: [
+      { label: 'A', status: 'blocked', detail: 'Closed.' },
+      { label: 'B', status: 'strained', detail: 'Paused.' },
+      { label: 'C', status: 'unknown', detail: 'Disputed.' }
+    ]
   };
-  pictogram.measure = { unit: '%', decimals: 0, baseline: 'zero' };
-  pictogram.primaryMetric = { value: '10%', label: 'planned head-office reduction' };
-  pictogram.visual = { type: 'pictogram', icon: 'person', total: 10, filled: 1, columns: 10 };
-  let result = validateSpec(pictogram);
-  assert.equal(result.valid, true, result.errors.join('; '));
-
-  const invalid = structuredClone(pictogram);
-  invalid.visual.filled = 11;
-  result = validateSpec(invalid);
+  let result = validateSpec(status);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => message.includes('cannot exceed visual.total')));
+  assert.ok(result.errors.some((message) => message.includes('text-only status list is not a chart')));
 
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(runtime, /visualType === 'pictogram'/);
-  assert.match(runtime, /tochnyi-pictogram-icon/);
-  assert.match(runtime, /visualType === 'progress'/);
-  assert.match(css, /\.tochnyi-pictogram\s*\{/);
-  assert.match(css, /\.tochnyi-headline-progress\s*\{/);
+  const headline = {
+    version: '2.0',
+    recipe: 'headline.metric',
+    title: 'One number',
+    subtitle: 'A lone value must be enriched before charting.',
+    date: '2026-08-04',
+    data: [{ label: 'Reported loss', value: 14.2, displayValue: '14.2bn RUB' }],
+    measure: { unit: 'billion RUB', decimals: 1, baseline: 'zero' }
+  };
+  result = validateSpec(headline);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('single number is not enough visual evidence')));
 });
 
 test('Russian regional maps normalize to continental context and reject detached framing controls', () => {
@@ -434,19 +441,33 @@ test('regional map callouts preserve geographic order by default', () => {
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'balanced' }, false, entries), 'balanced');
 });
 
-test('regional map leader routing stays direct unless lanes are explicitly requested', () => {
+test('regional map leader routing automatically fans out crowded anchor clusters', () => {
   const entries = [100, 104, 109, 113, 119].map((y, index) => ({
     index,
     side: 'left',
-    point: { x: 500 + index * 20, y }
+    point: { x: 500 + index * 20, y },
+    endY: 95 + index * 18
   }));
-  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries), 'direct');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries, { gap: 16 }), 'lanes');
   const planned = TochnyiMaps.planLeaderRoutes(entries, {
     routing: 'auto', top: 80, bottom: 180, gap: 16
   });
-  assert.equal(planned.routing, 'direct');
-  assert.ok(planned.every((entry) => entry.laneIndex === 0 && entry.sideCount === 1));
-  assert.deepEqual(planned.map((entry) => entry.routeY), entries.map((entry) => entry.point.y));
+  assert.equal(planned.routing, 'lanes');
+  assert.ok(planned.every((entry) => entry.sideCount === entries.length));
+  const destinationOrder = planned.slice().sort((first, second) => first.endY - second.endY);
+  assert.deepEqual(
+    destinationOrder.map((entry) => entry.approachLaneIndex),
+    [4, 3, 2, 1, 0],
+    'card approaches are nested from outermost at the top to innermost at the bottom'
+  );
+
+  const separated = [90, 140, 190].map((y, index) => ({
+    index,
+    side: 'left',
+    point: { x: 500 + index * 20, y },
+    endY: y
+  }));
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, separated, { gap: 16 }), 'direct');
 
   const lanePlan = TochnyiMaps.planLeaderRoutes(entries, {
     routing: 'lanes', top: 80, bottom: 180, gap: 16
@@ -549,12 +570,95 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(dense.attachmentInset, 14);
   assert.equal(dense.portGap, 18);
   assert.equal(dense.minimumCardStub, 36);
+  assert.equal(dense.leaderClearance, 16);
   assert.equal(dense.shapeClearance, 2);
   assert.equal(standard.dense, false);
   assert.equal(standard.cardWidth, 204);
   assert.equal(standard.cardGap, 10);
   assert.equal(standard.portGap, 22);
+  assert.equal(standard.leaderClearance, 14);
   assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 8);
+});
+
+test('supporting context switches prose values to a stacked text treatment', () => {
+  const prose = VisualPlan.contextFactLayout({ value: 'Universal model ended' });
+  const metric = VisualPlan.contextFactLayout({ value: '+15% to +25%' });
+  assert.equal(prose.mode, 'stacked');
+  assert.equal(prose.proseValue, true);
+  assert.equal(metric.mode, 'inline');
+  assert.equal(metric.proseValue, false);
+});
+
+test('relative percentage declines render as retained outcome levels', () => {
+  const source = loadExample('farm-diesel-range.json');
+  const spec = {
+    ...source,
+    title: 'Shipments are expected to fall on both comparisons',
+    subtitle: 'The chart should show what remains, not encode a decline as a positive result.',
+    data: [
+      {
+        label: 'Year-over-year decline',
+        low: 25,
+        high: 35,
+        quantity: 'shipment decline',
+        scope: 'Black Sea coal shipments',
+        period: 'July 2026',
+        tone: 'critical'
+      },
+      {
+        label: 'Month-over-month decline',
+        low: 15,
+        high: 25,
+        quantity: 'shipment decline',
+        scope: 'Black Sea coal shipments',
+        period: 'July 2026',
+        tone: 'warning'
+      }
+    ],
+    references: [],
+    measure: {
+      unit: '% change',
+      axisTitle: 'Shipment change',
+      decimals: 0,
+      baseline: 'zero',
+      scale: 'linear',
+      quantity: 'shipment decline'
+    },
+    primaryMetric: undefined,
+    supportingFacts: [],
+    metadata: {
+      slug: 'shipment-decline-outcome-test',
+      topic: 'shipment decline',
+      country: 'Russia',
+      dataPeriod: 'July 2026',
+      keyFinding: 'Shipments fell on both comparisons.'
+    }
+  };
+  const validation = validateSpec(spec);
+  assert.equal(validation.valid, true, validation.errors.join('; '));
+  assert.deepEqual(validation.normalized.data.map((item) => item.direction), ['down', 'down']);
+
+  const plan = VisualPlan.percentageChangeRangePlan(validation.normalized, validation.normalized.data);
+  assert.equal(plan.mode, 'outcome-index');
+  assert.equal(plan.baseline, 100);
+  assert.deepEqual(
+    plan.items.map((item) => [item.outcomeLow, item.outcomeHigh]),
+    [[65, 75], [75, 85]]
+  );
+  assert.equal(plan.items[0].outcomeDisplay, '65–75% of prior level');
+  assert.equal(plan.items[0].impactDisplay, '25–35% lower');
+});
+
+test('leader crowding detects long near-parallel routes without treating separated routes as crowded', () => {
+  const base = [[{ x: 0, y: 0 }, { x: 120, y: 0 }]];
+  const close = [[{ x: 0, y: 8 }, { x: 120, y: 8 }]];
+  const separated = [[{ x: 0, y: 40 }, { x: 120, y: 40 }]];
+  const closeMetrics = TochnyiMaps.sampledSegmentCrowding(base, close, 14);
+  const separatedMetrics = TochnyiMaps.sampledSegmentCrowding(base, separated, 14);
+  assert.equal(closeMetrics.significant, true);
+  assert.ok(closeMetrics.score > 8);
+  assert.equal(separatedMetrics.significant, false);
+  assert.equal(separatedMetrics.score, 0);
 });
 
 test('regional breakdown planner owns routing mode, side assignment, and distribution', () => {
@@ -577,12 +681,54 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
     summaryOnRight: false
   });
   assert.equal(plan.usePortRouting, true);
-  assert.equal(plan.placementMode, 'crossing-optimized');
+  assert.equal(plan.placementMode, 'crossing-optimized-ports');
   assert.equal(plan.sides.left.length, 4);
   assert.equal(plan.sides.right.length, 4);
   assert.equal(plan.leftDistribution, 'geographic');
   assert.equal(plan.rightDistribution, 'geographic');
   assert.ok(plan.placement.assignmentEvaluations > 0);
+});
+
+test('sparse regional maps optimize callout order before drawing direct leaders', () => {
+  const entries = [
+    { index: 0, item: { calloutSide: 'left' }, point: { x: 430, y: 390 }, height: 92, side: 'left' },
+    { index: 1, item: { calloutSide: 'left' }, point: { x: 455, y: 190 }, height: 92, side: 'left' },
+    { index: 2, item: { calloutSide: 'right' }, point: { x: 735, y: 205 }, height: 92, side: 'right' },
+    { index: 3, item: { calloutSide: 'right' }, point: { x: 760, y: 405 }, height: 92, side: 'right' }
+  ];
+  const geometry = {
+    map: { leaderRouting: 'direct', calloutDistribution: 'geographic' },
+    dense: false,
+    width: 1190,
+    cardWidth: 204,
+    topLeft: 20,
+    topRight: 20,
+    bottom: 590,
+    summaryShown: false,
+    summaryOnRight: false
+  };
+  const baseline = TochnyiMaps.scoreCalloutPlacement(
+    entries.slice(0, 2),
+    entries.slice(2),
+    {
+      width: geometry.width,
+      cardWidth: geometry.cardWidth,
+      topLeft: geometry.topLeft,
+      topRight: geometry.topRight,
+      bottom: geometry.bottom,
+      gap: 10,
+      leftDistribution: 'geographic',
+      rightDistribution: 'geographic',
+      preserveOrder: true
+    }
+  );
+  const plan = TochnyiMaps.planRegionalBreakdown(entries, geometry);
+  assert.equal(plan.usePortRouting, false);
+  assert.equal(plan.placementMode, 'crossing-optimized-direct');
+  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [1, 0]);
+  assert.deepEqual(plan.sides.right.map((entry) => entry.index), [2, 3]);
+  assert.equal(plan.placement.predictedCrossings, 0);
+  assert.ok(plan.placement.predictedLength <= baseline.length);
 });
 
 test('edge-port leaders use a smooth region curve and readable horizontal card connection', () => {
@@ -960,9 +1106,10 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     endY: 120
   });
   assert.match(leftPath.path, /^M 520 310 C /);
-  assert.match(leftPath.path, / 302 120 H 220$/);
+  assert.ok(leftPath.path.endsWith(' ' + leftPath.approachX + ' 120 H 220'));
   assert.doesNotMatch(leftPath.path, /\s[LVQ]\s/);
-  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 3);
+  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 3,
+    'lane routes separate source fan-out, lane travel, and card approach');
   assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
   assert.ok(leftPath.fanX > leftPath.approachX && leftPath.fanX < 520);
   assert.equal(leftPath.routeY, 338);
@@ -979,9 +1126,10 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     endY: 450
   });
   assert.match(rightPath.path, /^M 610 330 C /);
-  assert.match(rightPath.path, / 880 450 H 980$/);
+  assert.ok(rightPath.path.endsWith(' ' + rightPath.approachX + ' 450 H 980'));
   assert.doesNotMatch(rightPath.path, /\s[LVQ]\s/);
-  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 3);
+  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 3,
+    'lane routes separate source fan-out, lane travel, and card approach');
   assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
   assert.ok(rightPath.fanX > 610 && rightPath.fanX < rightPath.approachX);
   assert.equal(rightPath.routeY, 366);
@@ -1782,7 +1930,7 @@ test('recipe constraints are enforced', () => {
   assert.ok(result.errors.includes('comparison.change requires exactly 2 data items.'));
 });
 
-test('range, status, and waterfall semantics are enforced', () => {
+test('range and waterfall semantics are enforced', () => {
   const range = loadExample('farm-diesel-range.json');
   let result = validateSpec(range);
   assert.equal(result.valid, true, result.errors.join('; '));
@@ -1791,12 +1939,6 @@ test('range, status, and waterfall semantics are enforced', () => {
   result = validateSpec(range);
   assert.equal(result.valid, false);
   assert.ok(result.errors.includes('data[1].low must not exceed high.'));
-
-  const status = loadExample('fuel-shortage-status.json');
-  delete status.data[0].status;
-  result = validateSpec(status);
-  assert.equal(result.valid, false);
-  assert.ok(result.errors.includes('data[0].status is required for status.grid.'));
 
   const waterfall = loadExample('ozon-collateral-waterfall.json');
   waterfall.data[0].role = 'change';
@@ -1835,44 +1977,28 @@ test('waterfall contract rejects inferred, uncertain, mixed-period, and non-reco
   assert.ok(result.errors.some((error) => error.includes('must reconcile with the running flow')));
 });
 
-test('inferred state-leasing losses use a headline metric instead of an invented waterfall', () => {
-  const spec = loadExample('headline-metric.json');
-  spec.title = 'The State Leasing Company Exceeded 14.2 Billion Rubles in Losses';
-  spec.subtitle = 'The reported first-half result is presented as a headline metric rather than an inferred bridge.';
-  spec.date = '2026-08-02';
-  spec.source = {
-    name: 'State Transport Leasing Company first-half 2026 results',
-    period: 'H1 2026'
-  };
-  spec.data = [{
-    label: 'Reported H1 loss',
-    value: 14.2,
-    displayValue: 'more than 14.2 billion rubles',
-    tone: 'critical'
-  }];
-  spec.measure = {
-    unit: 'billion rubles',
-    decimals: 1,
-    baseline: 'zero'
-  };
-  spec.primaryMetric = {
-    value: 'more than 14.2 billion rubles',
-    label: 'Reported H1 loss'
-  };
-  spec.note = 'Prior-year context is separate from the reported result and does not imply an invented bridge.';
-  spec.metadata = {
-    slug: 'state-leasing-h1-loss',
-    topic: 'state leasing company results',
-    country: 'Russia',
-    dataPeriod: 'H1 2026',
-    keyFinding: 'The state leasing company reported more than 14.2 billion rubles in losses.'
+test('a reported loss must gain a real comparator instead of becoming a single-number chart', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'headline.metric',
+    title: 'The State Leasing Company Exceeded 14.2 Billion Rubles in Losses',
+    subtitle: 'A single reported result is not enough to justify a chart.',
+    date: '2026-08-02',
+    source: {
+      name: 'State Transport Leasing Company first-half 2026 results',
+      period: 'H1 2026'
+    },
+    data: [{
+      label: 'Reported H1 loss',
+      value: 14.2,
+      displayValue: 'more than 14.2 billion rubles',
+      tone: 'critical'
+    }],
+    measure: { unit: 'billion rubles', decimals: 1, baseline: 'zero' }
   };
   const result = validateSpec(spec);
-  assert.equal(result.valid, true, result.errors.join('; '));
-  assert.equal(result.normalized.recipe, 'headline.metric');
-  assert.match(result.normalized.title, /exceeded 14\.2/i);
-  assert.match(result.normalized.primaryMetric.value, /more than 14\.2/i);
-  assert.match(result.normalized.note, /prior-year context/i);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('Add a real comparator')));
 });
 
 test('semantic reference lineStyle is allowed while implementation style remains forbidden', () => {
@@ -1896,10 +2022,10 @@ test('editorial validation flags redundant composition copy and internal sources
     tone: 'primary'
   });
   const result = validateSpec(spec);
-  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.valid, false);
   assert.ok(result.warnings.some((warning) => warning.includes('internal working reference')));
   assert.ok(result.warnings.some((warning) => warning.includes('ambiguous repeated unit abbreviation')));
-  assert.ok(result.warnings.some((warning) => warning.includes('Supporting facts repeat values')));
+  assert.ok(result.errors.some((error) => error.includes('Supporting facts repeat values')));
 });
 
 test('ISO week paths are zero padded', () => {

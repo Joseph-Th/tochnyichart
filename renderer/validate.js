@@ -2,6 +2,7 @@
 
 const { getRecipe, recipeIds } = require('./catalog');
 const TochnyiMaps = require('../lib/tochnyi-maps');
+const VisualPlan = require('../lib/tochnyi-visual-plan');
 
 const FORBIDDEN_KEYS = new Set([
   'html', 'script', 'style', 'styles', 'customCss', 'customJS', 'customJs',
@@ -32,6 +33,16 @@ const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
+const DISABLED_RECIPES = new Map([
+  [
+    'status.grid',
+    'status.grid is disabled for production. A text-only status list is not a chart. Enrich the source with a common numeric measure, use map.regional when geography is explanatory, or omit the story.'
+  ],
+  [
+    'headline.metric',
+    'headline.metric is disabled for production. A single number is not enough visual evidence. Add a real comparator, denominator, benchmark, or time series and select a multi-mark recipe.'
+  ]
+]);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
@@ -191,6 +202,16 @@ function normalizeSpec(input) {
         ...(item.scope !== undefined ? { scope: typeof item.scope === 'string' ? item.scope.trim() : item.scope } : {})
       }) : item)
     : spec.data;
+
+  if (Array.isArray(spec.data)) {
+    spec.data = spec.data.map((item) => {
+      if (!isObject(item) || item.direction !== undefined) return item;
+      const inferredDirection = VisualPlan.inferChangeDirection(item, spec);
+      return inferredDirection === 'up' || inferredDirection === 'down'
+        ? { ...item, direction: inferredDirection }
+        : item;
+    });
+  }
 
   spec.references = Array.isArray(spec.references)
     ? spec.references.map((reference) => isObject(reference) ? ({
@@ -489,6 +510,9 @@ function validateRecipe(spec, errors, warnings) {
       if (data.some((item) => typeof item?.value === 'number' && item.value <= 0)) errors.push('composition.stacked values must all be greater than zero.');
       const sum = data.reduce((total, item) => total + (typeof item?.value === 'number' ? item.value : 0), 0);
       if (spec.measure?.unit === '%' && Math.abs(sum - 100) > 0.5) warnings.push(`Stacked percentages total ${sum}, not 100.`);
+      if (spec.primaryMetric) {
+        errors.push('composition.stacked cannot use primaryMetric. The proportional marks and direct segment labels must carry the story; do not collapse a composition into one headline number.');
+      }
       break;
     }
     case 'flow.waterfall':
@@ -747,7 +771,7 @@ function validateMetadata(spec, errors, warnings) {
   }
 }
 
-function validateEditorialEconomy(spec, warnings) {
+function validateEditorialEconomy(spec, errors, warnings) {
   if (/(input[.]txt|weekly source text|source text)/i.test(spec.source?.name || '')) {
     warnings.push('source.name looks like an internal working reference; use the underlying publication or dataset when available.');
   }
@@ -771,7 +795,7 @@ function validateEditorialEconomy(spec, warnings) {
   });
   const duplicateFacts = spec.supportingFacts.filter((fact) => repeated.has(normalizeEditorialValue(fact.value)));
   if (duplicateFacts.length) {
-    warnings.push('Supporting facts repeat values already encoded in the stacked composition; keep only facts that add a different unit, cause, or consequence.');
+    errors.push('Supporting facts repeat values already encoded in the stacked composition. Segment values and shares must be labeled on the visual itself; supporting facts may only add a different cause, consequence, or unit.');
   }
 
   const allAnnotated = data.every((item) => typeof item?.annotation === 'string' && item.annotation.trim());
@@ -815,7 +839,9 @@ function validateSpec(input) {
   forbidden.forEach((path) => errors.push(`${path} is forbidden; ChartSpec cannot contain implementation code or styles.`));
 
   const spec = normalizeSpec(input);
-  if (!getRecipe(spec.recipe) && !LEGACY_RECIPES.has(spec.recipe)) {
+  if (DISABLED_RECIPES.has(spec.recipe)) {
+    errors.push(DISABLED_RECIPES.get(spec.recipe));
+  } else if (!getRecipe(spec.recipe) && !LEGACY_RECIPES.has(spec.recipe)) {
     errors.push(`Unknown recipe: ${String(spec.recipe)}.`);
   }
   pushLengthIssue(spec.title, 'title', 100, errors, warnings, 68);
@@ -843,7 +869,7 @@ function validateSpec(input) {
   validateOptions(spec, errors);
   validateMap(spec, errors);
   validateMetadata(spec, errors, warnings);
-  validateEditorialEconomy(spec, warnings);
+  validateEditorialEconomy(spec, errors, warnings);
   validateInformationDensity(spec, warnings);
 
   if (spec.note !== undefined && (typeof spec.note !== 'string' || spec.note.length > 240)) {

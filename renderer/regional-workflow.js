@@ -32,6 +32,14 @@ function numberAttribute(attributes, name) {
   return Number.isFinite(value) ? value : null;
 }
 
+function firstNumberAttribute(attributes, names) {
+  for (const name of names) {
+    const value = numberAttribute(attributes, name);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
 function summarizeDiagnosticRun(run) {
   const attributes = run.chartAttributes || {};
   return {
@@ -43,7 +51,20 @@ function summarizeDiagnosticRun(run) {
     routing: attributes['data-map-leader-routing'] || null,
     placement: attributes['data-map-callout-placement'] || null,
     predictedCrossings: numberAttribute(attributes, 'data-map-callout-predicted-crossings'),
+    predictedCrowding: numberAttribute(attributes, 'data-map-callout-predicted-crowding'),
     renderedCrossings: numberAttribute(attributes, 'data-map-port-rendered-crossings'),
+    routeCrowding: firstNumberAttribute(attributes, [
+      'data-map-leader-crowding-score',
+      'data-map-port-crowding-score'
+    ]),
+    crowdedRoutes: firstNumberAttribute(attributes, [
+      'data-map-leader-crowded-pairs',
+      'data-map-port-crowded-routes'
+    ]),
+    minimumRouteGap: firstNumberAttribute(attributes, [
+      'data-map-leader-min-gap',
+      'data-map-port-min-route-gap'
+    ]),
     finalCollisions: numberAttribute(attributes, 'data-map-port-final-collisions'),
     fallbackRoutes: numberAttribute(attributes, 'data-map-port-fallback-routes'),
     sourceExitRoutes: numberAttribute(attributes, 'data-map-port-source-exit-routes'),

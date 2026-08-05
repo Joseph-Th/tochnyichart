@@ -27,10 +27,6 @@
     "baseline": "zero",
     "scale": "linear"
   },
-  "primaryMetric": {
-    "value": "5.60 million m²",
-    "label": "estimated total construction pipeline"
-  },
   "supportingFacts": [
     {
       "value": "Weaker demand",

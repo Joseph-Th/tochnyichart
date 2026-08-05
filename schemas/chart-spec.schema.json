@@ -19,9 +19,7 @@
         "composition.stacked",
         "flow.waterfall",
         "ranking.horizontal",
-        "status.grid",
-        "map.regional",
-        "headline.metric"
+        "map.regional"
       ]
     },
     "title": { "type": "string", "minLength": 1, "maxLength": 100 },

@@ -46,7 +46,11 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.sharedContract.resources.storySelection, 'docs/story-selection.md');
   assert.equal(orientation.sharedContract.stages[0].id, 'verify-source');
   assert.match(orientation.sharedContract.sharedScaleContract.sentenceTest, /Every mark encodes/);
-  assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /simple comparison/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
+  assert.deepEqual(
+    orientation.sharedContract.visualEvidenceContract.rejectedRecipes,
+    ['status.grid', 'headline.metric']
+  );
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
   assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
   assert.match(orientation.batchWorkflow.presentation, /tochnyi-charts-YYYY-week-WW\.pptx$/);
@@ -64,7 +68,10 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.workflow, 'standard-chart');
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'map.regional'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'story.facets'), false);
-  assert.ok(standard.authoringRules.some((rule) => /Never use card or facet grids/.test(rule)));
+  assert.ok(standard.authoringRules.some((rule) => /Never use status, card, bullet, or facet grids/.test(rule)));
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'status.grid'), false);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
+  assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
   assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
   assert.deepEqual(standard.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
@@ -100,7 +107,8 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
     ['magnitude', 'comparison', 'mechanism', 'consequence']
   );
   assert.match(manifest.sourceEnrichment.coreRule, /full primary source/i);
-  assert.match(manifest.sourceEnrichment.complexityRule, /visually interesting/i);
+  assert.match(manifest.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
+  assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric']);
   assert.match(manifest.sourceEnrichment.attributionRule, /omit source/i);
   assert.match(manifest.sourceEnrichment.attributionRule, /presentation copy/i);
   assert.ok(manifest.excludedWork.some((entry) => entry.includes('renderer/')));
@@ -122,7 +130,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.4');
+  assert.equal(manifest.version, '1.5');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');

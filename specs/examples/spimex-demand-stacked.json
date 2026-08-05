@@ -30,10 +30,6 @@
     "baseline": "zero",
     "scale": "linear"
   },
-  "primaryMetric": {
-    "value": "55,000 tons/day",
-    "label": "estimated solvent demand"
-  },
   "supportingFacts": [
     {
       "value": "10,000+ tons/day",

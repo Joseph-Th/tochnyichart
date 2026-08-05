@@ -30,6 +30,9 @@ parse distinct data stories
 verify and enrich each story from its sources
     |
     v
+apply the visual-evidence gate; enrich or omit prose-only and one-point stories
+    |
+    v
 decide whether each story needs a chart and select the appropriate workflow and recipe
     |
     v
@@ -68,6 +71,21 @@ Do not assume every paragraph requires a chart. Merge duplicate notes when they 
 Follow `docs/source-enrichment.md` before selecting a chart recipe.
 
 The agent must verify the source, read the full primary source, extract relevant evidence, calculate safe derivations, and fill only named material evidence gaps. It must not add unrelated context merely to make the chart more complex.
+
+Before accepting a chart candidate, apply the visual-evidence gate:
+
+- A non-map chart must contain at least two quantitative marks.
+- A lone value must gain a source-supported prior value, target, benchmark,
+  denominator, remainder, peer, range, or time series.
+- A categorical status list must be quantified on one common dimension or
+  routed to `map.regional` when geography explains the finding.
+- A prose wall, card grid, bullet grid, or one oversized number is not an
+  acceptable chart.
+- Omit a story when source enrichment cannot supply legitimate visual
+  structure.
+
+The production catalog and validator disable `status.grid` and
+`headline.metric`, so these failures cannot proceed to rendering.
 
 ## 3. Select the production tool
 
@@ -137,7 +155,7 @@ For `flow.waterfall`, use the recipe only for a source-supported start-to-end
 bridge with same-scope, same-period values and arithmetic reconciliation. Do
 not turn `more than`, `about`, or incomplete charges into an exact inferred
 opening value. If the bridge is uncertain or not mutually exclusive, use a
-simpler comparison or headline with supporting facts instead. A waterfall that
+source-supported comparison, range, or separate chart instead. A waterfall that
 passes validation but is visually ambiguous fails semantic QA.
 
 The Tool API also requires every waterfall item to declare

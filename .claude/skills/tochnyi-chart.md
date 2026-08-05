@@ -191,8 +191,8 @@ The start, each change, and the ending value must share scope and period and
 must reconcile arithmetically. Do not infer an exact opening value from charges
 described as `more than`, `about`, or otherwise incomplete. If the bridge is
 inferred, not mutually exclusive, or visually ambiguous, reject the waterfall
-and use `comparison.change`, `headline.metric`, or a simpler chart with
-supporting facts. A valid JSON spec is not evidence that a waterfall is an
+and use `comparison.change`, `comparison.scenarios`, `comparison.range`, or a
+separate chart. A valid JSON spec is not evidence that a waterfall is an
 honest or intelligible visual.
 
 The Tool API enforces this gate. Every waterfall item must declare
@@ -201,7 +201,23 @@ rejects missing, derived, bounded, approximate, or non-reconciling steps. A
 reported operating profit is not a reported pre-charge net result, and a prior-
 period expense is not a current-period bridge step. Never construct an opening
 profit by adding incomplete charges to a loss. If those facts are the story,
-use a headline or comparison and keep the charges as supporting facts.
+use a source-supported comparison and keep genuinely secondary charges as
+supporting facts.
+
+### Visual-evidence gate
+
+Do not create prose walls, status-card grids, bullet grids, or single-number
+charts. Every non-map production chart needs at least two quantitative marks.
+A lone value must gain a source-supported prior value, target, benchmark,
+denominator, remainder, peer, range, or time series. Categorical evidence must
+be quantified on a common dimension or routed to `map.regional` when geography
+explains the finding. Omit the story when legitimate visual structure cannot be
+found.
+
+The production catalog, schema, and validator disable `status.grid` and
+`headline.metric`. For `composition.stacked`, the proportional bar and direct
+segment labels must carry the story; do not add `primaryMetric` or repeat
+segment values in `supportingFacts`.
 
 ## Regional workflow
 

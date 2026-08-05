@@ -179,9 +179,9 @@ Check that:
 - Composition charts retain a tangible absolute amount in `displayValue` when
   the source provides one; percentages alone are not enough when real amounts
   are known.
-- A single metric uses progress or pictogram treatment only when there is a real
-  denominator or population to encode. Decorative symbols without semantic
-  meaning are not acceptable.
+- A non-map chart must contain at least two quantitative marks. A lone metric
+  must gain a real prior value, target, benchmark, denominator, remainder,
+  peer, range, or time series from the source. If none exists, omit the story.
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`, and
 `comparison.range`, the validator requires `measure.quantity`,
@@ -202,8 +202,8 @@ start, each change, and the ending value must share scope and period, reconcile
 arithmetically, and be visually readable as cumulative steps. Do not infer an
 exact opening value from charges described as `more than`, `about`, or otherwise
 incomplete. If the bridge is inferred or not mutually exclusive, mark it as a
-bound and prefer `comparison.change`, `headline.metric`, or a chart with
-supporting facts. A structurally valid waterfall that requires mental
+bound and prefer `comparison.change`, `comparison.scenarios`,
+`comparison.range`, or a separate chart. A structurally valid waterfall that requires mental
 reconstruction fails semantic QA and must be revised or rejected.
 
 The machine contract is strict: every waterfall item must include
@@ -237,7 +237,6 @@ The guide returns recipe selection rules and a validated example path for each r
 
 | Finding shape | Recipe |
 | --- | --- |
-| One decisive number; optionally a real progress or pictogram denominator | `headline.metric` |
 | Two periods of the same named quantity for the same scope | `comparison.change` |
 | Actual, expected, prior, target, or alternatives for one quantity, scope, and period | `comparison.scenarios` |
 | Positive and negative values of one quantity, scope, and period | `comparison.diverging` |
@@ -247,7 +246,9 @@ The guide returns recipe selection rules and a validated example path for each r
 | Multi-part composition where shape matters | `composition.donut` |
 | Starting value, additions or losses, ending value | `flow.waterfall` |
 | Ranked categories with long labels | `ranking.horizontal` |
-| Categorical conditions by place or operation | `status.grid` |
+| Categorical conditions with a common measurable dimension | Enrich and select a quantitative recipe |
+| Categorical conditions where place explains the finding | `map.regional` |
+| One unsupported value or prose-only evidence | Omit until source enrichment supplies visual structure |
 | Several essential mixed-unit or mixed-stage measures | Separate ChartSpecs |
 
 Composable semantic features include:
@@ -259,10 +260,15 @@ Composable semantic features include:
   different unit.
 - Separate ChartSpecs when mixed-unit evidence is the main story rather than
   context.
-- `visual.type = "progress"` or `"pictogram"` for a headline metric with a
-  meaningful denominator or counted population.
+- `composition.stacked` for a bounded share when both numerator and remainder
+  can be encoded as tangible parts.
 - `data[].displayValue` for the tangible amount in composition charts; the
   renderer shows it together with the calculated share.
+
+`status.grid` and `headline.metric` are disabled in the production catalog,
+schema, and validator. They remain only as legacy renderer code for previously
+generated HTML. The Tool API will reject new specs that attempt to create a
+text wall or single-number chart.
 
 Run:
 
