@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const WORKSPACE_DIRECTORY = '.work';
 const LEGACY_PREVIEW_DIRECTORY = 'previews';
@@ -58,8 +59,52 @@ function deliveryPath(projectRoot, runId, ...segments) {
   return projectPath(projectRoot, DELIVERY_DIRECTORY, normalized, ...segments);
 }
 
+function readInputSnapshot(projectRoot) {
+  const inputPath = projectPath(projectRoot, 'input.txt');
+  if (!fs.existsSync(inputPath)) {
+    throw new Error('input.txt is missing. Production runs must use the exact project-root input.txt; do not substitute a sibling or alternate file.');
+  }
+  const content = fs.readFileSync(inputPath, 'utf8');
+  if (!content.trim()) {
+    throw new Error('input.txt is empty. Stop the run and obtain the intended source document; do not substitute a sibling or alternate file.');
+  }
+  return {
+    path: inputPath,
+    content,
+    bytes: Buffer.byteLength(content, 'utf8'),
+    sha256: crypto.createHash('sha256').update(content, 'utf8').digest('hex')
+  };
+}
+
+function sourceLedgerPath(projectRoot, runId) {
+  return workspacePath(projectRoot, runId, 'source-ledger.json');
+}
+
+function initializeSourceLedger(projectRoot, runId, snapshot) {
+  const target = sourceLedgerPath(projectRoot, runId);
+  if (!fs.existsSync(target)) {
+    fs.writeFileSync(target, `${JSON.stringify({
+      version: '1.0',
+      runId: normalizeRunId(runId),
+      input: {
+        path: 'input.txt',
+        bytes: snapshot.bytes,
+        sha256: snapshot.sha256
+      },
+      inventoryComplete: false,
+      ignoredEvidence: [],
+      candidates: []
+    }, null, 2)}\n`, 'utf8');
+  }
+  return target;
+}
+
 function initializeRunWorkspace(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
+  const createOutputs = options.createOutputs !== false;
+  const inputSnapshot = createOutputs && options.requireInput !== false
+    ? readInputSnapshot(projectRoot)
+    : null;
   const root = workspacePath(projectRoot, normalized);
   const subdirectories = Array.isArray(options.subdirectories)
     ? options.subdirectories
@@ -73,11 +118,13 @@ function initializeRunWorkspace(projectRoot, runId, options = {}) {
     created.push(target);
   }
 
-  const createOutputs = options.createOutputs !== false;
   const specificationRoot = createOutputs ? runSpecPath(projectRoot, normalized) : null;
   const deliveryRoot = createOutputs ? deliveryPath(projectRoot, normalized) : null;
   if (specificationRoot) fs.mkdirSync(specificationRoot, { recursive: true });
   if (deliveryRoot) fs.mkdirSync(deliveryRoot, { recursive: true });
+  const ledgerPath = inputSnapshot
+    ? initializeSourceLedger(projectRoot, normalized, inputSnapshot)
+    : null;
 
   const manifestPath = workspacePath(projectRoot, normalized, 'run.json');
   if (!fs.existsSync(manifestPath)) {
@@ -91,7 +138,7 @@ function initializeRunWorkspace(projectRoot, runId, options = {}) {
       retention: {
         keepLocal: createOutputs ? [`specs/runs/${normalized}/`, `charts/${normalized}/`] : [],
         repository: 'ignored',
-        purge: [`${WORKSPACE_DIRECTORY}/${normalized}/`, LEGACY_PREVIEW_DIRECTORY, 'input.txt when finalizing']
+        purge: [`${WORKSPACE_DIRECTORY}/${normalized}/`, LEGACY_PREVIEW_DIRECTORY]
       }
     }, null, 2)}\n`, 'utf8');
   }
@@ -100,6 +147,7 @@ function initializeRunWorkspace(projectRoot, runId, options = {}) {
     runId: normalized,
     root,
     manifestPath,
+    ledgerPath,
     directories: created,
     specificationRoot,
     deliveryRoot
@@ -132,16 +180,19 @@ function flushRunWorkspace(projectRoot, runId, options = {}) {
   if (options.removeLegacy) {
     removed.push(removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun));
   }
-  const input = options.clearInput ? clearInput(projectRoot, dryRun) : null;
   return {
     mode: 'run',
     runId: normalized,
     dryRun,
     removed,
-    input,
+    input: {
+      target: projectPath(projectRoot, 'input.txt'),
+      preserved: true
+    },
     preserved: [
       runSpecPath(projectRoot, normalized),
-      deliveryPath(projectRoot, normalized)
+      deliveryPath(projectRoot, normalized),
+      projectPath(projectRoot, 'input.txt')
     ]
   };
 }
@@ -177,6 +228,9 @@ module.exports = {
   workspacePath,
   runSpecPath,
   deliveryPath,
+  readInputSnapshot,
+  sourceLedgerPath,
+  initializeSourceLedger,
   initializeRunWorkspace,
   flushRunWorkspace,
   resetTransientWorkspace

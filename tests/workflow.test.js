@@ -42,12 +42,17 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.interface.entrypoint, /tool-api\/chart\.js/);
   assert.ok(orientation.boundary.implementation.includes('renderer/'));
   assert.equal(orientation.sharedContract.resources.sourcePolicy, 'docs/source-enrichment.md');
+  assert.equal(orientation.sharedContract.resources.sourceLedger, 'docs/source-ledger.md');
   assert.equal(orientation.sharedContract.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(orientation.sharedContract.resources.storySelection, 'docs/story-selection.md');
   assert.equal(orientation.sharedContract.stages[0].id, 'preserve-input');
   assert.match(orientation.sharedContract.sourceEnrichment.coreRule, /expert-authored editorial evidence/i);
   assert.match(orientation.sharedContract.sourceEnrichment.inputRule, /external silence is not a contradiction/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.inputIdentityRule, /exact non-empty project-root input\.txt/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.inventoryRule, /inventory every distinct quantitative input story/i);
   assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /Do not replace, downgrade, or relabel/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /may not supply the subject, central claim, title, or primary plotted measure/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.titleFidelityRule, /titleBasis/i);
   assert.match(orientation.sharedContract.sourceEnrichment.contradictionRule, /direct material contradiction/i);
   assert.match(orientation.sharedContract.sourceEnrichment.presentationRule, /uncorroborated/i);
   assert.match(orientation.sharedContract.sharedScaleContract.sentenceTest, /Every mark encodes/);
@@ -62,6 +67,9 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/<run-id>/');
   assert.equal(orientation.batchWorkflow.specificationFolder, 'specs/runs/<run-id>/');
   assert.equal(orientation.batchWorkflow.presentation, 'charts/<run-id>/tochnyi-charts-<run-id>.pptx');
+  assert.equal(orientation.batchWorkflow.sourceLedger, '.work/<run-id>/source-ledger.json');
+  assert.equal(orientation.batchWorkflow.sourceVerificationCommand, 'npm run run:verify-source -- <run-id>');
+  assert.equal(orientation.batchWorkflow.sourceAndSpecVerificationCommand, 'npm run run:verify-source -- <run-id> --specs');
   assert.match(orientation.batchWorkflow.boundary, /orchestration layer owns input parsing/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
@@ -100,9 +108,11 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.entrypoint, /tool-api\/chart\.js/);
   assert.equal(manifest.resources.schema, 'schemas/chart-spec.schema.json');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
+  assert.equal(manifest.resources.sourceLedger, 'docs/source-ledger.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(manifest.resources.storySelection, 'docs/story-selection.md');
   assert.equal(fs.existsSync(path.join(root, manifest.resources.sourcePolicy)), true);
+  assert.equal(fs.existsSync(path.join(root, manifest.resources.sourceLedger)), true);
   assert.equal(fs.existsSync(path.join(root, manifest.resources.batchPolicy)), true);
   assert.equal(fs.existsSync(path.join(root, manifest.resources.storySelection)), true);
   assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
@@ -150,6 +160,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(manifest.batchWorkflow.temporaryWorkspace, '.work/<run-id>/');
   assert.equal(manifest.batchWorkflow.finalizeCommand, 'npm run run:finalize -- <run-id>');
   assert.match(manifest.batchWorkflow.retentionRule, /specs\/runs\/<run-id>\/ and charts\/<run-id>\/ are retained locally/i);
+  assert.match(manifest.batchWorkflow.retentionRule, /input\.txt is also retained/i);
   assert.match(manifest.batchWorkflow.retentionRule, /ignored by Git/i);
   assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);
 });

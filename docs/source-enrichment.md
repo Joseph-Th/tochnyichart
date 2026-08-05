@@ -16,6 +16,13 @@ mechanisms, consequences, or current status. Failure to find the same fact in a
 second source is not a contradiction and must not cause an agent to delete,
 downgrade, relabel, or replace an input claim.
 
+External research may not originate a story. The subject, central claim, title,
+and primary plotted measure must be directly supported by `input.txt`. A source
+found during research may supply a comparator, denominator, mechanism,
+consequence, or attribution only after the input-supported story has been
+inventoried. Do not create a slide because an adjacent article contains an
+interesting dataset.
+
 The input is not assumed to contain the complete dataset available for the
 chart. Inspect and exhaust supplied sources before selecting the recipe, then
 supplement the expert material when reputable reporting strengthens the same
@@ -35,10 +42,19 @@ Do not add context merely to avoid a simple chart. A clean two-value comparison 
 Use this order before recipe selection:
 
 ```text
-expert input note or assignment
+exact project-root input.txt
     |
     v
-confirm source identity and relevance
+inventory every distinct quantitative claim with exact input excerpts
+    |
+    v
+record selected, omitted, or merged disposition for every candidate
+    |
+    v
+verify the source ledger
+    |
+    v
+confirm source identity and relevance for already-inventoried stories
     |
     v
 read the full primary source
@@ -57,6 +73,10 @@ select the evidence spine and recipe
 ```
 
 ## 1. Confirm and attribute sources
+
+Do not search for or use a sibling `input.txt`, previous batch file, alternate
+brief, or similarly named document. If the project-root `input.txt` is missing,
+empty, or changed after initialization, stop the run.
 
 When a URL is provided, confirm that the page matches the input note before
 extracting supplemental data.
@@ -163,6 +183,10 @@ Searching for another article from the same publisher is not the default. It is
 an enrichment step after the linked source and its underlying evidence have
 been exhausted.
 
+Additional research must not introduce a new company, policy, market event,
+ownership structure, or operating result as a chart subject unless that subject
+and claim already appear in `input.txt`.
+
 ## 6. Apply the relevance test
 
 Include secondary context only when all of the following are true:
@@ -179,6 +203,14 @@ to cite. Preserve the input evidence spine and add the external fact only when
 it is compatible with that spine.
 
 Reject context that is merely adjacent, interesting, or visually convenient.
+
+Apply a title-fidelity test before accepting the story. Every substantive title
+concept must be stated in, or be an unavoidable plain-language paraphrase of,
+the exact input excerpt recorded as `titleBasis`. Structural words such as
+`maximum`, `range`, `coverage`, `collapse`, `exposure`, `erosion`, or a
+sector-specific form of `inflation` require the corresponding structure to be
+explicitly present in the input evidence. Do not promote a nearby fact into the
+headline.
 
 A useful removal test is: if deleting the fact does not weaken the title, subtitle, explanation, or interpretation, the fact is probably noise.
 
@@ -202,6 +234,10 @@ Do not default to bars because the input contains numbers. Do not select a more 
 Before authoring the `ChartSpec`, confirm:
 
 - The expert input claim has been preserved.
+- The story exists in the complete source ledger with exact input anchors.
+- The title is directly supported by its recorded `titleBasis` excerpt.
+- At least one primary evidence item comes from `input.txt`.
+- External evidence is supplemental and does not originate the story.
 - Any linked source used for supplementation matches the story.
 - The full source has been read.
 - All directly relevant evidence has been extracted.

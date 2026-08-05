@@ -16,6 +16,10 @@ queue. Treat its claims and datapoints as correct by default. It may be
 incomplete, so reputable external reporting may supplement it, but absence of
 independent corroboration is not grounds to weaken or replace it.
 
+The exact project-root file is mandatory. A missing, blank, or changed
+`input.txt` stops the run. Never substitute a sibling project file, prior batch,
+alternate brief, or similarly named source.
+
 ## Agent responsibility
 
 The LLM agent is the batch orchestrator. It owns the sequence across source research, chart production, image capture, and presentation assembly.
@@ -34,7 +38,16 @@ input.txt
 parse distinct data stories
     |
     v
-preserve each expert claim and enrich it from reputable sources
+inventory every quantitative claim with exact input excerpts
+    |
+    v
+record selected, omitted, or merged disposition for every candidate
+    |
+    v
+verify .work/<run-id>/source-ledger.json
+    |
+    v
+preserve each inventoried claim and enrich it from reputable sources
     |
     v
 apply the visual-evidence gate; enrich or omit prose-only and one-point stories
@@ -83,6 +96,15 @@ if any production or transient artifact is tracked, including force-added files.
 
 Read all of `input.txt` and separate it into distinct data stories.
 
+`npm run run:init -- <run-id>` creates
+`.work/<run-id>/source-ledger.json` with the input byte count and SHA-256 hash.
+Complete this ledger before external research. Every distinct quantitative
+claim must appear exactly once and receive one disposition: `selected`,
+`omitted`, or `merged`. Follow `docs/source-ledger.md` for the required fields.
+The source verifier also requires every numeric token in `input.txt` to be
+covered by a candidate anchor or by a specifically justified ignored-evidence
+anchor. This makes silent omission of quantitative stories a validation error.
+
 For each candidate, identify:
 
 - Working subject and central claim
@@ -91,11 +113,22 @@ For each candidate, identify:
 - Values already present in the note
 - Whether the story duplicates or overlaps another item
 - Whether the story is sufficiently material and visual to include
+- One or more exact excerpts from `input.txt`
+- The exact excerpt that supports any proposed chart title
+- Which evidence is primary input evidence versus external or derived context
 
 Do not assume every paragraph requires a chart. Merge duplicate notes when they
 describe the same finding. Exclude items that are duplicative, immaterial, or do
 not support a clear visual story. Do not omit a story merely because an external
 search failed to repeat an expert-authored claim.
+
+An omission requires a specific editorial reason. A merged candidate must name
+its destination. Set `inventoryComplete` to true only after the complete input
+has been checked against the ledger, then run:
+
+```bash
+npm run run:verify-source -- <run-id>
+```
 
 ## 2. Verify and enrich each story
 
@@ -106,6 +139,12 @@ sources, extract relevant evidence, calculate safe derivations, and fill useful
 evidence gaps. It must not add unrelated context merely to make the chart more
 complex. External sources may supplement or attribute the input, but may not
 silently override it unless they directly contradict a material point.
+
+External research may not originate a selected story. Every selected item must
+have primary evidence anchored in `input.txt`, and its `titleBasis` must be an
+exact input excerpt that directly supports the title. External evidence may be
+comparison, denominator, mechanism, consequence, or context, but never the
+primary claim.
 
 Before accepting a chart candidate, apply the visual-evidence gate:
 
@@ -162,6 +201,11 @@ For regional candidates, use `regional-guide` and `regions` to obtain stable
 region IDs before authoring the ChartSpec. Do not proceed to rendering until
 each accepted story has exactly one recorded workflow decision.
 
+Do not write a ChartSpec whose output slug is absent from the source ledger.
+Do not add a chart discovered during research. If a new input-supported story
+was genuinely missed, return to the inventory, add its exact anchors, and rerun
+source verification before authoring it.
+
 ## 4. Produce each chart
 
 For every accepted chart story:
@@ -173,6 +217,16 @@ For every accepted chart story:
 5. Perform semantic chart QA on the rendered output.
 6. Correct semantic problems or report infrastructure defects.
 7. Capture a final PNG only after the chart passes its required checks.
+
+After all ChartSpecs are written, run:
+
+```bash
+npm run run:verify-source -- <run-id> --specs
+```
+
+This requires the selected source-ledger output slugs to exactly match the JSON
+files in `specs/runs/<run-id>/` and requires every ChartSpec title to exactly
+match its ledger title.
 
 Schema validation and responsive diagnostics are necessary but not sufficient.
 Semantic QA must confirm that the visual grammar matches the evidence, that
@@ -260,14 +314,15 @@ After the retained specifications and delivery folder are complete, run:
 npm run run:finalize -- <run-id>
 ```
 
-This deletes `.work/<run-id>/`, removes the legacy `previews/` tree, and
-truncates the consumed `input.txt`. It does not delete
-`specs/runs/<run-id>/` or `charts/<run-id>/`.
+Finalization first reruns source-ledger validation with ChartSpec coverage. It
+then deletes `.work/<run-id>/` and removes the legacy `previews/` tree. It
+preserves `input.txt` and does not delete `specs/runs/<run-id>/` or
+`charts/<run-id>/`.
 
-Use `npm run run:flush -- <run-id>` when transient files should be removed
-but the input must remain. Use `npm run run:reset` before a cold-agent test to
-remove every transient workspace, legacy previews, and input while retaining all
-specification and chart folders.
+Use `npm run run:flush -- <run-id>` when only the selected run workspace should
+be removed. Use `npm run run:reset` before a cold-agent test to remove every
+transient workspace, legacy previews, and input while retaining all specification
+and chart folders.
 
 ## Completion condition
 
@@ -275,6 +330,12 @@ The batch run is complete only when:
 
 - `input.txt` has been fully parsed.
 - Each included story preserves the expert input claim and has a clear central finding.
+- The source ledger inventories every quantitative input story with an explicit
+  selected, omitted, or merged disposition.
+- Every selected story has exact input anchors, an exact title-basis excerpt,
+  and primary evidence from `input.txt`.
+- External evidence supplements rather than originates selected stories.
+- Source-ledger selections and titles exactly match the final ChartSpecs.
 - Each chart has a validated ChartSpec.
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
@@ -282,6 +343,6 @@ The batch run is complete only when:
 - The HTML files, final PNGs, and `.pptx` file are present in `charts/<run-id>/`.
 - The ChartSpecs are present in `specs/runs/<run-id>/`.
 - The run has been finalized, leaving no run-specific notes, scripts, logs,
-  downloads, review files, package staging, or consumed input outside the
-  retained `specs/` and `charts/` folders.
+  downloads, review files, or package staging outside the retained `specs/` and
+  `charts/` folders. The original `input.txt` remains available.
 - Remaining omissions, direct source conflicts, source mismatches, warnings, or infrastructure defects are reported.

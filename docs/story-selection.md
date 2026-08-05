@@ -89,6 +89,27 @@ chart.
 schema, and validator. Legacy generated HTML may still contain those renderers,
 but the Tool API will not accept new ChartSpecs using them.
 
+## Source coverage and title fidelity
+
+Selection begins with a complete inventory of the supplied document, not with
+web research or an early list of attractive chart ideas. Every distinct
+quantitative claim must receive one disposition: `selected`, `omitted`, or
+`merged`. An omitted item needs a specific editorial reason, and a merged item
+must identify its destination. This prevents highly chartable input stories
+from disappearing while externally discovered stories take their place.
+
+Every selected chart must have:
+
+- An exact `titleBasis` excerpt from `input.txt`.
+- At least one primary evidence item anchored to `input.txt`.
+- A chart title that does not claim a maximum, range, exposure, erosion,
+  coverage, collapse, or other analytical structure absent from that excerpt.
+- An output slug recorded in the source ledger before the ChartSpec is written.
+
+External research may improve comparison or interpretation, but it may not
+supply the story subject, central claim, or primary plotted measure. The final
+set of ChartSpecs must exactly match the source-ledger entries marked selected.
+
 ## Comparison recipe contracts
 
 | Recipe | Semantic contract |
@@ -166,6 +187,9 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
 5. Is the broader story visible without mixing unrelated evidence on one axis?
 6. Does a non-map visual contain at least two data-driven marks rather than a
    prose list or one headline number?
+7. Is the title directly supported by an exact excerpt from `input.txt`?
+8. Does the final chart set cover every ledger item marked selected and exclude
+   every unselected or externally originated story?
 
 If any answer is no, change the recipe or evidence structure before changing the
 styling.

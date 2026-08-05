@@ -1,0 +1,177 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { initializeRunWorkspace } = require('../renderer/run-workspace');
+const { validateSourceLedger } = require('../renderer/source-fidelity');
+
+function project() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-source-fidelity-'));
+  fs.writeFileSync(path.join(root, 'input.txt'), [
+    'Ozon insurance prices rose 230%, while shares initially fell 8.5%.',
+    'Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.'
+  ].join('\n'));
+  return root;
+}
+
+function validLedger(workspace) {
+  const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+  ledger.inventoryComplete = true;
+  ledger.candidates = [
+    {
+      id: 'ozon-insurance',
+      claim: 'Ozon insurance prices rose sharply.',
+      decision: 'selected',
+      outputSlug: 'ozon-insurance-price-increase',
+      title: 'Ozon insurance prices rose 230%',
+      titleBasis: 'Ozon insurance prices rose 230%, while shares initially fell 8.5%.',
+      anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
+      evidence: [
+        {
+          statement: 'Insurance prices rose 230%.',
+          origin: 'input',
+          role: 'primary',
+          anchor: 'Ozon insurance prices rose 230%, while shares initially fell 8.5%.'
+        },
+        {
+          statement: 'A prior-year insurance price provides context.',
+          origin: 'external',
+          role: 'comparison',
+          source: 'Company filing'
+        }
+      ]
+    },
+    {
+      id: 'seller-population',
+      claim: 'The online seller population contracted.',
+      decision: 'omitted',
+      reason: 'Reserved for a separate deck.',
+      anchors: ['Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.'],
+      evidence: [
+        {
+          statement: 'Seller population fell 4.9%.',
+          origin: 'input',
+          role: 'primary',
+          anchor: 'Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.'
+        }
+      ]
+    }
+  ];
+  fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+}
+
+test('source fidelity accepts a complete anchored inventory and exact spec coverage', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-1');
+    validLedger(workspace);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json'), JSON.stringify({
+      title: 'Ozon insurance prices rose 230%'
+    }));
+    const result = validateSourceLedger(root, 'issue-1', { requireSpecs: true });
+    assert.equal(result.valid, true);
+    assert.equal(result.candidates, 2);
+    assert.equal(result.selected, 1);
+    assert.equal(result.omitted, 1);
+    assert.equal(result.specificationsChecked, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects stories originated by external research', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-2');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].evidence = [{
+      statement: 'An unrelated ownership fact.',
+      origin: 'external',
+      role: 'primary',
+      source: 'Unrelated article'
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(() => validateSourceLedger(root, 'issue-2'), /may not originate one|no primary evidence anchored/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects unsupported anchors, changed input, and untracked specs', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-3');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].titleBasis = 'Arctic LNG 2 ownership';
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(() => validateSourceLedger(root, 'issue-3'), /titleBasis must be an exact input excerpt/i);
+
+    validLedger(workspace);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'unsupported-story.json'), JSON.stringify({ title: 'Unsupported story' }));
+    assert.throws(() => validateSourceLedger(root, 'issue-3', { requireSpecs: true }), /must exactly match ChartSpecs/i);
+
+    fs.appendFileSync(path.join(root, 'input.txt'), '\nChanged after inventory.');
+    assert.throws(() => validateSourceLedger(root, 'issue-3'), /input\.txt changed/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects invalid merge targets and detached title evidence', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-4');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[1] = {
+      ...ledger.candidates[1],
+      decision: 'merged',
+      mergedInto: 'missing-candidate'
+    };
+    ledger.candidates[0].anchors = [
+      'Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.'
+    ];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(() => validateSourceLedger(root, 'issue-4'), /mergedInto must name another candidate|titleBasis must be covered/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects quantitative input that has no candidate disposition', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-5');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates = [ledger.candidates[0]];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(() => validateSourceLedger(root, 'issue-5'), /Unassigned numeric evidence/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity permits explicitly justified non-story numeric metadata', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-6');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates = [ledger.candidates[0]];
+    ledger.ignoredEvidence = [{
+      anchor: 'Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.',
+      reason: 'Fixture treats this passage as non-story metadata for coverage testing only.'
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const result = validateSourceLedger(root, 'issue-6');
+    assert.equal(result.valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

@@ -7,7 +7,7 @@
   "scripts": {
     "chart": "node tool-api/chart.js",
     "test": "npm run test:unit",
-    "test:unit": "node --test tests/chart-pipeline.test.js tests/workflow.test.js tests/run-workspace.test.js tests/repository-hygiene.test.js",
+    "test:unit": "node --test tests/chart-pipeline.test.js tests/workflow.test.js tests/run-workspace.test.js tests/source-fidelity.test.js tests/repository-hygiene.test.js",
     "test:workflow": "node --test tests/workflow.test.js",
     "test:browser": "node --test tests/browser-workflow.test.js",
     "test:performance": "node --test tests/performance.test.js",
@@ -21,8 +21,9 @@
     "quality": "npm run test:all && npm run diagnostics && npm run samples && npm run visual",
     "check:repo": "node tools/check-repository-hygiene.js",
     "run:init": "node tools/workspace.js init",
+    "run:verify-source": "node tools/workspace.js verify",
     "run:flush": "node tools/workspace.js flush",
-    "run:finalize": "node tools/workspace.js flush --input --legacy",
+    "run:finalize": "node tools/workspace.js finalize --legacy",
     "run:reset": "node tools/workspace.js reset --input --legacy"
   },
   "engines": {

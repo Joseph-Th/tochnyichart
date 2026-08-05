@@ -23,6 +23,7 @@ tool-api/chart.js
 docs/batch-workflow.md
 docs/agent-workflows.md
 docs/source-enrichment.md
+docs/source-ledger.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
@@ -34,10 +35,16 @@ charts/<run-id>/
 The normal authoring lifecycle is:
 
 ```text
-expert input note or assignment
+exact project-root input.txt
     |
     v
-preserve the input claim and read supplied sources
+inventory every quantitative story with exact excerpts
+    |
+    v
+record selected, omitted, or merged disposition and verify the source ledger
+    |
+    v
+preserve selected input claims and read supplied sources
     |
     v
 extract evidence and safe derivations
@@ -63,7 +70,11 @@ stories. The LLM agent, not the chart engine, owns the complete batch:
 ```text
 initialize .work/<run-id>/
     -> input.txt
-    -> parse stories and preserve expert claims
+    -> reject missing or blank project-root input
+    -> inventory every quantitative story with exact excerpts
+    -> record selected, omitted, or merged disposition
+    -> verify the source ledger before research
+    -> preserve input-supported claims and enrich without originating stories
     -> choose the appropriate tool and chart workflow for each accepted story
     -> render and diagnose chart HTML
     -> capture final PNG images
@@ -77,8 +88,10 @@ downloads, helper scripts, logs, review captures, and package staging only under
 the created `.work/<run-id>/` tree. After delivery, run
 `npm run run:finalize -- <run-id>`; it preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and the consumed input. Both retained production paths are ignored by
-Git.
+material and legacy previews. It also preserves `input.txt`. Both retained
+production paths are ignored by Git. The run cannot finalize until
+`.work/<run-id>/source-ledger.json` passes validation and exactly covers the
+final ChartSpecs.
 
 The Tool API is used once per accepted chart story. PowerPoint creation is a
 separate agent capability and must use the final generated PNGs rather than
@@ -91,7 +104,8 @@ tochnyi-charts-<run-id>.pptx
 ```
 
 See [`docs/batch-workflow.md`](../docs/batch-workflow.md) for the complete batch
-contract.
+contract. See [`docs/source-ledger.md`](../docs/source-ledger.md) for the exact
+ledger fields and evidence-origin rules.
 
 ## Source policy
 
@@ -110,6 +124,11 @@ attribution and context can be added. Prefer the underlying official dataset,
 company filing, named report, or reputable Russian business publication before
 broader research. Additional context must fill a defined role in magnitude,
 comparison, mechanism, or consequence.
+
+External research may not originate a story. The subject, central claim, title,
+and primary plotted measure must be supported by exact `input.txt` excerpts in
+the source ledger. External facts may only supplement comparison, denominator,
+mechanism, consequence, context, or attribution.
 
 External silence is not contradiction. Do not delete, downgrade, replace, or
 label an input claim `uncorroborated`, `unsupported`, or `not independently

@@ -12,8 +12,11 @@ stories. The LLM agent owns the complete batch orchestration:
 ```text
 initialize .work/<run-id>/
     -> input.txt
-    -> parse distinct stories
-    -> preserve expert claims and enrich sources
+    -> fail if the exact project-root input is missing or blank
+    -> inventory every quantitative story with exact excerpts
+    -> record selected, omitted, or merged disposition for every candidate
+    -> verify .work/<run-id>/source-ledger.json
+    -> preserve inventoried claims and enrich without originating new stories
     -> decide the appropriate production tool for each story
     -> create and render accepted charts
     -> capture final PNG images
@@ -24,17 +27,20 @@ initialize .work/<run-id>/
 
 Start each batch with `npm run run:init -- <run-id>`. Keep research notes,
 downloads, helper scripts, logs, review captures, and package staging under the
-created `.work/<run-id>/` tree. End with
+created `.work/<run-id>/` tree. Complete the generated source ledger and run
+`npm run run:verify-source -- <run-id>` before external research. End with
 `npm run run:finalize -- <run-id>`, which preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and the consumed input. Both retained production paths are ignored by
-Git.
+material and legacy previews. It also preserves `input.txt`. Both retained
+production paths are ignored by Git. Finalization fails unless selected ledger
+slugs and titles exactly match the final ChartSpecs.
 
 The Tool API described below handles individual chart production. It does not
 parse the complete batch assignment or assemble the PowerPoint deck. Those are
 agent responsibilities.
 
 The full batch contract is in [`docs/batch-workflow.md`](batch-workflow.md).
+The required ledger fields are in [`docs/source-ledger.md`](source-ledger.md).
 
 ## 1. Enter through the Tool API
 

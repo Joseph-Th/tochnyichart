@@ -23,16 +23,26 @@ The normal job begins with one user-supplied file:
 input.txt
 ```
 
-The LLM agent is the batch orchestrator. It reads the complete file, separates it
-into distinct data stories, verifies and enriches the sources, decides which
-production tool and chart workflow each story requires, renders the accepted
-charts, captures final PNG images, assembles those images into a PowerPoint
-presentation, and saves the complete delivery in the run delivery folder.
+The LLM agent is the batch orchestrator. It reads the exact project-root file,
+inventories every quantitative story with exact excerpts, records a selected,
+omitted, or merged disposition, verifies that ledger, and only then enriches the
+selected input-supported stories. It renders the accepted charts, captures final
+PNG images, assembles those images into a PowerPoint presentation, and saves the
+complete delivery in the run delivery folder.
 
 Initialize a disposable run workspace before reading the input:
 
 ```bash
 npm run run:init -- <run-id>
+```
+
+Initialization fails when `input.txt` is missing or blank and creates
+`.work/<run-id>/source-ledger.json` with the input hash. Never substitute a
+sibling project file, prior batch, or alternate brief. Complete the ledger and
+verify it before research:
+
+```bash
+npm run run:verify-source -- <run-id>
 ```
 
 The run ID is an opaque caller-supplied label. It may be a date, issue number,
@@ -49,12 +59,15 @@ the run:
 npm run run:finalize -- <run-id>
 ```
 
-Finalization removes the run workspace, legacy `previews/`, and the consumed
-contents of `input.txt`. It never deletes `specs/` or `charts/`.
+Finalization removes the run workspace and legacy `previews/`. It preserves
+`input.txt` and never deletes `specs/` or `charts/`. It refuses to finalize
+unless the selected source-ledger slugs and titles exactly match the ChartSpecs.
 
 ```text
 input.txt
-    -> parsed and verified data stories
+    -> complete anchored source ledger
+    -> verified selected, omitted, or merged decisions
+    -> input-supported stories enriched with supplemental context
     -> selected chart or slide treatment
     -> ChartSpec files
     -> rendered HTML charts
@@ -67,7 +80,8 @@ The chart Tool API produces individual chart artifacts. PowerPoint assembly and
 batch coordination belong to the LLM orchestration layer.
 
 The complete batch contract is in
-[`docs/batch-workflow.md`](docs/batch-workflow.md).
+[`docs/batch-workflow.md`](docs/batch-workflow.md). The ledger format is defined
+in [`docs/source-ledger.md`](docs/source-ledger.md).
 
 ## Start here
 
@@ -372,8 +386,9 @@ npm run layout            # synthetic label-layout regression
 npm run quality           # full automated and visual quality pipeline
 npm run check:repo        # reject tracked inputs, generated specs, charts, and other run data
 npm run run:init -- <id>  # create one isolated transient workspace
+npm run run:verify-source -- <id> # validate the complete anchored story inventory
 npm run run:flush -- <id> # remove one transient workspace, preserving input
-npm run run:finalize -- <id> # remove workspace, legacy previews, and consumed input
+npm run run:finalize -- <id> # verify source/spec coverage, then clean transient work
 npm run run:reset         # cold reset all transient work and input
 ```
 

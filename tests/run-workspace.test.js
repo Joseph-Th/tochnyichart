@@ -32,8 +32,14 @@ test('run workspace initialization centralizes transient data and creates ignore
     }
     assert.equal(result.specificationRoot, path.join(root, 'specs', 'runs', RUN_ID));
     assert.equal(result.deliveryRoot, path.join(root, 'charts', RUN_ID));
+    assert.equal(result.ledgerPath, path.join(root, '.work', RUN_ID, 'source-ledger.json'));
     assert.equal(fs.existsSync(result.specificationRoot), true);
     assert.equal(fs.existsSync(result.deliveryRoot), true);
+    const ledger = JSON.parse(fs.readFileSync(result.ledgerPath, 'utf8'));
+    assert.equal(ledger.input.path, 'input.txt');
+    assert.equal(ledger.input.bytes, Buffer.byteLength('temporary batch source\n'));
+    assert.match(ledger.input.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(ledger.inventoryComplete, false);
 
     const manifest = JSON.parse(fs.readFileSync(result.manifestPath, 'utf8'));
     assert.deepEqual(manifest.retention.keepLocal, [
@@ -41,6 +47,19 @@ test('run workspace initialization centralizes transient data and creates ignore
       `charts/${RUN_ID}/`
     ]);
     assert.equal(manifest.retention.repository, 'ignored');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('production initialization rejects missing or empty input without searching elsewhere', () => {
+  const root = temporaryProject();
+  try {
+    fs.rmSync(path.join(root, 'input.txt'));
+    assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /exact project-root input\.txt/i);
+
+    fs.writeFileSync(path.join(root, 'input.txt'), '   \n');
+    assert.throws(() => initializeRunWorkspace(root, 'empty-input'), /input\.txt is empty/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -62,7 +81,7 @@ test('internal tools can request a transient-only workspace', () => {
   }
 });
 
-test('finalization removes run data and input while preserving local specs and charts', () => {
+test('finalization removes run data while preserving input, local specs, and charts', () => {
   const root = temporaryProject();
   try {
     const workspace = initializeRunWorkspace(root, RUN_ID);
@@ -79,10 +98,11 @@ test('finalization removes run data and input while preserving local specs and c
 
     assert.equal(fs.existsSync(workspace.root), false);
     assert.equal(fs.existsSync(path.join(root, 'previews')), false);
-    assert.equal(fs.readFileSync(path.join(root, 'input.txt'), 'utf8'), '');
+    assert.equal(fs.readFileSync(path.join(root, 'input.txt'), 'utf8'), 'temporary batch source\n');
     assert.equal(fs.existsSync(path.join(workspace.specificationRoot, 'story.json')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'story.html')), true);
-    assert.equal(result.preserved.length, 2);
+    assert.equal(result.input.preserved, true);
+    assert.equal(result.preserved.length, 3);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

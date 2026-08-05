@@ -12,7 +12,8 @@ const TOOL_API_RESOURCES = Object.freeze({
   examples: 'specs/examples/',
   storySelection: 'docs/story-selection.md',
   batchPolicy: 'docs/batch-workflow.md',
-  sourcePolicy: 'docs/source-enrichment.md'
+  sourcePolicy: 'docs/source-enrichment.md',
+  sourceLedger: 'docs/source-ledger.md'
 });
 
 const BATCH_WORKFLOW = Object.freeze({
@@ -21,17 +22,19 @@ const BATCH_WORKFLOW = Object.freeze({
   inputAuthority: 'Expert-authored editorial evidence. Presume claims and datapoints are correct; external silence is not contradiction.',
   purpose: 'Produce a chart presentation from multiple candidate data stories.',
   steps: Object.freeze([
-    'initialize .work/<run-id>/ and keep all research notes, downloads, helper scripts, logs, review captures, and package staging inside it',
-    'read the complete input.txt and parse distinct data stories',
-    'preserve each expert-authored claim and enrich it from reputable sources',
+    'initialize .work/<run-id>/ from the exact non-empty project-root input.txt and create its hashed source ledger',
+    'read the complete input.txt and inventory every distinct quantitative story with exact excerpts',
+    'record selected, omitted, or merged disposition for every candidate and verify the source ledger before research',
+    'preserve each inventoried expert-authored claim and enrich it from reputable sources without originating new stories',
     'merge duplicates and omit weak, irrelevant, or non-visual stories',
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'decide the appropriate production tool and chart workflow for each accepted story',
     'author, validate, render, and diagnose one ChartSpec per accepted chart story',
     'capture one final PNG image per accepted chart',
     'assemble the final PNG images into one PowerPoint presentation',
+    'verify that selected source-ledger slugs and titles exactly match the final ChartSpecs',
     'save the ChartSpecs, HTML files, final PNGs, and presentation in the retained local run folders',
-    'finalize the run to remove .work/<run-id>/, legacy previews, and input.txt while preserving specs/runs/<run-id>/ and charts/<run-id>/'
+    'finalize the run to remove .work/<run-id>/ and legacy previews while preserving input.txt, specs/runs/<run-id>/, and charts/<run-id>/'
   ]),
   initializeCommand: 'npm run run:init -- <run-id>',
   deliveryFolder: 'charts/<run-id>/',
@@ -45,16 +48,22 @@ const BATCH_WORKFLOW = Object.freeze({
   ]),
   temporaryWorkspace: '.work/<run-id>/',
   temporaryReviewFolder: '.work/<run-id>/review/',
+  sourceLedger: '.work/<run-id>/source-ledger.json',
+  sourceVerificationCommand: 'npm run run:verify-source -- <run-id>',
+  sourceAndSpecVerificationCommand: 'npm run run:verify-source -- <run-id> --specs',
   finalizeCommand: 'npm run run:finalize -- <run-id>',
   coldResetCommand: 'npm run run:reset',
-  retentionRule: 'Only specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. Both paths are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, legacy previews, and the consumed input are transient.',
+  retentionRule: 'specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. input.txt is also retained. Both production paths are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, and legacy previews are transient.',
   boundary: 'The Tool API produces individual chart artifacts. The orchestration layer owns input parsing, story selection, image capture, presentation assembly, and run delivery.'
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   coreRule: 'Treat input.txt as expert-authored editorial evidence. Assume its factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point.',
   inputRule: 'Treat each input entry as both evidence and routing information. It may be incomplete, but external silence is not a contradiction.',
-  supplementationRule: 'Use reputable external sources to add attribution, comparators, denominators, historical series, mechanisms, consequences, or current status. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
+  inputIdentityRule: 'Use only the exact non-empty project-root input.txt. Never substitute a sibling project file, prior batch, alternate brief, or similarly named source.',
+  inventoryRule: 'Before research, inventory every distinct quantitative input story with exact excerpts and record selected, omitted, or merged disposition. Every selected story requires primary input evidence and an exact titleBasis excerpt.',
+  supplementationRule: 'Use reputable external sources only after the input story is inventoried. They may add attribution, comparators, denominators, historical series, mechanisms, consequences, or current status, but may not supply the subject, central claim, title, or primary plotted measure. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
+  titleFidelityRule: 'Every substantive title concept must be directly supported by its exact titleBasis excerpt. Analytical terms such as maximum, range, coverage, collapse, exposure, erosion, or sector-specific inflation require that structure in the input evidence.',
   contradictionRule: 'Only a direct material contradiction from a reputable source creates a source conflict. Preserve both positions in working notes and escalate for editorial resolution instead of silently rewriting the expert report.',
   presentationRule: 'Do not expose research-process labels such as uncorroborated, not independently confirmed, unsupported draft, or verification failed solely because external search results are silent.',
   safeDerivations: Object.freeze([
