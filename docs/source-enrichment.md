@@ -16,11 +16,13 @@ mechanisms, consequences, or current status. Failure to find the same fact in a
 second source is not a contradiction and must not cause an agent to delete,
 downgrade, relabel, or replace an input claim.
 
-External research may not originate a story. The subject, central claim, title,
-and primary plotted measure must be directly supported by `input.txt`. A source
-found during research may supply a comparator, denominator, mechanism,
-consequence, or attribution only after the input-supported story has been
-inventoried. Do not create a slide because an adjacent article contains an
+External research may not originate a story. The subject, central claim, and
+title must be directly supported by `input.txt`. After that story is inventoried,
+a supplied source, underlying dataset, or directly relevant external source may
+provide actual levels that express the same anchored change more clearly than a
+percentage or index. This changes the representation, not the story. Research
+may also supply a comparator, denominator, mechanism, consequence, or
+attribution. Do not create a slide because an adjacent article contains an
 interesting dataset.
 
 The input is not assumed to contain the complete dataset available for the
@@ -136,7 +138,32 @@ Retain the source inputs and formula in working notes. Do not imply more precisi
 
 Do not derive values that depend on unstated assumptions, incompatible periods, or unrelated datasets.
 
-For `flow.waterfall`, this is a hard constraint rather than a review preference.
+## 4. Audit the value representation
+
+Choose the least normalized representation that still expresses the input-supported story. Use this hierarchy:
+
+1. Reported or retrievable actual levels, such as prices, revenue, output, volume, counts, or share values.
+2. Absolute change in the same tangible unit.
+3. A native rate or share when the rate or share is itself the measured quantity.
+4. Relative change or an index only when the underlying levels are unavailable or not meaningfully comparable.
+
+Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, or a directly linked filing, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
+
+For a selected source-ledger candidate, record:
+
+```json
+"representationAudit": {
+  "selectedMode": "level",
+  "levelAvailability": "reported",
+  "rationale": "The source reports the actual before and after prices."
+}
+```
+
+The matching `ChartSpec.measure` must declare the same `valueMode` and `levelAvailability`. A `relative-change` or `index` measure also requires `normalizationNote` when levels are unavailable or incomparable.
+
+When a share is the primary measure and the absolute component values are reported or retrievable, show both in the visible data label. A percentage-only label discards useful magnitude.
+
+For `flow.waterfall`, exact evidence is a hard constraint rather than a review preference.
 Every item must be an exact reported value and declare the same `period` and
 `scope` as the other items. Use `valueStatus: "bound"`, `"approximate"`, or
 `"derived"` to preserve the evidence state when authoring another recipe, but
@@ -144,7 +171,7 @@ do not put those values in a waterfall. A net loss plus incomplete charges does
 not establish a pre-charge net result, and an operating-profit figure is not a
 substitute for one.
 
-## 4. Build an evidence spine
+## 5. Build an evidence spine
 
 A chart has one central finding. Supporting evidence may fill up to three of these roles:
 
@@ -157,7 +184,7 @@ Not every chart needs every role. Select only the facts required to make the fin
 
 Supporting evidence may appear as primary data, references, annotations, supporting facts, a subtitle, or a note. It does not need to share an axis with the main measure.
 
-## 5. Search beyond the supplied material conditionally
+## 6. Search beyond the supplied material conditionally
 
 Additional research is allowed when it strengthens the expert report or fills a
 material evidence gap. Examples include:
@@ -187,7 +214,7 @@ Additional research must not introduce a new company, policy, market event,
 ownership structure, or operating result as a chart subject unless that subject
 and claim already appear in `input.txt`.
 
-## 6. Apply the relevance test
+## 7. Apply the relevance test
 
 Include secondary context only when all of the following are true:
 
@@ -214,7 +241,7 @@ headline.
 
 A useful removal test is: if deleting the fact does not weaken the title, subtitle, explanation, or interpretation, the fact is probably noise.
 
-## 7. Select the recipe after enrichment
+## 8. Select the recipe after enrichment
 
 Recipe selection follows evidence extraction, not the abbreviated input note.
 
@@ -242,6 +269,9 @@ Before authoring the `ChartSpec`, confirm:
 - The full source has been read.
 - All directly relevant evidence has been extracted.
 - Derived values are traceable and period-compatible.
+- Actual-level availability has been checked before choosing a percentage or index representation.
+- The source-ledger `representationAudit` matches `measure.valueMode` and `measure.levelAvailability`.
+- Percentage or index geometry is used only when actual levels are unavailable or incomparable.
 - External research supplements rather than silently overrides the input.
 - Any direct contradiction has been escalated for editorial resolution.
 - Every selected fact supports magnitude, comparison, mechanism, or consequence.

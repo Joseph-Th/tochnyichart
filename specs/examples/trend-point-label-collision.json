@@ -5,20 +5,80 @@
   "subtitle": "This regression fixture exercises point-aware value-label placement across alternating rises and declines.",
   "date": "2026-08-04",
   "data": [
-    { "label": "Jun 8", "value": 0.20, "displayValue": "0.20%" },
-    { "label": "Jun 15", "value": 0.15, "displayValue": "0.15%" },
-    { "label": "Jun 22", "value": 0.25, "displayValue": "0.25%" },
-    { "label": "Jun 29", "value": 0.22, "displayValue": "0.22%" },
-    { "label": "Jul 6", "value": 0.31, "displayValue": "0.31%", "tone": "critical" },
-    { "label": "Jul 13", "value": 0.17, "displayValue": "0.17%" },
-    { "label": "Jul 20", "value": 0.17, "displayValue": "0.17%" },
-    { "label": "Jul 27", "value": 0.04, "displayValue": "0.04%", "tone": "positive" }
+    {
+      "label": "Jun 8",
+      "value": 0.2,
+      "displayValue": "0.20%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jun 8 2026"
+    },
+    {
+      "label": "Jun 15",
+      "value": 0.15,
+      "displayValue": "0.15%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jun 15 2026"
+    },
+    {
+      "label": "Jun 22",
+      "value": 0.25,
+      "displayValue": "0.25%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jun 22 2026"
+    },
+    {
+      "label": "Jun 29",
+      "value": 0.22,
+      "displayValue": "0.22%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jun 29 2026"
+    },
+    {
+      "label": "Jul 6",
+      "value": 0.31,
+      "displayValue": "0.31%",
+      "tone": "critical",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jul 6 2026"
+    },
+    {
+      "label": "Jul 13",
+      "value": 0.17,
+      "displayValue": "0.17%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jul 13 2026"
+    },
+    {
+      "label": "Jul 20",
+      "value": 0.17,
+      "displayValue": "0.17%",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jul 20 2026"
+    },
+    {
+      "label": "Jul 27",
+      "value": 0.04,
+      "displayValue": "0.04%",
+      "tone": "positive",
+      "quantity": "weekly consumer-price growth",
+      "scope": "Russia consumer-price index",
+      "period": "Week of Jul 27 2026"
+    }
   ],
   "measure": {
     "quantity": "weekly consumer-price growth",
     "unit": "% weekly CPI",
     "decimals": 2,
-    "baseline": "zero"
+    "baseline": "zero",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable"
   },
   "supportingFacts": [
     {

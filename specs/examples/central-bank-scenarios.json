@@ -44,7 +44,9 @@
     "minimum": 13,
     "maximum": 15,
     "baseline": "explicit",
-    "quantity": "policy interest rate"
+    "quantity": "policy interest rate",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable"
   },
   "emphasis": {
     "direction": "down",

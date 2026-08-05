@@ -83,7 +83,9 @@
     "maximum": 60,
     "baseline": "explicit",
     "scale": "linear",
-    "quantity": "synthetic percentage"
+    "quantity": "synthetic percentage",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable"
   },
   "narrative": {
     "frame": "neutral",

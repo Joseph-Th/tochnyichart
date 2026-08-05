@@ -9,18 +9,63 @@
     "period": "2020–2025"
   },
   "data": [
-    { "label": "2020", "value": 280, "displayValue": "280K" },
-    { "label": "2021", "value": 320, "displayValue": "320K" },
-    { "label": "2022", "value": 350, "displayValue": "350K" },
-    { "label": "2023", "value": 390, "displayValue": "390K" },
-    { "label": "2024", "value": 432, "displayValue": "432K" },
-    { "label": "2025", "value": 568, "displayValue": "568K" }
+    {
+      "label": "2020",
+      "value": 280,
+      "displayValue": "280K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2020"
+    },
+    {
+      "label": "2021",
+      "value": 320,
+      "displayValue": "320K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2021"
+    },
+    {
+      "label": "2022",
+      "value": 350,
+      "displayValue": "350K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2022"
+    },
+    {
+      "label": "2023",
+      "value": 390,
+      "displayValue": "390K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2023"
+    },
+    {
+      "label": "2024",
+      "value": 432,
+      "displayValue": "432K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2024"
+    },
+    {
+      "label": "2025",
+      "value": 568,
+      "displayValue": "568K",
+      "quantity": "personal bankruptcy case count",
+      "scope": "Russian personal bankruptcy cases",
+      "period": "2025"
+    }
   ],
   "measure": {
     "unit": "thousand cases",
     "axisTitle": "Personal bankruptcy cases",
     "decimals": 0,
-    "baseline": "zero"
+    "baseline": "zero",
+    "quantity": "personal bankruptcy case count",
+    "valueMode": "level",
+    "levelAvailability": "reported"
   },
   "emphasis": {
     "direction": "up",

@@ -51,11 +51,14 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.sharedContract.sourceEnrichment.inputIdentityRule, /exact non-empty project-root input\.txt/i);
   assert.match(orientation.sharedContract.sourceEnrichment.inventoryRule, /inventory every distinct quantitative input story/i);
   assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /Do not replace, downgrade, or relabel/i);
-  assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /may not supply the subject, central claim, title, or primary plotted measure/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /actual levels that directly express the same input-anchored change/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /may not create the subject, central claim, or title/i);
   assert.match(orientation.sharedContract.sourceEnrichment.titleFidelityRule, /titleBasis/i);
   assert.match(orientation.sharedContract.sourceEnrichment.contradictionRule, /direct material contradiction/i);
   assert.match(orientation.sharedContract.sourceEnrichment.presentationRule, /uncorroborated/i);
   assert.match(orientation.sharedContract.sharedScaleContract.sentenceTest, /Every mark encodes/);
+  assert.match(orientation.sharedContract.valueRepresentationContract.actualLevelRule, /plot those levels/i);
+  assert.match(orientation.sharedContract.valueRepresentationContract.syntheticBaselineRule, /0% before-event/i);
   assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.deepEqual(
     orientation.sharedContract.visualEvidenceContract.rejectedRecipes,
@@ -88,6 +91,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'status.grid'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
+  assert.match(standard.valueRepresentationContract.hierarchy, /actual levels/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
   assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
   assert.deepEqual(standard.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
@@ -136,6 +140,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.deepEqual(manifest.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
   assert.match(manifest.waterfallContract.reconciliation, /reconcile/i);
   assert.match(manifest.sharedScaleContract.rejectionRule, /split the evidence into separate charts/i);
+  assert.match(manifest.valueRepresentationContract.exceptionRule, /normalizationNote/i);
 
   const guide = standardAgentGuide('russia');
   guide.selectionRules.forEach((entry) => {
@@ -150,7 +155,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.8');
+  assert.equal(manifest.version, '1.9');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');

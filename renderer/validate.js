@@ -16,6 +16,8 @@ const STATUSES = new Set(['stable', 'improving', 'strained', 'critical', 'blocke
 const ROLES = new Set(['start', 'change', 'subtotal', 'end']);
 const VALUE_STATUSES = new Set(['reported', 'derived', 'bound', 'approximate']);
 const SCALES = new Set(['linear', 'logarithmic']);
+const VALUE_MODES = new Set(['level', 'absolute-change', 'relative-change', 'rate', 'share', 'index']);
+const LEVEL_AVAILABILITY = new Set(['reported', 'retrievable', 'unavailable', 'incomparable', 'not-applicable']);
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
@@ -30,7 +32,8 @@ const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed
 const ICONS = new Set(['person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
-  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range'
+  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range',
+  'trend.line', 'ranking.horizontal'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -55,7 +58,10 @@ const DATA_KEYS = new Set([
   'period', 'scope'
 ]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
-const MEASURE_KEYS = new Set(['quantity', 'unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale']);
+const MEASURE_KEYS = new Set([
+  'quantity', 'unit', 'axisTitle', 'valueMode', 'levelAvailability', 'normalizationNote',
+  'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale'
+]);
 const EMPHASIS_KEYS = new Set(['direction', 'value', 'displayValue', 'label', 'position']);
 const METRIC_KEYS = new Set(['value', 'label']);
 const FACT_KEYS = new Set(['value', 'label', 'tone']);
@@ -132,6 +138,109 @@ function normalizeEditorialValue(value) {
 function percentageText(value) {
   const decimals = Math.abs(value - Math.round(value)) < 0.05 ? 0 : 1;
   return `${value.toFixed(decimals)}%`;
+}
+
+const UNIT_MAGNITUDE_WORDS = new Set([
+  'unit', 'units', 'thousand', 'million', 'billion', 'trillion',
+  'per', 'each', 'annual', 'annually', 'monthly', 'weekly', 'daily'
+]);
+
+function normalizeVisibleUnitText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\u2012\u2013\u2014\u2212]/g, '-')
+    .replace(/[^a-z0-9%$€£₽¥]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function singularUnitWord(word) {
+  if (word === 'people') return 'person';
+  if (word === 'men') return 'man';
+  if (word === 'women') return 'woman';
+  if (word.length > 4 && word.endsWith('ies')) return `${word.slice(0, -3)}y`;
+  if (word.length > 3 && word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+  return word;
+}
+
+function measureUnitKeywords(unit) {
+  const normalized = normalizeVisibleUnitText(unit);
+  const keywords = new Set();
+  if (!normalized) return keywords;
+  if (normalized.includes('%')) {
+    keywords.add('%');
+    keywords.add('percent');
+    keywords.add('percentage');
+  }
+  if (/\b(?:usd|dollar)\b/.test(normalized)) {
+    keywords.add('$');
+    keywords.add('usd');
+    keywords.add('dollar');
+  }
+  if (/\b(?:rub|ruble|rouble)\b/.test(normalized)) {
+    keywords.add('₽');
+    keywords.add('rub');
+    keywords.add('ruble');
+    keywords.add('rouble');
+  }
+  if (/\b(?:eur|euro)\b/.test(normalized)) {
+    keywords.add('€');
+    keywords.add('eur');
+    keywords.add('euro');
+  }
+  if (/\bindex\b/.test(normalized)) {
+    keywords.add('index');
+    keywords.add('point');
+  }
+  normalized.split(' ').forEach((word) => {
+    if (!word || UNIT_MAGNITUDE_WORDS.has(word)) return;
+    if (/^(?:k|m|mn|bn|tn)$/.test(word)) return;
+    keywords.add(singularUnitWord(word));
+  });
+  return keywords;
+}
+
+function visibleTextContainsUnit(text, unit) {
+  const normalized = normalizeVisibleUnitText(text);
+  if (!normalized) return false;
+  const words = new Set(normalized.split(' ').map(singularUnitWord));
+  for (const keyword of measureUnitKeywords(unit)) {
+    if (['%', '$', '€', '£', '₽', '¥'].includes(keyword)) {
+      if (String(text || '').includes(keyword)) return true;
+    } else if (words.has(keyword)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isMagnitudeOnlyDisplayValue(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  return /^[≈~<>+\-−]?\s*\d[\d.,]*(?:\s*(?:k|m|mn|bn|tn))?$/i.test(normalized);
+}
+
+function validateVisibleUnits(spec, errors) {
+  if (['map.regional', 'story.facets'].includes(spec.recipe)) return;
+  const unit = spec.measure?.unit || spec.measure?.suffix || spec.measure?.prefix;
+  if (!unit) return;
+  const context = `${spec.title || ''} ${spec.subtitle || ''}`;
+  const contextDefinesUnit = visibleTextContainsUnit(context, unit);
+  (spec.data || []).forEach((item, index) => {
+    if (!isObject(item) || !isMagnitudeOnlyDisplayValue(item.displayValue)) return;
+    if (contextDefinesUnit || visibleTextContainsUnit(item.displayValue, unit)) return;
+    errors.push(
+      `data[${index}].displayValue "${item.displayValue}" is unitless while measure.unit is "${unit}"; ` +
+      'add the unit to displayValue or state it explicitly in the title or subtitle.'
+    );
+  });
+  if (isMagnitudeOnlyDisplayValue(spec.emphasis?.displayValue) &&
+      !contextDefinesUnit && !visibleTextContainsUnit(spec.emphasis.displayValue, unit)) {
+    errors.push(
+      `emphasis.displayValue "${spec.emphasis.displayValue}" is unitless while measure.unit is "${unit}"; ` +
+      'add the unit to the emphasis value or state it explicitly in the title or subtitle.'
+    );
+  }
 }
 
 function normalizeSource(source) {
@@ -453,7 +562,7 @@ function validateSharedScaleSemantics(spec, errors) {
     errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Split unlike scopes into separate charts or keep secondary evidence in the unboxed supportingFacts context rail.`);
   }
 
-  if (spec.recipe !== 'comparison.change') {
+  if (!['comparison.change', 'trend.line'].includes(spec.recipe)) {
     const periods = data
       .map((item) => typeof item?.period === 'string' ? normalizeEditorialValue(item.period) : '')
       .filter(Boolean);
@@ -594,6 +703,19 @@ function validateMeasure(spec, errors, warnings) {
   if (measure.axisTitle !== undefined && (typeof measure.axisTitle !== 'string' || measure.axisTitle.length > 80)) {
     errors.push('measure.axisTitle must be a string of 80 characters or fewer.');
   }
+  if (measure.valueMode !== undefined && !VALUE_MODES.has(measure.valueMode)) {
+    errors.push('measure.valueMode is not supported.');
+  }
+  if (measure.levelAvailability !== undefined && !LEVEL_AVAILABILITY.has(measure.levelAvailability)) {
+    errors.push('measure.levelAvailability is not supported.');
+  }
+  if (measure.normalizationNote !== undefined && (
+    typeof measure.normalizationNote !== 'string' ||
+    measure.normalizationNote.trim() === '' ||
+    measure.normalizationNote.length > 180
+  )) {
+    errors.push('measure.normalizationNote must be a non-empty string of 180 characters or fewer.');
+  }
   if (measure.quantity !== undefined && (typeof measure.quantity !== 'string' || measure.quantity.trim().length < 3 || measure.quantity.length > 80)) {
     errors.push('measure.quantity must be a specific string of 3 to 80 characters.');
   }
@@ -609,6 +731,76 @@ function validateMeasure(spec, errors, warnings) {
     const data = Array.isArray(spec.data) ? spec.data : [];
     const values = data.flatMap((item) => [item?.value, item?.low, item?.high, item?.benchmark]).filter((value) => typeof value === 'number');
     if (values.some((value) => value <= 0)) errors.push('Logarithmic scale requires all plotted values to be greater than zero.');
+  }
+}
+
+function isPercentUnit(measure) {
+  return /%|percent|percentage/i.test(`${measure?.unit || ''} ${measure?.suffix || ''}`);
+}
+
+function isIndexUnit(measure) {
+  return /\bindex(?:ed)?\b/i.test(`${measure?.unit || ''} ${measure?.axisTitle || ''}`);
+}
+
+function containsTangibleMagnitude(value) {
+  const text = String(value || '');
+  const withoutPercentages = text.replace(/[≈~<>+\-−]?\s*\d[\d.,]*(?:\s*(?:k|m|mn|bn|tn))?\s*%/gi, ' ');
+  return /(?:[$€£₽¥]\s*\d|\b(?:USD|RUB|EUR|GBP|JPY|CNY)\s*\d|\d[\d.,]*\s*(?:[a-zA-Z]{1,12}|m²|km²|tons?|tonnes?|barrels?|shares?|units?|people|persons?))/i.test(withoutPercentages);
+}
+
+function validateValueRepresentation(spec, errors, warnings) {
+  if (['map.regional', 'story.facets'].includes(spec.recipe)) return;
+  const measure = spec.measure || {};
+  const percentOrIndex = isPercentUnit(measure) || isIndexUnit(measure);
+
+  if (percentOrIndex && !measure.valueMode) {
+    errors.push(
+      'measure.valueMode is required for percentage or index charts. Declare whether the marks are a native rate, share, relative change, or index.'
+    );
+    return;
+  }
+  if (!measure.valueMode) return;
+
+  if (!measure.levelAvailability) {
+    errors.push(
+      'measure.levelAvailability is required when measure.valueMode is declared. Record whether actual levels are reported, retrievable, unavailable, incomparable, or not applicable.'
+    );
+    return;
+  }
+
+  if (['relative-change', 'index'].includes(measure.valueMode)) {
+    if (['reported', 'retrievable'].includes(measure.levelAvailability)) {
+      errors.push(
+        `measure.valueMode ${measure.valueMode} cannot be primary when actual levels are ${measure.levelAvailability}. ` +
+        'Plot the actual values and move the relative or indexed change into emphasis, annotation, or supporting context.'
+      );
+    }
+    if (['unavailable', 'incomparable'].includes(measure.levelAvailability) && !measure.normalizationNote) {
+      errors.push(
+        `measure.normalizationNote is required when ${measure.valueMode} is used because actual levels are ${measure.levelAvailability}.`
+      );
+    }
+    if (measure.levelAvailability === 'not-applicable') {
+      errors.push(`measure.levelAvailability cannot be not-applicable for ${measure.valueMode}; an underlying level exists conceptually.`);
+    }
+  }
+
+  if (measure.valueMode === 'level' && ['unavailable', 'incomparable', 'not-applicable'].includes(measure.levelAvailability)) {
+    errors.push('measure.valueMode level requires actual levels to be reported or retrievable.');
+  }
+
+  if (measure.valueMode === 'share' && ['reported', 'retrievable'].includes(measure.levelAvailability)) {
+    (spec.data || []).forEach((item, index) => {
+      if (!containsTangibleMagnitude(item?.displayValue)) {
+        errors.push(
+          `data[${index}].displayValue must include the tangible absolute amount as well as the share because actual component levels are ${measure.levelAvailability}.`
+        );
+      }
+    });
+  }
+
+  if (!['relative-change', 'index'].includes(measure.valueMode) && measure.normalizationNote) {
+    warnings.push('measure.normalizationNote is only needed for relative-change or index representations.');
   }
 }
 
@@ -860,6 +1052,7 @@ function validateSpec(input) {
   validateRecipe(spec, errors, warnings);
   validateSharedScaleSemantics(spec, errors);
   validateMeasure(spec, errors, warnings);
+  validateValueRepresentation(spec, errors, warnings);
   validateVisual(spec, errors);
   validateReferences(spec, errors, warnings);
   validateEmphasis(spec, errors);
@@ -869,6 +1062,7 @@ function validateSpec(input) {
   validateOptions(spec, errors);
   validateMap(spec, errors);
   validateMetadata(spec, errors, warnings);
+  validateVisibleUnits(spec, errors);
   validateEditorialEconomy(spec, errors, warnings);
   validateInformationDensity(spec, warnings);
 

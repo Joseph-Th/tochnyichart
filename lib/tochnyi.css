@@ -795,6 +795,12 @@ body.tochnyi-regional-matrix-page {
     opacity: 0.85;
 }
 
+.tochnyi-svg-zero-reference {
+    stroke: var(--tochnyi-black);
+    stroke-width: 3;
+    opacity: 0.82;
+}
+
 .tochnyi-svg-reference.dashed { stroke-dasharray: 7 5; }
 
 .tochnyi-svg-reference-label {

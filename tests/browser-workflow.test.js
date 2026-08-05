@@ -95,6 +95,50 @@ test('trend value labels clear measured plot points at every responsive viewport
   }
 });
 
+test('axes that cross zero render a prominent interior zero reference', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-zero-reference-'));
+  try {
+    const specPath = path.join(tempDir, 'zero-reference.json');
+    const outputPath = path.join(tempDir, 'zero-reference.html');
+    fs.writeFileSync(specPath, JSON.stringify({
+      version: '2.0',
+      recipe: 'comparison.diverging',
+      title: 'Operating contributions crossed zero',
+      subtitle: 'Positive and negative contributions use one company-wide bridge.',
+      date: '2026-08-05',
+      data: [
+        {
+          label: 'Price effect', value: 12, displayValue: 'RUB 12m',
+          quantity: 'contribution to operating profit change',
+          scope: 'company-wide operating profit bridge', period: 'H1 2026'
+        },
+        {
+          label: 'Cost effect', value: -7, displayValue: '−RUB 7m',
+          quantity: 'contribution to operating profit change',
+          scope: 'company-wide operating profit bridge', period: 'H1 2026'
+        }
+      ],
+      measure: {
+        quantity: 'contribution to operating profit change',
+        unit: 'million RUB', axisTitle: 'Operating profit contribution',
+        valueMode: 'absolute-change', levelAvailability: 'reported',
+        decimals: 0, baseline: 'auto'
+      }
+    }), 'utf8');
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, {
+      browser,
+      viewports: REGIONAL_WORKFLOW_VIEWPORTS
+    });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.scaleAttributes?.['data-zero-reference'], 'interior-prominent');
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('categorical status evidence is rejected before browser rendering', () => {
   const spec = {
     version: '2.0',

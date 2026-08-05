@@ -28,8 +28,10 @@ const BATCH_WORKFLOW = Object.freeze({
     'preserve each inventoried expert-authored claim and enrich it from reputable sources without originating new stories',
     'merge duplicates and omit weak, irrelevant, or non-visual stories',
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
+    'audit whether actual levels are reported or retrievable and record the chosen value representation for every selected story',
     'decide the appropriate production tool and chart workflow for each accepted story',
     'author, validate, render, and diagnose one ChartSpec per accepted chart story',
+    'compare authored ChartSpecs for duplicate source, reporting context, recipe, and category or time skeleton; consolidate matches before delivery',
     'capture one final PNG image per accepted chart',
     'assemble the final PNG images into one PowerPoint presentation',
     'verify that selected source-ledger slugs and titles exactly match the final ChartSpecs',
@@ -62,7 +64,7 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   inputRule: 'Treat each input entry as both evidence and routing information. It may be incomplete, but external silence is not a contradiction.',
   inputIdentityRule: 'Use only the exact non-empty project-root input.txt. Never substitute a sibling project file, prior batch, alternate brief, or similarly named source.',
   inventoryRule: 'Before research, inventory every distinct quantitative input story with exact excerpts and record selected, omitted, or merged disposition. Every selected story requires primary input evidence and an exact titleBasis excerpt.',
-  supplementationRule: 'Use reputable external sources only after the input story is inventoried. They may add attribution, comparators, denominators, historical series, mechanisms, consequences, or current status, but may not supply the subject, central claim, title, or primary plotted measure. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
+  supplementationRule: 'Use reputable external sources only after the input story is inventoried. They may add attribution, comparators, denominators, historical series, mechanisms, consequences, current status, or actual levels that directly express the same input-anchored change. They may not create the subject, central claim, or title. Changing from a percentage or index to its corresponding actual levels is a representation improvement, not a new story. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
   titleFidelityRule: 'Every substantive title concept must be directly supported by its exact titleBasis excerpt. Analytical terms such as maximum, range, coverage, collapse, exposure, erosion, or sector-specific inflation require that structure in the input evidence.',
   contradictionRule: 'Only a direct material contradiction from a reputable source creates a source conflict. Preserve both positions in working notes and escalate for editorial resolution instead of silently rewriting the expert report.',
   presentationRule: 'Do not expose research-process labels such as uncorroborated, not independently confirmed, unsupported draft, or verification failed solely because external search results are silent.',
@@ -86,6 +88,8 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   ]),
   relevanceRule: 'Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.',
   complexityRule: 'Do not add irrelevant facts or choose a complex recipe merely for decoration. A chart still needs a genuine visual comparison: enrich a one-point or text-only story with a source-supported comparator, denominator, benchmark, composition, or time series; otherwise omit it.',
+  representationRule: 'Before recipe selection, determine whether actual levels are reported or retrievable. Prefer those levels for primary geometry. Record representationAudit on every selected ledger candidate, and use relative change or an index only when levels are unavailable or incomparable.',
+  consolidationRule: 'The ledger inventories claims, not mandatory slides. After authoring, consolidate selected ChartSpecs that share the same input passage, source and reporting period, recipe, and category or time skeleton. Keep the primary measure as the chart, move a secondary measure into supportingFacts, or mark the secondary candidate merged.',
   attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable; never substitute input.txt, internal provenance, research-process labels, or workflow commentary into presentation copy.'
 });
 
@@ -95,6 +99,8 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, remainder, peer, range, or time series. If none exists, omit the story.',
   categoricalRule: 'Categorical operating states cannot use a text grid. Quantify a common dimension, use map.regional when place explains the finding, or do not chart the story.',
   compositionRule: 'A composition must lead with proportional marks and direct segment labels. It cannot collapse into a primaryMetric or use supporting facts to restate segment values.',
+  actualValueRule: 'Actual reported or retrievable levels outrank normalized percentages and indexes for primary geometry. Percentage change should explain the level movement, not replace it.',
+  visibleUnitRule: 'A magnitude-only displayValue or emphasis value must include its unit unless the title or subtitle explicitly defines that unit. Axis titles alone do not satisfy this rule.',
   supportingFactsRule: 'supportingFacts may explain cause or consequence only after the primary visual already carries the argument. They cannot substitute for marks.',
   rejectedRecipes: Object.freeze(['status.grid', 'headline.metric'])
 });
@@ -112,13 +118,22 @@ const STANDARD_SELECTION_RULES = Object.freeze([
 ]);
 
 const SHARED_SCALE_CONTRACT = Object.freeze({
-  sentenceTest: 'Before selecting a shared-axis comparison, complete this sentence: Every mark encodes [measure.quantity] for [data.scope] in [data.period].',
+  sentenceTest: 'Before selecting any shared-axis comparison, trend, or ranking, complete this sentence: Every mark encodes [measure.quantity] for [data.scope] in [data.period].',
   requiredFields: Object.freeze(['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']),
   sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
   sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
-  periodRule: 'Scenario, diverging, and range comparisons use one period. comparison.change may use two periods because time is the intended contrast.',
+  periodRule: 'Scenario, diverging, range, and ranking charts use one period. comparison.change may use two periods, and trend.line may advance through ordered periods, while quantity and scope stay fixed.',
   rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Select one primary quantitative story and keep secondary context inline, or split the evidence into separate charts.',
   genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
+});
+
+const VALUE_REPRESENTATION_CONTRACT = Object.freeze({
+  auditRule: 'Every selected source-ledger candidate must declare representationAudit.selectedMode, levelAvailability, and rationale before a ChartSpec is authored.',
+  hierarchy: 'Prefer reported or retrievable actual levels for the primary geometry. Use absolute change next. Use native rates and shares when they are the real measured quantity. Use relative change or an index only when actual levels are unavailable or incomparable.',
+  actualLevelRule: 'When actual levels are reported or retrievable, plot those levels and move percentage or indexed change into emphasis, annotation, subtitle, or supporting context.',
+  syntheticBaselineRule: 'Never invent a 0% before-event point or an index-100 starting point merely to create a trend. Research the actual level or chart only the reported relative observations.',
+  tangibleValueRule: 'For prices, volumes, revenues, output, counts, and other tangible quantities, use the tangible values when available. For shares, show the absolute component amount in the visible label when it is available.',
+  exceptionRule: 'A relative-change or index ChartSpec is valid only when levelAvailability is unavailable or incomparable and measure.normalizationNote explains the limitation.'
 });
 
 
@@ -156,9 +171,15 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Read supplied sources before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
   'Search beyond the primary source to fill a named material evidence gap or add useful attribution and context, and reject adjacent context that does not strengthen the central claim.',
   'Do not add irrelevant data or decorative complexity. Do require a real visual comparison: a one-point or prose-only story must be enriched with source-supported structure or omitted.',
-  'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison recipe.',
+  'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison, trend, or ranking recipe.',
+  'Audit value representation before recipe selection. Declare measure.valueMode and measure.levelAvailability, matching the selected story representationAudit.',
+  'When actual levels are reported or retrievable, plot the actual values and move percentage or indexed change into emphasis, annotation, subtitle, or supportingFacts.',
+  'Never invent a 0% before-event point or index-100 starting point merely to create a trend. Use actual levels or only the reported relative observations.',
+  'Use relative-change or index geometry only when actual levels are unavailable or incomparable, and explain the limitation in measure.normalizationNote.',
   'Never use status, card, bullet, or facet grids as a substitute for a chart. Quantify a common dimension, use a regional map when geography matters, split the evidence, or omit the story.',
   'Never create a chart from one numeric item. Find a comparator, denominator, benchmark, remainder, peer, range, or time series in the source; otherwise omit it.',
+  'Never publish a bare numeric label whose unit is only available on an axis. Put the unit in displayValue or state it explicitly in the title or subtitle.',
+  'Do not create parallel charts from the same source passage, reporting period, recipe, and category or time skeleton merely because the measures use different units. Consolidate the secondary measure or mark it merged.',
   'For composition charts, preserve both the share and tangible absolute amount, lead with proportional marks, and do not use primaryMetric or repeated supporting facts.',
   'Use flow.waterfall only when the strict waterfall contract is satisfied: every step is exact and reported, period and scope match, and the bridge reconciles.',
   'Keep the title, subtitle, labels, and details concise enough to survive responsive layouts.',
@@ -171,6 +192,7 @@ const SHARED_STAGES = Object.freeze([
   Object.freeze({ id: 'confirm-source', action: 'Confirm that supplied sources used for supplementation match the entity, event, period, and finding.' }),
   Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract relevant supplemental evidence and safe derivations.' }),
   Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond supplied sources to fill a named material evidence gap or add useful attribution and context.' }),
+  Object.freeze({ id: 'audit-representation', action: 'Determine whether actual levels are reported or retrievable, record the representation audit, and prefer tangible values over normalized changes.' }),
   Object.freeze({ id: 'analyze', action: 'Choose one central finding, its evidence spine, the workflow, and the recipe.' }),
   Object.freeze({ id: 'author', action: 'Write the smallest semantic ChartSpec that expresses that story.' }),
   Object.freeze({ id: 'validate', command: `${TOOL_API_ENTRYPOINT} validate <spec.json>` }),
@@ -222,6 +244,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     steps: [
       'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
+      'Audit actual-level availability and select the least normalized representation that preserves the story.',
       'Classify the enriched evidence with the selection rules below.',
       'Write a semantic ChartSpec using the selected recipe.',
       'Validate, render, and diagnose the chart; capture the final PNG into charts/<run-id>/.'
@@ -242,6 +265,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     authoringRules: [...SHARED_AUTHORING_RULES],
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
+    valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     composableFeatures: clone(COMPOSABLE_FEATURES),
     waterfallContract: clone(WATERFALL_CONTRACT),
@@ -312,7 +336,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.8',
+    version: '1.9',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -342,6 +366,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
       visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
       sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
+      valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
       waterfallContract: clone(WATERFALL_CONTRACT),
       stages: clone(SHARED_STAGES),
       authorOwns: [
@@ -381,7 +406,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.8',
+    version: '1.9',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -404,6 +429,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
+    valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
     waterfallContract: clone(WATERFALL_CONTRACT),
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
@@ -438,6 +464,7 @@ module.exports = {
   SOURCE_ENRICHMENT_POLICY,
   VISUAL_EVIDENCE_CONTRACT,
   SHARED_SCALE_CONTRACT,
+  VALUE_REPRESENTATION_CONTRACT,
   WATERFALL_CONTRACT,
   toolApiManifest,
   agentWorkflowOrientation,

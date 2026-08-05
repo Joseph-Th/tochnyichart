@@ -9,11 +9,51 @@
     "period": "July 2026"
   },
   "data": [
-    { "label": "Kursk region", "value": 82, "displayValue": "82", "tone": "critical" },
-    { "label": "Novosibirsk region", "value": 76, "displayValue": "76", "tone": "warning" },
-    { "label": "Kirov region", "value": 69, "displayValue": "69", "tone": "warning" },
-    { "label": "Mari El", "value": 61, "displayValue": "61", "tone": "secondary" },
-    { "label": "Pskov region", "value": 54, "displayValue": "54", "tone": "primary" }
+    {
+      "label": "Kursk region",
+      "value": 82,
+      "displayValue": "82",
+      "tone": "critical",
+      "quantity": "composite fuel-shortage severity score",
+      "scope": "regional fuel-shortage assessment",
+      "period": "July 2026"
+    },
+    {
+      "label": "Novosibirsk region",
+      "value": 76,
+      "displayValue": "76",
+      "tone": "warning",
+      "quantity": "composite fuel-shortage severity score",
+      "scope": "regional fuel-shortage assessment",
+      "period": "July 2026"
+    },
+    {
+      "label": "Kirov region",
+      "value": 69,
+      "displayValue": "69",
+      "tone": "warning",
+      "quantity": "composite fuel-shortage severity score",
+      "scope": "regional fuel-shortage assessment",
+      "period": "July 2026"
+    },
+    {
+      "label": "Mari El",
+      "value": 61,
+      "displayValue": "61",
+      "tone": "secondary",
+      "quantity": "composite fuel-shortage severity score",
+      "scope": "regional fuel-shortage assessment",
+      "period": "July 2026"
+    },
+    {
+      "label": "Pskov region",
+      "value": 54,
+      "displayValue": "54",
+      "tone": "primary",
+      "quantity": "composite fuel-shortage severity score",
+      "scope": "regional fuel-shortage assessment",
+      "period": "July 2026"
+    }
   ],
   "measure": {
     "unit": "severity index",
@@ -21,7 +61,11 @@
     "decimals": 0,
     "minimum": 0,
     "maximum": 100,
-    "baseline": "explicit"
+    "baseline": "explicit",
+    "valueMode": "index",
+    "levelAvailability": "incomparable",
+    "normalizationNote": "The composite severity score combines unlike shortage indicators, so no common physical level can replace the index.",
+    "quantity": "composite fuel-shortage severity score"
   },
   "note": "This fixture demonstrates the ranking layout; replace the illustrative index with a documented scoring method before publication.",
   "narrative": {

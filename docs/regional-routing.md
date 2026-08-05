@@ -52,7 +52,11 @@ preserves geographic order within each card column, separates ports, and scores
 crossings, attachment sharpness, route length, side displacement, and local
 curve naturalness. Detour candidates fan away from a nearby leader before
 turning, and routes with very short intermediate spline runs are penalized so a
-collision-free result does not introduce a tight local S-curve. Region
+collision-free result does not introduce a tight local S-curve. The naturalness
+contract also rejects control-point backtracking and terminal box turns, where a
+leader reaches the card edge and then makes a short corrective vertical turn.
+When one obstacle can be cleared with one continuous fan spline, a multi-segment
+corrective path is not eligible merely because it is collision-free. Region
 polygons are evidence rather than physical barriers: leaders may cross
 geography. Only leader-to-leader and card collisions trigger detours.
 
@@ -110,13 +114,17 @@ normalizes them to fields such as:
 | `finalCollisions` | Final leader/shape or card collision count. |
 | `fallbackRoutes` | Routes that needed the fallback path strategy. |
 | `sourceExitRoutes` | Routes that retained a source-exit detour. |
+| `directionReversalRoutes` | Non-source-exit routes that reverse horizontal direction. |
+| `controlReversalRoutes` | Routes whose Bézier control polygon backtracks even when sampled positions appear monotonic. |
+| `terminalBoxTurnRoutes` | Routes with an undersized terminal approach followed by a sharp corrective turn. |
 | `strictEnvelopeRoutes` | Routes solved within the endpoint vertical envelope. |
 | `expandedEnvelopeRoutes` | Routes that needed an expanded envelope. |
 
 Expected delivery state is `diagnostics.status = "pass"`, zero error-level
-diagnostics, and zero final collisions or fallback routes unless a reviewed
-special case is documented. Warnings are signals for editorial review; they are
-not permission to edit generated HTML.
+diagnostics, zero final collisions, and zero direction-reversal, control-
+reversal, or terminal-box-turn routes. The regional workflow fails when any of
+these naturalness counters is nonzero. Warnings are signals for editorial
+review; they are not permission to edit generated HTML.
 
 ## Performance guidance
 

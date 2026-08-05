@@ -162,6 +162,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   const diagnostics = extractLayoutDiagnostics(result.stdout);
   const chartAttributes = extractDataAttributes(result.stdout);
   const trendAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-trend-');
+  const scaleAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-zero-');
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
     throw new Error(`Layout diagnostics did not complete (state: ${state}).`);
@@ -174,6 +175,7 @@ function diagnoseHtml(htmlPath, options = {}) {
     diagnostics,
     chartAttributes,
     trendAttributes,
+    scaleAttributes,
     rendered: true
   };
 }
@@ -193,7 +195,8 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
       viewport: run.viewport,
       diagnostics: run.diagnostics,
       chartAttributes: run.chartAttributes,
-      trendAttributes: run.trendAttributes
+      trendAttributes: run.trendAttributes,
+      scaleAttributes: run.scaleAttributes
     }))
   };
 }

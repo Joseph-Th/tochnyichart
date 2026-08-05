@@ -84,6 +84,149 @@ test('shared-axis comparisons reject unlike quantities, scopes, and periods', ()
   result = validateSpec(genericQuantity);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => message.includes('measure.quantity is too generic')));
+
+  const trend = loadExample('bankruptcies-trend.json');
+  result = validateSpec(trend);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  const mixedTrend = structuredClone(trend);
+  mixedTrend.data[2].quantity = 'bankruptcy growth rate';
+  result = validateSpec(mixedTrend);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('must match measure.quantity exactly')));
+
+  const ranking = loadExample('regional-ranking.json');
+  result = validateSpec(ranking);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  const mixedRanking = structuredClone(ranking);
+  mixedRanking.data[1].scope = 'national fuel market';
+  result = validateSpec(mixedRanking);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('cannot place unlike scopes on one scale')));
+});
+
+test('numeric labels must expose their units unless the title or subtitle defines them', () => {
+  const indexed = {
+    version: '2.0',
+    recipe: 'comparison.change',
+    title: 'Insurance prices rose 230%',
+    subtitle: 'An indexed view moves from 100 to 330.',
+    date: '2026-08-05',
+    data: [
+      {
+        label: 'Before',
+        value: 100,
+        displayValue: '100',
+        quantity: 'indexed insurance price',
+        scope: 'company insurance pricing',
+        period: 'Before increase'
+      },
+      {
+        label: 'After',
+        value: 330,
+        displayValue: '330',
+        quantity: 'indexed insurance price',
+        scope: 'company insurance pricing',
+        period: 'After increase'
+      }
+    ],
+    measure: {
+      quantity: 'indexed insurance price',
+      unit: 'index points',
+      axisTitle: 'Indexed insurance price',
+      valueMode: 'index',
+      levelAvailability: 'unavailable',
+      normalizationNote: 'The fixture intentionally provides only an indexed series for visible-unit validation.',
+      decimals: 0,
+      baseline: 'zero'
+    },
+    emphasis: {
+      direction: 'up',
+      displayValue: '330',
+      label: 'After increase',
+      position: 'corner'
+    }
+  };
+  let result = validateSpec(indexed);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('displayValue "330" is unitless')));
+
+  const explicitLabels = structuredClone(indexed);
+  explicitLabels.data[0].displayValue = '100 index points';
+  explicitLabels.data[1].displayValue = '330 index points';
+  explicitLabels.emphasis.displayValue = '330 index points';
+  result = validateSpec(explicitLabels);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  const explicitTitle = structuredClone(indexed);
+  explicitTitle.title = 'Insurance price index rose from 100 to 330 points';
+  result = validateSpec(explicitTitle);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('value representation prefers actual levels over percentages and synthetic indexes', () => {
+  const relative = {
+    version: '2.0',
+    recipe: 'comparison.change',
+    title: 'Share price changed after the event',
+    subtitle: 'The source reports both share prices and the percentage movement.',
+    date: '2026-08-05',
+    data: [
+      {
+        label: 'Before', value: 0, displayValue: '0%',
+        quantity: 'share-price change', scope: 'company shares', period: 'Before event'
+      },
+      {
+        label: 'After', value: -8.5, displayValue: '−8.5%',
+        quantity: 'share-price change', scope: 'company shares', period: 'After event'
+      }
+    ],
+    measure: {
+      quantity: 'share-price change', unit: '%', axisTitle: 'Share-price change',
+      valueMode: 'relative-change', levelAvailability: 'retrievable', decimals: 1, baseline: 'zero'
+    }
+  };
+  let result = validateSpec(relative);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /actual levels are retrievable/i.test(message)));
+
+  const levels = structuredClone(relative);
+  levels.title = 'Share price fell from RUB 250 to RUB 229';
+  levels.subtitle = 'The percentage decline remains secondary context.';
+  levels.data[0] = {
+    label: 'Before', value: 250, displayValue: 'RUB 250',
+    quantity: 'share price', scope: 'company shares', period: 'Before event'
+  };
+  levels.data[1] = {
+    label: 'After', value: 229, displayValue: 'RUB 229',
+    quantity: 'share price', scope: 'company shares', period: 'After event'
+  };
+  levels.measure = {
+    quantity: 'share price', unit: 'RUB per share', axisTitle: 'Share price',
+    valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'auto'
+  };
+  result = validateSpec(levels);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  const justifiedRelative = structuredClone(relative);
+  justifiedRelative.measure.levelAvailability = 'unavailable';
+  justifiedRelative.measure.normalizationNote = 'The source reports only the percentage movement and no recoverable share-price level.';
+  result = validateSpec(justifiedRelative);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('share charts expose tangible amounts when component levels are available', () => {
+  const composition = loadExample('budget-composition.json');
+  composition.measure.levelAvailability = 'reported';
+  let result = validateSpec(composition);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /tangible absolute amount/i.test(message)));
+
+  composition.data[0].displayValue = '35% · RUB 35,000';
+  composition.data[1].displayValue = '25% · RUB 25,000';
+  composition.data[2].displayValue = '20% · RUB 20,000';
+  composition.data[3].displayValue = '20% · RUB 20,000';
+  result = validateSpec(composition);
+  assert.equal(result.valid, true, result.errors.join('; '));
 });
 
 test('legacy story facets are deprecated and render without standalone cards', () => {
@@ -671,6 +814,9 @@ test('relative percentage declines render as retained outcome levels', () => {
     measure: {
       unit: '% change',
       axisTitle: 'Shipment change',
+      valueMode: 'relative-change',
+      levelAvailability: 'unavailable',
+      normalizationNote: 'The fixture supplies only source-reported decline ranges, not comparable shipment levels.',
       decimals: 0,
       baseline: 'zero',
       scale: 'linear',
@@ -960,6 +1106,65 @@ test('leader detours fan out before turning around a nearby route', () => {
     'the detour must preserve the configured leader clearance');
   assert.ok(Math.min(...chordLengths) >= 28,
     'the route must fan out before turning instead of using tiny local S-curves');
+});
+
+test('obstacle detours reject false-smooth terminal box turns', () => {
+  const cubic = (start, control1, control2, end) => ({ start, control1, control2, end });
+  const straight = (start, end) => cubic(
+    start,
+    {
+      x: start.x + (end.x - start.x) / 3,
+      y: start.y + (end.y - start.y) / 3
+    },
+    {
+      x: start.x + (end.x - start.x) * 2 / 3,
+      y: start.y + (end.y - start.y) * 2 / 3
+    },
+    end
+  );
+  const priorRoute = [
+    cubic(
+      { x: 358, y: 386 },
+      { x: 516, y: 386 },
+      { x: 881, y: 354 },
+      { x: 1150, y: 354 }
+    ),
+    straight({ x: 1150, y: 354 }, { x: 1182, y: 354 })
+  ];
+  const routed = TochnyiMaps.buildPortLeaderPath({
+    side: 'right',
+    point: { x: 324, y: 387 },
+    portY: 396,
+    portIndex: 3,
+    sideCount: 4
+  }, {
+    mapEdgeX: 1160,
+    cardX: 1182,
+    cardTop: 378,
+    cardBottom: 462,
+    endY: 396,
+    portOffset: 10,
+    minimumCardStub: 32,
+    leaderClearance: 14,
+    obstacles: [{ left: 340, right: 385, top: 370, bottom: 405 }],
+    sourceObstacles: [],
+    routeTop: 80,
+    routeBottom: 520,
+    routeLeft: 250,
+    routeRight: 1150,
+    samplesPerSegment: 48,
+    preferSmooth: true,
+    avoidRoutes: [priorRoute]
+  });
+  assert.equal(routed.fallback, false);
+  assert.equal(routed.collisionCount, 0);
+  assert.equal(routed.routeCrossings, 0);
+  assert.equal(routed.directionReversalCount, 0);
+  assert.equal(routed.controlReverseDistance, 0);
+  assert.equal(routed.terminalBoxTurn, false);
+  assert.ok(routed.terminalApproachRun >= 28);
+  assert.equal((routed.path.match(/\bC\b/g) || []).length, 1,
+    'a simple obstruction should produce one continuous fan spline, not corrective S-turns');
 });
 
 test('successive crowded leaders remain single logical splines', () => {
@@ -2083,7 +2288,9 @@ test('browser diagnostic JSON can be extracted from dumped DOM', () => {
 test('regional workflow extracts routing diagnostics from the chart element', () => {
   const dom = '<div id="chart" data-map-workflow="regional-breakdown" data-map-leader-routing="ports" ' +
     'data-map-callout-predicted-crossings="0" data-map-port-final-collisions="0" ' +
-    'data-map-port-rendered-crossings="0" data-map-port-fallback-routes="0"></div>';
+    'data-map-port-rendered-crossings="0" data-map-port-fallback-routes="0" ' +
+    'data-map-port-direction-reversal-routes="0" data-map-port-control-reversal-routes="0" ' +
+    'data-map-port-terminal-box-turn-routes="0"></div>';
   const attributes = extractDataAttributes(dom);
   assert.equal(attributes['data-map-workflow'], 'regional-breakdown');
   const summary = summarizeDiagnosticRun({
@@ -2096,6 +2303,9 @@ test('regional workflow extracts routing diagnostics from the chart element', ()
   assert.equal(summary.renderedCrossings, 0);
   assert.equal(summary.finalCollisions, 0);
   assert.equal(summary.fallbackRoutes, 0);
+  assert.equal(summary.directionReversalRoutes, 0);
+  assert.equal(summary.controlReversalRoutes, 0);
+  assert.equal(summary.terminalBoxTurnRoutes, 0);
 });
 
 test('regional agent workflow validates, renders, and reports normalized automatic defaults', () => {

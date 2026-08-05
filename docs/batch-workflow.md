@@ -53,10 +53,19 @@ preserve each inventoried claim and enrich it from reputable sources
 apply the visual-evidence gate; enrich or omit prose-only and one-point stories
     |
     v
+audit actual-level availability and record the selected value representation
+    |
+    v
 decide whether each story needs a chart and select the appropriate workflow and recipe
     |
     v
 author and validate one ChartSpec per selected story
+    |
+    v
+compare the authored set for duplicate source, reporting context, recipe, and series skeleton
+    |
+    v
+consolidate duplicate visuals and update the ledger to merged where needed
     |
     v
 render and diagnose the chart HTML
@@ -116,6 +125,8 @@ For each candidate, identify:
 - One or more exact excerpts from `input.txt`
 - The exact excerpt that supports any proposed chart title
 - Which evidence is primary input evidence versus external or derived context
+- Whether actual values are reported, retrievable, unavailable, incomparable,
+  or not applicable, and the least normalized representation the chart should use
 
 Do not assume every paragraph requires a chart. Merge duplicate notes when they
 describe the same finding. Exclude items that are duplicative, immaterial, or do
@@ -226,13 +237,21 @@ npm run run:verify-source -- <run-id> --specs
 
 This requires the selected source-ledger output slugs to exactly match the JSON
 files in `specs/runs/<run-id>/` and requires every ChartSpec title to exactly
-match its ledger title.
+match its ledger title. It also rejects selected pairs that repeat the same input
+passage, publication and reporting period, recipe, and category or time-label
+sequence. Consolidate these pairs before rendering. Keep one primary visual and
+move the secondary measure into `supportingFacts`, or mark the secondary ledger
+candidate `merged`.
 
 Schema validation and responsive diagnostics are necessary but not sufficient.
 Semantic QA must confirm that the visual grammar matches the evidence, that
 reported and derived values are distinguishable, that qualifiers and bounds
 are preserved, and that a reader can state the intended takeaway without
 mentally reconstructing the chart.
+
+Visible values must also be self-describing. A numeric `displayValue` or
+`emphasis.displayValue` cannot rely solely on an axis title for its unit. Include
+the unit in the label unless the title or subtitle explicitly defines it.
 
 All standard charts must retain the shared large, centered watermark treatment
 through PNG capture and PowerPoint assembly. Do not vary it by recipe or move it

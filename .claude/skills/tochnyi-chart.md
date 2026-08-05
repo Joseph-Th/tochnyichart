@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.5.0
+version: 4.6.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -27,13 +27,14 @@ The agent must:
 2. Read the complete `input.txt`.
 3. Separate it into distinct stories and merge duplicates.
 4. Preserve each expert claim and enrich it with reputable sources.
-5. Decide which production tool and chart workflow each story requires.
-6. Produce, validate, render, and diagnose each accepted chart.
-7. Capture one final PNG for every accepted chart.
-8. Assemble the final PNGs into one PowerPoint presentation.
-9. Save local production specs in `specs/runs/<run-id>/` and delivery artifacts
+5. Audit whether actual levels are reported or retrievable and record the selected value representation.
+6. Decide which production tool and chart workflow each story requires.
+7. Produce, validate, render, and diagnose each accepted chart.
+8. Capture one final PNG for every accepted chart.
+9. Assemble the final PNGs into one PowerPoint presentation.
+10. Save local production specs in `specs/runs/<run-id>/` and delivery artifacts
    in `charts/<run-id>/`.
-10. Run `npm run run:finalize -- <run-id>` after delivery.
+11. Run `npm run run:finalize -- <run-id>` after delivery.
 
 The canonical deck filename is `tochnyi-charts-<run-id>.pptx`. Production
 specifications and chart outputs are local artifacts ignored by Git. The chart
@@ -122,6 +123,11 @@ every accepted story:
 - Do not add facts or select a complex recipe merely to make the output more visually interesting.
 - Keep a simple two-value chart when the contrast itself is the complete story.
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
+- Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
+- Prefer reported or retrievable actual levels for primary geometry. Use percentage or indexed change as annotation, emphasis, subtitle, or supporting context.
+- Never manufacture a `0%` before-event point or index-100 starting point merely to create a trend.
+- Use `relative-change` or `index` only when actual levels are unavailable or incomparable, and explain the limitation in `measure.normalizationNote`.
+- Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec.
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
 - Keep the specification small and semantic.
@@ -146,33 +152,34 @@ Then:
 1. Preserve the expert input claim, then confirm and read the full supplied source.
 2. Extract the evidence spine and safe derivations.
 3. Fill only material evidence gaps with targeted research.
-4. Identify one central finding and select the recipe.
-5. Author the ChartSpec.
-6. Validate:
+4. Audit actual-level availability and choose the least normalized valid representation.
+5. Identify one central finding and select the recipe.
+6. Author the ChartSpec with representation metadata.
+7. Validate:
 
    ```bash
    node tool-api/chart.js validate specs/runs/<run-id>/[slug].json
    ```
 
-7. Render:
+8. Render:
 
    ```bash
    node tool-api/chart.js render specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].html --run-id <run-id>
    ```
 
-8. Diagnose:
+9. Diagnose:
 
    ```bash
    node tool-api/chart.js diagnose charts/<run-id>/[slug].html
    ```
 
-9. Perform semantic QA on the rendered output. State the intended reader
+10. Perform semantic QA on the rendered output. State the intended reader
    takeaway in one sentence and accept the chart only if a reader can recover
    it without mentally reconstructing the argument. Check that the visual
    grammar matches the evidence, derived values are transparent, qualifiers
    remain visible, and the title and labels describe the marks accurately.
 
-10. Correct semantic errors or report an infrastructure defect. For the batch
+11. Correct semantic errors or report an infrastructure defect. For the batch
    run, capture the final PNG into the run delivery folder:
 
    ```bash

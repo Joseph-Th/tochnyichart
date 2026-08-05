@@ -24,7 +24,7 @@ npm run run:verify-source -- <run-id> --specs
 
 ```json
 {
-  "version": "1.0",
+  "version": "1.1",
   "runId": "issue-2026-08-05",
   "input": {
     "path": "input.txt",
@@ -46,6 +46,11 @@ npm run run:verify-source -- <run-id> --specs
       "outputSlug": "ozon-insurance-price-increase",
       "title": "Ozon insurance prices rose 230%",
       "titleBasis": "Exact sentence or passage copied from input.txt",
+      "representationAudit": {
+        "selectedMode": "level",
+        "levelAvailability": "retrievable",
+        "rationale": "The underlying market data provides the actual before and after prices."
+      },
       "anchors": [
         "Exact sentence or passage copied from input.txt"
       ],
@@ -112,13 +117,31 @@ npm run run:verify-source -- <run-id> --specs
 
 Every distinct quantitative input story must appear exactly once.
 
-- `selected` requires `outputSlug`, `title`, `titleBasis`, and at least one
-  `input` evidence item with role `primary`.
+- `selected` requires `outputSlug`, `title`, `titleBasis`,
+  `representationAudit`, and at least one `input` evidence item with role
+  `primary`.
 - `omitted` requires a specific `reason`.
 - `merged` requires `mergedInto` naming another candidate ID.
 
 An omitted story cannot disappear silently. A merged story cannot point to a
 subject that is absent from the input.
+
+## Representation audit
+
+Every selected story must record the representation chosen before recipe
+selection:
+
+- `selectedMode`: `level`, `absolute-change`, `relative-change`, `rate`,
+  `share`, or `index`.
+- `levelAvailability`: `reported`, `retrievable`, `unavailable`,
+  `incomparable`, or `not-applicable`.
+- `rationale`: a concise explanation of why that representation is the least
+  normalized form that preserves the story.
+
+When actual levels are `reported` or `retrievable`, `relative-change` and
+`index` are rejected as primary geometry. Use the actual values and retain the
+percentage or indexed change as secondary context. A synthetic `0%` before
+point or index-100 baseline is not a substitute for researching the level.
 
 The validator scans every numeric token in `input.txt`. Each number must fall
 inside a candidate `anchor` or an `ignoredEvidence.anchor`. Use
@@ -148,9 +171,11 @@ Allowed origins are:
 Allowed roles are `primary`, `comparison`, `denominator`, `mechanism`,
 `consequence`, and `context`.
 
-External research may never be primary. It cannot create a new subject, central
-claim, title, or primary plotted measure. It may only strengthen a story already
-anchored in `input.txt`.
+External evidence cannot create a new subject, central claim, or title. It may
+provide actual levels that directly express an input-anchored percentage or
+indexed change, as well as comparison, denominator, mechanism, consequence,
+context, or attribution. The primary editorial claim must remain anchored in
+`input.txt` even when the chart uses a less normalized representation.
 
 ## ChartSpec coverage
 
@@ -160,6 +185,11 @@ With `--specs`, validation requires:
   `specs/runs/<run-id>/`.
 - No extra ChartSpec exists outside the selected ledger entries.
 - Every ChartSpec title exactly matches its ledger title.
+- Every ChartSpec `measure.valueMode` and `measure.levelAvailability` exactly
+  match the selected candidate's `representationAudit`.
+- Selected ChartSpecs do not repeat the same input anchor, publication and
+  reporting period, recipe, and category or time-label sequence. When they do,
+  consolidate the secondary measure or mark its ledger candidate `merged`.
 
 `npm run run:finalize -- <run-id>` performs this validation automatically before
 removing transient run files.

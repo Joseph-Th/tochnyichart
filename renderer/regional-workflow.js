@@ -68,6 +68,9 @@ function summarizeDiagnosticRun(run) {
     finalCollisions: numberAttribute(attributes, 'data-map-port-final-collisions'),
     fallbackRoutes: numberAttribute(attributes, 'data-map-port-fallback-routes'),
     sourceExitRoutes: numberAttribute(attributes, 'data-map-port-source-exit-routes'),
+    directionReversalRoutes: numberAttribute(attributes, 'data-map-port-direction-reversal-routes'),
+    controlReversalRoutes: numberAttribute(attributes, 'data-map-port-control-reversal-routes'),
+    terminalBoxTurnRoutes: numberAttribute(attributes, 'data-map-port-terminal-box-turn-routes'),
     strictEnvelopeRoutes: numberAttribute(attributes, 'data-map-port-strict-envelope-routes'),
     expandedEnvelopeRoutes: numberAttribute(attributes, 'data-map-port-expanded-envelope-routes')
   };
@@ -100,6 +103,18 @@ function renderRegionalBreakdown(specPath, outputPath, options = {}) {
     throw workflowError('Generated regional chart failed browser diagnostics.', {
       valid: false,
       errors: runs.filter((run) => run.status === 'fail'),
+      warnings: []
+    });
+  }
+  const unnaturalRoutes = runs.filter((run) =>
+    (run.directionReversalRoutes || 0) > 0 ||
+    (run.controlReversalRoutes || 0) > 0 ||
+    (run.terminalBoxTurnRoutes || 0) > 0
+  );
+  if (unnaturalRoutes.length) {
+    throw workflowError('Generated regional chart contains unnatural leader geometry.', {
+      valid: false,
+      errors: unnaturalRoutes,
       warnings: []
     });
   }

@@ -28,7 +28,9 @@
     "unit": "%",
     "decimals": 1,
     "baseline": "zero",
-    "scale": "linear"
+    "scale": "linear",
+    "valueMode": "share",
+    "levelAvailability": "not-applicable"
   },
   "supportingFacts": [
     {

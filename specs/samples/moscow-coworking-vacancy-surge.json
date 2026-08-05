@@ -36,7 +36,9 @@
     "decimals": 1,
     "minimum": 0,
     "maximum": 20,
-    "baseline": "explicit"
+    "baseline": "explicit",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable"
   },
   "emphasis": {
     "direction": "up",

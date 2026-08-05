@@ -47,7 +47,9 @@
     "maximum": 2.3,
     "baseline": "explicit",
     "scale": "linear",
-    "quantity": "July-to-date consumer price increase"
+    "quantity": "July-to-date consumer price increase",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable"
   },
   "supportingFacts": [
     {

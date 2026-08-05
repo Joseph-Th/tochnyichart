@@ -28,6 +28,11 @@ function validLedger(workspace) {
       outputSlug: 'ozon-insurance-price-increase',
       title: 'Ozon insurance prices rose 230%',
       titleBasis: 'Ozon insurance prices rose 230%, while shares initially fell 8.5%.',
+      representationAudit: {
+        selectedMode: 'relative-change',
+        levelAvailability: 'unavailable',
+        rationale: 'The fixture contains only the reported percentage increase.'
+      },
       anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
       evidence: [
         {
@@ -69,7 +74,8 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
     const workspace = initializeRunWorkspace(root, 'issue-1');
     validLedger(workspace);
     fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json'), JSON.stringify({
-      title: 'Ozon insurance prices rose 230%'
+      title: 'Ozon insurance prices rose 230%',
+      measure: { valueMode: 'relative-change', levelAvailability: 'unavailable' }
     }));
     const result = validateSourceLedger(root, 'issue-1', { requireSpecs: true });
     assert.equal(result.valid, true);
@@ -171,6 +177,84 @@ test('source fidelity permits explicitly justified non-story numeric metadata', 
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
     const result = validateSourceLedger(root, 'issue-6');
     assert.equal(result.valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects duplicate charts with the same source and series skeleton', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-7');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates.push({
+      id: 'ozon-share-drop',
+      claim: 'Ozon shares fell after the event.',
+      decision: 'selected',
+      outputSlug: 'ozon-share-drop',
+      title: 'Ozon shares initially fell 8.5%',
+      titleBasis: 'Ozon insurance prices rose 230%, while shares initially fell 8.5%.',
+      representationAudit: {
+        selectedMode: 'relative-change',
+        levelAvailability: 'unavailable',
+        rationale: 'The fixture contains only the reported percentage decline.'
+      },
+      anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
+      evidence: [
+        {
+          statement: 'Shares initially fell 8.5%.',
+          origin: 'input',
+          role: 'primary',
+          anchor: 'Ozon insurance prices rose 230%, while shares initially fell 8.5%.'
+        }
+      ]
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+
+    const commonSpec = {
+      recipe: 'trend.line',
+      source: { name: 'Company filing', period: 'August 2026' },
+      metadata: { dataPeriod: 'August 2026' },
+      data: [{ label: 'Before' }, { label: 'After' }]
+    };
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json'), JSON.stringify({
+      ...commonSpec,
+      title: 'Ozon insurance prices rose 230%',
+      measure: { unit: 'index points', valueMode: 'relative-change', levelAvailability: 'unavailable' }
+    }));
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-share-drop.json'), JSON.stringify({
+      ...commonSpec,
+      title: 'Ozon shares initially fell 8.5%',
+      measure: { unit: '%', valueMode: 'relative-change', levelAvailability: 'unavailable' }
+    }));
+
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-7', { requireSpecs: true }),
+      /repeat the same source passage, reporting context, recipe, and category\/time skeleton/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects normalized geometry when actual levels are retrievable', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-8');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].representationAudit = {
+      selectedMode: 'relative-change',
+      levelAvailability: 'retrievable',
+      rationale: 'The underlying filing contains actual before and after values.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}
+`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-8'),
+      /actual levels are retrievable|select level values/i
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

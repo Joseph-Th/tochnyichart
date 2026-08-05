@@ -12,8 +12,8 @@ literally:
 Every mark encodes [measure.quantity] for [data.scope] in [data.period].
 ```
 
-The bracketed phrases must mean the same thing for every mark. The comparison
-recipes enforce this contract with four required fields:
+The bracketed phrases must mean the same thing for every mark. Comparison,
+trend, and ranking recipes enforce this contract with four required fields:
 
 - `measure.quantity`: the real-world quantity encoded by the axis.
 - `data[].quantity`: the same phrase, repeated on each item.
@@ -21,9 +21,54 @@ recipes enforce this contract with four required fields:
   bridge to which the value applies.
 - `data[].period`: the reporting period represented by the value.
 
+Trend periods may advance from point to point, but quantity and scope must stay
+constant. Rankings and non-change comparisons require one common reporting
+period as well as one quantity and scope.
+
 The validator rejects generic quantity names such as `reported change`, `value`,
 `metric`, `amount`, or `result`. Those labels describe a chart operation, not a
 measured quantity.
+
+## Visible units
+
+A numeric label must be interpretable without searching the axis title or source
+note. Bare values such as `330`, `2.99m`, or `85` are permitted only when the
+title or subtitle explicitly states the unit. Otherwise, put the unit in every
+visible `displayValue` and in `emphasis.displayValue` when present.
+
+Valid treatments include:
+
+```text
+330 index points
+2.99 million tires
+$85 million
+```
+
+The validator rejects magnitude-only labels when `measure.unit` is known but the
+unit is absent from both the label and the title/subtitle. An axis title alone
+does not satisfy this rule because labels may be read in a slide thumbnail,
+cropped image, or exported context where the axis is less prominent.
+
+## Actual levels before normalized change
+
+Before choosing a recipe, classify the proposed primary values with
+`measure.valueMode` and record whether the underlying actual levels are
+`reported`, `retrievable`, `unavailable`, `incomparable`, or `not-applicable`.
+
+Use actual levels for primary geometry whenever they are reported or
+retrievable. This applies especially to prices, market values, revenue, output,
+volume, counts, and other tangible quantities. Show percentage or indexed
+change as emphasis or context rather than replacing the levels.
+
+Do not create a `0%` before-event observation or an index-100 starting point to
+make a normalized trend look complete. A relative-change or index chart is an
+exception that requires unavailable or incomparable levels plus a concise
+`measure.normalizationNote`.
+
+Native rates and shares are not downgraded by this rule. Interest rates,
+inflation rates, vacancy rates, and part-to-whole shares may remain primary when
+they are the real measured quantity. When absolute component amounts are also
+available for a share, include them in the visible labels.
 
 ### Valid shared scale
 
@@ -106,9 +151,31 @@ Every selected chart must have:
   coverage, collapse, or other analytical structure absent from that excerpt.
 - An output slug recorded in the source ledger before the ChartSpec is written.
 
-External research may improve comparison or interpretation, but it may not
-supply the story subject, central claim, or primary plotted measure. The final
-set of ChartSpecs must exactly match the source-ledger entries marked selected.
+External research may improve comparison or interpretation, including by
+supplying actual levels that directly express the same input-anchored change.
+It may not supply the story subject, central claim, or title. The final set of
+ChartSpecs must exactly match the source-ledger entries marked selected.
+
+## Consolidation gate
+
+The inventory is a claim ledger, not a one-claim-per-slide instruction. Before
+finalizing selections, compare candidate charts for duplicate visual structure.
+Two selected stories must be consolidated when they share all of the following:
+
+- The same exact input passage.
+- The same publication and reporting period.
+- The same chart recipe.
+- The same category or time-label sequence.
+
+Different units do not justify two near-identical slides. Select the measure that
+carries the central finding and place the secondary measure in `supportingFacts`,
+or mark the secondary candidate `merged` in the source ledger. Split the stories
+only when the second measure requires a genuinely different visual structure or
+supports a distinct editorial conclusion.
+
+Source-and-spec verification rejects repeated selected charts that match this
+duplicate skeleton. This check occurs after ChartSpecs exist because the ledger
+alone cannot reliably determine recipe and series structure.
 
 ## Comparison recipe contracts
 
@@ -190,6 +257,9 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
 7. Is the title directly supported by an exact excerpt from `input.txt`?
 8. Does the final chart set cover every ledger item marked selected and exclude
    every unselected or externally originated story?
+9. Does every bare numeric label expose its unit in the label, title, or subtitle?
+10. Have charts with the same source passage, reporting context, recipe, and
+    series skeleton been consolidated?
 
 If any answer is no, change the recipe or evidence structure before changing the
 styling.

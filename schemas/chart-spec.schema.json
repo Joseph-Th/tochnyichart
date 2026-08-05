@@ -136,6 +136,15 @@
         "quantity": { "type": "string", "minLength": 3, "maxLength": 80 },
         "unit": { "type": "string", "maxLength": 40 },
         "axisTitle": { "type": "string", "maxLength": 80 },
+        "valueMode": {
+          "type": "string",
+          "enum": ["level", "absolute-change", "relative-change", "rate", "share", "index"]
+        },
+        "levelAvailability": {
+          "type": "string",
+          "enum": ["reported", "retrievable", "unavailable", "incomparable", "not-applicable"]
+        },
+        "normalizationNote": { "type": "string", "minLength": 1, "maxLength": 180 },
         "prefix": { "type": "string", "maxLength": 12 },
         "suffix": { "type": "string", "maxLength": 20 },
         "decimals": { "type": "integer", "minimum": 0, "maximum": 4 },

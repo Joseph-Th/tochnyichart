@@ -125,10 +125,12 @@ company filing, named report, or reputable Russian business publication before
 broader research. Additional context must fill a defined role in magnitude,
 comparison, mechanism, or consequence.
 
-External research may not originate a story. The subject, central claim, title,
-and primary plotted measure must be supported by exact `input.txt` excerpts in
-the source ledger. External facts may only supplement comparison, denominator,
-mechanism, consequence, context, or attribution.
+External research may not originate a story. The subject, central claim, and
+title must be supported by exact `input.txt` excerpts in the source ledger.
+After inventory, a supplied source or directly relevant dataset may provide
+actual levels that express the same anchored percentage or indexed change more
+clearly. External facts may also supplement comparison, denominator, mechanism,
+consequence, context, or attribution.
 
 External silence is not contradiction. Do not delete, downgrade, replace, or
 label an input claim `uncorroborated`, `unsupported`, or `not independently

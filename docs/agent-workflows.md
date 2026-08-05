@@ -17,6 +17,7 @@ initialize .work/<run-id>/
     -> record selected, omitted, or merged disposition for every candidate
     -> verify .work/<run-id>/source-ledger.json
     -> preserve inventoried claims and enrich without originating new stories
+    -> audit actual-level availability and record the value representation
     -> decide the appropriate production tool for each story
     -> create and render accepted charts
     -> capture final PNG images
@@ -138,7 +139,8 @@ Before selecting a recipe:
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
-7. Select one central finding, its evidence spine, the workflow, and the recipe.
+7. Determine whether actual levels are reported or retrievable. Prefer those levels over relative or indexed geometry and record the choice in `representationAudit`.
+8. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
 
@@ -163,12 +165,13 @@ Every route follows the same semantic stages:
 1. Preserve the expert input claim, then confirm and read supplied sources in full.
 2. Extract the relevant evidence, supplemental context, and safe derivations.
 3. Fill only material evidence gaps with conditional research.
-4. Choose one central finding, the workflow, and the story recipe.
-5. Write the smallest ChartSpec that expresses the enriched evidence spine.
-6. Validate the JSON.
-7. Render through the selected workflow.
-8. Correct semantic errors and rerun the checks.
-9. For a batch run, capture the final PNG into `charts/<run-id>/` after
+4. Audit the value representation. Use actual levels when reported or retrievable; never manufacture a `0%` or index-100 starting point.
+5. Choose one central finding, the workflow, and the story recipe.
+6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode` and `measure.levelAvailability`.
+7. Validate the JSON.
+8. Render through the selected workflow.
+9. Correct semantic errors and rerun the checks.
+10. For a batch run, capture the final PNG into `charts/<run-id>/` after
    diagnostics pass. Use `.work/<run-id>/review/` only for temporary or ad
    hoc review.
 
@@ -192,7 +195,7 @@ argument.
 Check that:
 
 - The visual grammar matches the evidence and the selected recipe.
-- Every shared-axis comparison passes this literal sentence test: `Every mark
+- Every comparison, trend, or ranking on a shared axis passes this literal sentence test: `Every mark
   encodes [measure.quantity] for [data.scope] in [data.period].` If the words in
   the brackets cannot stay the same for every mark, the values do not belong on
   one scale.
@@ -210,11 +213,12 @@ Check that:
   must gain a real prior value, target, benchmark, denominator, remainder,
   peer, range, or time series from the source. If none exists, omit the story.
 
-For `comparison.change`, `comparison.scenarios`, `comparison.diverging`, and
-`comparison.range`, the validator requires `measure.quantity`,
+For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
+`comparison.range`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
-match the measure quantity exactly, scopes must match, and all non-change
-comparisons must share a period. Generic declarations such as `reported change`
+match the measure quantity exactly and scopes must match. Rankings and
+non-change comparisons must share a period; trend periods may advance while
+quantity and scope remain fixed. Generic declarations such as `reported change`
 or `metric` are rejected because they hide unlike measures behind one axis.
 
 When several facts with different units, scopes, periods, or operational stages
