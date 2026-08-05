@@ -61,14 +61,14 @@ write('marketplace-retrenchment', {
   ],
   measure: { unit: 'billion rubles', decimals: 1, baseline: 'zero' },
   supportingFacts: [
-    { value: 'Universal model ended', label: 'Magnit said the service would cease operating as a broad marketplace and become an extended assortment for its core retail business.', tone: 'warning' },
+    { value: 'Universal model ended', label: 'Magnit narrowed the service into an extended assortment for its core retail business.', tone: 'warning' },
     { value: 'FBO wound down', label: 'The transition moved sellers to fulfillment by seller and stopped new warehouse intake in July.', tone: 'critical' },
     { value: 'Acquisition cancelled', label: 'Wildberries reportedly withdrew from the planned Magnit Market transaction.', tone: 'warning' },
     { value: 'Investment paused', label: 'Wildberries also reportedly suspended acquisition and investment activity.', tone: 'critical' }
   ],
   note: 'The implied cost base is derived as 2024 revenue plus the reported net loss. It is used as a high-level funding view, not an accounting expense reconciliation.',
   narrative: { frame: 'collapse', density: 'detailed', emphasis: 'composition' },
-  options: { height: 'short', showLegend: true, labelMode: 'inside' },
+  options: { height: 'standard', showLegend: true, labelMode: 'inside' },
   metadata: { topic: 'marketplace retrenchment', dataPeriod: '2024–July 2026', keyFinding: 'Magnit Market entered its narrower 2026 operating model after a loss equal to roughly half its 2024 revenue.' }
 });
 
@@ -161,7 +161,7 @@ write('ecommerce-company-churn', {
 
 write('ecommerce-active-company-base', {
   recipe: 'comparison.change',
-  title: 'Russia’s Online-Trading Company Base Contracted for the First Time Since 2021',
+  title: 'Online-Trading Companies Declined for the First Time Since 2021',
   subtitle: 'The active company count fell by an estimated 23,500 in the first half of 2026.',
   source: { name: 'Russian marketplace company-registration reporting', period: 'H1 2026' },
   data: [
@@ -181,7 +181,7 @@ write('ecommerce-active-company-base', {
 });
 
 write('ecommerce-growth-deceleration', {
-  recipe: 'trend.line',
+  recipe: 'ranking.horizontal',
   title: 'Russian E-commerce Growth Has Slowed Sharply',
   subtitle: 'Turnover still expanded, but the growth rate fell from 60.3% in 2024 to 18.4% in H1 2026.',
   source: { name: 'Russian e-commerce market reporting', period: '2024–H1 2026' },
@@ -199,7 +199,7 @@ write('ecommerce-growth-deceleration', {
     { value: '4m jobs; 8–10%', label: 'Reported employment footprint and broad economic share of e-commerce activity.', tone: 'primary' }
   ],
   narrative: { frame: 'warning', density: 'detailed', emphasis: 'direction' },
-  options: { height: 'standard' },
+  options: { height: 'tall', sort: 'none' },
   metadata: { topic: 'e-commerce growth', dataPeriod: '2024–H1 2026', keyFinding: 'Russian e-commerce growth remained positive but decelerated by more than 40 percentage points in two years.' }
 });
 
@@ -476,8 +476,8 @@ write('black-sea-terminal-exposure', {
 });
 
 write('sunflower-export-shock', {
-  recipe: 'trend.line',
-  title: 'Sunflower-Oil Exports Were Headed Toward One Quarter of June’s Level',
+  recipe: 'ranking.horizontal',
+  title: 'Sunflower-Oil Exports Were Headed Toward 28% of June’s Level',
   subtitle: 'July shipments fell 53.9% month over month, and the expected 40% further decline in August would reduce the export index to about 28.',
   source: { name: 'Russian agricultural export reporting', period: 'July–August 2026' },
   data: [
@@ -495,7 +495,7 @@ write('sunflower-export-shock', {
   ],
   note: 'The August index is derived as 46.1 × 0.60. June is normalized to 100 because the source reports percentage changes rather than absolute monthly tonnage.',
   narrative: { frame: 'collapse', density: 'detailed', emphasis: 'direction' },
-  options: { height: 'standard' },
+  options: { height: 'tall', sort: 'none' },
   metadata: { topic: 'sunflower oil exports', dataPeriod: 'June–August 2026', keyFinding: 'Two consecutive export declines would leave August sunflower-oil shipments at about 28% of June’s level.' }
 });
 

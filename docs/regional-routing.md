@@ -49,7 +49,10 @@ automatic entries can move to the side that produces a clearer result.
 Port leaders use a smooth curve from the geographic anchor to a dedicated
 card-edge port, followed by a visible horizontal terminal stub. The planner
 preserves geographic order within each card column, separates ports, and scores
-crossings, attachment sharpness, route length, and side displacement. Region
+crossings, attachment sharpness, route length, side displacement, and local
+curve naturalness. Detour candidates fan away from a nearby leader before
+turning, and routes with very short intermediate spline runs are penalized so a
+collision-free result does not introduce a tight local S-curve. Region
 polygons are evidence rather than physical barriers: leaders may cross
 geography. Only leader-to-leader and card collisions trigger detours.
 

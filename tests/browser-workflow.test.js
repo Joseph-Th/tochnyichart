@@ -72,6 +72,9 @@ test('trend value labels clear measured plot points at every responsive viewport
       assert.equal(run.diagnostics?.summary?.errors, 0);
       assert.equal(run.diagnostics?.summary?.warnings, 0);
       assert.equal(run.diagnostics?.summary?.marksChecked, 8);
+      assert.equal(run.trendAttributes?.['data-trend-label-layout'], 'measured');
+      assert.equal(Number(run.trendAttributes?.['data-trend-label-line-overlaps']), 0);
+      assert.ok(Number(run.trendAttributes?.['data-trend-label-visible-count']) >= 3);
       assert.equal(
         run.diagnostics?.issues?.some((issue) =>
           issue.code === 'text-object-overlap' &&

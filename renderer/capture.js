@@ -161,6 +161,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   const expectsDiagnostics = source.includes('tochnyi-diagnostics.js');
   const diagnostics = extractLayoutDiagnostics(result.stdout);
   const chartAttributes = extractDataAttributes(result.stdout);
+  const trendAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-trend-');
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
     throw new Error(`Layout diagnostics did not complete (state: ${state}).`);
@@ -172,6 +173,7 @@ function diagnoseHtml(htmlPath, options = {}) {
     viewport,
     diagnostics,
     chartAttributes,
+    trendAttributes,
     rendered: true
   };
 }
@@ -190,7 +192,8 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
     runs: runs.map((run) => ({
       viewport: run.viewport,
       diagnostics: run.diagnostics,
-      chartAttributes: run.chartAttributes
+      chartAttributes: run.chartAttributes,
+      trendAttributes: run.trendAttributes
     }))
   };
 }

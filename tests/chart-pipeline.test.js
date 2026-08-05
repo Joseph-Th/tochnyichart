@@ -288,13 +288,20 @@ test('trend labels remain candidates until measured layout and avoid line geomet
     pointRadius: 6,
     pointPadding: 5,
     labelPadding: 6,
-    lineTolerance: 4
+    lineTolerance: 4,
+    lineStrokeWidth: 4,
+    labelBackgroundPadding: 2
   });
   const placed = layout.filter((item) => item.showLabel);
   assert.ok(placed.length >= 3, 'the layout should retain the highest-priority labels');
   assert.equal(layout[5].showLabel, true);
   assert.equal(layout[6].showLabel, true,
     'adjacent equal values should both render when their measured boxes fit');
+  assert.equal(
+    VisualPlan.trendLabelLineOverlapCount(layout, points, 8),
+    0,
+    'placed labels must clear the stroked line and label-background safety margin'
+  );
   for (const item of placed) {
     for (const point of points) {
       assert.equal(
@@ -846,6 +853,68 @@ test('port detours do not reverse into their terminal card stub', () => {
   const cardDirection = Math.sign(terminal.end.x - terminal.start.x);
   assert.ok(Math.abs(tangentX) < 0.5 || tangentX * cardDirection >= 0,
     'the final curve must arrive from the map side before entering the card');
+});
+
+test('leader detours fan out before turning around a nearby route', () => {
+  const cubic = (start, control1, control2, end) => ({ start, control1, control2, end });
+  const straight = (start, end) => cubic(
+    start,
+    {
+      x: start.x + (end.x - start.x) / 3,
+      y: start.y + (end.y - start.y) / 3
+    },
+    {
+      x: start.x + (end.x - start.x) * 2 / 3,
+      y: start.y + (end.y - start.y) * 2 / 3
+    },
+    end
+  );
+  const priorRoute = [
+    cubic(
+      { x: 322.4893323171313, y: 367.3365011510068 },
+      { x: 437.99146585370505, y: 367.3365011510068 },
+      { x: 703.6463729878246, y: 237.8 },
+      { x: 900, y: 237.8 }
+    ),
+    straight({ x: 900, y: 237.8 }, { x: 932, y: 237.8 })
+  ];
+  const routed = TochnyiMaps.buildPortLeaderPath({
+    side: 'right',
+    point: { x: 297.4499915498942, y: 368.0431577728622 },
+    portY: 353.2,
+    portIndex: 2,
+    sideCount: 4
+  }, {
+    mapEdgeX: 910,
+    cardX: 932,
+    cardTop: 335,
+    cardBottom: 420,
+    endY: 353.2,
+    portOffset: 10,
+    minimumCardStub: 32,
+    leaderClearance: 14,
+    obstacles: [],
+    sourceObstacles: [],
+    routeTop: 80,
+    routeBottom: 520,
+    routeLeft: 246,
+    routeRight: 900,
+    samplesPerSegment: 48,
+    preferSmooth: true,
+    avoidRoutes: [priorRoute]
+  });
+  const chordLengths = routed.routeSegments.map((segment) => Math.hypot(
+    segment.end.x - segment.start.x,
+    segment.end.y - segment.start.y
+  ));
+  assert.equal(routed.fallback, false);
+  assert.equal(routed.routeCrossings, 0);
+  assert.equal(routed.selfIntersection, false);
+  assert.equal(routed.smooth, true);
+  assert.ok(routed.minimumRouteGap >= 14,
+    'the detour must preserve the configured leader clearance');
+  assert.ok(Math.min(...chordLengths) >= 28,
+    'the route must fan out before turning instead of using tiny local S-curves');
 });
 
 test('steep box connectors reserve a long horizontal terminal tangent', () => {

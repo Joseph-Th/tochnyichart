@@ -80,10 +80,25 @@ try {
     date: '2026-08-02',
     source: { name: 'Diagnostic fixture' },
     data: [
-      { label: 'Midpoint', value: 50, displayValue: '50' },
-      { label: 'Axis maximum', value: 100, displayValue: '100' }
+      {
+        label: 'Midpoint',
+        value: 50,
+        displayValue: '50',
+        quantity: 'diagnostic index value',
+        scope: 'boundary-label diagnostic fixture',
+        period: 'single diagnostic run'
+      },
+      {
+        label: 'Axis maximum',
+        value: 100,
+        displayValue: '100',
+        quantity: 'diagnostic index value',
+        scope: 'boundary-label diagnostic fixture',
+        period: 'single diagnostic run'
+      }
     ],
     measure: {
+      quantity: 'diagnostic index value',
       unit: 'index',
       decimals: 0,
       minimum: 0,
