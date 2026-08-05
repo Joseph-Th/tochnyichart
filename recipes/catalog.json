@@ -66,16 +66,9 @@
     },
     {
       "id": "status.grid",
-      "purpose": "Compare named places or operating areas by categorical status and concise evidence.",
+      "purpose": "Compare named places or operating areas in an unboxed categorical status list with concise evidence.",
       "data": "3 to 12 items with label, status, and detail; numeric value is optional.",
       "bestFor": ["regional shortages", "service availability", "operational disruption", "risk monitoring"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
-    },
-    {
-      "id": "story.facets",
-      "purpose": "Tell one coherent story with evidence measured in different units, scopes, or stages without pretending the values share an axis.",
-      "data": "2 to 8 facets with label, detail, and displayValue or value; group, icon, direction, status, and tone are optional.",
-      "bestFor": ["mixed-metric evidence", "cause-and-consequence stories", "strategic retreat", "operating model changes"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 0 }
     },
     {
@@ -108,7 +101,7 @@
     },
     {
       "id": "supportingFacts",
-      "purpose": "Add up to four contextual facts after the primary visual instead of forcing unlike measures onto one axis."
+      "purpose": "Add up to four contextual facts in an unboxed inline rail after the primary visual instead of forcing unlike measures onto one axis."
     }
   ]
 }

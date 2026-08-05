@@ -159,7 +159,9 @@ Examples:
 - A note containing two profit values may become a richer earnings story when the source also provides revenue, operating drivers, and a resulting dividend decision.
 - A shortage note may become a coverage-rate headline when supply and demand periods can be normalized safely.
 - A profit-to-loss reversal may remain a simple two-value diverging comparison when the sign change is the complete finding.
-- A story with unlike units may use one primary visual plus `supportingFacts` rather than forcing every measure onto one chart.
+- A story with unlike units may use one primary visual plus the unboxed
+  `supportingFacts` rail for secondary context. When multiple unlike measures
+  are essential, split them into separate ChartSpecs.
 
 Do not default to bars because the input contains numbers. Do not select a more complex recipe solely to make the output look more interesting.
 

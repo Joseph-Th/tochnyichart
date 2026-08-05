@@ -191,10 +191,11 @@ comparisons must share a period. Generic declarations such as `reported change`
 or `metric` are rejected because they hide unlike measures behind one axis.
 
 When several facts with different units, scopes, periods, or operational stages
-jointly carry the main argument, use `story.facets`. When the mixed-unit facts
-are secondary context, keep the primary chart simple and place them in
-`supportingFacts`. Do not normalize unrelated facts into percentages merely to
-make them look comparable.
+jointly carry the main argument, split them into separate ChartSpecs. When the
+mixed-unit facts are secondary context, keep the primary chart simple and place
+them in the unboxed `supportingFacts` rail. Do not normalize unrelated facts
+into percentages or turn them into a grid of metric cards merely to make them
+look comparable.
 
 For `flow.waterfall`, require a real source-supported start-to-end bridge. The
 start, each change, and the ending value must share scope and period, reconcile
@@ -247,15 +248,17 @@ The guide returns recipe selection rules and a validated example path for each r
 | Starting value, additions or losses, ending value | `flow.waterfall` |
 | Ranked categories with long labels | `ranking.horizontal` |
 | Categorical conditions by place or operation | `status.grid` |
-| One argument supported by mixed-unit or mixed-stage evidence | `story.facets` |
+| Several essential mixed-unit or mixed-stage measures | Separate ChartSpecs |
 
 Composable semantic features include:
 
 - `references` for targets, averages, legal limits, or benchmarks.
 - `data[].annotation` for a concise explanation tied to a point.
 - `measure.scale = "logarithmic"` for positive values spanning orders of magnitude.
-- `supportingFacts` for context in a different unit.
-- `story.facets` when mixed-unit evidence is the main story rather than context.
+- `supportingFacts` as an unboxed inline rail for secondary context in a
+  different unit.
+- Separate ChartSpecs when mixed-unit evidence is the main story rather than
+  context.
 - `visual.type = "progress"` or `"pictogram"` for a headline metric with a
   meaningful denominator or counted population.
 - `data[].displayValue` for the tangible amount in composition charts; the
@@ -302,8 +305,8 @@ Keep the map object minimal. Do not author coordinates, card positions, route
 points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library
 configuration. Russian regional maps always use the continental mainland
 silhouette. Kaliningrad and island fragments are permanently excluded from the
-map geometry and cannot be active map items. Use `story.facets`, `status.grid`,
-or another non-map recipe for detached-region evidence.
+map geometry and cannot be active map items. Use a separate standard chart,
+`status.grid`, or another non-map recipe for detached-region evidence.
 
 Regional summary cards are permanently disabled. The callout cards carry the
 evidence, while the compact header, smaller watermark, and wide regional canvas

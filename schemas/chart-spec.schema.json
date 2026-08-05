@@ -20,7 +20,6 @@
         "flow.waterfall",
         "ranking.horizontal",
         "status.grid",
-        "story.facets",
         "map.regional",
         "headline.metric"
       ]

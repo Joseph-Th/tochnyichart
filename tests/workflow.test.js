@@ -63,7 +63,8 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   const standard = standardAgentGuide();
   assert.equal(standard.workflow, 'standard-chart');
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'map.regional'), false);
-  assert.equal(standard.selectionRules.some((entry) => entry.use === 'story.facets'), true);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'story.facets'), false);
+  assert.ok(standard.authoringRules.some((rule) => /Never use card or facet grids/.test(rule)));
   assert.equal(standard.regionalHandoff.use, 'map.regional');
   assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
   assert.deepEqual(standard.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
@@ -106,7 +107,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.escalation, /report an infrastructure issue/i);
   assert.deepEqual(manifest.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);
   assert.match(manifest.waterfallContract.reconciliation, /reconcile/i);
-  assert.match(manifest.sharedScaleContract.rejectionRule, /story\.facets/);
+  assert.match(manifest.sharedScaleContract.rejectionRule, /split the evidence into separate charts/i);
 
   const guide = standardAgentGuide('russia');
   guide.selectionRules.forEach((entry) => {

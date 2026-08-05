@@ -65,9 +65,9 @@ symbol does not create semantic comparability.
 
 Use one of these alternatives:
 
-- `story.facets` when the mixed evidence jointly carries the main argument.
-- `supportingFacts` when mixed-unit evidence is secondary context.
-- Separate charts when each measure needs its own scale or trend.
+- Separate ChartSpecs when multiple measures jointly carry the main argument.
+- `supportingFacts` as an unboxed inline rail when mixed-unit evidence is
+  secondary context.
 - `status.grid` when the point is categorical operating condition rather than
   magnitude.
 
@@ -86,24 +86,14 @@ measure.
 
 ## Mixed-evidence stories
 
-Use `story.facets` for one coherent claim supported by heterogeneous evidence.
-Each facet has its own value and explanatory detail rather than a fake common
-axis.
+Do not turn heterogeneous facts into standalone metric cards. Select the one
+quantity that carries the primary visual argument. Put genuinely secondary
+facts in `supportingFacts`, which renders as an unboxed inline context rail.
+When two or more unlike measures each carry essential meaning, create separate
+ChartSpecs so each measure receives an appropriate visual scale and geometry.
 
-Useful fields are:
-
-- `label`: the evidence dimension.
-- `displayValue` or `value`: the tangible result.
-- `detail`: why the result matters to the central claim.
-- `group`: an optional story stage such as `Pressure`, `Response`, or
-  `Consequence`.
-- `icon`: a semantic symbol such as `shield`, `warehouse`, `pause`, `exit`,
-  `money`, `ship`, or `person`.
-- `direction`: `up`, `down`, or `neutral` when directional meaning is useful.
-- `tone` or `status`: restrained editorial emphasis.
-
-Icons must encode meaning. Do not add decorative illustrations that do not map
-to a data role.
+`story.facets` remains readable only for legacy files and is excluded from the
+production recipe catalog and selection workflow.
 
 ## Composition charts
 

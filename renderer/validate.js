@@ -31,6 +31,7 @@ const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range'
 ]);
+const LEGACY_RECIPES = new Set(['story.facets']);
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
@@ -416,7 +417,7 @@ function validateSharedScaleSemantics(spec, errors) {
     if (typeof item?.quantity !== 'string' || !item.quantity.trim()) {
       errors.push(`data[${index}].quantity is required for ${spec.recipe}.`);
     } else if (quantity && normalizeEditorialValue(item.quantity) !== normalizeEditorialValue(quantity)) {
-      errors.push(`data[${index}].quantity must match measure.quantity exactly. Use story.facets when items measure different things.`);
+      errors.push(`data[${index}].quantity must match measure.quantity exactly. Split unlike measures into separate charts or choose one primary quantity and keep the rest as inline context.`);
     }
     if (typeof item?.scope !== 'string' || !item.scope.trim()) {
       errors.push(`data[${index}].scope is required for ${spec.recipe}; use the exact population, denominator, or measured system, not the chart topic.`);
@@ -428,7 +429,7 @@ function validateSharedScaleSemantics(spec, errors) {
     }
   });
   if (new Set(scopes).size > 1) {
-    errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Use story.facets or supportingFacts for evidence measured on a different population, denominator, or system.`);
+    errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Split unlike scopes into separate charts or keep secondary evidence in the unboxed supportingFacts context rail.`);
   }
 
   if (spec.recipe !== 'comparison.change') {
@@ -436,7 +437,7 @@ function validateSharedScaleSemantics(spec, errors) {
       .map((item) => typeof item?.period === 'string' ? normalizeEditorialValue(item.period) : '')
       .filter(Boolean);
     if (new Set(periods).size > 1) {
-      errors.push(`${spec.recipe} requires one shared period. Use comparison.change for before-and-after values or story.facets for mixed-period evidence.`);
+      errors.push(`${spec.recipe} requires one shared period. Use comparison.change for before-and-after values or split mixed-period evidence into separate charts.`);
     }
   }
 }
@@ -505,6 +506,7 @@ function validateRecipe(spec, errors, warnings) {
       });
       break;
     case 'story.facets':
+      warnings.push('story.facets is deprecated and excluded from the production selection workflow. It renders only for backward compatibility; split mixed evidence into separate ChartSpecs or select one primary quantitative recipe.');
       if (count < 2 || count > 8) errors.push('story.facets requires 2 to 8 evidence facets.');
       data.forEach((item, index) => {
         if (typeof item?.detail !== 'string' || !item.detail) errors.push(`data[${index}].detail is required for story.facets.`);
@@ -538,7 +540,7 @@ function validateRecipe(spec, errors, warnings) {
       requireNumericValues(spec, errors);
       break;
     default:
-      errors.push(`recipe must be one of: ${recipeIds.join(', ')}.`);
+      errors.push(`recipe must be one of: ${[...recipeIds, ...LEGACY_RECIPES].join(', ')}.`);
   }
 }
 
@@ -813,7 +815,9 @@ function validateSpec(input) {
   forbidden.forEach((path) => errors.push(`${path} is forbidden; ChartSpec cannot contain implementation code or styles.`));
 
   const spec = normalizeSpec(input);
-  if (!getRecipe(spec.recipe)) errors.push(`Unknown recipe: ${String(spec.recipe)}.`);
+  if (!getRecipe(spec.recipe) && !LEGACY_RECIPES.has(spec.recipe)) {
+    errors.push(`Unknown recipe: ${String(spec.recipe)}.`);
+  }
   pushLengthIssue(spec.title, 'title', 100, errors, warnings, 68);
   pushLengthIssue(spec.subtitle, 'subtitle', 240, errors, warnings, 170);
   if (!isDateString(spec.date)) errors.push('date must be a real date in YYYY-MM-DD format.');

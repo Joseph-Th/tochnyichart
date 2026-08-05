@@ -77,8 +77,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
   Object.freeze({ when: 'A source-supported exact start-to-end bridge with same-period, same-scope steps', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
   Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' }),
-  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' }),
-  Object.freeze({ when: 'One story is supported by evidence with different units, scopes, periods, or operational stages', use: 'story.facets', example: 'specs/examples/mixed-evidence-facets.json' })
+  Object.freeze({ when: 'Places or operations have categorical conditions', use: 'status.grid', example: 'specs/examples/fuel-shortage-status.json' })
 ]);
 
 const SHARED_SCALE_CONTRACT = Object.freeze({
@@ -87,7 +86,7 @@ const SHARED_SCALE_CONTRACT = Object.freeze({
   sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
   sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
   periodRule: 'Scenario, diverging, and range comparisons use one period. comparison.change may use two periods because time is the intended contrast.',
-  rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Use story.facets, supportingFacts, status.grid, composition, or separate charts.',
+  rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Select one primary quantitative story and keep secondary context inline, or split the evidence into separate charts.',
   genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
 });
 
@@ -103,15 +102,15 @@ const WATERFALL_CONTRACT = Object.freeze({
     'the opening value is reconstructed from incomplete charges',
     'the steps are unlike facts rather than additive components of one measure'
   ]),
-  fallback: 'Use headline.metric, comparison.change, comparison.scenarios, or supportingFacts when the bridge cannot be proven.'
+  fallback: 'Use headline.metric, comparison.change, comparison.scenarios, or a separate chart when the bridge cannot be proven.'
 });
 
 const COMPOSABLE_FEATURES = Object.freeze([
   Object.freeze({ need: 'Target, average, legal limit, or benchmark', add: 'references' }),
   Object.freeze({ need: 'Explain a specific point', add: 'data[].annotation' }),
   Object.freeze({ need: 'Values span orders of magnitude', add: 'measure.scale = logarithmic' }),
-  Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts instead of another axis' }),
-  Object.freeze({ need: 'Several mixed-unit facts jointly carry the main story', add: 'story.facets instead of a shared axis' }),
+  Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts as an unboxed inline context rail' }),
+  Object.freeze({ need: 'Several mixed-unit facts jointly carry the main story', add: 'split them into separate ChartSpecs; do not use a card or facet grid' }),
   Object.freeze({ need: 'A headline percentage has a meaningful denominator', add: 'visual.type = progress or pictogram' }),
   Object.freeze({ need: 'A composition is expressed as percentages', add: 'data[].displayValue with the tangible absolute amount as well' })
 ]);
@@ -123,7 +122,7 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Search beyond the primary source only to fill a named material evidence gap, and reject adjacent context that does not strengthen the central claim.',
   'Do not add data or complexity merely to make the chart more visually interesting; a simple comparison may be the correct result.',
   'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison recipe.',
-  'When mixed evidence carries the main story, use story.facets. When it is secondary context, use supportingFacts.',
+  'Never use card or facet grids as a substitute for a chart. If mixed evidence jointly carries the story, split it into separate ChartSpecs. If it is secondary, use the unboxed supportingFacts context rail.',
   'For composition charts, preserve both the share and the tangible absolute amount whenever the source provides both.',
   'For a single percentage or count, prefer progress or pictogram treatment when it communicates a real denominator or population; otherwise use a plain number.',
   'Use flow.waterfall only when the strict waterfall contract is satisfied: every step is exact and reported, period and scope match, and the bridge reconciles.',
@@ -203,6 +202,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output <preview.png>`
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
+    authoringRules: [...SHARED_AUTHORING_RULES],
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     composableFeatures: clone(COMPOSABLE_FEATURES),

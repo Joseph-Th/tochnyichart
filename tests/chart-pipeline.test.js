@@ -86,23 +86,34 @@ test('shared-axis comparisons reject unlike quantities, scopes, and periods', ()
   assert.ok(result.errors.some((message) => message.includes('measure.quantity is too generic')));
 });
 
-test('mixed evidence uses story facets instead of a fake shared axis', () => {
-  const facets = loadExample('mixed-evidence-facets.json');
+test('legacy story facets are deprecated and render without standalone cards', () => {
+  const facets = {
+    version: '2.0',
+    recipe: 'story.facets',
+    title: 'Legacy mixed evidence',
+    subtitle: 'Backward compatibility must not reintroduce a card grid.',
+    date: '2026-08-04',
+    data: [
+      { label: 'Volume', displayValue: '2.99m', detail: 'Reported shipment volume.', tone: 'primary' },
+      { label: 'Value', displayValue: '$85m', detail: 'Reported customs value.', tone: 'warning' }
+    ]
+  };
   const result = validateSpec(facets);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.normalized.recipe, 'story.facets');
-  assert.equal(result.normalized.measure.quantity, undefined);
-  assert.equal(result.normalized.measure.unit, undefined);
+  assert.ok(result.warnings.some((message) => message.includes('deprecated')));
   const html = renderHtml(result.normalized);
   assert.equal(reviewHtml(html).valid, true);
 
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(runtime, /function renderStoryFacets\(/);
+  assert.match(runtime, /function renderLegacyStoryEvidence\(/);
   assert.match(runtime, /case 'story\.facets'/);
-  assert.match(runtime, /semanticIcon\(item\.icon \|\| 'document'/);
-  assert.match(css, /\.tochnyi-facet-grid\s*\{/);
-  assert.match(css, /\.tochnyi-facet-icon\s*\{/);
+  assert.match(runtime, /tochnyi-evidence-list/);
+  assert.doesNotMatch(runtime, /tochnyi-facet-card/);
+  assert.match(css, /\.tochnyi-evidence-list\s*\{/);
+  assert.doesNotMatch(css, /\.tochnyi-facet-card\s*\{/);
+  assert.doesNotMatch(css, /\.tochnyi-stat-grid\s*\{/);
 });
 
 test('composition segments retain tangible values alongside calculated shares', () => {
@@ -254,6 +265,53 @@ test('trend labels are limited and positioned away from line geometry', () => {
   assert.ok(visible.includes(4), 'global peak should retain a label');
   assert.notEqual(plan[4].dy, 0);
   assert.notEqual(plan[7].dx, 0, 'edge labels should be pulled inward');
+
+  const points = [
+    { x: 80, y: 230 }, { x: 190, y: 270 }, { x: 300, y: 170 }, { x: 410, y: 200 },
+    { x: 520, y: 100 }, { x: 630, y: 250 }, { x: 740, y: 250 }, { x: 850, y: 330 }
+  ];
+  const layout = VisualPlan.trendLabelLayout(data, {
+    plans: plan,
+    points,
+    labelSizes: data.map(() => ({ width: 54, height: 26 })),
+    boundary: { left: 20, top: 20, right: 900, bottom: 360 },
+    pointRadius: 6,
+    pointPadding: 5,
+    labelPadding: 6,
+    lineTolerance: 4
+  });
+  const placed = layout.filter((item) => item.showLabel);
+  assert.ok(placed.length >= 3, 'the layout should retain the highest-priority labels');
+  for (const item of placed) {
+    for (const point of points) {
+      assert.equal(
+        item.box.left < point.x + 6 && item.box.right > point.x - 6 &&
+          item.box.top < point.y + 6 && item.box.bottom > point.y - 6,
+        false,
+        `label ${item.placement} must clear every plot point`
+      );
+    }
+  }
+  for (let first = 0; first < placed.length; first += 1) {
+    for (let second = first + 1; second < placed.length; second += 1) {
+      assert.equal(
+        placed[first].box.left < placed[second].box.right && placed[first].box.right > placed[second].box.left &&
+          placed[first].box.top < placed[second].box.bottom && placed[first].box.bottom > placed[second].box.top,
+        false,
+        'placed labels must not overlap one another'
+      );
+    }
+  }
+});
+
+test('supporting facts render as an unboxed inline context rail', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /tochnyi-context-rail/);
+  assert.match(runtime, /tochnyi-context-item/);
+  assert.match(css, /\.tochnyi-context-rail\s*\{/);
+  assert.doesNotMatch(css, /\.tochnyi-context-item\s*\{[^}]*border:/s);
+  assert.doesNotMatch(css, /\.tochnyi-context-item\s*\{[^}]*background:/s);
 });
 
 test('context planning compacts secondary layers when the information budget is exceeded', () => {
@@ -1397,10 +1455,14 @@ test('shared quantitative marks use restrained translucent styling', () => {
   assert.ok(opaqueIssues.some((issue) => issue.code === 'column-fill-too-opaque' && issue.severity === 'error'));
 });
 
-test('semantic cards do not use thick colored border highlights', () => {
+test('non-map semantic layouts do not fall back to standalone card grids', () => {
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\{[^}]*border-top:\s*(?:[2-9]|\d{2,})px/gs);
-  assert.doesNotMatch(css, /\.tochnyi-(?:status-card|stat|sequence-node|headline-metric)[^{]*\[[^\]]+\][^{]*\{[^}]*border-top-color/gs);
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.doesNotMatch(runtime, /tochnyi-(?:status-card|facet-card|stat-grid)/);
+  assert.doesNotMatch(css, /\.tochnyi-(?:status-card|facet-card|stat-grid)\s*\{/);
+  assert.match(runtime, /tochnyi-status-list/);
+  assert.match(css, /\.tochnyi-status-row\s*\{[^}]*border-bottom:/s);
+  assert.doesNotMatch(css, /\.tochnyi-status-row\s*\{[^}]*background:/s);
 });
 
 test('emphasis labels occupy a dedicated layout rail instead of overlaying graph geometry', () => {
@@ -1569,6 +1631,24 @@ test('layout diagnostics ignore a label inside its own column', () => {
     boundaries: [{ source: 'amcharts', rect: normalizeRect({ left: 0, top: 0, right: 100, bottom: 100 }) }]
   });
   assert.equal(issues.length, 0);
+});
+
+test('layout diagnostics reject a data label covering its own line point', () => {
+  const label = {
+    id: 'point-label', source: 'amcharts', role: 'data-label', text: '0.31%', dataUid: 11,
+    rect: normalizeRect({ left: 32, top: 28, right: 82, bottom: 52 })
+  };
+  const point = {
+    id: 'point', source: 'amcharts', role: 'point', dataUid: 11, line: false,
+    rect: normalizeRect({ left: 50, top: 38, right: 62, bottom: 50 })
+  };
+  const issues = diagnoseBoxes({
+    labels: [label],
+    objects: [point],
+    boundaries: [{ source: 'amcharts', rect: normalizeRect({ left: 0, top: 0, right: 120, bottom: 100 }) }]
+  });
+  assert.ok(issues.some((issue) => issue.code === 'text-object-overlap'));
+  assert.ok(issues.some((issue) => issue.elements.some((element) => element.role === 'point')));
 });
 
 test('layout diagnostics fail unresolved labels and ignore their own SVG marks', () => {

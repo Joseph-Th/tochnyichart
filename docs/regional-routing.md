@@ -76,8 +76,7 @@ and a shorter desktop map stage. These are renderer-owned regional defaults.
 Regional summary panels are permanently disabled. `map.summaryDisplay` is
 renderer-owned as `hide`, and `map.summaryPosition` is `none`. Any essential
 regional fact must live in a callout. Material non-geographic context belongs in
-a separate standard chart or `story.facets`, not in a competing blue card over
-the map.
+a separate standard chart, not in a competing blue card over the map.
 
 Automatic callout distribution uses geographic packing. The explicit
 `balanced` mode remains available for a verified special case, but it should not

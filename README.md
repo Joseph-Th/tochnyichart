@@ -109,8 +109,10 @@ reader must mentally reconstruct the takeaway.
 Before using any shared-axis comparison, complete this sentence literally:
 `Every mark encodes [measure.quantity] for [data.scope] in [data.period].` The
 validator requires those fields and rejects unlike quantities, scopes, and
-periods. Use `story.facets` when heterogeneous evidence jointly carries the main
-argument instead of forcing it onto one scale.
+periods. When heterogeneous evidence jointly carries the argument, split it
+into separate ChartSpecs. Keep secondary mixed-unit context in the unboxed
+`supportingFacts` rail rather than substituting a grid of metric cards for a
+chart.
 
 Use `flow.waterfall` only for a source-supported start-to-end bridge whose
 same-scope values reconcile arithmetically. Do not infer an exact opening value
