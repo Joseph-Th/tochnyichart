@@ -34,10 +34,10 @@ previews/
 The normal authoring lifecycle is:
 
 ```text
-input note or assignment
+expert input note or assignment
     |
     v
-verify and read the full primary source
+preserve the input claim and read supplied sources
     |
     v
 extract evidence and safe derivations
@@ -62,7 +62,7 @@ stories. The LLM agent, not the chart engine, owns the complete batch:
 
 ```text
 input.txt
-    -> parse and verify stories
+    -> parse stories and preserve expert claims
     -> choose the appropriate tool and chart workflow for each accepted story
     -> render and diagnose chart HTML
     -> capture final PNG images
@@ -85,11 +85,27 @@ contract.
 
 ## Source policy
 
-Treat an input note, headline, excerpt, or `input.txt` entry as routing information rather than the complete dataset.
+Treat `input.txt` as expert-authored editorial evidence. Assume its factual
+claims, values, comparisons, and interpretation are correct unless a reputable
+source directly contradicts a material point. Entries are also routing
+information and may not contain the complete chart dataset.
 
-Always verify that a supplied URL matches the story and read the full primary source before recipe selection. Extract directly relevant comparators, components, causes, consequences, forecasts, scale, denominators, and underlying datasets when they strengthen the same central claim.
+Confirm that a supplied URL used for supplementation matches the story and read
+the full source before recipe selection. Extract directly relevant comparators,
+components, causes, consequences, forecasts, scale, denominators, and underlying
+datasets when they strengthen the same central claim.
 
-Search beyond the primary source only when a material evidence gap remains. Prefer the underlying official dataset, company filing, or named report before searching for another publisher article. Additional context must fill a defined role in magnitude, comparison, mechanism, or consequence.
+Search beyond the supplied source when a material evidence gap remains or useful
+attribution and context can be added. Prefer the underlying official dataset,
+company filing, named report, or reputable Russian business publication before
+broader research. Additional context must fill a defined role in magnitude,
+comparison, mechanism, or consequence.
+
+External silence is not contradiction. Do not delete, downgrade, replace, or
+label an input claim `uncorroborated`, `unsupported`, or `not independently
+confirmed` merely because a second source was not found. Only a direct material
+contradiction from a reputable source should be escalated for editorial
+resolution.
 
 Do not add facts merely to make a chart more complex or visually varied. A simple comparison is correct when the contrast itself is the complete story.
 

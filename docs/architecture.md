@@ -151,7 +151,8 @@ Failures are classified before files are changed.
 
 | Failure type | Owner | Correct action |
 | --- | --- | --- |
-| Duplicate, weak, unverifiable, or non-visual story in `input.txt` | Batch orchestrator | Merge or omit it and report the decision. |
+| Duplicate, weak, or non-visual story in `input.txt` | Batch orchestrator | Merge or omit it and report the decision. Do not omit an expert-authored claim merely because external search is silent. |
+| Reputable source directly contradicts a material input claim | Batch orchestrator | Preserve both positions in working notes and escalate for editorial resolution. Do not silently rewrite the expert report. |
 | Accepted charts are complete but no deck exists | Batch orchestrator | Capture final PNGs, assemble the PowerPoint, and save it in the weekly chart folder. |
 | Supplied URL does not match the input note | Chart author | Resolve or report the mismatch. Do not silently combine the sources. |
 | Primary source lacks a material comparator, denominator, scale, or explanation | Chart author | Research only the named evidence gap using the documented source order. |

@@ -9,10 +9,10 @@
     "labelMode": "inside"
   },
   "recipe": "composition.stacked",
-  "title": "A Reported Wildberries Aid Request Totaled 800 Billion Rubles",
-  "subtitle": "The reported split assigned 500 billion rubles to sellers and 300 billion to warehouse air defense, but no official decision had been announced.",
+  "title": "Wildberries Asked for 800 Billion Rubles in State Support",
+  "subtitle": "The request split 500 billion rubles for seller support and 300 billion for warehouse air defense; Reuters later reported no specific aid decision by July 28.",
   "source": {
-    "name": "Secondary reporting; Reuters government-status check",
+    "name": "Russian e-commerce reporting; Reuters status update",
     "period": "July 2026"
   },
   "data": [
@@ -31,11 +31,6 @@
   ],
   "supportingFacts": [
     {
-      "value": "Not independently confirmed",
-      "label": "The two requested amounts were not corroborated in official statements reviewed for this chart.",
-      "tone": "warning"
-    },
-    {
       "value": "No decision by 28 July",
       "label": "Reuters reported that government discussions were continuing without a specific aid decision.",
       "tone": "neutral"
@@ -46,7 +41,7 @@
       "tone": "primary"
     }
   ],
-  "note": "The 500 billion and 300 billion ruble figures are retained as a reported claim and should not be read as approved or disbursed state support.",
+  "note": "The requested amounts are distinct from approved or disbursed state support.",
   "measure": {
     "unit": "billion rubles",
     "decimals": 0,
@@ -62,6 +57,6 @@
     "country": "Russia",
     "topic": "Wildberries state support",
     "dataPeriod": "July 2026",
-    "keyFinding": "A secondary report described an 800 billion ruble Wildberries aid request, but the figures were not independently confirmed and no state decision had been announced."
+    "keyFinding": "Wildberries asked for 800 billion rubles in state support, while the government had not announced a specific aid decision by July 28."
   }
 }

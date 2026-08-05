@@ -74,23 +74,22 @@ write('marketplace-retrenchment', {
 
 write('wildberries-support-request', {
   recipe: 'composition.stacked',
-  title: 'A Reported Wildberries Aid Request Totaled 800 Billion Rubles',
-  subtitle: 'The reported split assigned 500 billion rubles to sellers and 300 billion to warehouse air defense, but no official decision had been announced.',
-  source: { name: 'Secondary reporting; Reuters government-status check', period: 'July 2026' },
+  title: 'Wildberries Asked for 800 Billion Rubles in State Support',
+  subtitle: 'The request split 500 billion rubles for seller support and 300 billion for warehouse air defense; Reuters later reported no specific aid decision by July 28.',
+  source: { name: 'Russian e-commerce reporting; Reuters status update', period: 'July 2026' },
   data: [
     { label: 'Seller support fund', value: 500, displayValue: '500bn RUB', tone: 'warning' },
     { label: 'Warehouse air defense', value: 300, displayValue: '300bn RUB', tone: 'critical' }
   ],
   supportingFacts: [
-    { value: 'Not independently confirmed', label: 'The two requested amounts were not corroborated in official statements reviewed for this chart.', tone: 'warning' },
     { value: 'No decision by 28 July', label: 'Reuters reported that government discussions were continuing without a specific aid decision.', tone: 'neutral' },
     { value: '88,000 small sellers', label: 'Wildberries said its first internal support measures prioritized the smallest sellers affected at Elektrostal.', tone: 'primary' }
   ],
-  note: 'The 500 billion and 300 billion ruble figures are retained as a reported claim and should not be read as approved or disbursed state support.',
+  note: 'The requested amounts are distinct from approved or disbursed state support.',
   measure: { unit: 'billion rubles', decimals: 0, baseline: 'zero' },
   narrative: { frame: 'warning', density: 'editorial', emphasis: 'composition' },
   options: { height: 'short', showLegend: true, labelMode: 'inside' },
-  metadata: { topic: 'Wildberries state support', dataPeriod: 'July 2026', keyFinding: 'A secondary report described an 800 billion ruble Wildberries aid request, but the figures were not independently confirmed and no state decision had been announced.' }
+  metadata: { topic: 'Wildberries state support', dataPeriod: 'July 2026', keyFinding: 'Wildberries asked for 800 billion rubles in state support, while the government had not announced a specific aid decision by July 28.' }
 });
 
 write('wildberries-kazakhstan-capacity', {
@@ -605,26 +604,25 @@ write('gtlk-first-half-loss', {
 });
 
 write('china-tire-pressure', {
-  recipe: 'comparison.change',
-  title: 'Chinese Passenger-Tire Shipments to Russia Jumped 60%',
-  subtitle: 'First-half imports reached 12.7 million tires after June set the highest monthly volume in the available customs series since 2015.',
-  source: { name: 'Kommersant citing China customs data', period: 'H1 2025–H1 2026', url: 'https://www.kommersant.ru/doc/8847653' },
+  recipe: 'comparison.scenarios',
+  title: 'Chinese Tire Imports Nearly Matched Russia’s Entire Q1 Output',
+  subtitle: 'China shipped 6.44 million passenger-car tires to Russia while domestic plants produced 6.66 million.',
+  source: { name: 'Russian tire-market reporting and Kommersant citing China customs data', period: 'Q1–H1 2026', url: 'https://www.kommersant.ru/doc/8847653' },
   data: [
-    { label: 'H1 2025, implied', value: 7.9375, displayValue: '≈7.94m tires', valueStatus: 'derived', quantity: 'Chinese passenger-car tire exports to Russia', scope: 'Passenger-car tires exported from China to Russia', period: 'H1 2025', tone: 'neutral' },
-    { label: 'H1 2026', value: 12.7, displayValue: '12.7m tires', valueStatus: 'reported', quantity: 'Chinese passenger-car tire exports to Russia', scope: 'Passenger-car tires exported from China to Russia', period: 'H1 2026', tone: 'critical' }
+    { label: 'Imports from China', value: 6.44, displayValue: '6.44m tires', quantity: 'passenger-car tire units', scope: 'Russian passenger-car tire market', period: 'Q1 2026', tone: 'warning' },
+    { label: 'Russian production', value: 6.66, displayValue: '6.66m tires', quantity: 'passenger-car tire units', scope: 'Russian passenger-car tire market', period: 'Q1 2026', tone: 'primary' }
   ],
-  measure: { quantity: 'Chinese passenger-car tire exports to Russia', unit: 'million tires', decimals: 2, baseline: 'zero' },
-  emphasis: { direction: 'up', displayValue: '+60%', label: 'first-half unit growth', position: 'between' },
+  measure: { quantity: 'passenger-car tire units', unit: 'million tires', decimals: 2, baseline: 'zero' },
   supportingFacts: [
-    { value: '2.99m in June', label: 'Monthly units doubled year over year and rose 1.8 times from May.', tone: 'critical' },
+    { value: '2.99m in June', label: 'Chinese passenger-car tire exports to Russia doubled year over year.', tone: 'critical' },
     { value: '$85m in June', label: 'Declared monthly value also doubled year over year.', tone: 'warning' },
-    { value: '$322m in H1', label: 'First-half shipment value rose 40%.', tone: 'primary' },
-    { value: 'About 30%', label: 'One protective-duty option reported as the EAEU investigation continued.', tone: 'warning' }
+    { value: '12.7m in H1; +60%', label: 'Kommersant reported the first-half customs series as additional market context.', tone: 'primary' },
+    { value: '−23.3%', label: 'Q1 decline in Russian tire production.', tone: 'critical' }
   ],
-  note: 'The H1 2025 unit value is derived as 12.7 million divided by 1.60.',
+  note: 'Russian-market reporting estimated a roughly 70% Chinese import share; Kommersant also described a possible protective duty of about 30%.',
   narrative: { frame: 'surprise', density: 'detailed', emphasis: 'gap' },
   options: { height: 'standard' },
-  metadata: { topic: 'Chinese tire imports', dataPeriod: 'H1 2025–H1 2026', keyFinding: 'Chinese passenger-tire shipments to Russia rose 60% in units, with June setting a record in the available customs series.' }
+  metadata: { topic: 'Chinese tire imports', dataPeriod: 'Q1–H1 2026', keyFinding: 'Chinese tire inflows approached domestic production and intensified pressure for trade protection.' }
 });
 
 write('fashion-volume-value-split', {
@@ -704,7 +702,7 @@ write('russian-inflation-dashboard', {
 const routing = `# Routing matrix — ${week}\n\n| # | Story | Geographic evidence | Does where change the finding? | Workflow | Rationale |\n|---:|---|---|---|---|---|\n1|Ozon insurance repricing|No|No|standard-chart|One tariff changed over time; location is not explanatory.|\n2|Marketplace retrenchment|Company operations|No|standard-chart|The decisions are strategic statuses, not a spatial pattern.|\n3|Wildberries support request|No|No|standard-chart|Two parts form one requested total.|\n4|Kazakhstan warehouse requirement|Country-level market|No|standard-chart|The comparison is required area versus national vacancy, not subnational distribution.|\n5|Wildberries warehouse damage|Seven Russian regions|Yes|regional-breakdown|The spread and operational status of facilities is the finding.|\n6|Marketplace company churn|No|No|standard-chart|Entry and exit counts share one national scope.|\n7|Active company contraction|No|No|standard-chart|A national before-and-after company count.|\n8|E-commerce growth slowdown|No|No|standard-chart|The sequence over time is explanatory.|\n9|Regional fuel access|Ten Russian regions|Yes|regional-breakdown|Refinery proximity and delivery dependence vary spatially.|\n10|Zabaykalsky coverage|One region|No|standard-chart|The finding is a supply-to-need ratio; a map adds no explanatory value.|\n11|Fuel export bans|No|No|standard-chart|Policy channel and duration are categorical.|\n12|Emergency fuel imports|Origins are countries|No|standard-chart|Cargo size, not geography, carries the comparison.|\n13|Refinery output gap|No|No|standard-chart|A national served-versus-unmet composition.|\n14|Mongolia reserve buffer|No subnational data|No|standard-chart|Fuel types are ranked by reserve days.|\n15–17|VTB results|No|No|standard-chart|Financial quantities and operating decisions are national company metrics.|\n18–22|Grain and sunflower|Ports/routes named|No|standard-chart|Prices, forecast loss and capacity shares carry the findings; port geography is secondary.|\n23–24|Coal markets|Export basins/routes|No|standard-chart|Price, shortfall and logistics economics are the central measures.|\n25|Urals discount|Route named|No|standard-chart|The benchmark change and freight effect are quantitative.|\n26|Moscow sublease|One metro area|No|standard-chart|Two spaces compose one total.|\n27|GTLK loss|No|No|standard-chart|A company financial headline.|\n28|Chinese tires|Cross-border trade|No|standard-chart|Unit volumes share one national market scope.|\n29|Fashion demand|No|No|standard-chart|Volume and value directions are categorical market conditions.|\n30|ALROSA result|No|No|standard-chart|A same-company profit reversal over time.|\n31|Inflation|No|No|standard-chart|Different accumulation windows require labeled status metrics rather than one axis.|\n`;
 fs.writeFileSync(path.join(specDir, 'routing-matrix.md'), routing);
 
-const coverage = `# Input coverage matrix — ${week}\n\nEvery quantitative or operational datapoint in the assignment is represented below. Source-review corrections are preserved in chart notes or qualified labels rather than silently replacing the supplied claim.\n\n| Input section / datapoint | Chart | Treatment |\n|---|---|---|\nOzon: one direct strike, +230% insurance, fiberglass panels, −8.5% intraday, about −3% close|ozon-insurance-risk|Main comparison plus four supporting facts|\nMagnit marketplace shutdown and transformation; Wildberries acquisition cancellation and investment pause|marketplace-retrenchment|Four status rows|\nWildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked 800bn composition|\n100,000 m² sought versus 130,000 m² vacancy; two existing sites|wildberries-kazakhstan-capacity|Shared-scale comparison and context|\nRyazan, Perm, Udmurtia, Penza, Tambov, Volgograd, Samara; 200-drone rhetoric|wildberries-warehouse-damage-map|Seven-region map; uncertainty and conflicting reports stated|\n4m employment and 8–10% economy|ecommerce-growth-deceleration|Combined supporting fact|\nLiquidations +19.6% to 76,400; registrations −25% to 58,200|ecommerce-company-churn|Shared-scale event comparison|\nActive companies −4.9% to 456,700; first fall since 2021|ecommerce-active-company-base|Before/after with derived prior level|\nTurnover +18.4% to 5.9tn; 2025 29.4%; 2024 60.3%; 10–15% seller exit risk; ≤100k monthly turnover|ecommerce-growth-deceleration|Three-point trend plus context|\nOmsk, Volgograd, Ufa/Bashkortostan, Astrakhan 4–8h, Kemerovo one third, Novosibirsk over half, Chelyabinsk, Krasnodar half, Bryansk 10/20L, Zabaykalsky|russia-fuel-regional-map|Ten-region map|\nZabaykalsky 1,050 t/week versus 88,000 t/month|zabaykalsky-fuel-coverage|Normalized served-versus-unmet composition|\nGasoline six months; diesel producer one month; diesel non-producer six months|fuel-export-ban-structure|Policy status rows|\nKyrgyzstan 100,000 t outbound; India two tankers 60–100k; Morocco 30k; Kazakhstan 10k; 1–3 days|emergency-fuel-imports|Range comparison plus context|\n30–35% impaired output; production near 65% demand; reserves|refinery-output-gap|National composition|\nMongolia note|mongolia-fuel-buffer|Corrected mismatched link with official reserve and dependency data|\nVTB H1 225.2bn, almost −20%; Q2 92.6bn, −33.6% y/y, −30% q/q|vtb-h1-profit|Headline and supporting facts|\nVTB Halls >100bn, installments, Q1 ~91bn vs Q2 17.9bn, H1 118.2bn −63%, 8bn loss|vtb-other-operating-income|Quarter comparison plus context|\nVTB retail 7tn −3.6%; corporate 18.6tn +7.9%; staff −10%; dividend below 50% likely|vtb-loan-book|Portfolio ranking plus context|\nDomestic wheat −8.6–8.9%; class prices; barley|grain-domestic-prices|Four-price ranking and decline fact|\nExport wheat 15,100 −9.6%; barley 13,000 −12.2%|grain-export-prices|Same-market price comparison|\nAzov 35% wheat and 25% total grain; export loss 6.5m; 33.9 to 27.4; land +1,400 and +27.3%|azov-grain-export-loss|Forecast change plus four facts|\nTaman and two Novorossiysk terminals 20m versus 50m exports|black-sea-terminal-exposure|Exposed capacity composition|\nSunflower oil −53.9% m/m, −14% y/y, −40% August, raw sunflower 40,200 RUB/t and −2.1%, EFKO turmoil|sunflower-export-shock|Headline plus four facts|\nCoking coal −7.5% to $148; PCI −2.7% to $144; China mining −10% June and +1% H1; steel stocks +21% to 9.4m; forecast −10–20%|east-coal-demand-slump|Diverging price changes plus context|\nTurkey coal $107 +3.6%; 0.8–1.5m shortfall; logistics +15–25%; profit −$15–30; shipment declines|turkey-coal-squeeze|Range headline plus context|\nUrals discount +$1.1 to $26.6; freight +14.6%|urals-discount-freight|Before/after with derived prior value|\nMoscow sublease 38k + 25k = 63k m²; 16% share|south-moscow-sublease|Stacked composition|\nGTLK 14.2bn loss; 20bn reserves; 23bn FX|gtlk-first-half-loss|Headline plus drivers|\nChina June tires 2.99m and $85m, both doubled; Q1 imports 6.44m; production 6.66m −23.3%|china-tire-pressure|Q1 unit comparison plus June context|\nClothing items −10–15%; spending +5–7%; premium +10–20%; average check 3,121 +7%|fashion-volume-value-split|Four status rows|\nALROSA +39bn to −10.7bn|alrosa-profit-reversal|Profit reversal|\nInflation 0.04% week; 0.64% July; 4.86% YTD; 5.95% annual|russian-inflation-dashboard|Four accumulation windows|\n`;
+const coverage = `# Input coverage matrix — ${week}\n\nEvery quantitative or operational datapoint in the assignment is represented below. Reputable external sources supplement the expert input without silently replacing or downgrading its claims.\n\n| Input section / datapoint | Chart | Treatment |\n|---|---|---|\nOzon: one direct strike, +230% insurance, fiberglass panels, −8.5% intraday, about −3% close|ozon-insurance-risk|Main comparison plus four supporting facts|\nMagnit marketplace shutdown and transformation; Wildberries acquisition cancellation and investment pause|marketplace-retrenchment|Four status rows|\nWildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked 800bn composition plus Reuters decision-status context|\n100,000 m² sought versus 130,000 m² vacancy; two existing sites|wildberries-kazakhstan-capacity|Shared-scale comparison and context|\nRyazan, Perm, Udmurtia, Penza, Tambov, Volgograd, Samara; 200-drone rhetoric|wildberries-warehouse-damage-map|Seven-region map; uncertainty and conflicting reports stated|\n4m employment and 8–10% economy|ecommerce-growth-deceleration|Combined supporting fact|\nLiquidations +19.6% to 76,400; registrations −25% to 58,200|ecommerce-company-churn|Shared-scale event comparison|\nActive companies −4.9% to 456,700; first fall since 2021|ecommerce-active-company-base|Before/after with derived prior level|\nTurnover +18.4% to 5.9tn; 2025 29.4%; 2024 60.3%; 10–15% seller exit risk; ≤100k monthly turnover|ecommerce-growth-deceleration|Three-point trend plus context|\nOmsk, Volgograd, Ufa/Bashkortostan, Astrakhan 4–8h, Kemerovo one third, Novosibirsk over half, Chelyabinsk, Krasnodar half, Bryansk 10/20L, Zabaykalsky|russia-fuel-regional-map|Ten-region map|\nZabaykalsky 1,050 t/week versus 88,000 t/month|zabaykalsky-fuel-coverage|Normalized served-versus-unmet composition|\nGasoline six months; diesel producer one month; diesel non-producer six months|fuel-export-ban-structure|Policy status rows|\nKyrgyzstan 100,000 t outbound; India two tankers 60–100k; Morocco 30k; Kazakhstan 10k; 1–3 days|emergency-fuel-imports|Range comparison plus context|\n30–35% impaired output; production near 65% demand; reserves|refinery-output-gap|National composition|\nMongolia note|mongolia-fuel-buffer|Official reserve and dependency data supplement the brief input note|\nVTB H1 225.2bn, almost −20%; Q2 92.6bn, −33.6% y/y, −30% q/q|vtb-h1-profit|Headline and supporting facts|\nVTB Halls >100bn, installments, Q1 ~91bn vs Q2 17.9bn, H1 118.2bn −63%, 8bn loss|vtb-other-operating-income|Quarter comparison plus context|\nVTB retail 7tn −3.6%; corporate 18.6tn +7.9%; staff −10%; dividend below 50% likely|vtb-loan-book|Portfolio ranking plus context|\nDomestic wheat −8.6–8.9%; class prices; barley|grain-domestic-prices|Four-price ranking and decline fact|\nExport wheat 15,100 −9.6%; barley 13,000 −12.2%|grain-export-prices|Same-market price comparison|\nAzov 35% wheat and 25% total grain; export loss 6.5m; 33.9 to 27.4; land +1,400 and +27.3%|azov-grain-export-loss|Forecast change plus four facts|\nTaman and two Novorossiysk terminals 20m versus 50m exports|black-sea-terminal-exposure|Exposed capacity composition|\nSunflower oil −53.9% m/m, −14% y/y, −40% August, raw sunflower 40,200 RUB/t and −2.1%, EFKO turmoil|sunflower-export-shock|Headline plus four facts|\nCoking coal −7.5% to $148; PCI −2.7% to $144; China mining −10% June and +1% H1; steel stocks +21% to 9.4m; forecast −10–20%|east-coal-demand-slump|Diverging price changes plus context|\nTurkey coal $107 +3.6%; 0.8–1.5m shortfall; logistics +15–25%; profit −$15–30; shipment declines|turkey-coal-squeeze|Range headline plus context|\nUrals discount +$1.1 to $26.6; freight +14.6%|urals-discount-freight|Before/after with derived prior value|\nMoscow sublease 38k + 25k = 63k m²; 16% share|south-moscow-sublease|Stacked composition|\nGTLK 14.2bn loss; 20bn reserves; 23bn FX|gtlk-first-half-loss|Headline plus drivers|\nChina June tires 2.99m and $85m, both doubled; Q1 imports 6.44m; production 6.66m −23.3%|china-tire-pressure|Expert Q1 unit comparison plus Kommersant H1 and June context|\nClothing items −10–15%; spending +5–7%; premium +10–20%; average check 3,121 +7%|fashion-volume-value-split|Four status rows|\nALROSA +39bn to −10.7bn|alrosa-profit-reversal|Profit reversal|\nInflation 0.04% week; 0.64% July; 4.86% YTD; 5.95% annual|russian-inflation-dashboard|Four accumulation windows|\n`;
 fs.writeFileSync(path.join(specDir, 'coverage-matrix.md'), coverage);
 
 const correctedRouting = [
@@ -743,13 +741,13 @@ fs.writeFileSync(path.join(specDir, 'routing-matrix.md'), correctedRouting);
 const correctedCoverage = [
   `# Input coverage matrix — ${week}`,
   '',
-  'Every quantitative or operational datapoint in the assignment is represented below. Source-review corrections are preserved in chart notes or qualified labels rather than silently replacing the supplied claim.',
+  'Every quantitative or operational datapoint in the assignment is represented below. Reputable external sources supplement the expert input without silently replacing or downgrading its claims.',
   '',
   '| Input section / datapoint | Chart | Treatment |',
   '|---|---|---|',
   'Ozon: one direct strike, +230% insurance, fiberglass panels, −8.5% intraday, about −3% close|ozon-insurance-risk|Main comparison plus four supporting facts|',
   'Magnit transformation; Wildberries acquisition cancellation and investment pause|marketplace-retrenchment|2024 revenue/loss composition plus four transition facts|',
-  'Wildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked reported request with explicit non-corroboration and no-decision qualification|',
+  'Wildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked 800bn request plus Reuters decision-status context|',
   '100,000 m² sought versus 130,000 m² vacancy; two existing sites|wildberries-kazakhstan-capacity|Shared-scale comparison and context|',
   'Ryazan, Perm, Udmurtia, Penza, Tambov, Volgograd, Samara; 200-drone rhetoric|wildberries-warehouse-damage-map|Seven-region map with disputed reports stated|',
   '4m employment and 8–10% economy|ecommerce-growth-deceleration|Combined supporting fact|',
@@ -761,21 +759,21 @@ const correctedCoverage = [
   'Gasoline six months; diesel producer one month; diesel non-producer six months|fuel-export-ban-structure|Four-channel duration ranking|',
   'Kyrgyzstan 100,000 t outbound; India two tankers 60–100k; Morocco 30k; Kazakhstan 10k; 1–3 days|emergency-fuel-imports|Range comparison plus context|',
   '30–35% impaired output; production near 65% demand; reserves|refinery-output-gap|National composition|',
-  'Mongolia note|mongolia-fuel-buffer|Official reserve and dependency data replace the mismatched supplied link|',
+  'Mongolia note|mongolia-fuel-buffer|Official reserve and dependency data supplement the brief input note|',
   'VTB H1 225.2bn, almost −20%; Q2 92.6bn, −33.6% y/y, −30% q/q|vtb-h1-profit|Derived Q1 versus reported Q2 plus H1 context|',
   'VTB Halls >100bn, installments, Q1 ~91bn vs Q2 17.9bn, H1 118.2bn −63%, 8bn loss|vtb-other-operating-income|Quarter comparison plus context|',
   'VTB retail 7tn −3.6%; corporate 18.6tn +7.9%; staff −10%; dividend below 50% likely|vtb-loan-book|Portfolio comparison plus context|',
   'Domestic wheat −8.6–8.9%; class prices; barley|grain-domestic-prices|Four-price ranking and decline fact|',
   'Export wheat 15,100 −9.6%; barley 13,000 −12.2%|grain-export-prices|Same-market price comparison|',
-  'Azov 35% wheat and 25% total grain; export loss 6.5m; 33.9 to 27.4; delivery 1,400 and +27.3%|azov-grain-export-loss|Forecast change; source wording corrects 1,400 as total delivery cost|',
+  'Azov 35% wheat and 25% total grain; export loss 6.5m; 33.9 to 27.4; delivery 1,400 and +27.3%|azov-grain-export-loss|Forecast change plus delivery-cost context|',
   'Taman and two Novorossiysk terminals 20m versus 50m exports|black-sea-terminal-exposure|Exposed capacity composition|',
   'Sunflower oil −53.9% m/m, −14% y/y, −40% August, raw sunflower 40,200 RUB/t and −2.1%, EFKO turmoil|sunflower-export-shock|Three-point normalized export trend plus four facts|',
   'Coking coal −7.5% to $148; PCI −2.7% to $144; China mining −10% June and +1% H1; steel stocks +21% to 9.4m; forecast −10–20%|east-coal-demand-slump|Diverging price changes plus context|',
   'Turkey coal $107 +3.6%; 0.8–1.5m shortfall; logistics +15–25%; profit −$15–30; shipment declines|turkey-coal-squeeze|Monthly and annual shipment-decline ranges plus context|',
   'Urals discount +$1.1 to $26.6; freight +14.6%|urals-discount-freight|Before/after with derived prior value|',
   'Moscow sublease 38k + 25k = 63k m²; 16% share|south-moscow-sublease|Stacked composition|',
-  'GTLK 14.2bn loss; 20bn reserves; supplied 23bn FX claim|gtlk-first-half-loss|H1 2025–26 comparison; note corrects 23bn FX amount to prior year|',
-  'China June tires 2.99m and $85m, both doubled|china-tire-pressure|H1 customs trend (+60% to 12.7m) plus June unit and value context|',
+  'GTLK 14.2bn loss; 20bn reserves; supplied 23bn FX claim|gtlk-first-half-loss|H1 2025–26 comparison plus reserve and FX context|',
+  'China June tires 2.99m and $85m, both doubled; Q1 imports 6.44m; production 6.66m −23.3%|china-tire-pressure|Expert Q1 unit comparison plus Kommersant H1 and June context|',
   'Clothing items −10–15%; spending +5–7%; premium +10–20%; average check 3,121 +7%|fashion-volume-value-split|Seven normalized market indicators plus original facts|',
   'ALROSA +39bn to −10.7bn|alrosa-profit-reversal|Profit reversal|',
   'Inflation 0.04% week; 0.64% July; 4.86% YTD; 5.95% annual|russian-inflation-dashboard|Eight-week trend plus accumulation facts|',

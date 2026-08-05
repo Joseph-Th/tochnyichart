@@ -10,7 +10,11 @@ The user provides one editorial source file at the project root:
 input.txt
 ```
 
-`input.txt` may contain multiple data stories, notes, links, and partially summarized evidence. It is an assignment queue, not a complete or fully verified dataset.
+`input.txt` may contain multiple data stories, notes, links, and partially
+summarized evidence. It is an expert-authored editorial source and assignment
+queue. Treat its claims and datapoints as correct by default. It may be
+incomplete, so reputable external reporting may supplement it, but absence of
+independent corroboration is not grounds to weaken or replace it.
 
 ## Agent responsibility
 
@@ -27,7 +31,7 @@ input.txt
 parse distinct data stories
     |
     v
-verify and enrich each story from its sources
+preserve each expert claim and enrich it from reputable sources
     |
     v
 apply the visual-evidence gate; enrich or omit prose-only and one-point stories
@@ -64,13 +68,20 @@ For each candidate, identify:
 - Whether the story duplicates or overlaps another item
 - Whether the story is sufficiently material and visual to include
 
-Do not assume every paragraph requires a chart. Merge duplicate notes when they describe the same finding. Exclude items that cannot be verified or do not support a clear data-led story.
+Do not assume every paragraph requires a chart. Merge duplicate notes when they
+describe the same finding. Exclude items that are duplicative, immaterial, or do
+not support a clear visual story. Do not omit a story merely because an external
+search failed to repeat an expert-authored claim.
 
 ## 2. Verify and enrich each story
 
 Follow `docs/source-enrichment.md` before selecting a chart recipe.
 
-The agent must verify the source, read the full primary source, extract relevant evidence, calculate safe derivations, and fill only named material evidence gaps. It must not add unrelated context merely to make the chart more complex.
+The agent must preserve the expert input claim, confirm and read supplied
+sources, extract relevant evidence, calculate safe derivations, and fill useful
+evidence gaps. It must not add unrelated context merely to make the chart more
+complex. External sources may supplement or attribute the input, but may not
+silently override it unless they directly contradict a material point.
 
 Before accepting a chart candidate, apply the visual-evidence gate:
 
@@ -94,7 +105,7 @@ For each accepted story, decide whether the output should use:
 - The standard chart workflow
 - The regional chart workflow
 - A non-chart visual or textual slide treatment when the evidence is not suited to a chart
-- No slide, when the story is weak, duplicative, unverifiable, or irrelevant
+- No slide, when the story is weak, duplicative, non-visual, or irrelevant
 
 When a chart is appropriate, use the public Tool API:
 
@@ -219,10 +230,10 @@ The exact number of chart files depends on the number of accepted stories.
 The weekly job is complete only when:
 
 - `input.txt` has been fully parsed.
-- Each included story has verified sources and a clear central finding.
+- Each included story preserves the expert input claim and has a clear central finding.
 - Each chart has a validated ChartSpec.
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
 - The PowerPoint deck has been assembled from those final images.
 - The HTML files, final PNGs, and `.pptx` file are present in `charts/YYYY-week-WW/`.
-- Remaining omissions, warnings, source mismatches, or infrastructure defects are reported.
+- Remaining omissions, direct source conflicts, source mismatches, warnings, or infrastructure defects are reported.

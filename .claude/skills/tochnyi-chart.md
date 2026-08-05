@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.3.0
+version: 4.4.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -23,7 +23,7 @@ The agent must:
 
 1. Read the complete `input.txt`.
 2. Separate it into distinct stories and merge duplicates.
-3. Verify and enrich each accepted story.
+3. Preserve each expert claim and enrich it with reputable sources.
 4. Decide which production tool and chart workflow each story requires.
 5. Produce, validate, render, and diagnose each accepted chart.
 6. Capture one final PNG for every accepted chart.
@@ -104,11 +104,14 @@ every accepted story:
 ## Shared authoring rules
 
 - Extract exact values, categories, dates, units, ranges, benchmarks, and source.
-- Treat an input note, excerpt, headline, or `input.txt` entry as routing information, not the complete dataset.
-- Verify that each supplied URL matches the entity, event, period, and finding before using it.
+- Treat `input.txt` as expert-authored editorial evidence. Assume its factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point.
+- Treat each entry as routing information as well as evidence; it may be incomplete, but external silence is not a contradiction.
+- Confirm that each supplied URL used for supplementation matches the entity, event, period, and finding before using it.
 - Read and exhaust the full primary source before selecting a recipe.
 - Extract relevant comparators, components, causes, consequences, forecasts, scale, denominators, and underlying datasets when they strengthen the same central claim.
-- Search beyond the primary source only to fill a named material evidence gap.
+- Search beyond the primary source to fill a named material evidence gap or add useful attribution and context.
+- Supplement the input; do not replace, downgrade, or label an expert claim uncorroborated merely because a second source was not found.
+- Escalate only direct material contradictions from reputable sources. Preserve both positions instead of silently rewriting the report.
 - Prefer an underlying official dataset, company filing, or named report before another article from the same publisher.
 - Use only context that materially clarifies magnitude, comparison, mechanism, or consequence.
 - Do not add facts or select a complex recipe merely to make the output more visually interesting.
@@ -135,7 +138,7 @@ The guide returns the standard recipes and a validated example path for each rec
 
 Then:
 
-1. Verify and read the full source.
+1. Preserve the expert input claim, then confirm and read the full supplied source.
 2. Extract the evidence spine and safe derivations.
 3. Fill only material evidence gaps with targeted research.
 4. Identify one central finding and select the recipe.
@@ -265,7 +268,7 @@ infrastructure defects.
 
 For the weekly batch, confirm that the HTML files, final PNGs, and
 `tochnyi-charts-YYYY-week-WW.pptx` are present in `charts/YYYY-week-WW/`. Report
-stories that were omitted because they were duplicate, weak, unverifiable, or
+stories that were omitted because they were duplicate, weak, non-visual, directly conflicted, or
 failed validation or diagnostics.
 
 Use `previews/` only for temporary review. Final PNGs used in the deck belong in

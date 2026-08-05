@@ -6,52 +6,44 @@
     "showLabels": true,
     "height": "standard"
   },
-  "recipe": "comparison.change",
-  "title": "Chinese Passenger-Tire Shipments to Russia Jumped 60%",
-  "subtitle": "First-half imports reached 12.7 million tires after June set the highest monthly volume in the available customs series since 2015.",
+  "recipe": "comparison.scenarios",
+  "title": "Chinese Tire Imports Nearly Matched Russia’s Entire Q1 Output",
+  "subtitle": "China shipped 6.44 million passenger-car tires to Russia while domestic plants produced 6.66 million.",
   "source": {
-    "name": "Kommersant citing China customs data",
-    "period": "H1 2025–H1 2026",
+    "name": "Russian tire-market reporting and Kommersant citing China customs data",
+    "period": "Q1–H1 2026",
     "url": "https://www.kommersant.ru/doc/8847653"
   },
   "data": [
     {
-      "label": "H1 2025, implied",
-      "value": 7.9375,
-      "displayValue": "≈7.94m tires",
-      "valueStatus": "derived",
-      "quantity": "Chinese passenger-car tire exports to Russia",
-      "scope": "Passenger-car tires exported from China to Russia",
-      "period": "H1 2025",
-      "tone": "neutral"
+      "label": "Imports from China",
+      "value": 6.44,
+      "displayValue": "6.44m tires",
+      "quantity": "passenger-car tire units",
+      "scope": "Russian passenger-car tire market",
+      "period": "Q1 2026",
+      "tone": "warning"
     },
     {
-      "label": "H1 2026",
-      "value": 12.7,
-      "displayValue": "12.7m tires",
-      "valueStatus": "reported",
-      "quantity": "Chinese passenger-car tire exports to Russia",
-      "scope": "Passenger-car tires exported from China to Russia",
-      "period": "H1 2026",
-      "tone": "critical"
+      "label": "Russian production",
+      "value": 6.66,
+      "displayValue": "6.66m tires",
+      "quantity": "passenger-car tire units",
+      "scope": "Russian passenger-car tire market",
+      "period": "Q1 2026",
+      "tone": "primary"
     }
   ],
   "measure": {
-    "quantity": "Chinese passenger-car tire exports to Russia",
+    "quantity": "passenger-car tire units",
     "unit": "million tires",
     "decimals": 2,
     "baseline": "zero"
   },
-  "emphasis": {
-    "direction": "up",
-    "displayValue": "+60%",
-    "label": "first-half unit growth",
-    "position": "between"
-  },
   "supportingFacts": [
     {
       "value": "2.99m in June",
-      "label": "Monthly units doubled year over year and rose 1.8 times from May.",
+      "label": "Chinese passenger-car tire exports to Russia doubled year over year.",
       "tone": "critical"
     },
     {
@@ -60,17 +52,17 @@
       "tone": "warning"
     },
     {
-      "value": "$322m in H1",
-      "label": "First-half shipment value rose 40%.",
+      "value": "12.7m in H1; +60%",
+      "label": "Kommersant reported the first-half customs series as additional market context.",
       "tone": "primary"
     },
     {
-      "value": "About 30%",
-      "label": "One protective-duty option reported as the EAEU investigation continued.",
-      "tone": "warning"
+      "value": "−23.3%",
+      "label": "Q1 decline in Russian tire production.",
+      "tone": "critical"
     }
   ],
-  "note": "The H1 2025 unit value is derived as 12.7 million divided by 1.60.",
+  "note": "Russian-market reporting estimated a roughly 70% Chinese import share; Kommersant also described a possible protective duty of about 30%.",
   "narrative": {
     "frame": "surprise",
     "density": "detailed",
@@ -80,7 +72,7 @@
     "slug": "china-tire-pressure",
     "country": "Russia",
     "topic": "Chinese tire imports",
-    "dataPeriod": "H1 2025–H1 2026",
-    "keyFinding": "Chinese passenger-tire shipments to Russia rose 60% in units, with June setting a record in the available customs series."
+    "dataPeriod": "Q1–H1 2026",
+    "keyFinding": "Chinese tire inflows approached domestic production and intensified pressure for trade protection."
   }
 }

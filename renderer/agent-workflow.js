@@ -18,11 +18,12 @@ const TOOL_API_RESOURCES = Object.freeze({
 const BATCH_WORKFLOW = Object.freeze({
   owner: 'llm-agent',
   input: 'input.txt',
+  inputAuthority: 'Expert-authored editorial evidence. Presume claims and datapoints are correct; external silence is not contradiction.',
   purpose: 'Produce the weekly chart presentation from multiple candidate data stories.',
   steps: Object.freeze([
     'read the complete input.txt and parse distinct data stories',
-    'verify and enrich each story from its sources',
-    'merge duplicates and omit weak, irrelevant, or unverifiable stories',
+    'preserve each expert-authored claim and enrich it from reputable sources',
+    'merge duplicates and omit weak, irrelevant, or non-visual stories',
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'decide the appropriate production tool and chart workflow for each accepted story',
     'author, validate, render, and diagnose one ChartSpec per accepted chart story',
@@ -42,8 +43,11 @@ const BATCH_WORKFLOW = Object.freeze({
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
-  coreRule: 'Verify and exhaust the full primary source before selecting a recipe. Enrich only within one central editorial claim.',
-  inputRule: 'Treat an input note, headline, excerpt, or input.txt entry as routing information, not the complete chart dataset.',
+  coreRule: 'Treat input.txt as expert-authored editorial evidence. Assume its factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point.',
+  inputRule: 'Treat each input entry as both evidence and routing information. It may be incomplete, but external silence is not a contradiction.',
+  supplementationRule: 'Use reputable external sources to add attribution, comparators, denominators, historical series, mechanisms, consequences, or current status. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
+  contradictionRule: 'Only a direct material contradiction from a reputable source creates a source conflict. Preserve both positions in working notes and escalate for editorial resolution instead of silently rewriting the expert report.',
+  presentationRule: 'Do not expose research-process labels such as uncorroborated, not independently confirmed, unsupported draft, or verification failed solely because external search results are silent.',
   safeDerivations: Object.freeze([
     'absolute change',
     'percentage change',
@@ -64,7 +68,7 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   ]),
   relevanceRule: 'Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.',
   complexityRule: 'Do not add irrelevant facts or choose a complex recipe merely for decoration. A chart still needs a genuine visual comparison: enrich a one-point or text-only story with a source-supported comparator, denominator, benchmark, composition, or time series; otherwise omit it.',
-  attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable; never substitute input.txt, internal provenance, verification status, or workflow commentary into presentation copy.'
+  attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable; never substitute input.txt, internal provenance, research-process labels, or workflow commentary into presentation copy.'
 });
 
 const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
@@ -127,8 +131,12 @@ const COMPOSABLE_FEATURES = Object.freeze([
 const SHARED_AUTHORING_RULES = Object.freeze([
   'Author a ChartSpec JSON file; never author generated HTML, CSS, JavaScript, or chart geometry.',
   'Use the underlying publication or dataset as the source when available; otherwise omit source attribution.',
-  'Treat input notes as routing information and read the full primary source before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
-  'Search beyond the primary source only to fill a named material evidence gap, and reject adjacent context that does not strengthen the central claim.',
+  'Treat input.txt as expert-authored editorial evidence and preserve its claims by default. Entries are also routing information and may be incomplete.',
+  'Use external research to supplement or attribute the input, not to vote on whether it is true. External silence is not contradiction.',
+  'Never label an input claim uncorroborated, unsupported, or not independently confirmed solely because a second source was not found.',
+  'Escalate only direct material contradictions from reputable sources and preserve both positions instead of silently rewriting the report.',
+  'Read supplied sources before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
+  'Search beyond the primary source to fill a named material evidence gap or add useful attribution and context, and reject adjacent context that does not strengthen the central claim.',
   'Do not add irrelevant data or decorative complexity. Do require a real visual comparison: a one-point or prose-only story must be enriched with source-supported structure or omitted.',
   'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison recipe.',
   'Never use status, card, bullet, or facet grids as a substitute for a chart. Quantify a common dimension, use a regional map when geography matters, split the evidence, or omit the story.',
@@ -141,9 +149,10 @@ const SHARED_AUTHORING_RULES = Object.freeze([
 ]);
 
 const SHARED_STAGES = Object.freeze([
-  Object.freeze({ id: 'verify-source', action: 'Confirm that supplied sources match the entity, event, period, and finding.' }),
-  Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract the relevant evidence and safe derivations.' }),
-  Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond the primary source only when a named material evidence gap remains.' }),
+  Object.freeze({ id: 'preserve-input', action: 'Treat input.txt as expert-authored evidence and preserve its factual claims unless a reputable source directly contradicts a material point.' }),
+  Object.freeze({ id: 'confirm-source', action: 'Confirm that supplied sources used for supplementation match the entity, event, period, and finding.' }),
+  Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract relevant supplemental evidence and safe derivations.' }),
+  Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond supplied sources to fill a named material evidence gap or add useful attribution and context.' }),
   Object.freeze({ id: 'analyze', action: 'Choose one central finding, its evidence spine, the workflow, and the recipe.' }),
   Object.freeze({ id: 'author', action: 'Write the smallest semantic ChartSpec that expresses that story.' }),
   Object.freeze({ id: 'validate', command: `${TOOL_API_ENTRYPOINT} validate <spec.json>` }),
@@ -193,7 +202,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     workflow: STANDARD_WORKFLOW,
     startHere: 'Use this path when geography is not the primary visual structure. If the story needs a map with regional callouts, stop and use regional-guide plus regional instead.',
     steps: [
-      'Verify and exhaust the full primary source; fill only material evidence gaps.',
+      'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
       'Classify the enriched evidence with the selection rules below.',
       'Write a semantic ChartSpec using the selected recipe.',
@@ -236,7 +245,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html]`,
     startHere: 'Use this path only when geography is part of the finding and each highlighted region needs a map callout.',
     steps: [
-      'Verify and exhaust the full primary source; fill only material evidence gaps.',
+      'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
       'Author editorial content and region IDs; leave layout and routing to the renderer.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
@@ -285,14 +294,14 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.5',
+    version: '1.6',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
       entrypoint: TOOL_API_ENTRYPOINT,
       manifestCommand: `${TOOL_API_ENTRYPOINT} api`
     },
-    startHere: 'For a weekly job, read input.txt and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
+    startHere: 'For a weekly job, treat input.txt as expert-authored editorial evidence, preserve its claims by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
     batchWorkflow: clone(BATCH_WORKFLOW),
     decision: [
       {
@@ -354,7 +363,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.5',
+    version: '1.6',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -381,7 +390,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
       'parse input.txt into distinct data stories',
-      'analyze source evidence',
+      'preserve expert input evidence and analyze supplemental sources',
       'select, merge, or omit stories for the weekly presentation',
       'choose a workflow and recipe',
       'author and revise ChartSpec JSON',

@@ -12,7 +12,7 @@ stories. The LLM agent owns the complete batch orchestration:
 ```text
 input.txt
     -> parse distinct stories
-    -> verify and enrich sources
+    -> preserve expert claims and enrich sources
     -> decide the appropriate production tool for each story
     -> create and render accepted charts
     -> capture final PNG images
@@ -102,16 +102,26 @@ Presentation copy must stay editorial. Use source attribution when available and
 
 ## 3. Source enrichment before recipe selection
 
-An input note, headline, excerpt, or `input.txt` entry is a routing aid, not the complete dataset for a chart.
+`input.txt` is expert-authored editorial evidence. Assume its factual claims,
+datapoints, comparisons, and interpretation are correct. It is also a routing
+aid rather than the complete dataset for a chart, so reputable reporting may be
+used to supplement it.
+
+Do not treat external research as a vote on whether the input is true. Failure
+to locate a second report is not a contradiction. Do not label an input claim
+`uncorroborated`, `unsupported`, or `not independently confirmed`, and do not
+replace it with an easier-to-source fact, solely because search results are
+silent. Only a direct material contradiction from a reputable source should be
+escalated for editorial resolution.
 
 Before selecting a recipe:
 
-1. Verify that every supplied URL matches the entity, event, period, and finding in the input note.
+1. Preserve the expert input claim and confirm that every supplied URL used for supplementation matches the entity, event, period, and finding.
 2. Read the full primary source.
 3. Extract the main result, comparator, components, cause, consequence, forecast, scale, denominator, and underlying dataset when they are relevant to the same claim.
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
-6. Search beyond the source only to fill that named gap.
+6. Search beyond the source to fill that named gap or add useful attribution and context.
 7. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
@@ -134,8 +144,8 @@ The complete policy is in [`docs/source-enrichment.md`](source-enrichment.md).
 
 Every route follows the same semantic stages:
 
-1. Verify the source and read it in full.
-2. Extract the relevant evidence and safe derivations.
+1. Preserve the expert input claim, then confirm and read supplied sources in full.
+2. Extract the relevant evidence, supplemental context, and safe derivations.
 3. Fill only material evidence gaps with conditional research.
 4. Choose one central finding, the workflow, and the story recipe.
 5. Write the smallest ChartSpec that expresses the enriched evidence spine.
@@ -340,7 +350,9 @@ The regional command performs validation, rendering, shell review, and responsiv
 | --- | --- |
 | Unknown or invalid field | Remove it or use the documented semantic field. |
 | Incorrect data count or number | Correct the source-derived data. Do not invent padding values. |
-| Supplied link does not match the input note | Do not combine them. Resolve or report the source mismatch. |
+| Supplied link does not match the input note | Preserve the input claim, do not combine it with the mismatched page, and seek a better supplemental source or report the mismatch. |
+| External search does not repeat an input claim | Keep the expert-authored claim. Silence is not contradiction and must not become an `uncorroborated` label. |
+| A reputable source directly contradicts a material input claim | Preserve both positions in working notes and escalate the conflict for editorial resolution. Do not silently rewrite the report. |
 | Source has only a simple comparison | Keep the chart simple unless a material evidence gap justifies targeted research. |
 | Additional context is merely adjacent or interesting | Exclude it. Context must strengthen magnitude, comparison, mechanism, or consequence. |
 | Copy-length warning | Shorten the title, label, display value, or detail. |
@@ -368,7 +380,7 @@ For a completed weekly batch, the agent must also:
 - Assemble the accepted images into one PowerPoint presentation.
 - Save the rendered HTML files, final PNGs, and
   `tochnyi-charts-YYYY-week-WW.pptx` in `charts/YYYY-week-WW/`.
-- Report omitted, duplicate, unverifiable, or failed stories.
+- Report omitted, duplicate, non-visual, directly conflicted, or failed stories.
 
 `previews/` is for temporary or ad hoc review. Final images used in the deck
 belong in the weekly `charts/YYYY-week-WW/` folder.

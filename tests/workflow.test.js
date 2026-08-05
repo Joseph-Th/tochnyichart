@@ -44,7 +44,12 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.sharedContract.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(orientation.sharedContract.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(orientation.sharedContract.resources.storySelection, 'docs/story-selection.md');
-  assert.equal(orientation.sharedContract.stages[0].id, 'verify-source');
+  assert.equal(orientation.sharedContract.stages[0].id, 'preserve-input');
+  assert.match(orientation.sharedContract.sourceEnrichment.coreRule, /expert-authored editorial evidence/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.inputRule, /external silence is not a contradiction/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /Do not replace, downgrade, or relabel/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.contradictionRule, /direct material contradiction/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.presentationRule, /uncorroborated/i);
   assert.match(orientation.sharedContract.sharedScaleContract.sentenceTest, /Every mark encodes/);
   assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.deepEqual(
@@ -52,6 +57,8 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
     ['status.grid', 'headline.metric']
   );
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
+  assert.match(orientation.batchWorkflow.inputAuthority, /expert-authored editorial evidence/i);
+  assert.match(orientation.batchWorkflow.inputAuthority, /external silence is not contradiction/i);
   assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
   assert.match(orientation.batchWorkflow.presentation, /tochnyi-charts-YYYY-week-WW\.pptx$/);
   assert.match(orientation.batchWorkflow.boundary, /LLM agent owns input parsing/i);
@@ -99,6 +106,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.equal(fs.existsSync(path.join(root, manifest.resources.storySelection)), true);
   assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
   assert.equal(manifest.batchWorkflow.input, 'input.txt');
+  assert.match(manifest.batchWorkflow.inputAuthority, /presume claims and datapoints are correct/i);
   assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/YYYY-week-WW/');
   assert.ok(manifest.batchWorkflow.steps.some((step) => step.includes('PowerPoint')));
   assert.ok(manifest.allowedWork.some((entry) => entry.includes('PowerPoint')));
@@ -106,7 +114,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
     manifest.sourceEnrichment.evidenceRoles,
     ['magnitude', 'comparison', 'mechanism', 'consequence']
   );
-  assert.match(manifest.sourceEnrichment.coreRule, /full primary source/i);
+  assert.match(manifest.sourceEnrichment.coreRule, /expert-authored editorial evidence/i);
   assert.match(manifest.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric']);
   assert.match(manifest.sourceEnrichment.attributionRule, /omit source/i);
@@ -130,7 +138,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.5');
+  assert.equal(manifest.version, '1.6');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');

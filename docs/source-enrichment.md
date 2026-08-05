@@ -6,9 +6,25 @@ The objective is not to maximize the number of data points or make every chart v
 
 ## Core rule
 
-Always inspect and exhaust the full primary source before selecting the recipe.
+Treat `input.txt` as expert-authored editorial evidence. Assume its factual
+claims, values, comparisons, and causal interpretation are correct unless a
+reputable source directly contradicts a material point.
 
-An input note, headline, excerpt, or `input.txt` entry is routing information. It identifies a possible story and often points to the relevant source. It is not assumed to contain the complete dataset available for the chart.
+External research is enrichment, not an adversarial fact-check of the weekly
+report. Use it to add attribution, comparators, denominators, historical series,
+mechanisms, consequences, or current status. Failure to find the same fact in a
+second source is not a contradiction and must not cause an agent to delete,
+downgrade, relabel, or replace an input claim.
+
+The input is not assumed to contain the complete dataset available for the
+chart. Inspect and exhaust supplied sources before selecting the recipe, then
+supplement the expert material when reputable reporting strengthens the same
+editorial claim.
+
+Do not expose research-process language such as `uncorroborated`, `not
+independently confirmed`, `unsupported draft`, or `verification failed` in a
+chart or presentation merely because an external search did not repeat an input
+claim.
 
 Do not create a two-value chart merely because the input note mentions two values. First determine whether the source provides a useful comparator, component, cause, consequence, forecast, denominator, or historical reference that strengthens the same finding.
 
@@ -19,10 +35,10 @@ Do not add context merely to avoid a simple chart. A clean two-value comparison 
 Use this order before recipe selection:
 
 ```text
-input note or assignment
+expert input note or assignment
     |
     v
-verify source identity and relevance
+confirm source identity and relevance
     |
     v
 read the full primary source
@@ -31,7 +47,7 @@ read the full primary source
 extract evidence and safe derivations
     |
     v
-identify any material evidence gap
+identify any useful enrichment gap
     |
     v
 conditionally research additional context
@@ -40,9 +56,10 @@ conditionally research additional context
 select the evidence spine and recipe
 ```
 
-## 1. Verify the source
+## 1. Confirm and attribute sources
 
-When a URL is provided, confirm that the page matches the input note before extracting data.
+When a URL is provided, confirm that the page matches the input note before
+extracting supplemental data.
 
 Verify:
 
@@ -53,7 +70,15 @@ Verify:
 - Source title
 - Whether the link is the underlying source or only a related article
 
-If the source does not match the note, do not silently combine them. Resolve the mismatch or report it.
+If the source does not match the note, do not silently combine them. Preserve
+the expert input claim, exclude the mismatched source from that claim, and seek
+a better attribution or supplemental source.
+
+Only a direct, material contradiction from a reputable source creates a source
+conflict. Silence, omission, different emphasis, lack of indexing, inaccessible
+archives, or failure to locate a second report do not. When a direct conflict
+exists, retain both positions in working notes and report the conflict for
+editorial resolution instead of silently rewriting the expert claim.
 
 Use the underlying publication, company report, official dataset, or named research source as `source.name` when available. When no usable attribution is available, omit the `source` field. Never substitute `input.txt`, an internal compilation, a file path, verification status, or workflow commentary into chart or presentation copy.
 
@@ -112,9 +137,10 @@ Not every chart needs every role. Select only the facts required to make the fin
 
 Supporting evidence may appear as primary data, references, annotations, supporting facts, a subtitle, or a note. It does not need to share an axis with the main measure.
 
-## 5. Search beyond the primary source conditionally
+## 5. Search beyond the supplied material conditionally
 
-Additional research is allowed only when the primary source leaves a material evidence gap. Examples include:
+Additional research is allowed when it strengthens the expert report or fills a
+material evidence gap. Examples include:
 
 - No prior-period or benchmark comparison for a claimed change
 - No historical series for a claimed record
@@ -133,7 +159,9 @@ full linked source
 -> broader high-quality external research
 ```
 
-Searching for another article from the same publisher is not the default. It is a gap-filling step after the linked source and its underlying evidence have been exhausted.
+Searching for another article from the same publisher is not the default. It is
+an enrichment step after the linked source and its underlying evidence have
+been exhausted.
 
 ## 6. Apply the relevance test
 
@@ -145,6 +173,10 @@ Include secondary context only when all of the following are true:
 - It materially changes or clarifies interpretation.
 - It has a traceable source.
 - It does not require changing the chart's central editorial sentence.
+
+External context must not replace an input datapoint merely because it is easier
+to cite. Preserve the input evidence spine and add the external fact only when
+it is compatible with that spine.
 
 Reject context that is merely adjacent, interesting, or visually convenient.
 
@@ -169,11 +201,13 @@ Do not default to bars because the input contains numbers. Do not select a more 
 
 Before authoring the `ChartSpec`, confirm:
 
-- The linked source matches the story.
+- The expert input claim has been preserved.
+- Any linked source used for supplementation matches the story.
 - The full source has been read.
 - All directly relevant evidence has been extracted.
 - Derived values are traceable and period-compatible.
-- Any external research fills a named evidence gap.
+- External research supplements rather than silently overrides the input.
+- Any direct contradiction has been escalated for editorial resolution.
 - Every selected fact supports magnitude, comparison, mechanism, or consequence.
 - The central finding remains singular and clear.
 - The selected recipe reflects the enriched evidence rather than the abbreviated input note.
