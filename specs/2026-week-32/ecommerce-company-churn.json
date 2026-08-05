@@ -1,0 +1,72 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.scenarios",
+  "title": "Marketplace Liquidations Exceeded New Registrations by 18,200",
+  "subtitle": "Business exits rose while new seller registrations fell in the first half of 2026.",
+  "source": {
+    "name": "Russian marketplace company-registration reporting",
+    "period": "H1 2026"
+  },
+  "data": [
+    {
+      "label": "Liquidations",
+      "value": 76400,
+      "displayValue": "76,400",
+      "quantity": "company lifecycle events",
+      "scope": "Russian companies and sellers trading through online platforms",
+      "period": "H1 2026",
+      "tone": "critical"
+    },
+    {
+      "label": "New registrations",
+      "value": 58200,
+      "displayValue": "58,200",
+      "quantity": "company lifecycle events",
+      "scope": "Russian companies and sellers trading through online platforms",
+      "period": "H1 2026",
+      "tone": "positive"
+    }
+  ],
+  "measure": {
+    "quantity": "company lifecycle events",
+    "unit": "companies",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "18,200",
+    "label": "more exits than entries",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "+19.6%",
+      "label": "Increase in liquidations from the comparable period.",
+      "tone": "critical"
+    },
+    {
+      "value": "−25%",
+      "label": "Decline in new registrations.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "metadata": {
+    "slug": "ecommerce-company-churn",
+    "country": "Russia",
+    "topic": "e-commerce seller churn",
+    "dataPeriod": "H1 2026",
+    "keyFinding": "Marketplace company exits outnumbered new registrations by 18,200 in H1 2026."
+  }
+}

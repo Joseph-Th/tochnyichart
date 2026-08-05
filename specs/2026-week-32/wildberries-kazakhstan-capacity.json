@@ -1,0 +1,71 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.scenarios",
+  "title": "One Wildberries Requirement Could Absorb Most Vacant Kazakh Space",
+  "subtitle": "The requested Class A warehouse equals nearly 77% of all high-quality space reported vacant across Kazakhstan.",
+  "source": {
+    "name": "Kazakhstan warehouse market reporting and Wildberries expansion plans",
+    "period": "July–August 2026"
+  },
+  "data": [
+    {
+      "label": "Warehouse sought",
+      "value": 100000,
+      "displayValue": "100,000 m²",
+      "quantity": "Class A warehouse floor area",
+      "scope": "vacant high-quality warehouse market in Kazakhstan",
+      "period": "July 2026",
+      "tone": "critical"
+    },
+    {
+      "label": "Total vacant stock",
+      "value": 130000,
+      "displayValue": "130,000 m²",
+      "quantity": "Class A warehouse floor area",
+      "scope": "vacant high-quality warehouse market in Kazakhstan",
+      "period": "July 2026",
+      "tone": "neutral"
+    }
+  ],
+  "measure": {
+    "quantity": "Class A warehouse floor area",
+    "unit": "m²",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "76.9%",
+      "label": "Share of the reported national vacancy represented by one requirement.",
+      "tone": "critical"
+    },
+    {
+      "value": "2 existing sites",
+      "label": "Wildberries already operated facilities in Almaty and Astana.",
+      "tone": "primary"
+    },
+    {
+      "value": "260,000 m²",
+      "label": "Reuters later reported additional Kazakhstan construction under way.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "surprise",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "metadata": {
+    "slug": "wildberries-kazakhstan-capacity",
+    "country": "Kazakhstan",
+    "topic": "Wildberries warehouse expansion",
+    "dataPeriod": "July–August 2026",
+    "keyFinding": "A single Wildberries requirement could consume most of Kazakhstan’s available high-grade warehouse space."
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "short",
+    "showLegend": true,
+    "labelMode": "inside"
+  },
+  "recipe": "composition.stacked",
+  "title": "Magnit Market Lost One Ruble for Every Two Rubles of Revenue",
+  "subtitle": "Its 2024 loss equaled about one third of an implied 9.5 billion ruble cost base before the marketplace was narrowed into Magnit’s “extended shelf” model.",
+  "source": {
+    "name": "Magnit Market seller FAQ and Kommersant",
+    "period": "2024 results and July 2026 transition",
+    "url": "https://seller-manual.mm.ru/faq"
+  },
+  "data": [
+    {
+      "label": "Revenue-funded cost",
+      "value": 6.3,
+      "displayValue": "6.3bn RUB",
+      "tone": "primary"
+    },
+    {
+      "label": "Loss / uncovered cost",
+      "value": 3.2,
+      "displayValue": "3.2bn RUB",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "billion rubles",
+    "decimals": 1,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "Universal model ended",
+      "label": "Magnit said the service would cease operating as a broad marketplace and become an extended assortment for its core retail business.",
+      "tone": "warning"
+    },
+    {
+      "value": "FBO wound down",
+      "label": "The transition moved sellers to fulfillment by seller and stopped new warehouse intake in July.",
+      "tone": "critical"
+    },
+    {
+      "value": "Acquisition cancelled",
+      "label": "Wildberries reportedly withdrew from the planned Magnit Market transaction.",
+      "tone": "warning"
+    },
+    {
+      "value": "Investment paused",
+      "label": "Wildberries also reportedly suspended acquisition and investment activity.",
+      "tone": "critical"
+    }
+  ],
+  "note": "The implied cost base is derived as 2024 revenue plus the reported net loss. It is used as a high-level funding view, not an accounting expense reconciliation.",
+  "narrative": {
+    "frame": "collapse",
+    "density": "detailed",
+    "emphasis": "composition"
+  },
+  "metadata": {
+    "slug": "marketplace-retrenchment",
+    "country": "Russia",
+    "topic": "marketplace retrenchment",
+    "dataPeriod": "2024–July 2026",
+    "keyFinding": "Magnit Market entered its narrower 2026 operating model after a loss equal to roughly half its 2024 revenue."
+  }
+}

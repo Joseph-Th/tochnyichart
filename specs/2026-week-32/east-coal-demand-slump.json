@@ -1,0 +1,77 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard",
+    "sort": "none"
+  },
+  "recipe": "comparison.diverging",
+  "title": "Far East Metallurgical Coal Prices Fell as Chinese Demand Normalized",
+  "subtitle": "Coking coal declined more than pulverized coal injection material over the 30 days to 17 July.",
+  "source": {
+    "name": "Kommersant coal market reporting",
+    "period": "17 June–17 July 2026"
+  },
+  "data": [
+    {
+      "label": "Coking coal",
+      "value": -7.5,
+      "displayValue": "−7.5%",
+      "quantity": "30-day export price change",
+      "scope": "Russian metallurgical coal at Far East ports under FOB terms",
+      "period": "17 June–17 July 2026",
+      "tone": "critical"
+    },
+    {
+      "label": "PCI coal",
+      "value": -2.7,
+      "displayValue": "−2.7%",
+      "quantity": "30-day export price change",
+      "scope": "Russian metallurgical coal at Far East ports under FOB terms",
+      "period": "17 June–17 July 2026",
+      "tone": "warning"
+    }
+  ],
+  "measure": {
+    "quantity": "30-day export price change",
+    "unit": "%",
+    "decimals": 1,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "$148 / $144",
+      "label": "Coking-coal and PCI prices per ton after the decline.",
+      "tone": "primary"
+    },
+    {
+      "value": "−10% June; +1% H1",
+      "label": "Chinese coal mining versus a year earlier, showing a monthly shock but higher half-year output.",
+      "tone": "neutral"
+    },
+    {
+      "value": "+21% to 9.4m t",
+      "label": "Chinese steel-inventory increase in June.",
+      "tone": "warning"
+    },
+    {
+      "value": "−10% to −20%",
+      "label": "Potential further fall in Russian metallurgical coal export prices.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "direction"
+  },
+  "metadata": {
+    "slug": "east-coal-demand-slump",
+    "country": "Russia",
+    "topic": "metallurgical coal prices",
+    "dataPeriod": "17 June–17 July 2026",
+    "keyFinding": "Russian Far East metallurgical coal prices weakened as Chinese supply recovered and steel inventories rose."
+  }
+}

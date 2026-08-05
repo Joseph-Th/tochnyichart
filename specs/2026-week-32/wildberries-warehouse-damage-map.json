@@ -1,0 +1,109 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "tall"
+  },
+  "recipe": "map.regional",
+  "title": "Wildberries Warehouse Disruption Spread Across Seven Regions",
+  "subtitle": "Several facilities were destroyed or disabled, while other sites remained partly operational or had disputed damage reports.",
+  "source": {
+    "name": "Reuters, Kommersant, local emergency reports and company statements",
+    "period": "Late July–early August 2026"
+  },
+  "data": [
+    {
+      "label": "Ryazan",
+      "regionId": "RU-RYA",
+      "status": "critical",
+      "displayValue": "Major fire",
+      "detail": "Reporting differed on whether half or all of the facility was lost."
+    },
+    {
+      "label": "Perm",
+      "regionId": "RU-PER",
+      "status": "unknown",
+      "displayValue": "Damage disputed",
+      "detail": "Initial reports said the site was disabled; Reuters later reported operations continued."
+    },
+    {
+      "label": "Udmurtia",
+      "regionId": "RU-UD",
+      "status": "blocked",
+      "displayValue": "Destroyed",
+      "detail": "The Sarapul-area facility was reported destroyed by fire after an attack."
+    },
+    {
+      "label": "Penza",
+      "regionId": "RU-PNZ",
+      "status": "blocked",
+      "displayValue": "Destroyed",
+      "detail": "The regional fulfillment center was reported destroyed."
+    },
+    {
+      "label": "Tambov",
+      "regionId": "RU-TAM",
+      "status": "strained",
+      "displayValue": "Partly damaged",
+      "detail": "Interior footage suggested major damage, but the site remained operational."
+    },
+    {
+      "label": "Volgograd",
+      "regionId": "RU-VGG",
+      "status": "blocked",
+      "displayValue": "Destroyed",
+      "detail": "The site was reported destroyed."
+    },
+    {
+      "label": "Samara",
+      "regionId": "RU-SAM",
+      "status": "critical",
+      "displayValue": "160,000 m² burned",
+      "detail": "Reuters reported 160,000 of 180,000 m² burned at the site."
+    }
+  ],
+  "map": {
+    "regionSet": "russia",
+    "calloutDistribution": "balanced"
+  },
+  "primaryMetric": {
+    "value": "7 regions",
+    "label": "facilities with reported disruption"
+  },
+  "supportingFacts": [
+    {
+      "value": "552,000 m²",
+      "label": "Warehouse area reported targeted in one compiled assessment.",
+      "tone": "warning"
+    },
+    {
+      "value": "444,000 m²",
+      "label": "Area reported unusable in the same assessment.",
+      "tone": "critical"
+    },
+    {
+      "value": "8–10%",
+      "label": "Estimated share of Wildberries capacity affected.",
+      "tone": "critical"
+    },
+    {
+      "value": "Yekaterinburg disputed",
+      "label": "Company rhetoric described mass attacks; official reporting described a much smaller debris fire.",
+      "tone": "neutral"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "detailed",
+    "emphasis": "geography"
+  },
+  "metadata": {
+    "slug": "wildberries-warehouse-damage-map",
+    "country": "Russia",
+    "topic": "Wildberries warehouse attacks",
+    "dataPeriod": "Late July–early August 2026",
+    "keyFinding": "Wildberries logistics disruption became a multi-region network problem rather than a single-site incident."
+  }
+}

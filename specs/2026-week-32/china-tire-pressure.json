@@ -1,0 +1,86 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.change",
+  "title": "Chinese Passenger-Tire Shipments to Russia Jumped 60%",
+  "subtitle": "First-half imports reached 12.7 million tires after June set the highest monthly volume in the available customs series since 2015.",
+  "source": {
+    "name": "Kommersant citing China customs data",
+    "period": "H1 2025–H1 2026",
+    "url": "https://www.kommersant.ru/doc/8847653"
+  },
+  "data": [
+    {
+      "label": "H1 2025, implied",
+      "value": 7.9375,
+      "displayValue": "≈7.94m tires",
+      "valueStatus": "derived",
+      "quantity": "Chinese passenger-car tire exports to Russia",
+      "scope": "Passenger-car tires exported from China to Russia",
+      "period": "H1 2025",
+      "tone": "neutral"
+    },
+    {
+      "label": "H1 2026",
+      "value": 12.7,
+      "displayValue": "12.7m tires",
+      "valueStatus": "reported",
+      "quantity": "Chinese passenger-car tire exports to Russia",
+      "scope": "Passenger-car tires exported from China to Russia",
+      "period": "H1 2026",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "quantity": "Chinese passenger-car tire exports to Russia",
+    "unit": "million tires",
+    "decimals": 2,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "+60%",
+    "label": "first-half unit growth",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "2.99m in June",
+      "label": "Monthly units doubled year over year and rose 1.8 times from May.",
+      "tone": "critical"
+    },
+    {
+      "value": "$85m in June",
+      "label": "Declared monthly value also doubled year over year.",
+      "tone": "warning"
+    },
+    {
+      "value": "$322m in H1",
+      "label": "First-half shipment value rose 40%.",
+      "tone": "primary"
+    },
+    {
+      "value": "About 30%",
+      "label": "One protective-duty option reported as the EAEU investigation continued.",
+      "tone": "warning"
+    }
+  ],
+  "note": "The H1 2025 unit value is derived as 12.7 million divided by 1.60.",
+  "narrative": {
+    "frame": "surprise",
+    "density": "detailed",
+    "emphasis": "gap"
+  },
+  "metadata": {
+    "slug": "china-tire-pressure",
+    "country": "Russia",
+    "topic": "Chinese tire imports",
+    "dataPeriod": "H1 2025–H1 2026",
+    "keyFinding": "Chinese passenger-tire shipments to Russia rose 60% in units, with June setting a record in the available customs series."
+  }
+}

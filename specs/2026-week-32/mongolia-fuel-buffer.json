@@ -1,0 +1,76 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "tall",
+    "sort": "descending"
+  },
+  "recipe": "ranking.horizontal",
+  "title": "Mongolia’s Fuel Buffer Was Measured in Weeks",
+  "subtitle": "Official July figures showed 27–44 days of reserves in a country that imports about 97% of petroleum products from Russia.",
+  "source": {
+    "name": "Mongolia Ministry of Industry and Mineral Resources",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "AI-95 gasoline",
+      "value": 44,
+      "displayValue": "44 days",
+      "tone": "positive"
+    },
+    {
+      "label": "AI-92 gasoline",
+      "value": 33,
+      "displayValue": "33 days",
+      "tone": "warning"
+    },
+    {
+      "label": "Diesel",
+      "value": 27,
+      "displayValue": "27 days",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "days of reserves",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "97%",
+      "label": "Share of petroleum-product imports sourced from Russia.",
+      "tone": "critical"
+    },
+    {
+      "value": "71k / 4k / 106k t",
+      "label": "Reported AI-92, AI-95 and diesel reserve tonnages.",
+      "tone": "primary"
+    },
+    {
+      "value": "+250 / −150 MNT",
+      "label": "AI-92 price rose while diesel fell per liter in mid-July.",
+      "tone": "warning"
+    },
+    {
+      "value": "291,000 m³",
+      "label": "Planned additional national storage capacity.",
+      "tone": "positive"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "ranking"
+  },
+  "metadata": {
+    "slug": "mongolia-fuel-buffer",
+    "country": "Mongolia",
+    "topic": "Mongolia fuel reserves",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Mongolia had only several weeks of fuel reserves despite near-total dependence on Russian imports."
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "tall",
+    "sort": "none"
+  },
+  "recipe": "ranking.horizontal",
+  "title": "Producer Diesel Received the Only Short Export Restriction",
+  "subtitle": "Most fuel-export channels were restricted for about six months, while producer diesel exports were initially limited only through August.",
+  "source": {
+    "name": "Reuters",
+    "period": "30 July 2026–31 January 2027",
+    "url": "https://www.reuters.com/business/energy/russia-extends-diesel-gasoline-export-bans-until-end-january-2027-2026-07-30/"
+  },
+  "data": [
+    {
+      "label": "Gasoline producers",
+      "value": 6,
+      "displayValue": "≈6 months",
+      "tone": "critical"
+    },
+    {
+      "label": "Gasoline non-producers",
+      "value": 6,
+      "displayValue": "≈6 months",
+      "tone": "critical"
+    },
+    {
+      "label": "Diesel non-producers",
+      "value": 6,
+      "displayValue": "≈6 months",
+      "tone": "critical"
+    },
+    {
+      "label": "Diesel producers",
+      "value": 1,
+      "displayValue": "≈1 month",
+      "tone": "warning"
+    }
+  ],
+  "measure": {
+    "unit": "months restricted",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "1 September",
+      "label": "Producer exemptions for diesel, marine fuel and gas oils were scheduled to begin.",
+      "tone": "primary"
+    },
+    {
+      "value": "31 January 2027",
+      "label": "End date for the broader export restrictions.",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "ranking"
+  },
+  "metadata": {
+    "slug": "fuel-export-ban-structure",
+    "country": "Russia",
+    "topic": "fuel export restrictions",
+    "dataPeriod": "July 2026–January 2027",
+    "keyFinding": "Russia used a six-month gasoline ban and differentiated diesel controls to protect domestic supply."
+  }
+}

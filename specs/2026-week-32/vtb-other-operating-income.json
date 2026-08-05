@@ -1,0 +1,85 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.change",
+  "title": "VTB’s Other Operating Income Collapsed in the Second Quarter",
+  "subtitle": "Quarterly income fell from about 91 billion rubles to 17.9 billion as the Halls transaction was paid in installments.",
+  "source": {
+    "name": "Kommersant",
+    "period": "Q1–Q2 2026",
+    "url": "https://www.kommersant.ru/doc/8845995"
+  },
+  "data": [
+    {
+      "label": "Q1 2026",
+      "value": 91,
+      "displayValue": "about 91bn RUB",
+      "valueStatus": "approximate",
+      "quantity": "other operating income",
+      "scope": "VTB Group",
+      "period": "Q1 2026",
+      "tone": "primary"
+    },
+    {
+      "label": "Q2 2026",
+      "value": 17.9,
+      "displayValue": "17.9bn RUB",
+      "valueStatus": "reported",
+      "quantity": "other operating income",
+      "scope": "VTB Group",
+      "period": "Q2 2026",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "quantity": "other operating income",
+    "unit": "billion rubles",
+    "decimals": 1,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "about −80%",
+    "label": "quarter to quarter",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "118.2bn RUB",
+      "label": "H1 other operating income.",
+      "tone": "primary"
+    },
+    {
+      "value": "−63%",
+      "label": "H1 year-over-year change.",
+      "tone": "critical"
+    },
+    {
+      "value": ">100bn RUB",
+      "label": "Value of the Halls Development transaction.",
+      "tone": "warning"
+    },
+    {
+      "value": "8bn RUB",
+      "label": "Additional reported loss associated with the transaction structure.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "direction"
+  },
+  "metadata": {
+    "slug": "vtb-other-operating-income",
+    "country": "Russia",
+    "topic": "VTB operating income",
+    "dataPeriod": "Q1–Q2 2026",
+    "keyFinding": "VTB’s other operating income fell by roughly four fifths from Q1 to Q2."
+  }
+}

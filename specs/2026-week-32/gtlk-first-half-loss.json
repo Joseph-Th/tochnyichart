@@ -1,0 +1,84 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.change",
+  "title": "GTLK’s First-Half Loss Widened Almost Eightfold",
+  "subtitle": "The state leasing company moved from a 1.8 billion ruble loss in H1 2025 to a record 14.2 billion ruble loss in H1 2026.",
+  "source": {
+    "name": "Kommersant and GTLK reporting",
+    "period": "H1 2025–H1 2026",
+    "url": "https://www.kommersant.ru/doc/8847713"
+  },
+  "data": [
+    {
+      "label": "H1 2025",
+      "value": -1.8,
+      "displayValue": "−1.8bn RUB",
+      "quantity": "GTLK net profit",
+      "scope": "GTLK first-half financial result",
+      "period": "H1 2025",
+      "tone": "warning"
+    },
+    {
+      "label": "H1 2026",
+      "value": -14.2,
+      "displayValue": "−14.2bn RUB",
+      "quantity": "GTLK net profit",
+      "scope": "GTLK first-half financial result",
+      "period": "H1 2026",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "quantity": "GTLK net profit",
+    "unit": "billion rubles",
+    "decimals": 1,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−12.4bn RUB",
+    "label": "year-over-year deterioration",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": ">20bn RUB",
+      "label": "Reserve provisions in H1 2026.",
+      "tone": "critical"
+    },
+    {
+      "value": "24bn RUB",
+      "label": "Other income after roughly halving year over year.",
+      "tone": "warning"
+    },
+    {
+      "value": "47.7bn RUB",
+      "label": "Operating profit, up by less than 2%.",
+      "tone": "primary"
+    },
+    {
+      "value": "560.6bn RUB; +20%",
+      "label": "Net investment in leases.",
+      "tone": "primary"
+    }
+  ],
+  "note": "The linked article reports more than 23 billion rubles of foreign-exchange conversion expense for the prior-year comparison period, not H1 2026. The chart therefore does not attribute that amount to the current loss.",
+  "narrative": {
+    "frame": "collapse",
+    "density": "detailed",
+    "emphasis": "direction"
+  },
+  "metadata": {
+    "slug": "gtlk-first-half-loss",
+    "country": "Russia",
+    "topic": "GTLK loss",
+    "dataPeriod": "H1 2025–H1 2026",
+    "keyFinding": "GTLK’s first-half loss deteriorated by 12.4 billion rubles year over year."
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "short",
+    "showLegend": true,
+    "labelMode": "inside"
+  },
+  "recipe": "composition.stacked",
+  "title": "Two Retailers Released 63,000 m² of South Moscow Warehouse Space",
+  "subtitle": "A 38,000 m² warehouse and a 25,000 m² warehouse formed the full sublease package.",
+  "source": {
+    "name": "Kommersant",
+    "period": "July 2026",
+    "url": "https://www.kommersant.ru/doc/8846779"
+  },
+  "data": [
+    {
+      "label": "Larger warehouse",
+      "value": 38000,
+      "displayValue": "38,000 m²",
+      "tone": "warning"
+    },
+    {
+      "label": "Smaller warehouse",
+      "value": 25000,
+      "displayValue": "25,000 m²",
+      "tone": "primary"
+    }
+  ],
+  "measure": {
+    "unit": "m²",
+    "decimals": 0,
+    "baseline": "zero"
+  },
+  "supportingFacts": [
+    {
+      "value": "16%",
+      "label": "Subleases as a share of all warehouse space offered, after growth programs were cut.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "minimal",
+    "emphasis": "composition"
+  },
+  "metadata": {
+    "slug": "south-moscow-sublease",
+    "country": "Russia",
+    "topic": "Moscow warehouse subleases",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Retailer retrenchment released 63,000 square meters of warehouse space in southern Moscow."
+  }
+}

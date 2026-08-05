@@ -1,0 +1,79 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "trend.line",
+  "title": "Russian E-commerce Growth Has Slowed Sharply",
+  "subtitle": "Turnover still expanded, but the growth rate fell from 60.3% in 2024 to 18.4% in H1 2026.",
+  "source": {
+    "name": "Russian e-commerce market reporting",
+    "period": "2024–H1 2026"
+  },
+  "data": [
+    {
+      "label": "2024",
+      "value": 60.3,
+      "displayValue": "60.3%"
+    },
+    {
+      "label": "2025",
+      "value": 29.4,
+      "displayValue": "29.4%"
+    },
+    {
+      "label": "H1 2026",
+      "value": 18.4,
+      "displayValue": "18.4%",
+      "tone": "warning"
+    }
+  ],
+  "measure": {
+    "unit": "% year over year",
+    "decimals": 1,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−41.9pp",
+    "label": "since 2024",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "5.9tn RUB",
+      "label": "Sector turnover in H1 2026 despite slower growth.",
+      "tone": "primary"
+    },
+    {
+      "value": "10–15%",
+      "label": "Share of active sellers expected to leave under fee pressure.",
+      "tone": "critical"
+    },
+    {
+      "value": "≤100,000 RUB/month",
+      "label": "Turnover level typical of the smallest sellers most at risk.",
+      "tone": "warning"
+    },
+    {
+      "value": "4m jobs; 8–10%",
+      "label": "Reported employment footprint and broad economic share of e-commerce activity.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "detailed",
+    "emphasis": "direction"
+  },
+  "metadata": {
+    "slug": "ecommerce-growth-deceleration",
+    "country": "Russia",
+    "topic": "e-commerce growth",
+    "dataPeriod": "2024–H1 2026",
+    "keyFinding": "Russian e-commerce growth remained positive but decelerated by more than 40 percentage points in two years."
+  }
+}

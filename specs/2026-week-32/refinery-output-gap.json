@@ -1,0 +1,63 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "short",
+    "showLegend": true,
+    "labelMode": "inside"
+  },
+  "recipe": "composition.stacked",
+  "title": "Russia Was Operating at Roughly Two Thirds of Seasonal Fuel Need",
+  "subtitle": "Reuters reported production near 65% of seasonal demand, consistent with estimates that 30–35% of gasoline output was impaired.",
+  "source": {
+    "name": "Reuters and Financial Times reporting",
+    "period": "Late July 2026"
+  },
+  "data": [
+    {
+      "label": "Available production",
+      "value": 65,
+      "displayValue": "65%",
+      "tone": "warning"
+    },
+    {
+      "label": "Implied shortfall",
+      "value": 35,
+      "displayValue": "35%",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "unit": "% of seasonal demand",
+    "decimals": 0,
+    "baseline": "zero",
+    "minimum": 0,
+    "maximum": 100
+  },
+  "supportingFacts": [
+    {
+      "value": "Summer reserves",
+      "label": "Stored fuel helped bridge the initial production loss.",
+      "tone": "primary"
+    },
+    {
+      "value": "Persistent gap",
+      "label": "Small import cargoes covered only a few days of consumption.",
+      "tone": "critical"
+    }
+  ],
+  "narrative": {
+    "frame": "collapse",
+    "density": "editorial",
+    "emphasis": "composition"
+  },
+  "metadata": {
+    "slug": "refinery-output-gap",
+    "country": "Russia",
+    "topic": "refinery output shortage",
+    "dataPeriod": "Late July 2026",
+    "keyFinding": "Refinery disruption left a national fuel-output gap of roughly one third."
+  }
+}

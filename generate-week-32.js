@@ -74,17 +74,23 @@ write('marketplace-retrenchment', {
 
 write('wildberries-support-request', {
   recipe: 'composition.stacked',
-  title: 'Wildberries Sought 800 Billion Rubles of State Support',
-  subtitle: 'Seller assistance accounted for the larger share, while warehouse air defense represented more than one third of the request.',
-  source: { name: 'Russian business reporting on Wildberries government requests', period: 'July 2026' },
+  title: 'A Reported Wildberries Aid Request Totaled 800 Billion Rubles',
+  subtitle: 'The reported split assigned 500 billion rubles to sellers and 300 billion to warehouse air defense, but no official decision had been announced.',
+  source: { name: 'Secondary reporting; Reuters government-status check', period: 'July 2026' },
   data: [
     { label: 'Seller support fund', value: 500, displayValue: '500bn RUB', tone: 'warning' },
     { label: 'Warehouse air defense', value: 300, displayValue: '300bn RUB', tone: 'critical' }
   ],
+  supportingFacts: [
+    { value: 'Not independently confirmed', label: 'The two requested amounts were not corroborated in official statements reviewed for this chart.', tone: 'warning' },
+    { value: 'No decision by 28 July', label: 'Reuters reported that government discussions were continuing without a specific aid decision.', tone: 'neutral' },
+    { value: '88,000 small sellers', label: 'Wildberries said its first internal support measures prioritized the smallest sellers affected at Elektrostal.', tone: 'primary' }
+  ],
+  note: 'The 500 billion and 300 billion ruble figures are retained as a reported claim and should not be read as approved or disbursed state support.',
   measure: { unit: 'billion rubles', decimals: 0, baseline: 'zero' },
   narrative: { frame: 'warning', density: 'editorial', emphasis: 'composition' },
   options: { height: 'short', showLegend: true, labelMode: 'inside' },
-  metadata: { topic: 'Wildberries state support', dataPeriod: 'July 2026', keyFinding: 'Wildberries requested a combined 800 billion rubles for sellers and warehouse protection.' }
+  metadata: { topic: 'Wildberries state support', dataPeriod: 'July 2026', keyFinding: 'A secondary report described an 800 billion ruble Wildberries aid request, but the figures were not independently confirmed and no state decision had been announced.' }
 });
 
 write('wildberries-kazakhstan-capacity', {
@@ -599,24 +605,26 @@ write('gtlk-first-half-loss', {
 });
 
 write('china-tire-pressure', {
-  recipe: 'comparison.scenarios',
-  title: 'Chinese Tire Imports Nearly Matched Russia’s Entire Q1 Output',
-  subtitle: 'China shipped 6.44 million passenger-car tires to Russia while domestic plants produced 6.66 million.',
-  source: { name: 'Russian tire-market reporting and customs data', period: 'Q1–June 2026' },
+  recipe: 'comparison.change',
+  title: 'Chinese Passenger-Tire Shipments to Russia Jumped 60%',
+  subtitle: 'First-half imports reached 12.7 million tires after June set the highest monthly volume in the available customs series since 2015.',
+  source: { name: 'Kommersant citing China customs data', period: 'H1 2025–H1 2026', url: 'https://www.kommersant.ru/doc/8847653' },
   data: [
-    { label: 'Imports from China', value: 6.44, displayValue: '6.44m tires', quantity: 'passenger-car tire units', scope: 'Russian passenger-car tire market', period: 'Q1 2026', tone: 'warning' },
-    { label: 'Russian production', value: 6.66, displayValue: '6.66m tires', quantity: 'passenger-car tire units', scope: 'Russian passenger-car tire market', period: 'Q1 2026', tone: 'primary' }
+    { label: 'H1 2025, implied', value: 7.9375, displayValue: '≈7.94m tires', valueStatus: 'derived', quantity: 'Chinese passenger-car tire exports to Russia', scope: 'Passenger-car tires exported from China to Russia', period: 'H1 2025', tone: 'neutral' },
+    { label: 'H1 2026', value: 12.7, displayValue: '12.7m tires', valueStatus: 'reported', quantity: 'Chinese passenger-car tire exports to Russia', scope: 'Passenger-car tires exported from China to Russia', period: 'H1 2026', tone: 'critical' }
   ],
-  measure: { quantity: 'passenger-car tire units', unit: 'million tires', decimals: 2, baseline: 'zero' },
+  measure: { quantity: 'Chinese passenger-car tire exports to Russia', unit: 'million tires', decimals: 2, baseline: 'zero' },
+  emphasis: { direction: 'up', displayValue: '+60%', label: 'first-half unit growth', position: 'between' },
   supportingFacts: [
-    { value: '2.99m in June', label: 'Chinese passenger-car tire exports to Russia, roughly double a year earlier.', tone: 'critical' },
-    { value: '$85m in June', label: 'Declared shipment value, also roughly double.', tone: 'warning' },
-    { value: '−23.3%', label: 'Q1 decline in Russian tire production.', tone: 'critical' },
-    { value: '≈70%; duty risk', label: 'Estimated Chinese import share and the resulting pressure for protective measures.', tone: 'warning' }
+    { value: '2.99m in June', label: 'Monthly units doubled year over year and rose 1.8 times from May.', tone: 'critical' },
+    { value: '$85m in June', label: 'Declared monthly value also doubled year over year.', tone: 'warning' },
+    { value: '$322m in H1', label: 'First-half shipment value rose 40%.', tone: 'primary' },
+    { value: 'About 30%', label: 'One protective-duty option reported as the EAEU investigation continued.', tone: 'warning' }
   ],
+  note: 'The H1 2025 unit value is derived as 12.7 million divided by 1.60.',
   narrative: { frame: 'surprise', density: 'detailed', emphasis: 'gap' },
   options: { height: 'standard' },
-  metadata: { topic: 'Chinese tire imports', dataPeriod: 'Q1–June 2026', keyFinding: 'Chinese tire inflows approached domestic production and intensified calls for trade protection.' }
+  metadata: { topic: 'Chinese tire imports', dataPeriod: 'H1 2025–H1 2026', keyFinding: 'Chinese passenger-tire shipments to Russia rose 60% in units, with June setting a record in the available customs series.' }
 });
 
 write('fashion-volume-value-split', {
@@ -741,7 +749,7 @@ const correctedCoverage = [
   '|---|---|---|',
   'Ozon: one direct strike, +230% insurance, fiberglass panels, −8.5% intraday, about −3% close|ozon-insurance-risk|Main comparison plus four supporting facts|',
   'Magnit transformation; Wildberries acquisition cancellation and investment pause|marketplace-retrenchment|2024 revenue/loss composition plus four transition facts|',
-  'Wildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked 800bn composition|',
+  'Wildberries 500bn seller support and 300bn air defense|wildberries-support-request|Stacked reported request with explicit non-corroboration and no-decision qualification|',
   '100,000 m² sought versus 130,000 m² vacancy; two existing sites|wildberries-kazakhstan-capacity|Shared-scale comparison and context|',
   'Ryazan, Perm, Udmurtia, Penza, Tambov, Volgograd, Samara; 200-drone rhetoric|wildberries-warehouse-damage-map|Seven-region map with disputed reports stated|',
   '4m employment and 8–10% economy|ecommerce-growth-deceleration|Combined supporting fact|',
@@ -767,7 +775,7 @@ const correctedCoverage = [
   'Urals discount +$1.1 to $26.6; freight +14.6%|urals-discount-freight|Before/after with derived prior value|',
   'Moscow sublease 38k + 25k = 63k m²; 16% share|south-moscow-sublease|Stacked composition|',
   'GTLK 14.2bn loss; 20bn reserves; supplied 23bn FX claim|gtlk-first-half-loss|H1 2025–26 comparison; note corrects 23bn FX amount to prior year|',
-  'China June tires 2.99m and $85m, both doubled; Q1 imports 6.44m; production 6.66m −23.3%|china-tire-pressure|Q1 unit comparison plus June context|',
+  'China June tires 2.99m and $85m, both doubled|china-tire-pressure|H1 customs trend (+60% to 12.7m) plus June unit and value context|',
   'Clothing items −10–15%; spending +5–7%; premium +10–20%; average check 3,121 +7%|fashion-volume-value-split|Seven normalized market indicators plus original facts|',
   'ALROSA +39bn to −10.7bn|alrosa-profit-reversal|Profit reversal|',
   'Inflation 0.04% week; 0.64% July; 4.86% YTD; 5.95% annual|russian-inflation-dashboard|Eight-week trend plus accumulation facts|',

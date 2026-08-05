@@ -1,0 +1,82 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard"
+  },
+  "recipe": "comparison.change",
+  "title": "Ozon Warehouse Insurance Became 3.3 Times More Expensive",
+  "subtitle": "The daily tariff rose after drone attacks increased the perceived risk to fulfillment centers.",
+  "source": {
+    "name": "The Moscow Times reporting based on Ozon seller notices",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Previous daily rate",
+      "value": 0.0035,
+      "displayValue": "0.0035%",
+      "quantity": "daily warehouse insurance tariff",
+      "scope": "goods stored in Ozon fulfillment centers",
+      "period": "Before 28 July 2026",
+      "tone": "neutral"
+    },
+    {
+      "label": "New daily rate",
+      "value": 0.0115,
+      "displayValue": "0.0115%",
+      "quantity": "daily warehouse insurance tariff",
+      "scope": "goods stored in Ozon fulfillment centers",
+      "period": "From 28 July 2026",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "quantity": "daily warehouse insurance tariff",
+    "unit": "% per day",
+    "decimals": 4,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "+230%",
+    "label": "tariff increase",
+    "position": "between"
+  },
+  "supportingFacts": [
+    {
+      "value": "−8.5%",
+      "label": "Ozon shares fell intraday during the renewed warehouse-attack wave.",
+      "tone": "critical"
+    },
+    {
+      "value": "about −3%",
+      "label": "The stock partly recovered by the close.",
+      "tone": "warning"
+    },
+    {
+      "value": "1 direct strike",
+      "label": "The reported Ozon incident hit outside a facility; the wider repricing followed sector attacks.",
+      "tone": "primary"
+    },
+    {
+      "value": "Fiberglass panels",
+      "label": "Ozon said flame-resistant roof panels would be installed as passive protection.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "metadata": {
+    "slug": "ozon-insurance-risk",
+    "country": "Russia",
+    "topic": "Ozon insurance and drone risk",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Ozon raised its daily warehouse insurance tariff by 230% as attack risk spread through Russian e-commerce logistics."
+  }
+}

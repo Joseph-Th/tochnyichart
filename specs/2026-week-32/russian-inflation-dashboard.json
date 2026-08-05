@@ -1,0 +1,107 @@
+{
+  "version": "2.0",
+  "date": "2026-08-04",
+  "options": {
+    "animate": false,
+    "showLabels": true,
+    "height": "standard",
+    "sort": "none"
+  },
+  "recipe": "trend.line",
+  "title": "Weekly Inflation Fell to 0.04% After an Early-July Spike",
+  "subtitle": "The official weekly rate peaked at 0.31% in early July before dropping to the lowest reading in the eight-week sequence.",
+  "source": {
+    "name": "Rosstat via Interfax",
+    "period": "2 June–27 July 2026",
+    "url": "https://www.interfax.ru/business/1106356"
+  },
+  "data": [
+    {
+      "label": "8 Jun",
+      "value": 0.2,
+      "displayValue": "0.20%"
+    },
+    {
+      "label": "15 Jun",
+      "value": 0.15,
+      "displayValue": "0.15%"
+    },
+    {
+      "label": "22 Jun",
+      "value": 0.25,
+      "displayValue": "0.25%"
+    },
+    {
+      "label": "29 Jun",
+      "value": 0.22,
+      "displayValue": "0.22%"
+    },
+    {
+      "label": "6 Jul",
+      "value": 0.31,
+      "displayValue": "0.31%",
+      "tone": "critical"
+    },
+    {
+      "label": "13 Jul",
+      "value": 0.17,
+      "displayValue": "0.17%"
+    },
+    {
+      "label": "20 Jul",
+      "value": 0.17,
+      "displayValue": "0.17%"
+    },
+    {
+      "label": "27 Jul",
+      "value": 0.04,
+      "displayValue": "0.04%",
+      "tone": "positive"
+    }
+  ],
+  "measure": {
+    "unit": "% per week",
+    "decimals": 2,
+    "baseline": "zero"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "−0.27pp",
+    "label": "from early-July peak",
+    "position": "corner"
+  },
+  "supportingFacts": [
+    {
+      "value": "0.64%",
+      "label": "Official July inflation through 27 July.",
+      "tone": "warning"
+    },
+    {
+      "value": "4.86%",
+      "label": "Official 2026 inflation through 27 July.",
+      "tone": "warning"
+    },
+    {
+      "value": "5.95%",
+      "label": "Reported annual inflation rate.",
+      "tone": "critical"
+    },
+    {
+      "value": "0.56% vs 1.66%",
+      "label": "Weekly gasoline inflation versus the previous week.",
+      "tone": "primary"
+    }
+  ],
+  "narrative": {
+    "frame": "comparison",
+    "density": "detailed",
+    "emphasis": "direction"
+  },
+  "metadata": {
+    "slug": "russian-inflation-dashboard",
+    "country": "Russia",
+    "topic": "Russian inflation",
+    "dataPeriod": "2 June–27 July 2026",
+    "keyFinding": "Weekly inflation fell sharply after peaking at 0.31% in early July, while cumulative inflation remained materially higher."
+  }
+}
