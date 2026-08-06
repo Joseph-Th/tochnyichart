@@ -157,7 +157,7 @@ test('source fidelity rejects synthetic index fallbacks', () => {
   }
 });
 
-test('source fidelity carries rate and share basis audits into ChartSpecs', () => {
+test('source fidelity requires tangible level selection when a rate or share basis is retrievable', () => {
   const root = project();
   try {
     const workspace = initializeRunWorkspace(root, 'issue-basis');
@@ -171,26 +171,58 @@ test('source fidelity carries rate and share basis audits into ChartSpecs', () =
       basisRationale: 'The numerator and denominator can be recovered from the named dataset.'
     };
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-basis'),
+      /cannot select share|select level values/i
+    );
+
+    ledger.candidates[0].representationAudit = {
+      selectedMode: 'level',
+      levelAvailability: 'retrievable',
+      rationale: 'The reported share and total allow the tangible numerator to be derived.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
     const specPath = path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json');
     fs.writeFileSync(specPath, JSON.stringify({
       title: 'Ozon insurance prices rose 230%',
-      measure: { valueMode: 'share', levelAvailability: 'not-applicable', basisAvailability: 'retrievable' },
-      basis: {
-        type: 'ratio',
-        items: [
-          { role: 'numerator', label: 'Numerator', value: 23, displayValue: '23 units' },
-          { role: 'denominator', label: 'Denominator', value: 100, displayValue: '100 units' }
-        ]
-      }
+      measure: { valueMode: 'level', levelAvailability: 'retrievable' }
     }));
     assert.equal(validateSourceLedger(root, 'issue-basis', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
-    const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
-    delete spec.basis;
-    fs.writeFileSync(specPath, JSON.stringify(spec));
+test('source fidelity rejects pending or generic research attempts', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-pending-research');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].representationAudit = {
+      selectedMode: 'relative-change',
+      levelAvailability: 'unavailable',
+      tangibleTarget: 'Monthly export volume for the reported periods.',
+      rationale: 'The source reports percentage changes only.',
+      researchAttempts: [
+        {
+          source: 'Supplied article',
+          sourceType: 'supplied-source',
+          locator: 'website',
+          outcome: 'To be checked for monthly volumes.'
+        },
+        {
+          source: 'Official trade database',
+          sourceType: 'official-dataset',
+          locator: 'Monthly commodity table, July 2026',
+          outcome: 'Pending review.'
+        }
+      ]
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
     assert.throws(
-      () => validateSourceLedger(root, 'issue-basis', { requireSpecs: true }),
-      /must expose basis/i
+      () => validateSourceLedger(root, 'issue-pending-research'),
+      /completed result|pending or generic lookup/i
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

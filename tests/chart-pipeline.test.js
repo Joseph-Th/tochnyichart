@@ -196,19 +196,17 @@ test('value representation prefers actual levels over percentages and synthetic 
   assert.ok(result.errors.some((message) => /actual levels are retrievable/i.test(message)));
 
   const levels = structuredClone(relative);
+  levels.recipe = 'comparison.benchmark-gap';
   levels.title = 'Share price fell from RUB 250 to RUB 229';
   levels.subtitle = 'The percentage decline remains secondary context.';
-  levels.data[0] = {
-    label: 'Before', value: 250, displayValue: 'RUB 250',
-    quantity: 'share price', scope: 'company shares', period: 'Before event'
-  };
-  levels.data[1] = {
-    label: 'After', value: 229, displayValue: 'RUB 229',
+  levels.data = [{
+    label: 'After', value: 229, benchmark: 250, displayValue: 'RUB 229',
+    benchmarkDisplayValue: 'RUB 250 prior level', gapDisplayValue: 'RUB 21 decline',
     quantity: 'share price', scope: 'company shares', period: 'After event'
-  };
+  }];
   levels.measure = {
     quantity: 'share price', unit: 'RUB per share', axisTitle: 'Share price',
-    valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'auto'
+    valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero'
   };
   result = validateSpec(levels);
   assert.equal(result.valid, true, result.errors.join('; '));
@@ -228,6 +226,7 @@ test('value representation prefers actual levels over percentages and synthetic 
   assert.equal(result.valid, true, result.errors.join('; '));
 
   const syntheticIndex = structuredClone(levels);
+  syntheticIndex.recipe = 'comparison.change';
   syntheticIndex.title = 'Share-price move shown as a synthetic baseline';
   syntheticIndex.data[0] = {
     label: 'Before event', value: 100, displayValue: '100 index',
@@ -270,7 +269,7 @@ test('share charts expose tangible amounts when component levels are available',
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
-test('rate and share stories require an explicit tangible basis audit', () => {
+test('rate and share stories with retrievable bases must switch to tangible level geometry', () => {
   const share = {
     version: '2.0',
     recipe: 'comparison.scenarios',
@@ -300,10 +299,34 @@ test('rate and share stories require an explicit tangible basis audit', () => {
     ]
   };
   result = validateSpec(share);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /cannot remain the primary geometry|measure\.valueMode level/i.test(message)));
+
+  const tangible = {
+    ...share,
+    recipe: 'comparison.range',
+    data: [
+      {
+        label: 'Online-trade footprint', low: 16, high: 20,
+        displayValue: 'RUB 16–20tn · 8–10%',
+        quantity: 'estimated economic footprint', scope: 'Russian economy', period: '2026 estimate'
+      },
+      {
+        label: 'Economy total', value: 200, displayValue: 'RUB 200tn',
+        quantity: 'estimated economic footprint', scope: 'Russian economy', period: '2026 estimate'
+      }
+    ],
+    measure: {
+      quantity: 'estimated economic footprint', unit: 'trillion RUB', valueMode: 'level',
+      levelAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    }
+  };
+  delete tangible.basis;
+  result = validateSpec(tangible);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
-test('risk ranges require a population anchor and explanatory context', () => {
+test('risk ranges use affected counts when the population is retrievable', () => {
   const risk = {
     version: '2.0',
     recipe: 'comparison.range',
@@ -329,15 +352,33 @@ test('risk ranges require a population anchor and explanatory context', () => {
   };
   let result = validateSpec(risk);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /narrative\.emphasis risk/i.test(message)));
+  assert.ok(result.errors.some((message) => /cannot remain the primary geometry|measure\.valueMode level/i.test(message)));
 
-  risk.narrative = { frame: 'warning', density: 'editorial', emphasis: 'risk' };
-  result = validateSpec(risk);
+  const tangibleRisk = {
+    ...risk,
+    data: [
+      {
+        label: 'Estimated exits', low: 45670, high: 68505,
+        displayValue: '45,670–68,505 sellers · 10–15%',
+        quantity: 'seller count', scope: 'active marketplace sellers', period: '2026 outlook'
+      },
+      {
+        label: 'Active sellers', value: 456700, displayValue: '456,700 sellers',
+        quantity: 'seller count', scope: 'active marketplace sellers', period: '2026 outlook'
+      }
+    ],
+    measure: {
+      quantity: 'seller count', unit: 'sellers', valueMode: 'level',
+      levelAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'warning', density: 'editorial', emphasis: 'risk' }
+  };
+  result = validateSpec(tangibleRisk);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /mechanism or consequence/i.test(message)));
 
-  risk.supportingFacts = [{ value: 'RUB 100,000/month', label: 'The exposed cohort consists of low-turnover sellers pressured by higher commissions.', role: 'mechanism', tone: 'warning' }];
-  result = validateSpec(risk);
+  tangibleRisk.supportingFacts = [{ value: 'RUB 100,000/month', label: 'The exposed cohort consists of low-turnover sellers pressured by higher commissions.', role: 'mechanism', tone: 'warning' }];
+  result = validateSpec(tangibleRisk);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
@@ -373,17 +414,201 @@ test('dated intervals, benchmark gaps, and dumbbells enforce their defining evid
   assert.ok(result.errors.some((message) => /requires measure\.valueMode level/i.test(message)));
 });
 
-test('runtime includes basis, calendar-duration, benchmark-gap, and dumbbell renderers', () => {
+test('benchmark gaps allow one informative row and reject redundant closure or remainder rows', () => {
+  const oneRow = {
+    version: '2.0',
+    recipe: 'comparison.benchmark-gap',
+    title: 'One lease would absorb most available warehouse space',
+    subtitle: 'The requested 100,000 square metres sits inside 130,000 square metres of vacancy.',
+    date: '2026-08-06',
+    data: [{
+      label: 'Requested facility',
+      value: 100000,
+      benchmark: 130000,
+      displayValue: '100,000 m² requested',
+      benchmarkDisplayValue: '130,000 m² vacant',
+      gapDisplayValue: '30,000 m² remains',
+      quantity: 'Class A warehouse area',
+      scope: 'Kazakhstan available Class A warehouse stock',
+      period: 'Late July 2026'
+    }],
+    measure: {
+      quantity: 'Class A warehouse area', unit: 'm²', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'surprise', density: 'editorial', emphasis: 'benchmark-gap' }
+  };
+  let result = validateSpec(oneRow);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  const closure = structuredClone(oneRow);
+  closure.data.push({
+    ...closure.data[0],
+    label: 'Full benchmark',
+    value: 130000,
+    displayValue: '130,000 m² total',
+    gapDisplayValue: 'No remaining gap'
+  });
+  result = validateSpec(closure);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /zero-gap closure row/i.test(message)));
+
+  const remainder = structuredClone(oneRow);
+  remainder.data.push({
+    ...remainder.data[0],
+    label: 'Remaining vacancy',
+    value: 30000,
+    displayValue: '30,000 m² remaining',
+    gapDisplayValue: 'after the lease'
+  });
+  result = validateSpec(remainder);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /derived remainder/i.test(message)));
+
+  const discountAmount = structuredClone(oneRow);
+  discountAmount.title = 'The crude discount widened';
+  discountAmount.measure.quantity = 'Urals crude discount';
+  discountAmount.measure.unit = 'USD/barrel';
+  discountAmount.data[0] = {
+    ...discountAmount.data[0],
+    value: 26.6,
+    benchmark: 100,
+    displayValue: '$26.60/bbl discount',
+    benchmarkDisplayValue: '$100/bbl benchmark',
+    gapDisplayValue: '$73.40/bbl retained',
+    quantity: 'Urals crude discount'
+  };
+  result = validateSpec(discountAmount);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /underlying tangible quantity/i.test(message)));
+});
+
+test('converging-signal relationships preserve mixed measures without a false shared scale', () => {
+  const relationship = loadExample('converging-signals.json');
+  let result = validateSpec(relationship);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.data.filter((item) => item.relationshipRole === 'driver').length, 2);
+  assert.equal(result.normalized.data.filter((item) => item.relationshipRole === 'outcome').length, 1);
+
+  const noDisclosure = structuredClone(relationship);
+  delete noDisclosure.note;
+  result = validateSpec(noDisclosure);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /mixed scopes or periods requires note/i.test(message)));
+
+  const falseIdentity = structuredClone(relationship);
+  falseIdentity.relationship.mode = 'identity';
+  delete falseIdentity.note;
+  result = validateSpec(falseIdentity);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /identity relationship requires one shared scope and period/i.test(message)));
+
+  const exactIdentity = structuredClone(relationship);
+  exactIdentity.relationship.mode = 'identity';
+  exactIdentity.data = [
+    { label: 'Units', relationshipRole: 'driver', value: 10, displayValue: '10 units', quantity: 'units sold', scope: 'one product', period: '2026', direction: 'up' },
+    { label: 'Price', relationshipRole: 'driver', value: 20, displayValue: 'RUB 20 per unit', quantity: 'price per unit', scope: 'one product', period: '2026', direction: 'up' },
+    { label: 'Revenue', relationshipRole: 'outcome', value: 200, displayValue: 'RUB 200', quantity: 'revenue', scope: 'one product', period: '2026', direction: 'up' }
+  ];
+  delete exactIdentity.note;
+  result = validateSpec(exactIdentity);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  exactIdentity.data[2].value = 190;
+  exactIdentity.data[2].displayValue = 'RUB 190';
+  result = validateSpec(exactIdentity);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /does not reconcile/i.test(message)));
+
+  const removedRecipe = structuredClone(relationship);
+  removedRecipe.recipe = 'relationship.driver-outcome';
+  result = validateSpec(removedRecipe);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /unknown recipe|recipe must be one of/i.test(message)));
+});
+
+test('thin two-item scenario charts must be enriched, merged, or omitted', () => {
+  const thinPair = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Two regional limits',
+    subtitle: 'The two reported limits are shown without additional evidence.',
+    date: '2026-08-06',
+    data: [
+      { label: 'Region', value: 10, displayValue: '10 liters', quantity: 'fuel purchase limit', scope: 'regional fuel sales', period: 'August 2026' },
+      { label: 'Border area', value: 20, displayValue: '20 liters', quantity: 'fuel purchase limit', scope: 'regional fuel sales', period: 'August 2026' }
+    ],
+    measure: { quantity: 'fuel purchase limit', unit: 'liters', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' }
+  };
+  let result = validateSpec(thinPair);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /too thin to stand alone/i.test(message)));
+
+  const enrichedPair = structuredClone(thinPair);
+  enrichedPair.supportingFacts = [
+    { value: '3 districts', label: 'The tighter rule affected three border districts.', role: 'denominator', tone: 'warning' }
+  ];
+  result = validateSpec(enrichedPair);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('exact-count pictograms preserve one symbol per unit and reject transformed substitutes', () => {
+  const pictogram = loadExample('exact-count-pictogram.json');
+  let result = validateSpec(pictogram);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.data.reduce((sum, item) => sum + item.value, 0), 201);
+
+  pictogram.data[0].value = 401;
+  result = validateSpec(pictogram);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /0 to 400/i.test(message)));
+});
+
+test('price movements and benchmark-relative stories require segmented gap geometry', () => {
+  const priceBars = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Export coal prices fell in July',
+    subtitle: 'Current prices are shown with reported percentage declines.',
+    date: '2026-08-06',
+    data: [
+      { label: 'Coking coal', value: 148, displayValue: '$148/ton', quantity: 'export coal price', scope: 'Far East ports', period: 'July 2026' },
+      { label: 'Pulverized coal', value: 144, displayValue: '$144/ton', quantity: 'export coal price', scope: 'Far East ports', period: 'July 2026' }
+    ],
+    measure: { quantity: 'export coal price', unit: 'USD/ton', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' },
+    emphasis: { direction: 'down', displayValue: '−7.5%', label: 'price decline', position: 'corner' }
+  };
+  let result = validateSpec(priceBars);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /segmented benchmark geometry/i.test(message)));
+
+  const discountBars = structuredClone(priceBars);
+  discountBars.title = 'Crude discount widened to $26 per barrel';
+  discountBars.measure.quantity = 'crude oil price';
+  discountBars.data.forEach((item) => { item.quantity = 'crude oil price'; });
+  result = validateSpec(discountBars);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /benchmark-relative stories must use/i.test(message)));
+});
+
+test('runtime includes pictogram, basis, calendar-duration, benchmark-gap, dumbbell, and converging-signal renderers', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /function renderDurationTimeline\(/);
   assert.match(runtime, /function renderBenchmarkGap\(/);
   assert.match(runtime, /function renderDumbbell\(/);
+  assert.match(runtime, /function renderPictogramComparison\(/);
+  assert.match(runtime, /function renderConvergingSignals\(/);
   assert.match(runtime, /tochnyi-basis-rail/);
   assert.match(css, /\.tochnyi-basis-rail\s*\{/);
   assert.match(css, /\.tochnyi-timeline-svg/);
   assert.match(css, /\.tochnyi-benchmark-gap-svg/);
   assert.match(css, /\.tochnyi-dumbbell-svg/);
+  assert.match(css, /\.tochnyi-count-comparison\s*\{/);
+  assert.match(css, /\.tochnyi-converging-signals-svg\s*\{/);
+  assert.doesNotMatch(runtime, /renderDriverOutcome/);
+  assert.doesNotMatch(css, /\.tochnyi-relationship-node\s*\{/);
+  assert.match(css, /\.tochnyi-count-card\[data-tone="critical"\] \.tochnyi-count-dot \{ background: #cc0000; \}/);
+  assert.doesNotMatch(css, /\.tochnyi-count-value[^\{]*\{[^}]*background:/s);
 });
 
 test('legacy story facets are deprecated and render without standalone cards', () => {

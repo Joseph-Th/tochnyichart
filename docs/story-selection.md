@@ -70,21 +70,18 @@ Use `valueMode: "index"` only for a named index whose point values are reported
 or retrievable. Do not use generic display copy such as `100 index`, `91.5
 index`, or `index points`; name the measure and display its values as points.
 
-Native rates and shares are not downgraded by this rule. Interest rates,
-inflation rates, vacancy rates, and part-to-whole shares may remain primary when
-they are the real measured quantity. They still require a separate basis audit.
-Use `measure.basisAvailability` to record whether a meaningful numerator and
-denominator, or population and affected count, are reported or retrievable.
-When they are, include a visible `basis` rail. Examples include cost and income
-behind a cost-to-income ratio, turnover and economy size behind a market share,
-or total sellers and implied exits behind an exit-risk range. Use
-`not-applicable` only for native quoted rates whose decomposition would not be
-meaningful, such as a policy rate or price-index growth rate.
+Native quoted rates may remain primary only when a tangible decomposition is
+genuinely not applicable, such as a policy interest rate or published CPI
+growth rate. For market shares, coverage rates, vacancy rates, utilization
+rates, ratios, and risk estimates, audit the numerator/denominator or
+population/affected count. When those amounts are reported or retrievable,
+switch to level geometry and keep the normalized rate in secondary copy.
 
 An `unavailable` or `incomparable` level or basis is not a shortcut around
 research. The source ledger requires an exact `tangibleTarget` and at least two
-structured source checks covering two source types, including a data-bearing
-source, before a normalized representation can receive either status.
+completed, source-specific checks covering two source types, including a
+data-bearing source, before a normalized representation can receive either
+status. Pending or generic lookup notes do not qualify.
 
 ### Valid shared scale
 
@@ -206,11 +203,13 @@ alone cannot reliably determine recipe and series structure.
 | Recipe | Semantic contract |
 | --- | --- |
 | `comparison.change` | Two periods of one quantity for one scope. Different periods are the intended contrast. |
-| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. |
+| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. |
+| `comparison.pictogram` | Two to four exact integer counts from 0 to 400. Every dot or semantic symbol represents one unit on the same scope and period. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
-| `comparison.benchmark-gap` | Two to six actual values shown within their benchmark totals. Before-and-after periods may advance while quantity and scope stay fixed. |
+| `comparison.benchmark-gap` | One to six independent actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. |
+| `relationship.converging-signals` | Exactly two drivers and one outcome whose quantities or units differ. Each measure is drawn as an independent local quantitative signal; the two factor paths converge at one operator before the outcome signal. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
@@ -223,28 +222,69 @@ represents `benchmark`; the solid endpoint represents `value`. Do not use it
 for unrelated category-specific measures or for a time series with more than
 two observations per category.
 
+Use `comparison.pictogram` instead of a logarithmic bar when the story is an
+extreme ratio between two to four exact counts no larger than 400. One symbol
+equals one unit, so `200` versus `1` remains literal rather than visually
+compressed by a transformed axis.
+
+An exact two-item `comparison.scenarios` pair is not automatically a chart.
+Before selecting it, look for one of the following: a third comparable item, a
+numeric reference or threshold, a tangible basis, or a source-supported numeric
+mechanism, consequence, denominator, or comparison fact. Also check whether the
+pair is a subset of an existing same-topic chart, especially a regional map or
+larger category comparison. If the pair cannot be enriched and does not carry a
+distinct editorial conclusion, mark it `merged` or `omitted` rather than giving
+it a standalone slide.
+
+Use one `comparison.benchmark-gap` row when the benchmark marker and segmented
+bar already express the complete relationship. `value` is the tangible actual
+level, `benchmark` is the total reference level, and `gapDisplayValue` names the
+discount, premium, shortfall, or remainder. Do not add another row that equals
+the benchmark or is simply `benchmark - value`. Those rows duplicate geometry
+the reader can already see. A discount chart must show the discounted price
+inside the undiscounted reference price, not chart the discount amount as if it
+were the price.
+
 ## Mixed-evidence stories
 
 Do not turn heterogeneous facts into standalone metric cards. Select the one
 quantity that carries the primary visual argument. Put genuinely secondary
 facts in `supportingFacts`, which renders as an unboxed inline context rail.
-When two or more unlike measures each carry essential meaning, create separate
-ChartSpecs so each measure receives an appropriate visual scale and geometry.
+When exactly two unlike drivers and one outcome form one coherent claim, use
+`relationship.converging-signals`; it draws each measure on its own local scale,
+then visibly converges the two factor paths into the outcome. The local signal
+lengths are not comparable across measures, and the connector width is fixed.
+Use `identity` only when the quantities, scope, and period reconcile
+arithmetically. Use `directional` with a note when the evidence supports the
+mechanism or direction but not an exact equation. Split more diffuse mixed
+evidence into separate ChartSpecs.
+
+## Information economy
+
+Each mark must contribute information that is not already encoded elsewhere in
+the chart. A benchmark marker already communicates the total endpoint. A gap
+segment already communicates the implied remainder. Direct labels already
+communicate exact values. Reject derived complement rows, zero-gap closure rows,
+duplicated totals, and bars whose only purpose is to repeat a label. Additional
+marks are justified only when they introduce an independent period, category,
+scenario, or measured value.
 
 `story.facets` remains readable only for legacy files and is excluded from the
 production recipe catalog and selection workflow.
 
 ## Ratio and population basis
 
-`basis` is a visible scale anchor, not a general-purpose fact grid. It is used
-only when a rate or share would otherwise hide the tangible amounts behind the
-percentage.
+`basis` is an arithmetic audit, not a substitute for geometry. When the
+numerator/denominator or population/affected count is reported or retrievable,
+the primary chart must use those tangible values with `measure.valueMode:
+"level"`. Keep the rate or share in labels, emphasis, annotations, or the
+subtitle.
 
 ```json
 {
   "measure": {
-    "valueMode": "share",
-    "basisAvailability": "retrievable"
+    "valueMode": "level",
+    "levelAvailability": "retrievable"
   },
   "basis": {
     "type": "ratio",
@@ -270,8 +310,22 @@ percentage.
 ```
 
 For risk estimates, use `type: "population"` with `population` and `affected`
-items. Derived affected counts must preserve the uncertainty of the reported
-risk range.
+items when the rail helps document arithmetic. The plotted marks should be the
+affected count or range and the population total. Derived affected counts must
+preserve the uncertainty of the reported risk range.
+
+## Segmented benchmark gaps
+
+Price, cost, freight, margin, discount, premium, shortfall, and overage stories
+should preserve both the retained amount and the changed segment. Use
+`comparison.benchmark-gap` for one to six independent rows, or `comparison.dumbbell` when
+several categories need before/after endpoints.
+
+When only a current level and percentage move are reported, derive the prior
+level as `current / (1 + change rate)`. Record the derivation in evidence, put
+the current level in `value`, the prior or total reference in `benchmark`, and
+label the changed segment with `gapDisplayValue`. Do not chart the current price
+as a standalone bar with the percentage relegated to a fact card.
 
 ## Calendar durations
 

@@ -161,10 +161,30 @@ reader must mentally reconstruct the takeaway.
 Before using any shared-axis comparison, complete this sentence literally:
 `Every mark encodes [measure.quantity] for [data.scope] in [data.period].` The
 validator requires those fields and rejects unlike quantities, scopes, and
-periods. When heterogeneous evidence jointly carries the argument, split it
-into separate ChartSpecs. Keep secondary mixed-unit context in the unboxed
-`supportingFacts` rail rather than substituting a grid of metric cards for a
-chart.
+periods. When two drivers and one outcome jointly carry the argument but use
+different quantities, use `relationship.converging-signals` rather than forcing
+them onto one axis. The renderer gives each factor and the outcome an independent
+local quantitative signal, then converges the factor paths at one operator.
+Connector width is fixed and never implies comparable magnitude. Reserve
+`relationship.mode: "identity"` for exactly reconciling scope and periods; use
+`directional` with an explicit note when the evidence only supports the direction
+of the relationship. Keep merely secondary mixed-unit context in the unboxed
+`supportingFacts` rail.
+
+A two-item `comparison.scenarios` chart is not automatically sufficient. It
+must add a numeric reference, basis, or source-supported numeric mechanism,
+consequence, denominator, or comparison fact. Before giving a simple pair its
+own slide, check whether it belongs inside an existing same-topic chart. If it
+cannot be enriched and does not carry a distinct editorial conclusion, merge or
+omit it.
+
+Use `comparison.benchmark-gap` with one row when one actual-plus-benchmark
+relationship is the complete story. The actual segment, gap segment, and
+benchmark marker already supply distinct marks. Do not add another row that is
+only the benchmark endpoint or the derived remainder. For discounts, plot the
+underlying discounted price as `value`, the undiscounted reference price as
+`benchmark`, and the discount as `gapDisplayValue`; never plot the discount
+amount itself as the actual level.
 
 Use `comparison.dumbbell` when several categories each have two comparable
 values, such as before and after or benchmark and actual. It preserves the
@@ -295,12 +315,14 @@ metrics may use progress or pictogram treatments only when a real denominator
 or counted population exists.
 
 Percentage evidence must also be anchored when its basis is recoverable. Rate
-and share specs declare `measure.basisAvailability`; reported or retrievable
-numerator/denominator or population/affected amounts appear in the visible
-`basis` rail. Before a batch ledger may classify actual levels or a basis as
+and share stories audit `basisAvailability`; reported or retrievable
+numerator/denominator or population/affected amounts become the primary level
+geometry. The percentage remains secondary copy, and a `basis` rail alone is
+not sufficient. Before a batch ledger may classify actual levels or a basis as
 unavailable or incomparable, it must name the exact tangible value sought and
-record at least two structured source checks spanning two source types,
-including a data-bearing source.
+record at least two completed, source-specific checks spanning two source
+types, including a data-bearing source. Pending or generic lookup notes are
+rejected.
 
 Percentage-only prices, workforce, exports, production, spending, and revenue
 must trigger a search for the underlying amounts for the same scope and periods.
@@ -309,11 +331,13 @@ rejected. `valueMode: "index"` is reserved for named, source-reported indices
 with actual point values, and generic visible labels such as `100 index` or
 `index points` are not permitted.
 
-Use `timeline.duration` for exact start-to-end intervals and
-`comparison.benchmark-gap` for discounts, premiums, shortfalls, or overages
-where both the benchmark total and actual amount are available. Risk ranges
-must identify the exposed population or denominator and include at least one
-mechanism or consequence.
+Use `comparison.pictogram` for two to four exact counts from 0 to 400 when one
+symbol per unit makes the magnitude difference tangible. Use
+`timeline.duration` for exact start-to-end intervals and segmented
+`comparison.benchmark-gap` geometry for prices, costs, freight, margins,
+discounts, premiums, shortfalls, or overages where the prior or total benchmark
+can be recovered. Risk ranges must identify the exposed population or
+denominator and include at least one mechanism or consequence.
 
 Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 

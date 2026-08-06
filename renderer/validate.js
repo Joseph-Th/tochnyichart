@@ -14,6 +14,9 @@ const HEIGHTS = new Set(['short', 'standard', 'tall']);
 const SORTS = new Set(['none', 'ascending', 'descending']);
 const STATUSES = new Set(['stable', 'improving', 'strained', 'critical', 'blocked', 'unknown']);
 const ROLES = new Set(['start', 'change', 'subtotal', 'end']);
+const RELATIONSHIP_ROLES = new Set(['driver', 'outcome']);
+const RELATIONSHIP_MODES = new Set(['identity', 'directional']);
+const RELATIONSHIP_OPERATORS = new Set(['multiply', 'combine']);
 const VALUE_STATUSES = new Set(['reported', 'derived', 'bound', 'approximate']);
 const SCALES = new Set(['linear', 'logarithmic']);
 const VALUE_MODES = new Set(['level', 'absolute-change', 'relative-change', 'rate', 'share', 'index']);
@@ -24,7 +27,7 @@ const FACT_ROLES = new Set(['comparison', 'denominator', 'mechanism', 'consequen
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
-const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap']);
+const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence']);
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
 const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
@@ -32,10 +35,10 @@ const MAP_SUMMARY_DISPLAYS = new Set(['auto', 'show', 'hide']);
 const MAP_CALLOUT_DISTRIBUTIONS = new Set(['auto', 'geographic', 'balanced']);
 const MAP_ANCHOR_STYLES = new Set(['auto', 'none', 'dot']);
 const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed']);
-const ICONS = new Set(['person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
+const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
-  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
+  'comparison.change', 'comparison.scenarios', 'comparison.pictogram', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
   'trend.line', 'ranking.horizontal'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
@@ -52,13 +55,13 @@ const DISABLED_RECIPES = new Map([
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
-  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map'
+  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
-  'period', 'scope'
+  'period', 'scope', 'relationshipRole'
 ]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const MEASURE_KEYS = new Set([
@@ -78,6 +81,7 @@ const MAP_KEYS = new Set([
   'regionSet', 'callouts', 'calloutDistribution', 'summaryPosition', 'summaryDisplay',
   'viewport', 'viewportAlignment', 'contextFit', 'landmass', 'excludeRegions', 'anchorStyle', 'leaderRouting'
 ]);
+const RELATIONSHIP_KEYS = new Set(['mode', 'operator', 'formula']);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -381,6 +385,14 @@ function normalizeSpec(input) {
       label: typeof spec.primaryMetric.label === 'string' ? spec.primaryMetric.label.trim() : spec.primaryMetric.label
     };
   }
+  if (isObject(spec.relationship)) {
+    spec.relationship = {
+      ...spec.relationship,
+      ...(spec.relationship.formula !== undefined
+        ? { formula: typeof spec.relationship.formula === 'string' ? spec.relationship.formula.trim() : spec.relationship.formula }
+        : {})
+    };
+  }
   return spec;
 }
 
@@ -414,6 +426,7 @@ function validateStructure(input, errors) {
   if (isObject(input.options)) rejectUnknownKeys(input.options, OPTION_KEYS, 'options', errors);
   if (isObject(input.metadata)) rejectUnknownKeys(input.metadata, METADATA_KEYS, 'metadata', errors);
   if (isObject(input.map)) rejectUnknownKeys(input.map, MAP_KEYS, 'map', errors);
+  if (isObject(input.relationship)) rejectUnknownKeys(input.relationship, RELATIONSHIP_KEYS, 'relationship', errors);
 }
 
 function validateData(spec, errors, warnings) {
@@ -483,6 +496,7 @@ function validateData(spec, errors, warnings) {
     if (item.tone !== undefined && !TONES.has(item.tone)) errors.push(`${path}.tone is not supported.`);
     if (item.status !== undefined && !STATUSES.has(item.status)) errors.push(`${path}.status is not supported.`);
     if (item.role !== undefined && !ROLES.has(item.role)) errors.push(`${path}.role is not supported.`);
+    if (item.relationshipRole !== undefined && !RELATIONSHIP_ROLES.has(item.relationshipRole)) errors.push(`${path}.relationshipRole is not supported.`);
   });
 
   const labels = spec.data.map((item) => item?.label).filter(Boolean);
@@ -625,6 +639,137 @@ function validateSharedScaleSemantics(spec, errors) {
   }
 }
 
+const GAP_MEASURE_WORDS = /\b(?:discount|premium|shortfall|overage|gap)\b/i;
+const REMAINDER_LABEL_WORDS = /\b(?:remaining|remainder|left|unused|unfilled|vacant after|gap after)\b/i;
+
+function nearlyEqual(left, right) {
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return false;
+  const scale = Math.max(1, Math.abs(left), Math.abs(right));
+  return Math.abs(left - right) <= scale * 1e-9;
+}
+
+function validateBenchmarkGapEconomy(spec, data, errors) {
+  const quantity = spec.measure?.quantity || '';
+  if (GAP_MEASURE_WORDS.test(quantity)) {
+    errors.push(
+      'comparison.benchmark-gap must plot the underlying tangible quantity, not the gap amount itself. ' +
+      'For a discount, plot the discounted actual price as value and the undiscounted reference price as benchmark; express the discount in gapDisplayValue.'
+    );
+  }
+  data.forEach((item, index) => {
+    if (Number.isFinite(item?.value) && Number.isFinite(item?.benchmark) && nearlyEqual(item.value, item.benchmark)) {
+      errors.push(
+        `data[${index}] has no benchmark gap because value equals benchmark. ` +
+        'Use another recipe or omit the row; a zero-length gap does not add quantitative information.'
+      );
+    }
+  });
+
+  for (let leftIndex = 0; leftIndex < data.length; leftIndex += 1) {
+    const left = data[leftIndex];
+    if (!Number.isFinite(left?.value) || !Number.isFinite(left?.benchmark)) continue;
+    for (let rightIndex = leftIndex + 1; rightIndex < data.length; rightIndex += 1) {
+      const right = data[rightIndex];
+      if (!Number.isFinite(right?.value) || !Number.isFinite(right?.benchmark)) continue;
+      if (!nearlyEqual(left.benchmark, right.benchmark)) continue;
+
+      const leftCloses = nearlyEqual(left.value, left.benchmark);
+      const rightCloses = nearlyEqual(right.value, right.benchmark);
+      if (leftCloses !== rightCloses) {
+        errors.push(
+          `data[${leftCloses ? leftIndex : rightIndex}] restates the benchmark as a zero-gap closure row. ` +
+          'The benchmark marker already communicates that endpoint; keep one segmented row unless each period has an independently meaningful non-zero gap.'
+        );
+      }
+
+      const complement = nearlyEqual(left.value + right.value, left.benchmark);
+      const relationshipText = `${left.label || ''} ${left.displayValue || ''} ${left.gapDisplayValue || ''} ` +
+        `${right.label || ''} ${right.displayValue || ''} ${right.gapDisplayValue || ''}`;
+      if (complement && REMAINDER_LABEL_WORDS.test(relationshipText)) {
+        errors.push(
+          `data[${leftIndex}] and data[${rightIndex}] duplicate a part and its derived remainder. ` +
+          'Use one segmented benchmark-gap row; the colored gap already shows and labels the remainder.'
+        );
+      }
+    }
+  }
+}
+
+function validateConvergingSignals(spec, data, errors) {
+  if (data.length !== 3) errors.push('relationship.converging-signals requires exactly 3 data items: two drivers and one outcome.');
+  const drivers = data.filter((item) => item?.relationshipRole === 'driver');
+  const outcomes = data.filter((item) => item?.relationshipRole === 'outcome');
+  if (drivers.length !== 2 || outcomes.length !== 1) {
+    errors.push('relationship.converging-signals requires exactly two relationshipRole driver items and one outcome item.');
+  }
+
+  data.forEach((item, index) => {
+    if (!RELATIONSHIP_ROLES.has(item?.relationshipRole)) errors.push(`data[${index}].relationshipRole is required for relationship.converging-signals.`);
+    if (!DIRECTIONS.has(item?.direction)) errors.push(`data[${index}].direction is required for relationship.converging-signals.`);
+    if (typeof item?.displayValue !== 'string' || !item.displayValue.trim()) errors.push(`data[${index}].displayValue is required for relationship.converging-signals.`);
+    if (typeof item?.quantity !== 'string' || !item.quantity.trim()) errors.push(`data[${index}].quantity is required for relationship.converging-signals.`);
+    if (typeof item?.scope !== 'string' || !item.scope.trim()) errors.push(`data[${index}].scope is required for relationship.converging-signals.`);
+    if (typeof item?.period !== 'string' || !item.period.trim()) errors.push(`data[${index}].period is required for relationship.converging-signals.`);
+    const hasValue = typeof item?.value === 'number' && Number.isFinite(item.value);
+    const hasRange = typeof item?.low === 'number' && Number.isFinite(item.low) && typeof item?.high === 'number' && Number.isFinite(item.high);
+    if (!hasValue && !hasRange) errors.push(`data[${index}] requires value or both low and high for relationship.converging-signals.`);
+    if (hasRange && item.low > item.high) errors.push(`data[${index}].low must not exceed high.`);
+  });
+
+  if (!isObject(spec.relationship)) {
+    errors.push('relationship is required for relationship.converging-signals.');
+    return;
+  }
+  if (!RELATIONSHIP_MODES.has(spec.relationship.mode)) errors.push('relationship.mode must be identity or directional.');
+  if (!RELATIONSHIP_OPERATORS.has(spec.relationship.operator)) errors.push('relationship.operator must be multiply or combine.');
+  if (spec.relationship.mode === 'identity' && spec.relationship.operator !== 'multiply') {
+    errors.push('relationship.mode identity requires relationship.operator multiply.');
+  }
+  if (spec.relationship.formula !== undefined && (typeof spec.relationship.formula !== 'string' || !spec.relationship.formula.trim())) {
+    errors.push('relationship.formula must be a non-empty string when provided.');
+  }
+
+  const scopes = new Set(data.map((item) => normalizeEditorialValue(item?.scope)).filter(Boolean));
+  const periods = new Set(data.map((item) => normalizeEditorialValue(item?.period)).filter(Boolean));
+  if (spec.relationship.mode === 'identity' && (scopes.size > 1 || periods.size > 1)) {
+    errors.push('An identity relationship requires one shared scope and period across both drivers and the outcome. Use relationship.mode directional when sources or periods do not reconcile exactly.');
+  }
+  if (spec.relationship.mode === 'identity') {
+    const exactDrivers = drivers.every((item) => typeof item?.value === 'number' && Number.isFinite(item.value));
+    const exactOutcome = outcomes.length === 1 && typeof outcomes[0]?.value === 'number' && Number.isFinite(outcomes[0].value);
+    if (!exactDrivers || !exactOutcome) {
+      errors.push('An identity relationship requires exact numeric driver and outcome values. Use directional mode for ranges or non-reconciling estimates.');
+    } else if (spec.relationship.operator === 'multiply' && !nearlyEqual(drivers[0].value * drivers[1].value, outcomes[0].value)) {
+      errors.push('The identity relationship does not reconcile: driver 1 × driver 2 must equal the outcome.');
+    }
+  }
+  if (spec.relationship.mode === 'directional' && (scopes.size > 1 || periods.size > 1) && !spec.note) {
+    errors.push('A directional relationship with mixed scopes or periods requires note explaining why the observations do not reconcile arithmetically.');
+  }
+  if (spec.narrative?.emphasis !== 'convergence') {
+    errors.push('relationship.converging-signals requires narrative.emphasis convergence.');
+  }
+}
+
+function hasNumericVisibleValue(value) {
+  return typeof value === 'string' && /\d/.test(value);
+}
+
+function validateStandaloneScenarioPair(spec, data, errors) {
+  if (spec.recipe !== 'comparison.scenarios' || data.length !== 2) return;
+  const hasReference = Array.isArray(spec.references) && spec.references.length > 0;
+  const hasBasis = isObject(spec.basis) && Array.isArray(spec.basis.items) && spec.basis.items.length >= 2;
+  const hasContextFact = Array.isArray(spec.supportingFacts) && spec.supportingFacts.some((fact) =>
+    FACT_ROLES.has(fact?.role) && fact.role !== 'context' && hasNumericVisibleValue(fact?.value)
+  );
+  const hasNumericAnnotation = data.some((item) => hasNumericVisibleValue(item?.annotation));
+  if (!hasReference && !hasBasis && !hasContextFact && !hasNumericAnnotation) {
+    errors.push(
+      'A two-item comparison.scenarios chart is too thin to stand alone. Add a source-supported numeric reference, basis, mechanism, consequence, denominator, or comparison fact; otherwise merge it into a richer same-topic chart or omit it.'
+    );
+  }
+}
+
 function validateRecipe(spec, errors, warnings) {
   const count = Array.isArray(spec.data) ? spec.data.length : 0;
   const data = Array.isArray(spec.data) ? spec.data : [];
@@ -637,6 +782,21 @@ function validateRecipe(spec, errors, warnings) {
     case 'comparison.scenarios':
       if (count < 2 || count > 5) errors.push('comparison.scenarios requires 2 to 5 data items.');
       requireNumericValues(spec, errors);
+      validateStandaloneScenarioPair(spec, data, errors);
+      break;
+    case 'comparison.pictogram':
+      if (count < 2 || count > 4) errors.push('comparison.pictogram requires 2 to 4 data items.');
+      data.forEach((item, index) => {
+        if (!Number.isInteger(item?.value) || item.value < 0 || item.value > 400) {
+          errors.push(`data[${index}].value must be a non-negative integer from 0 to 400 for comparison.pictogram.`);
+        }
+      });
+      if (!data.some((item) => Number.isInteger(item?.value) && item.value > 0)) {
+        errors.push('comparison.pictogram requires at least one positive count.');
+      }
+      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
+        errors.push('comparison.pictogram requires measure.valueMode level because every symbol represents one tangible unit.');
+      }
       break;
     case 'comparison.diverging':
       if (count < 2 || count > 10) errors.push('comparison.diverging requires 2 to 10 data items.');
@@ -652,7 +812,7 @@ function validateRecipe(spec, errors, warnings) {
       });
       break;
     case 'comparison.benchmark-gap':
-      if (count < 2 || count > 6) errors.push('comparison.benchmark-gap requires 2 to 6 data items.');
+      if (count < 1 || count > 6) errors.push('comparison.benchmark-gap requires 1 to 6 data items.');
       data.forEach((item, index) => {
         if (typeof item?.value !== 'number' || !Number.isFinite(item.value)) {
           errors.push(`data[${index}].value is required for comparison.benchmark-gap.`);
@@ -668,6 +828,7 @@ function validateRecipe(spec, errors, warnings) {
       if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
         errors.push('comparison.benchmark-gap requires measure.valueMode level because actual and benchmark are tangible amounts.');
       }
+      validateBenchmarkGapEconomy(spec, data, errors);
       break;
     case 'comparison.dumbbell':
       if (count < 3 || count > 10) errors.push('comparison.dumbbell requires 3 to 10 data items.');
@@ -684,6 +845,9 @@ function validateRecipe(spec, errors, warnings) {
       if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
         errors.push('comparison.dumbbell requires measure.valueMode level because both endpoints are tangible values.');
       }
+      break;
+    case 'relationship.converging-signals':
+      validateConvergingSignals(spec, data, errors);
       break;
     case 'trend.line':
       if (count < 3) errors.push('trend.line requires at least 3 data items.');
@@ -838,7 +1002,7 @@ function validateMeasure(spec, errors, warnings) {
       errors.push(`measure.${key} must be a string of ${max} characters or fewer.`);
     }
   }
-  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.facets', 'map.regional'].includes(spec.recipe)) {
+  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.facets', 'map.regional', 'relationship.converging-signals'].includes(spec.recipe)) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
@@ -874,7 +1038,7 @@ function containsTangibleMagnitude(value) {
 }
 
 function validateValueRepresentation(spec, errors, warnings) {
-  if (['map.regional', 'story.facets'].includes(spec.recipe)) return;
+  if (['map.regional', 'story.facets', 'relationship.converging-signals'].includes(spec.recipe)) return;
   const measure = spec.measure || {};
   const percentOrIndex = isPercentUnit(measure) || isIndexUnit(measure);
 
@@ -962,6 +1126,13 @@ function validateValueRepresentation(spec, errors, warnings) {
     }
   }
 
+  if (['rate', 'share'].includes(measure.valueMode) && ['reported', 'retrievable'].includes(measure.basisAvailability)) {
+    errors.push(
+      `measure.valueMode ${measure.valueMode} cannot remain the primary geometry when its tangible basis is ${measure.basisAvailability}. ` +
+      'Derive and plot the numerator/denominator or affected/population amounts with measure.valueMode level, and keep the rate or share in labels, emphasis, or annotations.'
+    );
+  }
+
   if (measure.valueMode === 'share' && ['reported', 'retrievable'].includes(measure.levelAvailability) && !spec.basis) {
     (spec.data || []).forEach((item, index) => {
       if (!containsTangibleMagnitude(item?.displayValue)) {
@@ -1040,11 +1211,15 @@ function validateVisual(spec, errors) {
   if (spec.visual.filled !== undefined && (spec.visual.filled < 0 || spec.visual.filled > 100)) errors.push('visual.filled must be from 0 to 100.');
   if (spec.visual.columns !== undefined && (spec.visual.columns < 2 || spec.visual.columns > 20)) errors.push('visual.columns must be from 2 to 20.');
   if (spec.visual.type === 'pictogram') {
-    if (spec.recipe !== 'headline.metric') errors.push('visual.type pictogram is only supported by headline.metric.');
-    if (!spec.visual.icon) errors.push('visual.icon is required for a pictogram.');
-    if (!spec.visual.total) errors.push('visual.total is required for a pictogram.');
-    if (spec.visual.filled !== undefined && spec.visual.total !== undefined && spec.visual.filled > spec.visual.total) {
-      errors.push('visual.filled cannot exceed visual.total.');
+    if (!['headline.metric', 'comparison.pictogram'].includes(spec.recipe)) {
+      errors.push('visual.type pictogram is only supported by headline.metric or comparison.pictogram.');
+    }
+    if (spec.recipe === 'headline.metric') {
+      if (!spec.visual.icon) errors.push('visual.icon is required for a headline pictogram.');
+      if (!spec.visual.total) errors.push('visual.total is required for a headline pictogram.');
+      if (spec.visual.filled !== undefined && spec.visual.total !== undefined && spec.visual.filled > spec.visual.total) {
+        errors.push('visual.filled cannot exceed visual.total.');
+      }
     }
   }
 }
@@ -1220,13 +1395,23 @@ function validateEditorialEconomy(spec, errors, warnings) {
   const hasBenchmarkGapFields = data.some((item) =>
     item?.benchmark !== undefined || item?.benchmarkDisplayValue !== undefined || item?.gapDisplayValue !== undefined
   );
-  if (hasBenchmarkGapFields && !['comparison.benchmark-gap', 'comparison.dumbbell', 'comparison.range'].includes(spec.recipe)) {
+  if (hasBenchmarkGapFields && !['comparison.benchmark-gap', 'comparison.dumbbell', 'comparison.range', 'relationship.converging-signals'].includes(spec.recipe)) {
     errors.push('Benchmark-relative data require comparison.benchmark-gap, comparison.dumbbell for several category pairs, or comparison.range when the benchmark is only a threshold.');
   }
   const benchmarkStoryText = `${spec.title || ''} ${spec.subtitle || ''} ${spec.measure?.quantity || ''}`;
   if (/\b(?:discount|premium|shortfall|overage|gap to benchmark|below benchmark|above benchmark)\b/i.test(benchmarkStoryText) &&
       !['comparison.benchmark-gap', 'comparison.dumbbell', 'comparison.range'].includes(spec.recipe)) {
-    warnings.push('This appears to be a benchmark-relative story. Prefer comparison.benchmark-gap for one repeated benchmark relationship or comparison.dumbbell for several category pairs.');
+    errors.push('Benchmark-relative stories must use comparison.benchmark-gap for segmented actual-plus-gap bars, comparison.dumbbell for several category pairs, or comparison.range for a threshold. Research the total benchmark before charting the gap.');
+  }
+  const priceMovementText = `${benchmarkStoryText} ${spec.emphasis?.label || ''} ${spec.emphasis?.displayValue || ''}`;
+  const priceLikeQuantity = /\b(?:price|cost|margin|profitability|freight|tariff)\b/i.test(spec.measure?.quantity || '');
+  const priceTerm = '(?:price|cost|margin|profitability|freight|tariff)s?';
+  const movementTerm = '(?:fell|fall|dropped|drop|declined|decline|rose|rise|increased|increase|decreased|decrease|cut|loss|lost|lower|higher|widened|narrowed)';
+  const centralPriceGap = new RegExp(`\\b${priceTerm}\\b[^.]{0,80}\\b${movementTerm}\\b|\\b${movementTerm}\\b[^.]{0,80}\\b${priceTerm}\\b`, 'i').test(priceMovementText);
+  if (spec.measure?.valueMode === 'level' && data.length >= 2 && data.length <= 6 &&
+      (priceLikeQuantity || centralPriceGap) && centralPriceGap &&
+      !['comparison.benchmark-gap', 'comparison.dumbbell', 'trend.line'].includes(spec.recipe)) {
+    errors.push('Price, cost, freight, or margin movements with recoverable prior levels must use segmented benchmark geometry. Derive the prior level from the current amount and reported change, then use comparison.benchmark-gap or comparison.dumbbell; keep the percentage as secondary context.');
   }
   data.forEach((item, index) => {
     if (!isObject(item)) return;

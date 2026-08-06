@@ -1,31 +1,19 @@
 {
   "version": "2.0",
   "recipe": "comparison.benchmark-gap",
-  "title": "The Urals Discount Takes a Larger Slice of the Benchmark Price",
-  "subtitle": "The benchmark stayed at $100 per barrel in this fixture while the Russian crude price fell as the discount widened.",
+  "title": "Urals Trades $26.60 Below the Benchmark Price",
+  "subtitle": "The latest discounted price remains visible inside the full $100 reference barrel; the discount widened by $1.10.",
   "date": "2026-08-05",
   "source": {
     "name": "Illustrative crude-price benchmark fixture",
-    "period": "Before and after a shipping disruption"
+    "period": "Latest assessment after a shipping disruption"
   },
   "data": [
     {
-      "label": "Before disruption",
+      "label": "Latest Urals price",
       "quantity": "crude oil price",
       "scope": "Urals crude compared with the same benchmark barrel",
-      "period": "Before disruption",
-      "value": 74.5,
-      "benchmark": 100,
-      "displayValue": "$74.50/bbl Urals",
-      "benchmarkDisplayValue": "$100/bbl benchmark",
-      "gapDisplayValue": "$25.50 discount",
-      "tone": "warning"
-    },
-    {
-      "label": "After disruption",
-      "quantity": "crude oil price",
-      "scope": "Urals crude compared with the same benchmark barrel",
-      "period": "After disruption",
+      "period": "Latest assessment after disruption",
       "value": 73.4,
       "benchmark": 100,
       "displayValue": "$73.40/bbl Urals",
@@ -62,7 +50,7 @@
   "metadata": {
     "slug": "urals-benchmark-gap-example",
     "topic": "benchmark discount",
-    "dataPeriod": "Before and after disruption",
-    "keyFinding": "The benchmark gap widened while the discounted actual price remained visible."
+    "dataPeriod": "Latest assessment after disruption",
+    "keyFinding": "The discounted Urals price remains visible inside the full benchmark while the latest gap is labeled directly."
   }
 }

@@ -12,10 +12,12 @@
       "enum": [
         "comparison.change",
         "comparison.scenarios",
+        "comparison.pictogram",
         "comparison.diverging",
         "comparison.range",
         "comparison.benchmark-gap",
         "comparison.dumbbell",
+        "relationship.converging-signals",
         "trend.line",
         "timeline.duration",
         "composition.donut",
@@ -63,7 +65,7 @@
           "group": { "type": "string", "minLength": 1, "maxLength": 60 },
           "icon": {
             "type": "string",
-            "enum": ["person", "shield", "warehouse", "pause", "exit", "money", "ship", "fuel", "factory", "warning", "trend", "document"]
+            "enum": ["dot", "person", "shield", "warehouse", "pause", "exit", "money", "ship", "fuel", "factory", "warning", "trend", "document"]
           },
           "direction": { "type": "string", "enum": ["up", "down", "neutral"] },
           "value": { "type": "number" },
@@ -91,8 +93,22 @@
           "role": {
             "type": "string",
             "enum": ["start", "change", "subtotal", "end"]
+          },
+          "relationshipRole": {
+            "type": "string",
+            "enum": ["driver", "outcome"]
           }
         }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "operator"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["identity", "directional"] },
+        "operator": { "type": "string", "enum": ["multiply", "combine"] },
+        "formula": { "type": "string", "minLength": 1, "maxLength": 140 }
       }
     },
     "map": {
@@ -253,7 +269,7 @@
         "type": { "type": "string", "enum": ["auto", "number", "progress", "pictogram"] },
         "icon": {
           "type": "string",
-          "enum": ["person", "shield", "warehouse", "pause", "exit", "money", "ship", "fuel", "factory", "warning", "trend", "document"]
+          "enum": ["dot", "person", "shield", "warehouse", "pause", "exit", "money", "ship", "fuel", "factory", "warning", "trend", "document"]
         },
         "total": { "type": "integer", "minimum": 2, "maximum": 100 },
         "filled": { "type": "integer", "minimum": 0, "maximum": 100 },
@@ -272,7 +288,7 @@
         "density": { "type": "string", "enum": ["minimal", "editorial", "detailed"] },
         "emphasis": {
           "type": "string",
-          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap"]
+          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap", "convergence"]
         }
       }
     },
@@ -339,9 +355,26 @@
       "then": {
         "properties": {
           "data": {
-            "minItems": 2,
+            "minItems": 1,
             "maxItems": 6,
             "items": { "required": ["value", "benchmark", "quantity", "scope", "period"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "relationship.converging-signals" } }
+      },
+      "then": {
+        "required": ["relationship"],
+        "properties": {
+          "data": {
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "required": ["relationshipRole", "direction", "displayValue", "quantity", "scope", "period"]
+            }
           }
         }
       }

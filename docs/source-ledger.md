@@ -126,6 +126,14 @@ Every distinct quantitative input story must appear exactly once.
 An omitted story cannot disappear silently. A merged story cannot point to a
 subject that is absent from the input.
 
+The ledger records quantitative claims, not a mandatory slide for each claim.
+A same-period two-value pair should be marked `merged` when it is already
+contained in a richer same-topic map, category comparison, or trend. It should
+be marked `omitted` when targeted enrichment cannot supply a third comparable,
+numeric reference, tangible basis, or source-supported numeric mechanism,
+consequence, denominator, or comparison fact and the pair does not carry a
+distinct editorial conclusion.
+
 ## Representation audit
 
 Every selected story must record the representation chosen before recipe
@@ -145,6 +153,11 @@ Rate and share stories also require:
   `incomparable`, or `not-applicable`.
 - `basisRationale`: why the selected basis status is correct.
 
+When `basisAvailability` is `reported` or `retrievable`, the selected primary
+representation must be `level`. Derive and plot the tangible numerator and
+denominator, or the affected count and population, and retain the rate/share as
+secondary copy. A raw percentage plus a basis rail is not sufficient.
+
 When an absolute or relative change uses `unavailable` or `incomparable` levels,
 or when a rate/share uses an `unavailable` or `incomparable` basis, the audit
 also requires:
@@ -161,12 +174,18 @@ must include an official dataset, company filing, market-data source, or
 industry dataset. A failed general web search or search-result snippet is not a
 source check.
 
+Every attempt must describe a completed source-specific check. The validator
+rejects pending outcomes such as `to be checked`, `will check`, `TBD`, or
+`follow up`, and generic locators such as `website`, `search`, `dataset`, or
+`report` without a URL, filing section, table, ticker/date range, or dataset
+slice.
+
 ```json
 {
-  "selectedMode": "share",
-  "levelAvailability": "not-applicable",
+  "selectedMode": "level",
+  "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
-  "rationale": "The claim is natively a share.",
+  "rationale": "The reported share and economy total allow a tangible sector amount to be derived.",
   "basisRationale": "Turnover and the economy total can be recovered from the named datasets."
 }
 ```
@@ -199,10 +218,11 @@ as primary geometry. Use the actual values and retain the percentage change as
 secondary context. `index` is reserved for a named, source-reported index with
 actual point values. A synthetic `0%` before point, index-100 baseline, or
 viewer-facing label such as `100 index` is not permitted.
-For a rate or share, `reported` or `retrievable` basis amounts must be exposed
-in the ChartSpec `basis` rail. Examples include cost and income behind a
+For a rate or share, `reported` or `retrievable` basis amounts must become the
+primary ChartSpec geometry. Examples include cost and income behind a
 cost-to-income ratio, turnover and economy size behind an economic share, or a
-seller population and affected count behind an exit-risk estimate.
+seller population and affected count behind an exit-risk estimate. A `basis`
+rail may document the arithmetic, but it cannot substitute for tangible marks.
 
 The validator scans every numeric token in `input.txt`. Each number must fall
 inside a candidate `anchor` or an `ignoredEvidence.anchor`. Use
@@ -248,8 +268,10 @@ With `--specs`, validation requires:
 - Every ChartSpec title exactly matches its ledger title.
 - Every ChartSpec `measure.valueMode` and `measure.levelAvailability` exactly
   match the selected candidate's `representationAudit`.
-- Rate/share ChartSpecs also match `measure.basisAvailability`; when the basis
-  is reported or retrievable, the ChartSpec must include `basis`.
+- A selected rate/share representation may use `measure.valueMode: "rate"` or
+  `"share"` only when the basis is unavailable, incomparable, or genuinely not
+  applicable. A reported or retrievable basis must produce a matching
+  `valueMode: "level"` ChartSpec with tangible marks.
 - Selected ChartSpecs do not repeat the same input anchor, publication and
   reporting period, recipe, and category or time-label sequence. When they do,
   consolidate the secondary measure or mark its ledger candidate `merged`.

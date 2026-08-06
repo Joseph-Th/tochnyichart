@@ -27,6 +27,8 @@ const DATA_BEARING_SOURCE_TYPES = new Set([
   'market-data',
   'industry-dataset'
 ]);
+const PENDING_RESEARCH_TEXT = /\b(?:to be checked|to check|pending|not yet checked|not yet reviewed|will check|needs? checking|needs? review|follow up|tbd|todo|unknown source|generic search)\b/i;
+const GENERIC_RESEARCH_LOCATOR = /^(?:homepage|website|search|web search|database|dataset|report|article|filing|statistics|table)$/i;
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -133,6 +135,12 @@ function validateRepresentationAudit(candidate, prefix, errors) {
     if (!isText(audit.basisRationale) || audit.basisRationale.length > 240) {
       errors.push(`${prefix}.representationAudit.basisRationale must be a non-empty string of 240 characters or fewer for ${audit.selectedMode} stories.`);
     }
+    if (['reported', 'retrievable'].includes(audit.basisAvailability)) {
+      errors.push(
+        `${prefix}.representationAudit cannot select ${audit.selectedMode} when its tangible basis is ${audit.basisAvailability}. ` +
+        'Derive and select level values for the primary geometry, then retain the rate or share as secondary context.'
+      );
+    }
   }
   if (audit.selectedMode === 'relative-change' &&
       ['reported', 'retrievable'].includes(audit.levelAvailability)) {
@@ -189,9 +197,13 @@ function validateRepresentationAudit(candidate, prefix, errors) {
           errors.push(
             `${attemptPrefix}.locator must identify the URL, filing, table, ticker/date range, or dataset slice checked in 240 characters or fewer.`
           );
+        } else if (PENDING_RESEARCH_TEXT.test(attempt.locator) || GENERIC_RESEARCH_LOCATOR.test(attempt.locator.trim())) {
+          errors.push(`${attemptPrefix}.locator must identify a completed, source-specific check rather than a pending or generic lookup.`);
         }
         if (!isText(attempt.outcome) || attempt.outcome.length > 240) {
           errors.push(`${attemptPrefix}.outcome must explain what was found or why it was unusable in 240 characters or fewer.`);
+        } else if (PENDING_RESEARCH_TEXT.test(attempt.outcome)) {
+          errors.push(`${attemptPrefix}.outcome must record a completed result; pending research language is not accepted.`);
         }
       });
       if (sources.size < 2) errors.push(`${prefix}.representationAudit.researchAttempts must cover at least two distinct named sources.`);

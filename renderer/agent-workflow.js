@@ -89,9 +89,13 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   ]),
   relevanceRule: 'Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.',
   complexityRule: 'Do not add irrelevant facts or choose a complex recipe merely for decoration. A chart still needs a genuine visual comparison: enrich a one-point or text-only story with a source-supported comparator, denominator, benchmark, composition, or time series; otherwise omit it.',
-  representationRule: 'Before recipe selection, determine whether actual levels and any rate/share basis are reported or retrievable. Prefer tangible values for primary geometry. Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying amounts. A claim of unavailable or incomparable requires an exact tangibleTarget and at least two structured researchAttempts covering two source types, including a data-bearing source.',
-  basisRule: 'For rates and shares, identify the numerator and denominator or the total and affected population. When those amounts are reported or retrievable, expose them through ChartSpec.basis rather than leaving the percentage unanchored.',
-  benchmarkGapRule: 'For discounts, premiums, shortfalls, and overages, research both the benchmark and actual amount. Use comparison.benchmark-gap when the visible gap is the finding.',
+  standalonePairRule: 'A same-period two-value comparison is not automatically a standalone chart. Before selecting comparison.scenarios with two items, search for a third comparable, numeric reference, denominator, mechanism, or consequence and check whether the pair belongs inside an existing same-topic chart. If none exists, merge or omit it.',
+  representationRule: 'Before recipe selection, determine whether actual levels and any rate/share basis are reported or retrievable. Prefer tangible values for primary geometry. Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying amounts. A claim of unavailable or incomparable requires an exact tangibleTarget and at least two completed structured researchAttempts covering two source types, including a data-bearing source.',
+  completedResearchRule: 'Research attempts must name the exact URL, filing, table, ticker/date range, or dataset slice actually checked and record a completed outcome. Pending language such as to be checked, will check, TBD, or generic web search is invalid evidence.',
+  basisRule: 'For rates and shares, identify the numerator and denominator or the total and affected population. When those amounts are reported or retrievable, derive and plot the tangible amounts with level geometry; keep the percentage in labels, emphasis, or annotations. A basis rail alone is not sufficient primary evidence.',
+  benchmarkGapRule: 'For prices, costs, freight, margins, discounts, premiums, shortfalls, and overages, research the underlying benchmark total and actual amount. In comparison.benchmark-gap, value is the tangible actual level and benchmark is the total reference level; the gap amount belongs in gapDisplayValue. Prefer one segmented row when that relationship fully carries the story. Do not add a second row that merely restates the benchmark or the mathematically implied remainder.',
+  relationshipRule: 'When two drivers and one outcome use different real-world quantities, do not force them onto a shared percentage axis. Use relationship.converging-signals so each factor and the outcome is drawn as an independent local quantitative signal connected through one merge point. Connector width never encodes magnitude. Use identity mode only when scope and period reconcile exactly; otherwise use directional mode and disclose the mismatch in note.',
+  redundancyRule: 'Every plotted mark must add information that is not already encoded by another mark. A benchmark marker already communicates the total endpoint; a segmented gap already communicates the remainder. Derived complements, zero-gap closure rows, and duplicated totals belong in direct labels or supporting context, not as additional marks.',
   durationRule: 'When exact start and end dates are available, prefer timeline.duration over abstract duration bars so readers can see the occupied calendar window.',
   consolidationRule: 'The ledger inventories claims, not mandatory slides. After authoring, consolidate selected ChartSpecs that share the same input passage, source and reporting period, recipe, and category or time skeleton. Keep the primary measure as the chart, move a secondary measure into supportingFacts, or mark the secondary candidate merged.',
   attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable; never substitute input.txt, internal provenance, research-process labels, or workflow commentary into presentation copy.'
@@ -100,25 +104,30 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
 const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   coreRule: 'Every production chart must communicate its main claim through geometry tied to data, not through a wall of prose, status cards, or one oversized number.',
   minimumMarks: 'A non-map chart requires at least two quantitative marks. A regional map may use one or more geographic marks because location is itself an encoding.',
-  onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, remainder, peer, range, or time series. If none exists, omit the story.',
+  onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, peer, range, or time series. One actual-plus-benchmark relationship is sufficient for a single-row comparison.benchmark-gap because the actual segment, gap segment, and benchmark marker provide multiple marks. If no valid structure exists, omit the story.',
+  standalonePairRule: 'A two-item comparison.scenarios chart needs more than two bars. It must add a numeric reference, basis, source-supported mechanism, consequence, denominator, or comparison fact. When the pair is a subset of a richer same-topic story, merge it instead of creating another slide.',
+  exactCountRule: 'When two to four exact integer counts from 0 to 400 form the story, use comparison.pictogram with one dot or semantic symbol per unit. Do not use logarithmic bars merely to fit an extreme count ratio.',
   categoricalRule: 'Categorical operating states cannot use a text grid. Quantify a common dimension, use map.regional when place explains the finding, or do not chart the story.',
   compositionRule: 'A composition must lead with proportional marks and direct segment labels. It cannot collapse into a primaryMetric or use supporting facts to restate segment values.',
   actualValueRule: 'Actual reported or retrievable levels outrank normalized percentages for primary geometry. Percentage change should explain the level movement, not replace it.',
-  basisRule: 'A rate or share must declare basisAvailability. If the tangible basis is reported or retrievable, the chart must expose it in a basis rail.',
+  basisRule: 'A rate or share must declare basisAvailability. If the tangible basis is reported or retrievable, the chart must switch to level geometry and plot the tangible numerator/denominator or affected/population amounts. The normalized rate remains secondary context.',
   riskRule: 'A risk range must identify the exposed population or denominator and include at least one mechanism or consequence; two percentage endpoints alone are insufficient.',
   unavailableProofRule: 'Absolute-change, relative-change, rate, or share evidence cannot be marked unavailable or incomparable without an exact tangibleTarget and at least two structured source checks covering two source types, including a data-bearing source.',
   visibleUnitRule: 'A magnitude-only displayValue or emphasis value must include its unit unless the title or subtitle explicitly defines that unit. Axis titles alone do not satisfy this rule.',
   supportingFactsRule: 'supportingFacts may explain cause or consequence only after the primary visual already carries the argument. They cannot substitute for marks.',
+  redundancyRule: 'Reject any row whose value is only the complement, remainder, total, or zero-gap endpoint already encoded by the primary geometry.',
   rejectedRecipes: Object.freeze(['status.grid', 'headline.metric'])
 });
 
 const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Two values showing change in the same named quantity for the same scope', use: 'comparison.change', example: 'specs/examples/ai95-price-spike.json' }),
-  Object.freeze({ when: 'Actual, expected, prior, target, or alternatives for the same named quantity, scope, and period', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
+  Object.freeze({ when: 'Three to five actual, expected, prior, target, or alternative values for the same named quantity, scope, and period; two values only when a numeric reference, basis, mechanism, consequence, denominator, or comparison fact makes the chart independently useful', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
+  Object.freeze({ when: 'Two to four exact integer counts from 0 to 400 where one symbol per unit makes the magnitude difference tangible', use: 'comparison.pictogram', example: 'specs/examples/exact-count-pictogram.json' }),
   Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
   Object.freeze({ when: 'Values include a min-max interval or threshold for the same named quantity, scope, and period', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
-  Object.freeze({ when: 'Actual values are separated from a benchmark by a discount, premium, shortfall, or overage', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
+  Object.freeze({ when: 'One or more independent actual values sit inside benchmark totals; one segmented row is preferred when one relationship fully carries the story', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
   Object.freeze({ when: 'Several categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
+  Object.freeze({ when: 'Two linked drivers and one outcome use different quantities or units and need independent local quantitative signals that visibly converge', use: 'relationship.converging-signals', example: 'specs/examples/converging-signals.json' }),
   Object.freeze({ when: 'Ordered time points', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
   Object.freeze({ when: 'Two or more exact start-to-end intervals share one calendar', use: 'timeline.duration', example: 'specs/examples/fuel-ban-timeline.json' }),
   Object.freeze({ when: 'Exact parts of one total', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
@@ -133,22 +142,22 @@ const SHARED_SCALE_CONTRACT = Object.freeze({
   sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
   sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
   periodRule: 'Scenario, diverging, range, dumbbell, and ranking charts use one shared period; a dumbbell period may name the comparison interval. comparison.change and comparison.benchmark-gap may use before-and-after periods, and trend.line may advance through ordered periods, while quantity and scope stay fixed.',
-  rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Select one primary quantitative story and keep secondary context inline, or split the evidence into separate charts.',
+  rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Use relationship.converging-signals when exactly two drivers and one outcome form one coherent claim; otherwise select one primary story with secondary context or split the evidence into separate charts.',
   genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
 });
 
 const VALUE_REPRESENTATION_CONTRACT = Object.freeze({
-  auditRule: 'Every selected source-ledger candidate must declare representationAudit.selectedMode, levelAvailability, and rationale. Rate/share stories also require basisAvailability and basisRationale. Unavailable or incomparable normalized evidence requires tangibleTarget plus structured researchAttempts.',
+  auditRule: 'Every selected source-ledger candidate must declare representationAudit.selectedMode, levelAvailability, and rationale. Rate/share stories also require basisAvailability and basisRationale. When a tangible basis is reported or retrievable, selectedMode must be level. Unavailable or incomparable normalized evidence requires tangibleTarget plus completed structured researchAttempts.',
   hierarchy: 'Prefer reported or retrievable actual levels for the primary geometry. Use absolute change next. Use native rates and shares when they are the real measured quantity. Use relative change only when actual levels are unavailable or incomparable. Use index only for a named, source-reported index with point levels.',
   actualLevelRule: 'When actual levels are reported or retrievable, plot those levels and move percentage or indexed change into emphasis, annotation, subtitle, or supporting context.',
   syntheticBaselineRule: 'Never invent a 0% before-event point or an index-100 starting point merely to create a trend. Research the actual level or chart only the reported relative observations. Do not publish generic labels such as 100 index or index points.',
-  tangibleValueRule: 'For prices, volumes, revenues, output, counts, and other tangible quantities, use the tangible values when available. For rates and shares, expose the numerator/denominator or population/affected amounts through ChartSpec.basis when available.',
+  tangibleValueRule: 'For prices, volumes, revenues, output, counts, and other tangible quantities, use the tangible values when available. For rates and shares with a reported or retrievable basis, derive and plot the numerator/denominator or population/affected amounts as level geometry rather than leaving the percentage as the chart.',
   researchProof: Object.freeze({
     requiredWhen: 'Actual levels or a rate/share basis are classified as unavailable or incomparable.',
     tangibleTarget: 'Name the exact price, count, volume, amount, numerator, or denominator sought.',
     attemptFields: Object.freeze(['source', 'sourceType', 'locator', 'outcome']),
     sourceTypes: Object.freeze(['supplied-source', 'official-dataset', 'company-filing', 'market-data', 'industry-dataset', 'authoritative-report']),
-    diversityRule: 'Use at least two source types and include an official dataset, company filing, market-data source, or industry dataset.'
+    diversityRule: 'Use at least two source types and include an official dataset, company filing, market-data source, or industry dataset. Every locator and outcome must describe a completed source-specific check; placeholders are rejected.'
   }),
   viewerCopyRule: 'Do not show synthetic index wording such as 100 index, 91.5 index, or index points. A named published index should use reader-facing point values and identify the measure by name.',
   exceptionRule: 'A relative-change ChartSpec is valid only when levelAvailability is unavailable or incomparable and measure.normalizationNote explains the limitation. An index ChartSpec requires reported or retrievable point levels for a named published index.'
@@ -174,10 +183,11 @@ const COMPOSABLE_FEATURES = Object.freeze([
   Object.freeze({ need: 'Explain a specific point', add: 'data[].annotation' }),
   Object.freeze({ need: 'Values span orders of magnitude', add: 'measure.scale = logarithmic' }),
   Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts after a primary visual with at least two marks' }),
-  Object.freeze({ need: 'Several mixed-unit facts jointly carry the main story', add: 'split them into separate ChartSpecs; do not use a card or facet grid' }),
+  Object.freeze({ need: 'Mixed-unit facts jointly carry the main story', add: 'use relationship.converging-signals for exactly two drivers and one outcome; otherwise split them into separate ChartSpecs' }),
+  Object.freeze({ need: 'An extreme comparison uses two to four exact counts no larger than 400', add: 'comparison.pictogram with one dot or semantic symbol per unit' }),
   Object.freeze({ need: 'A lone percentage has a meaningful denominator', add: 'encode numerator and remainder with composition.stacked rather than a headline number' }),
   Object.freeze({ need: 'A composition is expressed as percentages', add: 'data[].displayValue with the tangible absolute amount as well' }),
-  Object.freeze({ need: 'A rate or share has a tangible numerator and denominator', add: 'basis with ratio or population items' }),
+  Object.freeze({ need: 'A rate or share has a tangible numerator and denominator', add: 'switch to level geometry and plot the tangible amounts; keep the rate or share as secondary copy' }),
   Object.freeze({ need: 'Exact start and end dates define the comparison', add: 'timeline.duration' }),
   Object.freeze({ need: 'A discount, premium, shortfall, or overage is measured against a total benchmark', add: 'comparison.benchmark-gap' })
 ]);
@@ -363,7 +373,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.9',
+    version: '1.11',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -433,7 +443,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.9',
+    version: '1.11',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,

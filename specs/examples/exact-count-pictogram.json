@@ -1,0 +1,61 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.pictogram",
+  "title": "Two Hundred Reported Events Versus One Visible Event",
+  "subtitle": "Each dot represents one event, preserving the exact 200-to-1 count difference without a logarithmic axis.",
+  "date": "2026-08-06",
+  "source": {
+    "name": "Illustrative exact-count comparison fixture",
+    "period": "Single reporting period"
+  },
+  "data": [
+    {
+      "label": "Reported count",
+      "value": 200,
+      "displayValue": "200 events",
+      "quantity": "event count",
+      "scope": "same reported incident",
+      "period": "Single reporting period",
+      "tone": "critical"
+    },
+    {
+      "label": "Visible count",
+      "value": 1,
+      "displayValue": "1 event",
+      "quantity": "event count",
+      "scope": "same reported incident",
+      "period": "Single reporting period",
+      "tone": "neutral"
+    }
+  ],
+  "measure": {
+    "quantity": "event count",
+    "unit": "events",
+    "decimals": 0,
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "visual": {
+    "type": "pictogram",
+    "icon": "dot",
+    "columns": 20
+  },
+  "narrative": {
+    "frame": "surprise",
+    "density": "minimal",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "tall",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "exact-count-pictogram-example",
+    "topic": "exact count comparison",
+    "dataPeriod": "Single reporting period",
+    "keyFinding": "One symbol per unit makes a 200-to-1 count difference directly visible."
+  }
+}

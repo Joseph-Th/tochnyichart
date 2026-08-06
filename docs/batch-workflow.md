@@ -169,22 +169,48 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 
 - A non-map chart must contain at least two quantitative marks.
 - A lone value must gain a source-supported prior value, target, benchmark,
-  denominator, remainder, peer, range, or time series.
+  denominator, peer, range, or time series. A single-row
+  `comparison.benchmark-gap` is valid because the actual segment, gap segment,
+  and benchmark marker are separate quantitative marks.
+- An exact two-item `comparison.scenarios` chart must add a numeric reference,
+  tangible basis, or source-supported numeric mechanism, consequence,
+  denominator, or comparison fact. Before creating a separate slide, check
+  whether the pair belongs inside an existing same-topic map, category
+  comparison, or trend. If it cannot be enriched and does not support a
+  distinct conclusion, mark it `merged` or `omitted`.
 - A percentage-only price, workforce, export, production, spending, or revenue
   claim must trigger a search for the underlying tangible amounts for the same
   scope and periods before normalized geometry is considered.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
-- A rate or share with a reported or retrievable tangible basis must expose it
-  in `basis`; a floating percentage is not sufficient.
+- A rate or share with a reported or retrievable tangible basis must switch to
+  level geometry and plot the tangible amounts; a floating percentage plus a
+  basis rail is not sufficient.
+- Two to four exact integer counts from 0 to 400 should use
+  `comparison.pictogram`, with one symbol per unit rather than a logarithmic
+  bar.
 - A risk estimate must include the exposed population or denominator and at
   least one mechanism or consequence.
 - Exact start and end dates should use `timeline.duration`.
-- A discount, premium, shortfall, or overage should use
-  `comparison.benchmark-gap` when the benchmark and actual amount are
-  available.
+- Prices, costs, freight, margins, discounts, premiums, shortfalls, and
+  overages should use segmented `comparison.benchmark-gap` geometry when the
+  benchmark and actual amount are available. Derive a prior level from the
+  current amount and reported change when necessary. Plot the underlying
+  actual quantity, not the gap amount itself. Use one row when one benchmark
+  relationship fully carries the finding; do not add a second row that merely
+  restates the total or derived remainder.
 - Several categories with paired before/after or benchmark/actual values should
   use `comparison.dumbbell` when the category-level movement is the finding.
+- When two drivers and one outcome are all essential but use unlike quantities
+  or units, use `relationship.converging-signals` instead of forcing them onto a
+  shared scale. Each factor and the outcome must render as an independent local
+  quantitative signal, with both factor paths visibly converging at one
+  operator. Connector width is fixed and never encodes magnitude. Use identity
+  mode only for arithmetically reconciling evidence; otherwise use directional
+  mode and disclose incompatible periods or scopes.
+- Every additional mark must add independent information. Reject complements,
+  remainders, totals, and zero-gap closure rows that the primary geometry
+  already encodes.
 - A prose wall, card grid, bullet grid, or one oversized number is not an
   acceptable chart.
 - Omit a story when source enrichment cannot supply legitimate visual
@@ -198,7 +224,9 @@ rate/share basis, state the exact `representationAudit.tangibleTarget` and
 record at least two structured source checks. Each attempt must include a named
 source, source type, concrete locator, and outcome. The attempts must cover two
 source types and include an official dataset, company filing, market-data
-source, or industry dataset capable of supplying tangible values.
+source, or industry dataset capable of supplying tangible values. Each locator
+and outcome must describe a completed source-specific check; pending language
+or a generic `website`, `search`, `dataset`, or `report` locator is invalid.
 
 Synthetic 100-based indexes and fabricated 0% starting observations are not
 fallbacks. If tangible values remain unavailable, show only the reported

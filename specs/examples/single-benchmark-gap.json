@@ -1,0 +1,50 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.benchmark-gap",
+  "title": "One Request Would Use Most Available Warehouse Space",
+  "subtitle": "A 100,000-square-metre requirement sits inside 130,000 square metres of available Class A stock.",
+  "date": "2026-08-06",
+  "source": {
+    "name": "Illustrative single benchmark-gap fixture",
+    "period": "Single reporting period"
+  },
+  "data": [
+    {
+      "label": "Requested facility",
+      "value": 100000,
+      "benchmark": 130000,
+      "displayValue": "100,000 m² requested",
+      "benchmarkDisplayValue": "130,000 m² available",
+      "gapDisplayValue": "30,000 m² remains",
+      "quantity": "Class A warehouse area",
+      "scope": "available warehouse stock in one market",
+      "period": "Single reporting period",
+      "tone": "warning"
+    }
+  ],
+  "measure": {
+    "quantity": "Class A warehouse area",
+    "unit": "m²",
+    "axisTitle": "Warehouse area",
+    "decimals": 0,
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "surprise",
+    "density": "editorial",
+    "emphasis": "benchmark-gap"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "single-benchmark-gap-example",
+    "topic": "single actual within a benchmark total",
+    "dataPeriod": "Single reporting period",
+    "keyFinding": "The requested facility would absorb most available warehouse space, leaving a visible 30,000-square-metre gap."
+  }
+}

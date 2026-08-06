@@ -1,0 +1,75 @@
+{
+  "version": "2.0",
+  "recipe": "relationship.converging-signals",
+  "title": "Fewer Purchases, Higher Prices, More Spending",
+  "subtitle": "Two independently scaled quantitative signals converge on the reported spending outcome without implying that their units are comparable.",
+  "date": "2026-08-06",
+  "source": {
+    "name": "Illustrative apparel-market convergence fixture",
+    "period": "January–June 2026"
+  },
+  "relationship": {
+    "mode": "directional",
+    "operator": "multiply",
+    "formula": "Purchase count × average spend per purchase shapes total spending"
+  },
+  "data": [
+    {
+      "label": "Items purchased",
+      "relationshipRole": "driver",
+      "low": -15,
+      "high": -10,
+      "displayValue": "−10% to −15%",
+      "quantity": "clothing and footwear purchase count",
+      "scope": "Russian clothing and footwear market",
+      "period": "January–May 2026 versus prior year",
+      "direction": "down",
+      "tone": "critical",
+      "detail": "Consumers bought fewer clothing and footwear items."
+    },
+    {
+      "label": "Average check",
+      "relationshipRole": "driver",
+      "value": 3100,
+      "benchmark": 2897,
+      "displayValue": "3,100 RUB, +7%",
+      "benchmarkDisplayValue": "2,897 RUB prior",
+      "quantity": "average clothing and footwear purchase check",
+      "scope": "Russian clothing and footwear market",
+      "period": "H1 2026 versus prior year",
+      "direction": "up",
+      "tone": "warning",
+      "detail": "The average transaction value increased."
+    },
+    {
+      "label": "Nominal spending",
+      "relationshipRole": "outcome",
+      "low": 5,
+      "high": 7,
+      "displayValue": "+5% to +7%",
+      "quantity": "nominal clothing and footwear spending",
+      "scope": "Russian clothing and footwear market",
+      "period": "January–May 2026 versus prior year",
+      "direction": "up",
+      "tone": "primary",
+      "detail": "Higher prices outweighed the fall in purchase volume."
+    }
+  ],
+  "note": "The reported measures use slightly different windows, so the connectors show a directional relationship rather than an exact arithmetic reconciliation.",
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "convergence"
+  },
+  "options": {
+    "height": "tall",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "converging-signals-example",
+    "topic": "mixed-measure converging signals",
+    "dataPeriod": "January–June 2026",
+    "keyFinding": "Falling purchase volume and a higher average check converged on higher nominal spending."
+  }
+}

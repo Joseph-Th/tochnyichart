@@ -92,7 +92,13 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'status.grid'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.converging-signals'), true);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
+  assert.match(standard.visualEvidenceContract.standalonePairRule, /two-item comparison\.scenarios/i);
+  assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
+  assert.match(standard.sourceEnrichment.benchmarkGapRule, /one segmented row|one row/i);
+  assert.match(standard.sourceEnrichment.relationshipRule, /independent local quantitative signal/i);
+  assert.match(standard.sourceEnrichment.standalonePairRule, /merge or omit/i);
   assert.match(standard.valueRepresentationContract.hierarchy, /actual levels/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
   assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
@@ -134,6 +140,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   );
   assert.match(manifest.sourceEnrichment.coreRule, /expert-authored editorial evidence/i);
   assert.match(manifest.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
+  assert.match(manifest.sourceEnrichment.redundancyRule, /duplicated totals|zero-gap/i);
   assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric']);
   assert.match(manifest.sourceEnrichment.attributionRule, /omit source/i);
   assert.match(manifest.sourceEnrichment.attributionRule, /presentation copy/i);
@@ -157,7 +164,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.9');
+  assert.equal(manifest.version, '1.11');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');

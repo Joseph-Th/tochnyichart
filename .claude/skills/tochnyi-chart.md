@@ -121,11 +121,16 @@ every accepted story:
 - Prefer an underlying official dataset, company filing, or named report before another article from the same publisher.
 - Use only context that materially clarifies magnitude, comparison, mechanism, or consequence.
 - Do not add facts or select a complex recipe merely to make the output more visually interesting.
-- Keep a simple two-value chart when the contrast itself is the complete story.
+- A two-value before/after `comparison.change` may stand alone when the movement
+  itself is the finding. A same-period two-item `comparison.scenarios` chart is
+  different: it must add a numeric reference, tangible basis, or
+  source-supported numeric mechanism, consequence, denominator, or comparison
+  fact. Check whether the pair belongs inside an existing same-topic chart; if
+  it cannot be enriched and has no distinct conclusion, merge or omit it.
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
 - Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
-- For every rate or share, separately record `basisAvailability` and `basisRationale`. Recoverable numerator/denominator or population/affected amounts must appear in ChartSpec `basis`.
-- Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two structured `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. The checks must span two source types and include a data-bearing source.
+- For every rate or share, separately record `basisAvailability` and `basisRationale`. When numerator/denominator or population/affected amounts are reported or retrievable, select `level` and plot those tangible amounts; the normalized rate remains secondary copy. A ChartSpec `basis` rail alone is not sufficient.
+- Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two completed, source-specific `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. Pending language and generic locators such as `website`, `search`, `dataset`, or `report` are invalid. The checks must span two source types and include a data-bearing source.
 - Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods.
 - Prefer reported or retrievable actual levels for primary geometry. Use percentage change as annotation, emphasis, subtitle, or supporting context.
 - Never manufacture a `0%` before-event point or index-100 starting point merely to create a trend.
@@ -133,8 +138,17 @@ every accepted story:
 - Use `index` only for a named index whose point values are reported or retrievable. Never publish generic visible labels such as `100 index`, `91.5 index`, or `index points`.
 - Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec. Rate/share specs also declare `measure.basisAvailability` and `measure.basisNote` when the basis is unavailable, incomparable, or not applicable.
 - Risk and exit-outlook charts require a population or denominator plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
+- Use `comparison.pictogram` for two to four exact integer counts from 0 to 400 when one symbol per unit is clearer than an axis; do not use logarithmic bars solely to fit an extreme count ratio.
 - Use `timeline.duration` when exact start and end dates define two or more intervals.
-- Use `comparison.benchmark-gap` when a discount, premium, shortfall, or overage can be expressed with both an actual value and a benchmark total.
+- Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; never add a row that only repeats the benchmark or implied remainder.
+- Use `relationship.converging-signals` when exactly two drivers and one outcome
+  are essential but use unlike quantities or units. Each factor and the outcome
+  must render as an independent local quantitative signal, with both factor
+  paths visibly converging at one operator. Connector width is fixed and never
+  represents magnitude. Use `identity` only for a same-scope, same-period
+  equation; use `directional` with a note when the evidence supports the
+  direction but does not reconcile exactly.
+- Apply an information-economy test: every mark must add an independent observation. Remove complement rows, duplicated totals, zero-gap closures, and other marks that merely restate labels or geometry already present.
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
 - Keep the specification small and semantic.
@@ -231,10 +245,11 @@ supporting facts.
 Do not create prose walls, status-card grids, bullet grids, or single-number
 charts. Every non-map production chart needs at least two quantitative marks.
 A lone value must gain a source-supported prior value, target, benchmark,
-denominator, remainder, peer, range, or time series. Categorical evidence must
-be quantified on a common dimension or routed to `map.regional` when geography
-explains the finding. Omit the story when legitimate visual structure cannot be
-found.
+denominator, peer, range, or time series. A one-row benchmark-gap is valid
+because its actual segment, gap segment, and benchmark marker are distinct
+marks. Categorical evidence must be quantified on a common dimension or routed
+to `map.regional` when geography explains the finding. Omit the story when
+legitimate visual structure cannot be found.
 
 The production catalog, schema, and validator disable `status.grid` and
 `headline.metric`. For `composition.stacked`, the proportional bar and direct

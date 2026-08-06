@@ -139,15 +139,18 @@ test('axes that cross zero render a prominent interior zero reference', { skip: 
   }
 });
 
-test('duration timelines, benchmark gaps, and dumbbells pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('pictograms, duration timelines, benchmark gaps, dumbbells, and converging-signal relationships pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-new-recipes-'));
   try {
     const cases = [
+      { file: 'exact-count-pictogram.json', marks: 201 },
       { file: 'fuel-ban-timeline.json', marks: 2 },
-      { file: 'urals-benchmark-gap.json', marks: 6 },
-      { file: 'marketplace-commission-dumbbell.json', marks: 12 }
+      { file: 'single-benchmark-gap.json', marks: 3 },
+      { file: 'urals-benchmark-gap.json', marks: 3 },
+      { file: 'marketplace-commission-dumbbell.json', marks: 12 },
+      { file: 'converging-signals.json', minimumMarks: 8 }
     ];
-    cases.forEach(({ file, marks }) => {
+    cases.forEach(({ file, marks, minimumMarks }) => {
       const outputPath = path.join(tempDir, `${path.basename(file, '.json')}.html`);
       renderSpecFile(path.join(examplesDir, file), outputPath, { projectRoot: root });
       const diagnostics = diagnoseHtmlResponsive(outputPath, {
@@ -158,7 +161,11 @@ test('duration timelines, benchmark gaps, and dumbbells pass responsive diagnost
       diagnostics.runs.forEach((run) => {
         assert.equal(run.diagnostics?.summary?.errors, 0, file);
         assert.equal(run.diagnostics?.summary?.warnings, 0, file);
-        assert.equal(run.diagnostics?.summary?.marksChecked, marks, file);
+        if (minimumMarks !== undefined) {
+          assert.ok(run.diagnostics?.summary?.marksChecked >= minimumMarks, file);
+        } else {
+          assert.equal(run.diagnostics?.summary?.marksChecked, marks, file);
+        }
       });
     });
   } finally {

@@ -1,5 +1,5 @@
 {
-  "version": "2.7.0",
+  "version": "2.9.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -11,9 +11,16 @@
     {
       "id": "comparison.scenarios",
       "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period.",
-      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period.",
-      "bestFor": ["expected versus actual", "policy choices", "benchmark comparisons"],
+      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period. A two-item standalone chart also needs a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact; otherwise enrich, merge, or omit it.",
+      "bestFor": ["expected versus actual", "policy choices", "three-or-more scenarios", "context-rich two-value comparisons"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "comparison.pictogram",
+      "purpose": "Compare small-to-medium exact counts with one visible symbol per unit so extreme count ratios remain tangible.",
+      "data": "2 to 4 labeled non-negative integer values from 0 to 400 with measure.quantity and matching scope and period.",
+      "bestFor": ["200 versus 1", "people affected", "facilities hit", "small exact populations"],
+      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "comparison.diverging",
@@ -32,9 +39,16 @@
     {
       "id": "comparison.benchmark-gap",
       "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, or overage remains visible.",
-      "data": "2 to 6 labeled items with value and benchmark in one unit, plus matching quantity and scope. Periods may advance for before-and-after comparisons.",
-      "bestFor": ["discounted prices", "premium to benchmark", "shortfall to target", "before-and-after benchmark gaps"],
+      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story.",
+      "bestFor": ["discounted prices", "premium to benchmark", "shortfall to target", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
+      "id": "relationship.converging-signals",
+      "purpose": "Visualize two differently measured factors converging on one outcome without forcing them onto a shared axis.",
+      "data": "Exactly 3 items: two relationshipRole driver items and one outcome item. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Each item is drawn on its own local quantitative signal; connectors encode the relationship, not comparable magnitude.",
+      "bestFor": ["two factors shaping one outcome", "volume and price driving revenue", "activity and intensity driving emissions", "mixed-measure causal relationships"],
+      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "comparison.dumbbell",

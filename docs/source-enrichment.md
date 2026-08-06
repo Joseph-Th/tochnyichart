@@ -173,14 +173,16 @@ For a selected source-ledger candidate, record:
 
 The matching `ChartSpec.measure` must declare the same `valueMode` and `levelAvailability`. A `relative-change` measure also requires `normalizationNote` when levels are unavailable or incomparable. A published index uses `valueMode: "index"` only with reported or retrievable point levels.
 
-For a rate or share, separately audit the tangible basis:
+For a rate or share, separately audit the tangible basis. When that basis is
+reported or retrievable, the least-normalized primary representation is a
+`level`, not a raw percentage:
 
 ```json
 "representationAudit": {
-  "selectedMode": "share",
-  "levelAvailability": "not-applicable",
+  "selectedMode": "level",
+  "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
-  "rationale": "The claim is natively a share.",
+  "rationale": "The reported share and economy total allow the sector amount to be derived and plotted in currency.",
   "basisRationale": "The source and named official dataset provide the turnover numerator and economy denominator."
 }
 ```
@@ -191,14 +193,19 @@ such as a policy interest rate or a price-index growth rate. A cost-to-income
 ratio, market share, coverage rate, utilization rate, or risk estimate normally
 has a meaningful basis and should be researched.
 
-When the basis is reported or retrievable, add a ChartSpec `basis` rail:
+When the basis is reported or retrievable, derive and plot the tangible values:
 
-- `type: "ratio"` with `numerator` and `denominator` items.
-- `type: "population"` with `population` and `affected` items.
+- For a ratio or economic share, plot the numerator and denominator, or the
+  derived numerator range against the denominator total.
+- For a risk or coverage estimate, plot the affected count or range and the
+  total population.
+- Keep the rate or share in `displayValue`, `emphasis`, an annotation, or the
+  subtitle.
 
-The primary chart may still show the rate or share, but the visible basis rail
-must state the tangible amounts. This prevents a percentage from floating free
-of scale.
+A `basis` rail may still document the arithmetic, but it does not satisfy the
+primary-geometry requirement by itself. Raw 8–10%, 15%, or 60% bars are not an
+acceptable fallback when the underlying economy, population, turnover, volume,
+or count can be obtained.
 
 Do not mark levels or a basis `unavailable` or `incomparable` after one failed
 search. First state the exact `tangibleTarget`, such as the share prices at the
@@ -214,6 +221,12 @@ Each attempt must identify:
 - `locator`: the URL, filing, table, ticker and date range, or dataset slice
   actually checked.
 - `outcome`: what values were found or why they could not be used.
+
+Every attempt must describe a completed source-specific check. Pending language
+such as `to be checked`, `will check`, `TBD`, or `follow up` is rejected by the
+source-ledger validator. A locator such as `website`, `search`, `dataset`, or
+`report` without a URL, table, filing section, ticker/date range, or dataset
+slice is also invalid.
 
 The attempts must cover at least two source types, including at least one source
 capable of supplying tangible data: an official dataset, company filing,
@@ -252,7 +265,15 @@ selecting geometry:
 - Spending or revenue change: currency amounts for the same scope and periods.
 - Market share or coverage: numerator, denominator, and remainder.
 
-When a share is the primary measure and the absolute component values are reported or retrievable, show both in the visible data label. A percentage-only label discards useful magnitude.
+If the normalized claim and a tangible base allow an absolute value to be
+derived, the derived value is the primary geometry. For example, an 8–10%
+economic share plus a reported GDP total becomes a currency range, and a
+10–15% exit estimate plus a seller population becomes an affected-count range.
+
+When a share remains the primary measure because its tangible basis is
+unavailable, incomparable, or genuinely not applicable, preserve any reported
+absolute component value in the visible label. When the full basis is reported
+or retrievable, use level geometry instead.
 
 For a risk or exit-outlook story, a low and high percentage alone are not a
 complete visual argument. Add the exposed population or denominator and at
@@ -355,11 +376,39 @@ Examples:
 - A discount, premium, shortfall, or overage should use
   `comparison.benchmark-gap` when both the benchmark and actual amount are
   available. The benchmark total, actual value, and gap must all remain visible.
+  One row is enough when one benchmark relationship fully carries the story;
+  do not add a second row that merely restates the total or the derived
+  remainder.
+- A current price plus a reported percentage move should normally use
+  `comparison.benchmark-gap`: derive the prior price as
+  `current / (1 + change rate)` and show the retained price plus the changed
+  segment. Use `comparison.dumbbell` when several categories each have a prior
+  and current value. For a quoted discount, research the undiscounted reference
+  price and plot the discounted actual price inside that total. Do not use the
+  discount amount as `value`.
+- Two to four exact integer counts from 0 to 400 should use
+  `comparison.pictogram`, with one dot or semantic symbol per unit. Do not use a
+  logarithmic bar merely to make a 200-to-1 comparison fit.
 - A percentage risk range should include a population basis and a mechanism or
   consequence. Without those, enrich it further or omit it.
 - A story with unlike units may use one primary visual plus the unboxed
-  `supportingFacts` rail for secondary context. When multiple unlike measures
-  are essential, split them into separate ChartSpecs.
+  `supportingFacts` rail for secondary context. When exactly two drivers and one
+  outcome are all essential, use `relationship.converging-signals`. Each factor
+  and the outcome must be drawn as an independent local quantitative signal,
+  with the two factor paths visibly converging at one operator. Connector width
+  is fixed and never represents magnitude. Use identity mode only for exact
+  same-scope, same-period reconciliation. Use directional mode with a note when
+  the measures support a mechanism or direction but use incompatible periods or
+  scopes. Split more diffuse mixed evidence into separate ChartSpecs.
+- A same-period two-value pair should not receive its own
+  `comparison.scenarios` chart merely because two values exist. Search for a
+  third comparable item, numeric reference or threshold, tangible basis, or a
+  numeric mechanism, consequence, denominator, or comparison fact. Also check
+  whether the pair belongs inside an existing same-topic chart. If it cannot be
+  enriched and has no distinct editorial conclusion, merge or omit it.
+- Apply an information-economy test before authoring: remove any proposed row
+  that is only a complement, remainder, duplicated total, or zero-gap endpoint
+  already encoded by a segmented bar or benchmark marker.
 
 Do not default to bars because the input contains numbers. Do not select a more complex recipe solely to make the output look more interesting.
 
@@ -377,14 +426,23 @@ Before authoring the `ChartSpec`, confirm:
 - All directly relevant evidence has been extracted.
 - Derived values are traceable and period-compatible.
 - Actual-level availability has been checked before choosing a percentage representation.
-- For a rate or share, basis availability has been checked and documented.
-- Any `unavailable` or `incomparable` normalized representation names its `tangibleTarget` and has at least two structured research attempts covering two source types, including a data-bearing source.
+- For a rate or share, basis availability has been checked and documented; a reported or retrievable basis has been converted to level geometry.
+- Any `unavailable` or `incomparable` normalized representation names its `tangibleTarget` and has at least two completed, source-specific research attempts covering two source types, including a data-bearing source.
 - The source-ledger `representationAudit` matches `measure.valueMode` and `measure.levelAvailability`.
-- For rate/share stories, the ledger basis audit matches `measure.basisAvailability`, and reported or retrievable amounts appear in `basis`.
+- A raw rate/share is used only when its tangible basis is unavailable, incomparable, or genuinely not applicable; otherwise the chart uses level geometry.
 - Relative-change geometry is used only when actual levels are unavailable or incomparable.
 - Index geometry is used only for a named, source-reported index with actual point values; synthetic 100-based baselines and viewer-facing `index` labels are absent.
 - Risk stories include a population or denominator plus a mechanism or consequence.
-- Dated intervals use `timeline.duration`; benchmark gaps use `comparison.benchmark-gap` when their defining evidence is available.
+- An exact two-item `comparison.scenarios` chart has a numeric reference, basis,
+  mechanism, consequence, denominator, or comparison fact, and is not a subset
+  of a richer same-topic chart.
+- Dated intervals use `timeline.duration`; price, cost, freight, margin, discount, premium, shortfall, and overage stories use segmented benchmark geometry when their defining evidence is available.
+- Benchmark-gap specs plot the underlying tangible actual and total benchmark,
+  use one row when one relationship is complete, and contain no complement or
+  zero-gap closure rows.
+- Mixed-measure driver/outcome stories use `relationship.converging-signals` rather
+  than a shared axis, with identity versus directional mode supported by the
+  evidence.
 - External research supplements rather than silently overrides the input.
 - Any direct contradiction has been escalated for editorial resolution.
 - Every selected fact supports magnitude, comparison, mechanism, or consequence.

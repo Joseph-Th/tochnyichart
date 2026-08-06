@@ -142,8 +142,8 @@ Before selecting a recipe:
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
-7. Determine whether actual levels are reported or retrievable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available.
-8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two named source checks and outcomes.
+7. Determine whether actual levels are reported or retrievable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available; when they are, select level geometry.
+8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two completed, source-specific checks and outcomes; pending research notes are invalid.
 9. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
@@ -169,7 +169,7 @@ Every route follows the same semantic stages:
 1. Preserve the expert input claim, then confirm and read supplied sources in full.
 2. Extract the relevant evidence, supplemental context, and safe derivations.
 3. Fill only material evidence gaps with conditional research.
-4. Audit the value representation and any rate/share basis. For percentage-only prices, workforce, exports, production, spending, or revenue, search for the underlying amounts for the same scope and periods. Use actual levels and tangible basis amounts when reported or retrievable; never manufacture a `0%` or index-100 starting point.
+4. Audit the value representation and any rate/share basis. For percentage-only prices, workforce, exports, production, spending, or revenue, search for the underlying amounts for the same scope and periods. Use actual levels and tangible basis amounts as the plotted geometry when reported or retrievable; never manufacture a `0%` or index-100 starting point.
 5. Choose one central finding, the workflow, and the story recipe.
 6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode`, `measure.levelAvailability`, and `measure.basisAvailability` for rates or shares.
 7. Validate the JSON.
@@ -219,21 +219,40 @@ Check that:
 - Composition charts retain a tangible absolute amount in `displayValue` when
   the source provides one; percentages alone are not enough when real amounts
   are known.
-- Rates and shares expose their tangible basis in `basis` when recoverable.
+- Rates and shares switch to tangible level geometry when their basis is
+  recoverable; a `basis` rail alone does not satisfy the requirement.
 - Risk ranges include a population or denominator plus a mechanism or
   consequence, not only two percentage endpoints.
 - Exact start/end intervals use `timeline.duration` so calendar overlap and
   elapsed time remain visible.
-- Discounts, premiums, shortfalls, and overages use
-  `comparison.benchmark-gap` when both the benchmark and actual amount are
-  available.
+- Prices, costs, freight, margins, discounts, premiums, shortfalls, and
+  overages use segmented `comparison.benchmark-gap` geometry when the prior or
+  total benchmark can be recovered. The plotted `value` is the underlying
+  actual level, not the gap amount. One row is preferred when one relationship
+  fully carries the finding; no row merely repeats the total or remainder.
+- Two to four exact counts from 0 to 400 use `comparison.pictogram` when one
+  symbol per unit makes the magnitude comparison clearer than an axis.
 - Several categories with one before/benchmark value and one after/actual value
   use `comparison.dumbbell` when the category-level movement is the finding.
+- When two unlike drivers and one outcome are all essential, use
+  `relationship.converging-signals` instead of a common axis. Each factor and
+  the outcome renders as an independent local quantitative signal, and both
+  factor paths visibly converge at one operator. Connector width is fixed and
+  never represents magnitude. Identity mode requires an exact same-scope,
+  same-period equation; directional mode requires a note when periods or scopes
+  differ.
+- An exact two-item `comparison.scenarios` chart must add a numeric reference,
+  tangible basis, or source-supported numeric mechanism, consequence,
+  denominator, or comparison fact. Check whether the pair is already contained
+  in a richer same-topic map, category comparison, or trend. If it cannot be
+  enriched and does not support a separate conclusion, merge or omit it.
 - A non-map chart must contain at least two quantitative marks. A lone metric
-  must gain a real prior value, target, benchmark, denominator, remainder,
-  peer, range, or time series from the source. If none exists, omit the story.
+  must gain a real prior value, target, benchmark, denominator, peer, range, or
+  time series from the source. A single-row benchmark-gap qualifies because its
+  actual segment, gap segment, and benchmark marker are separate marks. If no
+  valid structure exists, omit the story.
 
-For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
+For `comparison.change`, `comparison.scenarios`, `comparison.pictogram`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
 `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
@@ -242,12 +261,20 @@ non-change comparisons must share a period; trend periods may advance while
 quantity and scope remain fixed. Generic declarations such as `reported change`
 or `metric` are rejected because they hide unlike measures behind one axis.
 
-When several facts with different units, scopes, periods, or operational stages
-jointly carry the main argument, split them into separate ChartSpecs. When the
-mixed-unit facts are secondary context, keep the primary chart simple and place
-them in the unboxed `supportingFacts` rail. Do not normalize unrelated facts
-into percentages or turn them into a grid of metric cards merely to make them
-look comparable.
+When exactly two facts act as drivers of one outcome, and all three are
+essential, `relationship.converging-signals` may keep them in one visual without
+a shared scale. The local signal lengths are meaningful only within each
+measure; the connector geometry communicates convergence, not relative size.
+More diffuse facts with different units, scopes, periods, or operational stages
+belong in separate ChartSpecs. When mixed-unit facts are secondary context, keep
+the primary chart simple and place them in the unboxed `supportingFacts` rail.
+Do not normalize unrelated facts into percentages or turn them into a grid of
+metric cards merely to make them look comparable.
+
+Apply an information-economy test before accepting the spec. Every mark must add
+an independent period, category, scenario, or measurement. Reject complement
+rows, duplicated totals, and zero-gap benchmark rows already encoded by another
+segment or marker.
 
 For `flow.waterfall`, require a real source-supported start-to-end bridge. The
 start, each change, and the ending value must share scope and period, reconcile
