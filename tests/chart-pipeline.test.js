@@ -302,6 +302,15 @@ test('rate and share stories with retrievable bases must switch to tangible leve
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /cannot remain the primary geometry|measure\.valueMode level/i.test(message)));
 
+  const unavailablePublicBasis = structuredClone(share);
+  delete unavailablePublicBasis.basis;
+  unavailablePublicBasis.measure.basisAvailability = 'unavailable';
+  unavailablePublicBasis.measure.basisNote = 'The economy total was not researched.';
+  unavailablePublicBasis.references = [{ value: 100, label: 'Whole economy', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(unavailablePublicBasis);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /named public aggregate|tangible level geometry|percentage range against 100%/i.test(message)));
+
   const tangible = {
     ...share,
     recipe: 'comparison.range',
@@ -319,9 +328,17 @@ test('rate and share stories with retrievable bases must switch to tangible leve
     measure: {
       quantity: 'estimated economic footprint', unit: 'trillion RUB', valueMode: 'level',
       levelAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    },
+    basis: {
+      type: 'ratio',
+      label: 'Economic footprint basis',
+      formula: 'Estimated footprint ÷ economy total',
+      items: [
+        { role: 'numerator', label: 'Online-trade footprint', low: 16, high: 20, displayValue: 'RUB 16–20tn', unit: 'trillion RUB', valueStatus: 'derived', tone: 'primary' },
+        { role: 'denominator', label: 'Economy total', value: 200, displayValue: 'RUB 200tn', unit: 'trillion RUB', valueStatus: 'reported', tone: 'neutral' }
+      ]
     }
   };
-  delete tangible.basis;
   result = validateSpec(tangible);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
@@ -473,6 +490,52 @@ test('coverage claims require a visible consumption orientation', () => {
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
+test('multi-component coverage stories keep supply components and demand in primary geometry', () => {
+  const daysOnly = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Replacement fuel covers only 1–3 days of monthly demand',
+    date: '2026-08-06',
+    data: [{
+      label: 'Replacement coverage', low: 1, high: 3, displayValue: '1–3 days',
+      quantity: 'fuel-demand coverage', scope: 'national monthly fuel demand', period: 'August 2026'
+    }],
+    references: [{ value: 30, label: '30-day month', tone: 'neutral', lineStyle: 'dashed' }],
+    measure: {
+      quantity: 'fuel-demand coverage', unit: 'days', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    },
+    supportingFacts: [{
+      value: '100–140 thousand tons',
+      label: 'Combined inbound supply from several separately reported sources.',
+      role: 'comparison'
+    }]
+  };
+  let result = validateSpec(daysOnly);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /physical supply volumes|each supply component|time while/i.test(message)));
+
+  const decomposed = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Replacement shipments covered only a fraction of monthly fuel demand',
+    subtitle: 'The announced components together equate to roughly one to three days of demand.',
+    date: '2026-08-06',
+    data: [
+      { label: 'India tankers', low: 60, high: 100, displayValue: '60–100 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
+      { label: 'Morocco tanker', value: 30, displayValue: '30 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
+      { label: 'Kazakhstan pledge', value: 10, displayValue: '10 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
+      { label: 'Monthly demand', value: 900, displayValue: '900 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026', tone: 'critical' }
+    ],
+    measure: {
+      quantity: 'fuel volume', unit: 'thousand tons', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    }
+  };
+  result = validateSpec(decomposed);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
 test('opposing quantitative signals cannot be hidden in supporting facts', () => {
   const thinContrast = {
     version: '2.0',
@@ -608,6 +671,18 @@ test('converging-signal relationships preserve mixed measures without a false sh
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /mixed scopes or periods requires note/i.test(message)));
 
+  const repeatedMeasure = structuredClone(relationship);
+  repeatedMeasure.data[2].quantity = repeatedMeasure.data[0].quantity;
+  result = validateSpec(repeatedMeasure);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /three distinct real-world quantities|same measure at different times/i.test(message)));
+
+  const missingMechanism = structuredClone(relationship);
+  delete missingMechanism.relationship.formula;
+  result = validateSpec(missingMechanism);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /formula is required|must have required property 'formula'/i.test(message)));
+
   const falseIdentity = structuredClone(relationship);
   falseIdentity.relationship.mode = 'identity';
   delete falseIdentity.note;
@@ -710,6 +785,7 @@ test('runtime includes pictogram, basis, calendar-duration, benchmark-gap, dumbb
   assert.match(runtime, /function renderDumbbell\(/);
   assert.match(runtime, /function renderPictogramComparison\(/);
   assert.match(runtime, /function renderConvergingSignals\(/);
+  assert.doesNotMatch(runtime, /'OUTCOME · '| 'FACTOR '/);
   assert.match(runtime, /tochnyi-basis-rail/);
   assert.match(css, /\.tochnyi-basis-rail\s*\{/);
   assert.match(css, /\.tochnyi-timeline-svg/);

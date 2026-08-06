@@ -6,6 +6,7 @@ const { validateSourceLedger } = require('./source-fidelity');
 const { renderStandardChart } = require('./workflow');
 const { renderRegionalBreakdown } = require('./regional-workflow');
 const { diagnoseHtmlResponsive, captureHtml } = require('./capture');
+const { buildPresentationPlan, validatePresentationPlan } = require('./presentation-plan');
 const {
   normalizeRunId,
   sourceLedgerPath,
@@ -77,7 +78,7 @@ function buildManifest(rows) {
 
 function isRebuiltArtifact(name, runId) {
   return /\.(?:html|png)$/i.test(name) ||
-    ['manifest.csv', 'qa-report.json'].includes(name) ||
+    ['manifest.csv', 'qa-report.json', 'presentation-plan.json'].includes(name) ||
     name === `tochnyi-charts-${runId}.pptx` ||
     name === `tochnyi-chart-pngs-${runId}.zip`;
 }
@@ -196,6 +197,14 @@ function buildRunCharts(projectRoot, runId, options = {}) {
     const stagedManifestPath = path.join(stagingRoot, 'manifest.csv');
     fs.writeFileSync(stagedManifestPath, buildManifest(rows), 'utf8');
 
+    const presentationPlan = buildPresentationPlan(rows, normalized);
+    const planReview = validatePresentationPlan(presentationPlan, rows);
+    if (!planReview.valid) {
+      throw new Error(`Presentation plan is invalid:\n- ${planReview.errors.join('\n- ')}`);
+    }
+    const stagedPresentationPlanPath = path.join(stagingRoot, 'presentation-plan.json');
+    fs.writeFileSync(stagedPresentationPlanPath, `${JSON.stringify(presentationPlan, null, 2)}\n`, 'utf8');
+
     const stagedQaPath = path.join(stagingRoot, 'qa-report.json');
     const qa = {
       version: '1.0',
@@ -214,12 +223,16 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       },
       files: {
         manifest: 'manifest.csv',
-        qaReport: 'qa-report.json'
+        qaReport: 'qa-report.json',
+        presentationPlan: 'presentation-plan.json'
       },
       presentation: {
         status: 'not-built',
         requiredNext: true,
-        note: 'Assemble a new presentation from these PNGs. Any prior presentation was removed because its chart images were stale.'
+        plan: 'presentation-plan.json',
+        expectedSlideCount: rows.length,
+        titleSlidesAllowed: false,
+        note: 'Assemble exactly one slide per presentation-plan entry from the final PNGs. Do not add a cover, title, agenda, divider, or closing slide unless the user explicitly requested one.'
       },
       charts: rows.map((row) => ({
         slug: row.slug,
@@ -242,6 +255,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       chartCount: rows.length,
       manifestPath: path.join(outputRoot, 'manifest.csv'),
       qaPath: path.join(outputRoot, 'qa-report.json'),
+      presentationPlanPath: path.join(outputRoot, 'presentation-plan.json'),
       diagnosticErrors,
       diagnosticWarnings,
       renderWarnings,

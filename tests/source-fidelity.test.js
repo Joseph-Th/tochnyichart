@@ -48,6 +48,18 @@ function validLedger(workspace) {
           }
         ]
       },
+      visualEvidenceAudit: {
+        rationale: 'The fixture exposes one same-scale insurance change observation for this selected claim.',
+        comparableObservations: [
+          {
+            label: 'Insurance price increase',
+            quantity: 'insurance price change',
+            unit: 'percent',
+            period: 'reported period',
+            value: 230
+          }
+        ]
+      },
       anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
       evidence: [
         {
@@ -98,6 +110,54 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
     assert.equal(result.selected, 1);
     assert.equal(result.omitted, 1);
     assert.equal(result.specificationsChecked, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects collapsing a richer same-scale dataset into one plotted item', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-rich-evidence');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].visualEvidenceAudit = {
+      rationale: 'Three named same-scale observations are available and should remain visible.',
+      comparableObservations: [
+        { label: 'Initial move', quantity: 'market move', unit: 'percent', period: 'initial reaction', value: -8.5 },
+        { label: 'Partial recovery', quantity: 'market move', unit: 'percent', period: 'later reaction', value: -3 },
+        { label: 'Insurance increase', quantity: 'market move', unit: 'percent', period: 'reported period', value: 230 }
+      ]
+    };
+    fs.writeFileSync(workspace.ledgerPath, JSON.stringify(ledger, null, 2) + '\n');
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json'), JSON.stringify({
+      title: 'Ozon insurance prices rose 230%',
+      data: [{ label: 'Aggregate', value: 230 }],
+      measure: { valueMode: 'relative-change', levelAvailability: 'unavailable' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-rich-evidence', { requireSpecs: true }),
+      /collapses a richer same-scale dataset|all must remain primary data items/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity requires mechanism evidence for converging signals', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-relationship-mechanism');
+    validLedger(workspace);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json'), JSON.stringify({
+      recipe: 'relationship.converging-signals',
+      title: 'Ozon insurance prices rose 230%',
+      measure: { valueMode: 'relative-change', levelAvailability: 'unavailable' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-relationship-mechanism', { requireSpecs: true }),
+      /without source-ledger mechanism evidence|role mechanism/i
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -199,6 +259,167 @@ test('consumption coverage requires an official or industry denominator check', 
     };
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
     assert.equal(validateSourceLedger(root, 'issue-consumption-research').valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('public aggregate shares require a tangible denominator and level geometry', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-public-share-'));
+  const anchor = 'E-commerce represents an estimated 8–10% of the Russian economy.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-public-share');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'ecommerce-economic-share',
+      claim: 'E-commerce represents an estimated 8–10% of the Russian economy.',
+      decision: 'selected',
+      outputSlug: 'ecommerce-economic-share',
+      title: 'E-commerce represents 8–10% of the Russian economy',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'share',
+        levelAvailability: 'not-applicable',
+        basisAvailability: 'unavailable',
+        basisTarget: 'Nominal Russian GDP and the corresponding e-commerce economic-footprint range.',
+        rationale: 'The claim was initially left as a percentage.',
+        basisRationale: 'The public economy denominator was not researched.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The initial draft contains only the reported share range.',
+        comparableObservations: [{
+          label: 'Economic share', quantity: 'economic activity share', unit: '%', period: '2026 estimate', low: 8, high: 10
+        }]
+      },
+      anchors: [anchor],
+      evidence: [{ statement: 'E-commerce represents 8–10% of the economy.', origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-public-share'),
+      /public aggregate denominator|must select reported or retrievable level geometry|denominator item/i
+    );
+
+    const candidate = ledger.candidates[0];
+    candidate.representationAudit = {
+      selectedMode: 'level',
+      levelAvailability: 'retrievable',
+      basisAvailability: 'retrievable',
+      basisTarget: 'Nominal Russian GDP and the corresponding e-commerce economic-footprint range.',
+      rationale: 'The public GDP total converts the reported share into a tangible value range.',
+      basisRationale: 'An official nominal-GDP total supplies the denominator for the reported share.'
+    };
+    candidate.visualEvidenceAudit = {
+      rationale: 'The derived footprint and total economy value form the tangible basis of the share.',
+      comparableObservations: [
+        { label: 'E-commerce footprint', quantity: 'economic value', unit: 'trillion RUB', period: '2026 estimate', low: 16, high: 20 },
+        { label: 'Economy total', quantity: 'economic value', unit: 'trillion RUB', period: '2026 estimate', value: 200 }
+      ]
+    };
+    candidate.evidence.push({
+      statement: 'Nominal GDP is 200 trillion rubles for the compatible period.',
+      origin: 'external',
+      role: 'denominator',
+      source: 'Official national accounts dataset'
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'ecommerce-economic-share.json'), JSON.stringify({
+      title: candidate.title,
+      recipe: 'comparison.range',
+      data: [
+        { label: 'E-commerce footprint', low: 16, high: 20 },
+        { label: 'Economy total', value: 200 }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'retrievable' },
+      basis: {
+        type: 'ratio',
+        items: [
+          { role: 'numerator', label: 'E-commerce footprint', low: 16, high: 20 },
+          { role: 'denominator', label: 'Economy total', value: 200 }
+        ]
+      }
+    }));
+    assert.equal(validateSourceLedger(root, 'issue-public-share', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage audits retain each supply component and the demand denominator', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-coverage-audit-'));
+  const anchor = 'Replacement fuel included 60–100 thousand tons from India, 30 thousand tons from Morocco, and 10 thousand tons from Kazakhstan, against 900 thousand tons of monthly demand.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-coverage-audit');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'replacement-fuel-coverage',
+      claim: 'Replacement fuel covers only a few days of monthly demand.',
+      decision: 'selected',
+      outputSlug: 'replacement-fuel-coverage',
+      title: 'Replacement fuel covers only a fraction of monthly demand',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level',
+        levelAvailability: 'reported',
+        rationale: 'The shipment components and monthly demand are reported in one tangible volume unit.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Every reported inbound component and the monthly demand denominator belong on one scale.',
+        comparableObservations: [
+          { label: 'India tankers', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', low: 60, high: 100 },
+          { label: 'Morocco tanker', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 30 },
+          { label: 'Kazakhstan pledge', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 10 },
+          { label: 'Monthly demand', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 900 }
+        ]
+      },
+      anchors: [anchor],
+      evidence: [{ statement: 'The input reports three replacement sources against monthly demand.', origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-coverage-audit'),
+      /coverageAudit is required|inventory each supply component/i
+    );
+
+    const candidate = ledger.candidates[0];
+    candidate.visualEvidenceAudit.coverageAudit = {
+      rationale: 'The coverage result is explained by three inbound components compared with monthly demand.',
+      denominatorLabel: 'Monthly demand',
+      sourceEvidence: [
+        { anchor: '60–100 thousand tons from India', disposition: 'component', label: 'India tankers' },
+        { anchor: '30 thousand tons from Morocco', disposition: 'component', label: 'Morocco tanker' },
+        { anchor: '10 thousand tons from Kazakhstan', disposition: 'component', label: 'Kazakhstan pledge' },
+        { anchor: '900 thousand tons of monthly demand', disposition: 'denominator', label: 'Monthly demand' }
+      ]
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'replacement-fuel-coverage.json'), JSON.stringify({
+      title: candidate.title,
+      recipe: 'comparison.range',
+      data: [{ label: 'Replacement coverage', low: 1, high: 3 }],
+      measure: { unit: 'days', valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-coverage-audit', { requireSpecs: true }),
+      /collapses a richer same-scale dataset|full supply-versus-demand decomposition|time-only geometry/i
+    );
+
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'replacement-fuel-coverage.json'), JSON.stringify({
+      title: candidate.title,
+      recipe: 'comparison.range',
+      data: [
+        { label: 'India tankers', low: 60, high: 100 },
+        { label: 'Morocco tanker', value: 30 },
+        { label: 'Kazakhstan pledge', value: 10 },
+        { label: 'Monthly demand', value: 900 }
+      ],
+      measure: { unit: 'thousand tons', valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.equal(validateSourceLedger(root, 'issue-coverage-audit', { requireSpecs: true }).valid, true);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

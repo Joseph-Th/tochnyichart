@@ -76,6 +76,10 @@ growth rate. For market shares, coverage rates, vacancy rates, utilization
 rates, ratios, and risk estimates, audit the numerator/denominator or
 population/affected count. When those amounts are reported or retrievable,
 switch to level geometry and keep the normalized rate in secondary copy.
+Shares of GDP, the economy, population, employment, exports, imports,
+production, or capacity treat the named public total as retrievable. Recover
+that total, derive the tangible numerator or range, and plot both. A 100%
+reference line is not a meaningful magnitude anchor.
 
 The least normalized representation is not automatically the best story
 geometry. When the finding is that a rate is slowing, accelerating, reversing,
@@ -90,10 +94,13 @@ a benchmark, or a complete composition. A basis rail alone does not let the
 reader see whether the affected range is small or large relative to the whole.
 
 When an amount is interpreted as days of consumption, share of demand, or
-coverage of need, visualize that orientation. Convert the amounts to coverage
-time when the denominator is defensible, or place a daily or monthly
-consumption benchmark on the same unit scale. Do not leave the only meaningful
-denominator in a supporting-fact sentence.
+coverage of need, visualize that orientation. If the source provides one supply
+amount, convert it to coverage time or place a daily or monthly consumption
+benchmark on the same unit scale. If it provides two or more contributors,
+retain each contributor and the demand denominator as primary marks in one
+tangible unit. The derived coverage time is then an annotation or subtitle, not
+the geometry. Do not combine named contributors into one range before the
+viewer can see what creates the result.
 
 An `unavailable` or `incomparable` level or basis is not a shortcut around
 research. The source ledger requires an exact `tangibleTarget` and at least two
@@ -238,6 +245,22 @@ Source-and-spec verification rejects repeated selected charts that match this
 duplicate skeleton. This check occurs after ChartSpecs exist because the ledger
 alone cannot reliably determine recipe and series structure.
 
+## Rich-data preservation gate
+
+Before choosing a recipe, inventory every materially relevant observation that
+shares one real-world quantity and unit in
+`visualEvidenceAudit.comparableObservations`. When three or more such
+observations exist, preserve every one as a primary `data[]` item. A total,
+average, min-max range, or days-of-coverage conversion may be added, but it may
+not replace named shipment components, categories, facilities, peers, or time
+points already available in the evidence.
+
+This gate prevents an information-rich source from becoming a one-row chart.
+Single-row range and benchmark treatments remain valid only when the underlying
+story genuinely consists of one interval or one actual-to-benchmark
+relationship, not when several comparable observations were compressed into
+that row.
+
 ## Comparison recipe contracts
 
 | Recipe | Semantic contract |
@@ -249,7 +272,7 @@ alone cannot reliably determine recipe and series structure.
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
 | `comparison.benchmark-gap` | One to six independent actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. |
-| `relationship.converging-signals` | Exactly two drivers and one outcome whose quantities or units differ. Each measure is drawn as an independent local quantitative signal; the two factor paths converge at one operator before the outcome signal. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
+| `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two paths converge at one operator before the outcome signal. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
@@ -292,8 +315,13 @@ quantity that carries the primary visual argument. Put genuinely secondary
 facts in `supportingFacts`, which renders as an unboxed inline context rail.
 When exactly two unlike drivers and one outcome form one coherent claim, use
 `relationship.converging-signals`; it draws each measure on its own local scale,
-then visibly converges the two factor paths into the outcome. The local signal
+then visibly converges the two paths into the outcome. The labels should name
+the measures directly; generic role captions such as “Factor 1,” “Factor 2,”
+and “Outcome” add no information and are not rendered. The local signal
 lengths are not comparable across measures, and the connector width is fixed.
+All three quantities must be distinct, and `relationship.formula` must state a
+mechanism supported by the source. Two observations of the same measure are not
+a causal relationship.
 Use `identity` only when the quantities, scope, and period reconcile
 arithmetically. Use `directional` with a note when the evidence supports the
 mechanism or direction but not an exact equation. Split more diffuse mixed

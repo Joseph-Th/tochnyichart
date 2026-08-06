@@ -193,10 +193,20 @@ reported or retrievable, the least-normalized primary representation is a
   "selectedMode": "level",
   "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
+  "basisTarget": "Nominal GDP and the corresponding sector-value range.",
   "rationale": "The reported share and economy total allow the sector amount to be derived and plotted in currency.",
   "basisRationale": "The source and named official dataset provide the turnover numerator and economy denominator."
 }
 ```
+
+Treat the denominator of a named public aggregate as retrievable. A claim such
+as `8–10% of the economy`, `35% of exports`, or `12% of national production`
+must trigger a lookup of the compatible GDP, export, production, population,
+employment, import, or capacity total. Record that target in `basisTarget`,
+derive the tangible numerator or numerator range, and use level geometry. Do
+not mark the basis unavailable merely because the source uses a broad sector
+label; preserve the perimeter qualification while anchoring the magnitude. A
+100% line or a bar from 0% to 10% is not a denominator in tangible terms.
 
 Use `basisAvailability: "not-applicable"` only for a native quoted rate whose
 numerator and denominator would not be a meaningful tangible decomposition,
@@ -281,6 +291,22 @@ For workforce reductions, one of the structured checks must be the company
 filing or official employee disclosure for the relevant reporting perimeter.
 For consumption or demand coverage, include an official or industry dataset
 capable of supplying the denominator.
+
+When the same input passage reports two or more shipment, reserve, import, or
+supply volumes, do not combine them before the evidence audit and do not reduce
+the story to `1–3 days`. Record `visualEvidenceAudit.coverageAudit` with:
+
+- `denominatorLabel`: the plotted demand or consumption total.
+- `sourceEvidence`: one entry for every physical-volume phrase in the input.
+- `disposition`: `component`, `denominator`, or `excluded`.
+- `label`: the matching `comparableObservations` and ChartSpec label for each
+  component or denominator.
+- `reason`: a specific scope, direction, period, or product reason for every
+  excluded volume.
+
+Every retained component and the denominator must remain primary ChartSpec
+data in one tangible unit. Coverage time may appear in the title, subtitle, or
+annotation only after the viewer can see why the result is small.
 
 If the normalized claim and a tangible base allow an absolute value to be
 derived, the derived value is the primary geometry. For example, an 8–10%
@@ -406,6 +432,10 @@ Examples:
   common observation date is known, because the calendar runway is the point.
 - Shipment volumes described as one to three days of consumption must show a
   daily-consumption reference or be converted into coverage time.
+- When the source provides three or more named observations of one quantity in
+  one unit, inventory every one in `visualEvidenceAudit` and keep every one in
+  primary geometry. Do not replace multiple shipment components, categories,
+  facilities, or time points with one aggregate or one derived coverage range.
 - Fewer purchases, higher prices, and higher spending jointly define one
   mixed-unit claim. Use `relationship.converging-signals` rather than plotting
   purchase declines and leaving price and spending changes in supporting facts.
@@ -429,7 +459,11 @@ Examples:
   consequence. Without those, enrich it further or omit it.
 - A story with unlike units may use one primary visual plus the unboxed
   `supportingFacts` rail for secondary context. When exactly two drivers and one
-  outcome are all essential, use `relationship.converging-signals`. Each factor
+  outcome are all essential, use `relationship.converging-signals`. The three
+  items must measure three distinct real-world quantities, and
+  `relationship.formula` must state the source-supported mechanism. Two price
+  points, two volume observations, or the same measure at different dates are
+  not causal factors; use change, scenarios, dumbbell, or trend geometry. Each factor
   and the outcome must be drawn as an independent local quantitative signal,
   with the two factor paths visibly converging at one operator. Connector width
   is fixed and never represents magnitude. Use identity mode only for exact
@@ -460,11 +494,17 @@ Before authoring the `ChartSpec`, confirm:
 - Any linked source used for supplementation matches the story.
 - The full source has been read.
 - All directly relevant evidence has been extracted.
+- `visualEvidenceAudit` inventories every materially relevant same-scale
+  observation; when three or more exist, every one appears in ChartSpec
+  `data[]` under its recorded label or `specLabel`.
 - Derived values are traceable and period-compatible.
 - Actual-level availability has been checked before choosing a percentage representation.
 - For a rate or share, basis availability has been checked and documented; a reported or retrievable basis has been converted to level geometry.
 - Any `unavailable` or `incomparable` normalized representation names its `tangibleTarget` and has at least two completed, source-specific research attempts covering two source types, including a data-bearing source.
 - The source-ledger `representationAudit` matches `measure.valueMode` and `measure.levelAvailability`.
+- `relationship.converging-signals`, when used, contains two genuine drivers
+  and a different outcome, all with distinct quantities and an explicit
+  mechanism formula; it is not a disguised time series or paired-price chart.
 - A raw rate/share is used only when its tangible basis is unavailable, incomparable, or genuinely not applicable; otherwise the chart uses level geometry.
 - Relative-change geometry is used only when actual levels are unavailable or incomparable.
 - Index geometry is used only for a named, source-reported index with actual point values; synthetic 100-based baselines and viewer-facing `index` labels are absent.

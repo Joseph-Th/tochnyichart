@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 'use strict';
 
+const fs = require('node:fs');
 const path = require('node:path');
 const {
   initializeRunWorkspace,
   flushRunWorkspace,
-  resetTransientWorkspace
+  resetTransientWorkspace,
+  deliveryPath
 } = require('../renderer/run-workspace');
 const { validateSourceLedger } = require('../renderer/source-fidelity');
+const { validatePresentationFile } = require('../renderer/presentation-file');
 
 function usage() {
   return [
@@ -20,7 +23,7 @@ function usage() {
     '',
     'The command never deletes specs/runs/<run-id>/ or charts/<run-id>/.',
     'Those local production paths are ignored by Git.',
-    'Finalize verifies source fidelity and ChartSpec coverage before cleanup.',
+    'Finalize verifies source fidelity, ChartSpec coverage, and any generated PowerPoint against presentation-plan.json before cleanup.',
     'Flush and finalize always preserve input.txt.',
     'Use --input only with reset to truncate input.txt.',
     'Use --legacy to remove the old previews/ tree during migration.'
@@ -66,8 +69,16 @@ function main() {
   } else if (options.command === 'finalize') {
     if (!options.runId) throw new Error('finalize requires a run id.');
     const fidelity = validateSourceLedger(projectRoot, options.runId, { requireSpecs: true });
+    const outputRoot = deliveryPath(projectRoot, options.runId);
+    const planPath = path.join(outputRoot, 'presentation-plan.json');
+    let presentation = null;
+    if (fs.existsSync(planPath)) {
+      const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+      const pptxPath = path.join(outputRoot, `tochnyi-charts-${options.runId}.pptx`);
+      presentation = validatePresentationFile(pptxPath, plan);
+    }
     const cleanup = flushRunWorkspace(projectRoot, options.runId, options);
-    result = { fidelity, cleanup };
+    result = { fidelity, presentation, cleanup };
   } else if (options.command === 'reset') {
     result = resetTransientWorkspace(projectRoot, {
       clearInput: options.clearInput,

@@ -106,7 +106,7 @@
     "relationship": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode", "operator"],
+      "required": ["mode", "operator", "formula"],
       "properties": {
         "mode": { "type": "string", "enum": ["identity", "directional"] },
         "operator": { "type": "string", "enum": ["multiply", "combine"] },

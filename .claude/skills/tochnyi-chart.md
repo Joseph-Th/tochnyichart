@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.7.0
+version: 4.8.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -26,15 +26,20 @@ The agent must:
 1. Run `npm run run:init -- <run-id>`.
 2. Read the complete `input.txt`.
 3. Separate it into distinct stories and merge duplicates.
-4. Preserve each expert claim and enrich it with reputable sources.
-5. Audit whether actual levels are reported or retrievable and record the selected value representation.
-6. Decide which production tool and chart workflow each story requires.
-7. Produce, validate, render, and diagnose each accepted chart.
-8. Capture one final PNG for every accepted chart.
-9. Assemble the final PNGs into one PowerPoint presentation.
-10. Save local production specs in `specs/runs/<run-id>/` and delivery artifacts
+4. Inventory every materially relevant same-scale observation in each selected
+   candidate's `visualEvidenceAudit`.
+5. Preserve each expert claim and enrich it with reputable sources.
+6. Audit whether actual levels are reported or retrievable and record the selected value representation.
+7. Decide which production tool and chart workflow each story requires.
+8. Produce, validate, render, and diagnose each accepted chart.
+9. Capture one final PNG for every accepted chart.
+10. Assemble the final PNGs into one PowerPoint presentation by following
+   `presentation-plan.json` exactly. The default deck has one chart per slide
+   and no cover, title, agenda, divider, closing, or other non-chart slide unless
+   the user explicitly requested one.
+11. Save local production specs in `specs/runs/<run-id>/` and delivery artifacts
    in `charts/<run-id>/`.
-11. Run `npm run run:finalize -- <run-id>` after delivery.
+12. Run `npm run run:finalize -- <run-id>` after delivery.
 
 The canonical deck filename is `tochnyi-charts-<run-id>.pptx`. Production
 specifications and chart outputs are local artifacts ignored by Git. The chart
@@ -130,6 +135,7 @@ every accepted story:
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
 - Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
 - For every rate or share, separately record `basisAvailability` and `basisRationale`. When numerator/denominator or population/affected amounts are reported or retrievable, select `level` and plot those tangible amounts; the normalized rate remains secondary copy. The total population or denominator must appear on the primary scale as a point, reference, benchmark, or complete composition. A ChartSpec `basis` rail alone is not sufficient.
+- For shares of named public aggregates such as GDP, the economy, population, employment, exports, imports, production, or capacity, treat the denominator as retrievable. Record `basisTarget`, recover the compatible public total, derive the tangible numerator or range, and use level geometry. A 100% reference line is not a tangible anchor.
 - Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two completed, source-specific `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. Pending language and generic locators such as `website`, `search`, `dataset`, or `report` are invalid. The checks must span two source types and include a data-bearing source.
 - Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods. Workforce research must include the company filing or official employee disclosure for the relevant reporting perimeter.
 - Prefer reported or retrievable actual levels for primary geometry. Use percentage change as annotation, emphasis, subtitle, or supporting context.
@@ -140,13 +146,22 @@ every accepted story:
 - Risk and exit-outlook charts require a population or denominator shown on the plotted scale plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
 - Use `comparison.pictogram` for two to four exact integer counts from 0 to 400 when one symbol per unit is clearer than an axis; do not use logarithmic bars solely to fit an extreme count ratio.
 - Use every comparable datapoint that materially proves the title. Three or more ordered observations establishing slowdown, acceleration, reversal, or persistence require `trend.line`; do not leave the historical series in `supportingFacts`.
+- Record every materially relevant same-scale observation in
+  `visualEvidenceAudit.comparableObservations`. When three or more exist, keep
+  every one as a primary `data[]` item. Do not replace named shipment
+  components, categories, facilities, peers, or time points with one aggregate,
+  one range, one total, or one headline value.
 - Use `timeline.duration` whenever duration or reserve runway is the comparison. Supply exact start/end dates, or a verified common `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
-- When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, convert them to coverage time or add a visible consumption benchmark on the same scale.
+- When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and plot all retained components plus total need in one tangible unit. Days of coverage may remain secondary context only.
 - Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; never add a row that only repeats the benchmark or implied remainder.
-- Use `relationship.converging-signals` when exactly two drivers and one outcome
-  are essential but use unlike quantities or units. Each factor and the outcome
-  must render as an independent local quantitative signal, with both factor
-  paths visibly converging at one operator. Connector width is fixed and never
+- Use `relationship.converging-signals` only when exactly two source-supported
+  causal drivers and one different outcome measure three distinct real-world
+  quantities. `relationship.formula` must state the mechanism. Repeated prices,
+  repeated volumes, or one measure at different dates require change,
+  scenarios, dumbbell, or trend geometry. Each measure renders as an independent
+  local quantitative signal, with both driver paths visibly converging at one
+  operator. The renderer names the measures directly and does not add generic
+  Factor 1, Factor 2, or Outcome captions. Connector width is fixed and never
   represents magnitude. Use `identity` only for a same-scope, same-period
   equation; use `directional` with a note when the evidence supports the
   direction but does not reconcile exactly.

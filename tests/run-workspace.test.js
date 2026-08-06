@@ -12,6 +12,10 @@ const {
   resetTransientWorkspace
 } = require('../renderer/run-workspace');
 const { buildRunCharts } = require('../renderer/run-charts');
+const {
+  zipEntryNamesFromBuffer,
+  validatePresentationFile
+} = require('../renderer/presentation-file');
 
 const RUN_ID = 'client-alpha.issue-7';
 
@@ -21,6 +25,23 @@ function temporaryProject() {
   fs.writeFileSync(path.join(root, 'specs', 'examples', 'fixture.json'), '{}\n');
   fs.writeFileSync(path.join(root, 'input.txt'), 'temporary batch source\n');
   return root;
+}
+
+function fakePowerPointArchive(entryNames) {
+  const centralDirectory = Buffer.concat(entryNames.map((entryName) => {
+    const name = Buffer.from(entryName, 'utf8');
+    const header = Buffer.alloc(46);
+    header.writeUInt32LE(0x02014b50, 0);
+    header.writeUInt16LE(name.length, 28);
+    return Buffer.concat([header, name]);
+  }));
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(entryNames.length, 8);
+  end.writeUInt16LE(entryNames.length, 10);
+  end.writeUInt32LE(centralDirectory.length, 12);
+  end.writeUInt32LE(0, 16);
+  return Buffer.concat([centralDirectory, end]);
 }
 
 test('run workspace initialization centralizes transient data and creates ignored local outputs', () => {
@@ -145,7 +166,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
   try {
     const workspace = initializeRunWorkspace(root, runId);
     const ledger = {
-      version: '1.3',
+      version: '1.4',
       runId,
       input: { path: 'input.txt', bytes: 0, sha256: 'stub' },
       inventoryComplete: true,
@@ -205,6 +226,13 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.equal(qa.artifacts.pngCharts, 2);
     assert.equal(qa.visualQa.diagnosticErrors, 0);
     assert.equal(qa.presentation.requiredNext, true);
+    assert.equal(qa.presentation.titleSlidesAllowed, false);
+    assert.equal(qa.presentation.expectedSlideCount, 2);
+    const presentationPlan = JSON.parse(fs.readFileSync(result.presentationPlanPath, 'utf8'));
+    assert.equal(presentationPlan.titleSlidesAllowed, false);
+    assert.equal(presentationPlan.expectedSlideCount, 2);
+    assert.deepEqual(presentationPlan.slides.map((slide) => slide.kind), ['chart', 'chart']);
+    assert.deepEqual(presentationPlan.slides.map((slide) => slide.slug), ['first-story', 'regional-story']);
     assert.deepEqual(qa.charts.map((chart) => chart.slug), ['first-story', 'regional-story']);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'first-story.png')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'regional-story.png')), true);
@@ -244,6 +272,42 @@ test('run chart builder preserves the previous delivery when staged capture fail
     assert.equal(
       fs.readdirSync(path.join(root, 'charts')).some((name) => name.startsWith(`${runId}.building-`)),
       false
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('presentation validation rejects unrequested extra slides', () => {
+  const root = temporaryProject();
+  try {
+    const pptxPath = path.join(root, 'deck.pptx');
+    const archive = fakePowerPointArchive([
+      '[Content_Types].xml',
+      'ppt/presentation.xml',
+      'ppt/slides/slide1.xml',
+      'ppt/slides/slide2.xml'
+    ]);
+    fs.writeFileSync(pptxPath, archive);
+    assert.deepEqual(zipEntryNamesFromBuffer(archive), [
+      '[Content_Types].xml',
+      'ppt/presentation.xml',
+      'ppt/slides/slide1.xml',
+      'ppt/slides/slide2.xml'
+    ]);
+
+    const valid = validatePresentationFile(pptxPath, {
+      titleSlidesAllowed: false,
+      expectedSlideCount: 2
+    });
+    assert.equal(valid.actualSlideCount, 2);
+
+    assert.throws(
+      () => validatePresentationFile(pptxPath, {
+        titleSlidesAllowed: false,
+        expectedSlideCount: 1
+      }),
+      /slide count is 2|remove unrequested cover/i
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

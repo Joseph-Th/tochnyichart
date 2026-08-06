@@ -29,6 +29,13 @@ const DATA_BEARING_SOURCE_TYPES = new Set([
 ]);
 const PENDING_RESEARCH_TEXT = /\b(?:to be checked|to check|pending|not yet checked|not yet reviewed|will check|needs? checking|needs? review|follow up|tbd|todo|unknown source|generic search)\b/i;
 const GENERIC_RESEARCH_LOCATOR = /^(?:homepage|website|search|web search|database|dataset|report|article|filing|statistics|table)$/i;
+const PUBLIC_AGGREGATE_SHARE_PATTERN = /(?:\b(?:share|accounts? for|represents?|makes? up)\b[^.]{0,60}\b(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:\d+(?:[.,]\d+)?\s*%|\d+(?:[.,]\d+)?\s*percent|one[- ](?:tenth|fifth|quarter|third|half))\s+(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\s+(?:share|percentage)\b)/i;
+const COVERAGE_TEXT = /\b(?:coverage|covers? only|days? of (?:consumption|demand|need)|share of need|monthly (?:consumption|demand|need)|daily consumption|shortage response|replacement suppl(?:y|ies))\b/i;
+const VOLUME_NUMBER = String.raw`\d+(?:[\s,]\d{3})*(?:[.,]\d+)?`;
+const PHYSICAL_VOLUME_PATTERN = new RegExp(
+  String.raw`\b${VOLUME_NUMBER}(?:\s*(?:-|–|—|to)\s*${VOLUME_NUMBER})?\s*(?:thousand|million|billion)?\s*(?:metric\s+)?(?:tons?|tonnes?|barrels?|liters?|litres?|gallons?|cubic\s+meters?|cubic\s+metres?|m3|m³)\b`,
+  'gi'
+);
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -86,6 +93,37 @@ function normalizedSeriesLabel(value) {
     .trim();
 }
 
+function candidateNarrative(candidate) {
+  return [
+    candidate?.claim,
+    candidate?.title,
+    candidate?.titleBasis,
+    ...(candidate?.anchors || []),
+    ...(candidate?.evidence || []).map((item) => item?.statement)
+  ].filter(isText).join(' ');
+}
+
+function isPublicAggregateShareCandidate(candidate) {
+  return PUBLIC_AGGREGATE_SHARE_PATTERN.test([candidate?.claim, candidate?.title].filter(isText).join(' '));
+}
+
+function isCoverageCandidate(candidate) {
+  return COVERAGE_TEXT.test(candidateNarrative(candidate));
+}
+
+function physicalVolumePhrases(candidate) {
+  const phrases = [];
+  for (const anchor of candidate?.anchors || []) {
+    if (!isText(anchor)) continue;
+    const matches = String(anchor).matchAll(new RegExp(PHYSICAL_VOLUME_PATTERN.source, PHYSICAL_VOLUME_PATTERN.flags));
+    for (const match of matches) {
+      const phrase = match[0].trim();
+      if (phrase && !phrases.includes(phrase)) phrases.push(phrase);
+    }
+  }
+  return phrases;
+}
+
 function sameSeriesSkeleton(first, second) {
   if (!first || !second || first.recipe !== second.recipe) return false;
   const firstLabels = Array.isArray(first.data)
@@ -127,6 +165,38 @@ function validateRepresentationAudit(candidate, prefix, errors) {
   }
   if (!isText(audit.rationale) || audit.rationale.length > 240) {
     errors.push(`${prefix}.representationAudit.rationale must be a non-empty string of 240 characters or fewer.`);
+  }
+  if (isPublicAggregateShareCandidate(candidate)) {
+    if (!LEVEL_AVAILABILITY.has(audit.basisAvailability)) {
+      errors.push(
+        `${prefix}.representationAudit.basisAvailability is required for a share of a named public aggregate such as GDP, population, exports, production, capacity, demand, or consumption.`
+      );
+    } else if (!['reported', 'retrievable'].includes(audit.basisAvailability)) {
+      errors.push(
+        `${prefix}.representationAudit cannot mark the public aggregate denominator ${audit.basisAvailability}. ` +
+        'Research the named total, derive the tangible numerator range, and select level geometry; otherwise omit the story.'
+      );
+    }
+    if (!isText(audit.basisRationale) || audit.basisRationale.length > 240) {
+      errors.push(`${prefix}.representationAudit.basisRationale must explain the public aggregate denominator in 240 characters or fewer.`);
+    }
+    if (!isText(audit.basisTarget) || audit.basisTarget.length > 240) {
+      errors.push(
+        `${prefix}.representationAudit.basisTarget must name the exact public total and tangible numerator to recover, such as nominal GDP and the derived sector-value range.`
+      );
+    }
+    if (audit.selectedMode !== 'level' || !['reported', 'retrievable'].includes(audit.levelAvailability)) {
+      errors.push(
+        `${prefix}.representationAudit must select reported or retrievable level geometry for a share of a named public aggregate. ` +
+        'A raw percentage of an economy, population, export total, production total, capacity, demand, or consumption is not a sufficient chart.'
+      );
+    }
+    const observations = candidate?.visualEvidenceAudit?.comparableObservations;
+    if (!Array.isArray(observations) || observations.length < 2) {
+      errors.push(
+        `${prefix}.visualEvidenceAudit must inventory both the tangible numerator or range and the named public aggregate total.`
+      );
+    }
   }
   if (['rate', 'share'].includes(audit.selectedMode)) {
     if (!LEVEL_AVAILABILITY.has(audit.basisAvailability)) {
@@ -231,6 +301,248 @@ function validateRepresentationAudit(candidate, prefix, errors) {
   }
 }
 
+function validateVisualEvidenceAudit(candidate, prefix, errors) {
+  const audit = candidate.visualEvidenceAudit;
+  if (!audit || typeof audit !== 'object' || Array.isArray(audit)) {
+    errors.push(`${prefix}.visualEvidenceAudit is required for a selected story.`);
+    return;
+  }
+  if (!isText(audit.rationale) || audit.rationale.length > 240) {
+    errors.push(`${prefix}.visualEvidenceAudit.rationale must be a non-empty string of 240 characters or fewer.`);
+  }
+  if (!Array.isArray(audit.comparableObservations) || audit.comparableObservations.length === 0) {
+    errors.push(`${prefix}.visualEvidenceAudit.comparableObservations must inventory at least one same-scale observation available for the central claim.`);
+    return;
+  }
+  if (audit.comparableObservations.length > 12) {
+    errors.push(`${prefix}.visualEvidenceAudit.comparableObservations may contain at most 12 observations.`);
+  }
+  const labels = new Set();
+  audit.comparableObservations.forEach((observation, index) => {
+    const observationPrefix = `${prefix}.visualEvidenceAudit.comparableObservations[${index}]`;
+    if (!observation || typeof observation !== 'object' || Array.isArray(observation)) {
+      errors.push(`${observationPrefix} must be an object.`);
+      return;
+    }
+    for (const field of ['label', 'quantity', 'unit', 'period']) {
+      if (!isText(observation[field])) errors.push(`${observationPrefix}.${field} is required.`);
+    }
+    const hasValue = typeof observation.value === 'number' && Number.isFinite(observation.value);
+    const hasRange = typeof observation.low === 'number' && Number.isFinite(observation.low) &&
+      typeof observation.high === 'number' && Number.isFinite(observation.high);
+    if (!hasValue && !hasRange) {
+      errors.push(`${observationPrefix} requires value or both low and high.`);
+    }
+    if (hasRange && observation.low > observation.high) {
+      errors.push(`${observationPrefix}.low must not exceed high.`);
+    }
+    if (observation.specLabel !== undefined && !isText(observation.specLabel)) {
+      errors.push(`${observationPrefix}.specLabel must be a non-empty string when provided.`);
+    }
+    const label = normalizedSeriesLabel(observation.specLabel || observation.label);
+    if (label && labels.has(label)) errors.push(`${observationPrefix} duplicates another comparable observation label.`);
+    if (label) labels.add(label);
+  });
+
+  const volumePhrases = physicalVolumePhrases(candidate);
+  if (!isCoverageCandidate(candidate) || volumePhrases.length < 2) return;
+  const coverageAudit = audit.coverageAudit;
+  if (!coverageAudit || typeof coverageAudit !== 'object' || Array.isArray(coverageAudit)) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.coverageAudit is required when a coverage story contains multiple physical-volume figures. ` +
+      'Inventory each supply component, the demand denominator, and every excluded volume explicitly.'
+    );
+    return;
+  }
+  if (!isText(coverageAudit.rationale) || coverageAudit.rationale.length > 240) {
+    errors.push(`${prefix}.visualEvidenceAudit.coverageAudit.rationale must explain the supply-versus-demand structure in 240 characters or fewer.`);
+  }
+  if (!isText(coverageAudit.denominatorLabel)) {
+    errors.push(`${prefix}.visualEvidenceAudit.coverageAudit.denominatorLabel is required.`);
+  } else if (!labels.has(normalizedSeriesLabel(coverageAudit.denominatorLabel))) {
+    errors.push(`${prefix}.visualEvidenceAudit.coverageAudit.denominatorLabel must match a comparableObservations label or specLabel.`);
+  }
+  if (!Array.isArray(coverageAudit.sourceEvidence) || coverageAudit.sourceEvidence.length === 0) {
+    errors.push(`${prefix}.visualEvidenceAudit.coverageAudit.sourceEvidence must disposition every physical-volume phrase in the input anchor.`);
+    return;
+  }
+  const candidateAnchors = (candidate.anchors || []).filter(isText);
+  const componentLabels = new Set();
+  const phraseDispositionCounts = new Map(volumePhrases.map((phrase) => [phrase, 0]));
+  coverageAudit.sourceEvidence.forEach((entry, index) => {
+    const entryPrefix = `${prefix}.visualEvidenceAudit.coverageAudit.sourceEvidence[${index}]`;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      errors.push(`${entryPrefix} must be an object.`);
+      return;
+    }
+    if (!isText(entry.anchor) || !candidateAnchors.some((anchor) => anchor.includes(entry.anchor.trim()))) {
+      errors.push(`${entryPrefix}.anchor must be an exact excerpt from one of the candidate anchors.`);
+    }
+    if (!['component', 'denominator', 'excluded'].includes(entry.disposition)) {
+      errors.push(`${entryPrefix}.disposition must be component, denominator, or excluded.`);
+    }
+    if (entry.disposition === 'component') {
+      if (!isText(entry.label)) errors.push(`${entryPrefix}.label is required for a component.`);
+      else {
+        const label = normalizedSeriesLabel(entry.label);
+        componentLabels.add(label);
+        if (!labels.has(label)) errors.push(`${entryPrefix}.label must match a comparableObservations label or specLabel.`);
+      }
+    }
+    if (entry.disposition === 'denominator' && normalizedSeriesLabel(entry.label) !== normalizedSeriesLabel(coverageAudit.denominatorLabel)) {
+      errors.push(`${entryPrefix}.label must match coverageAudit.denominatorLabel for denominator evidence.`);
+    }
+    if (entry.disposition === 'excluded' && (!isText(entry.reason) || entry.reason.length > 240)) {
+      errors.push(`${entryPrefix}.reason must specifically explain why the volume is outside the supply-versus-demand comparison.`);
+    }
+    if (isText(entry.anchor)) {
+      const matchedPhrases = volumePhrases.filter((phrase) => entry.anchor.includes(phrase));
+      if (matchedPhrases.length !== 1) {
+        errors.push(
+          `${entryPrefix}.anchor must identify exactly one physical-volume phrase; it currently matches ${matchedPhrases.length}. ` +
+          'Use one sourceEvidence entry per reported volume.'
+        );
+      }
+      matchedPhrases.forEach((phrase) => phraseDispositionCounts.set(phrase, (phraseDispositionCounts.get(phrase) || 0) + 1));
+    }
+  });
+  const uncovered = volumePhrases.filter((phrase) => phraseDispositionCounts.get(phrase) === 0);
+  const duplicated = volumePhrases.filter((phrase) => phraseDispositionCounts.get(phrase) > 1);
+  if (uncovered.length) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.coverageAudit leaves physical-volume evidence undispositioned: ${uncovered.join(', ')}. ` +
+      'Plot it as a component or denominator, or exclude it with a specific scope or direction reason.'
+    );
+  }
+  if (duplicated.length) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.coverageAudit dispositions the same physical-volume evidence more than once: ${duplicated.join(', ')}. ` +
+      'Each reported volume must have exactly one disposition.'
+    );
+  }
+  if (componentLabels.size < 2) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.coverageAudit must retain at least two named supply components when multiple volume figures explain the coverage result. ` +
+      'Do not replace them with one combined shipment range or a days-of-coverage headline.'
+    );
+  }
+}
+
+function validateVisualEvidenceCoverage(candidate, spec, errors) {
+  const observations = candidate?.visualEvidenceAudit?.comparableObservations;
+  if (!Array.isArray(observations) || observations.length < 3) return;
+  const data = Array.isArray(spec?.data) ? spec.data : [];
+  const plottedLabels = new Set(data.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const missing = observations
+    .filter((observation) => !plottedLabels.has(normalizedSeriesLabel(observation?.specLabel || observation?.label)))
+    .map((observation) => observation?.specLabel || observation?.label)
+    .filter(Boolean);
+  const mismatched = observations.filter((observation) => {
+    const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
+    const item = data.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
+    if (!item) return false;
+    if (typeof observation.value === 'number' && Number.isFinite(observation.value)) {
+      return typeof item.value !== 'number' || !Number.isFinite(item.value) ||
+        Math.abs(item.value - observation.value) > 1e-9;
+    }
+    return typeof item.low !== 'number' || typeof item.high !== 'number' ||
+      Math.abs(item.low - observation.low) > 1e-9 || Math.abs(item.high - observation.high) > 1e-9;
+  }).map((observation) => observation?.specLabel || observation?.label).filter(Boolean);
+  if (data.length < observations.length || missing.length || mismatched.length) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} collapses a richer same-scale dataset. ` +
+      `The source ledger inventories ${observations.length} comparable observations, so all must remain primary data items. ` +
+      `${missing.length ? `Missing plotted labels: ${missing.join(', ')}. ` : ''}` +
+      `${mismatched.length ? `Changed plotted values or ranges: ${mismatched.join(', ')}. ` : ''}` +
+      'Do not replace named components or time points with one aggregate, one range, or one headline value.'
+    );
+  }
+}
+
+function validateRelationshipEvidence(candidate, spec, errors) {
+  if (spec?.recipe !== 'relationship.converging-signals') return;
+  const hasMechanismEvidence = Array.isArray(candidate?.evidence) &&
+    candidate.evidence.some((item) => item?.role === 'mechanism');
+  if (!hasMechanismEvidence) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} uses relationship.converging-signals without source-ledger mechanism evidence. ` +
+      'Record an input, external, or derived evidence item with role mechanism that supports relationship.formula, or use comparison geometry instead.'
+    );
+  }
+}
+
+function validatePublicAggregateBasisEvidence(candidate, prefix, errors) {
+  if (!isPublicAggregateShareCandidate(candidate)) return;
+  const hasDenominatorEvidence = Array.isArray(candidate?.evidence) &&
+    candidate.evidence.some((item) => item?.role === 'denominator' && ['external', 'derived', 'input'].includes(item?.origin));
+  if (!hasDenominatorEvidence) {
+    errors.push(
+      `${prefix}.evidence must include a denominator item for the named public aggregate. ` +
+      'Record the GDP, population, export total, production total, capacity, demand, consumption, or other public total used to derive the tangible numerator.'
+    );
+  }
+}
+
+function isCompleteTangibleComposition(spec) {
+  if (!['composition.stacked', 'composition.donut'].includes(spec?.recipe)) return false;
+  if (spec?.measure?.valueMode !== 'level') return false;
+  if (/%|percent|percentage/i.test(String(spec?.measure?.unit || ''))) return false;
+  const values = (spec?.data || []).map((item) => item?.value);
+  return values.length >= 2 && values.every((value) => typeof value === 'number' && Number.isFinite(value) && value >= 0);
+}
+
+function validatePublicAggregateSpecCoverage(candidate, spec, errors) {
+  if (!isPublicAggregateShareCandidate(candidate)) return;
+  if (!spec?.basis && !isCompleteTangibleComposition(spec)) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} must include a tangible basis or a complete level composition for the public aggregate share. ` +
+      'Plot the derived numerator and the named total; a percentage range plus a 100% reference is not an anchor.'
+    );
+    return;
+  }
+  if (spec?.basis) {
+    const plottedLabels = new Set((spec?.data || []).map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+    const basisItems = Array.isArray(spec.basis.items) ? spec.basis.items : [];
+    const numerator = basisItems.find((item) => ['numerator', 'affected', 'base', 'derived'].includes(item?.role));
+    const denominator = basisItems.find((item) => ['denominator', 'population'].includes(item?.role));
+    const missing = [numerator, denominator]
+      .filter((item) => item && !plottedLabels.has(normalizedSeriesLabel(item.label)))
+      .map((item) => item.label || item.role);
+    if (missing.length) {
+      errors.push(
+        `ChartSpec ${candidate.outputSlug} keeps public-aggregate basis values outside primary geometry. ` +
+        `Missing plotted basis labels: ${missing.join(', ')}.`
+      );
+    }
+  }
+}
+
+function validateCoverageSpecCoverage(candidate, spec, errors) {
+  const coverageAudit = candidate?.visualEvidenceAudit?.coverageAudit;
+  if (!coverageAudit || !Array.isArray(coverageAudit.sourceEvidence)) return;
+  const componentLabels = coverageAudit.sourceEvidence
+    .filter((entry) => entry?.disposition === 'component' && isText(entry.label))
+    .map((entry) => entry.label);
+  const plottedLabels = new Set((spec?.data || []).map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const missingComponents = componentLabels.filter((label) => !plottedLabels.has(normalizedSeriesLabel(label)));
+  const denominatorMissing = !plottedLabels.has(normalizedSeriesLabel(coverageAudit.denominatorLabel));
+  if (missingComponents.length || denominatorMissing) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} does not show the full supply-versus-demand decomposition. ` +
+      `${missingComponents.length ? `Missing supply components: ${missingComponents.join(', ')}. ` : ''}` +
+      `${denominatorMissing ? `Missing demand denominator: ${coverageAudit.denominatorLabel}. ` : ''}` +
+      'Plot every retained component and the total need in primary geometry.'
+    );
+  }
+  const unit = String(spec?.measure?.unit || '').toLowerCase();
+  if (componentLabels.length >= 2 && /\b(?:day|days|week|weeks|month|months)\b/.test(unit)) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} converts a multi-component supply story into time-only geometry. ` +
+      'Keep the shipment or reserve components and the demand denominator in the same tangible volume unit; days of coverage may remain secondary context.'
+    );
+  }
+}
+
 function validateSourceLedger(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const snapshot = readInputSnapshot(projectRoot);
@@ -238,7 +550,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
-  if (ledger.version !== '1.3') errors.push('Source ledger version must be 1.3.');
+  if (ledger.version !== '1.4') errors.push('Source ledger version must be 1.4.');
   if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
   if (!ledger.input || ledger.input.path !== 'input.txt') errors.push('Source ledger must identify the project-root input.txt.');
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
@@ -333,6 +645,8 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
         errors.push(`${prefix}.titleBasis must be covered by one of the candidate anchors.`);
       }
       validateRepresentationAudit(candidate, prefix, errors);
+      validateVisualEvidenceAudit(candidate, prefix, errors);
+      validatePublicAggregateBasisEvidence(candidate, prefix, errors);
       selected.push(candidate);
     } else if (candidate.decision === 'omitted') {
       if (!isText(candidate.reason)) errors.push(`${prefix}.reason is required for an omitted story.`);
@@ -418,6 +732,10 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
           errors.push(`ChartSpec ${candidate.outputSlug} must expose basis because the ledger records a ${audit.basisAvailability} tangible basis.`);
         }
       }
+      validateVisualEvidenceCoverage(candidate, spec, errors);
+      validateRelationshipEvidence(candidate, spec, errors);
+      validatePublicAggregateSpecCoverage(candidate, spec, errors);
+      validateCoverageSpecCoverage(candidate, spec, errors);
       selectedSpecs.push({ candidate, spec });
     }
 

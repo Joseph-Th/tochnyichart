@@ -14,6 +14,7 @@ initialize .work/<run-id>/
     -> input.txt
     -> fail if the exact project-root input is missing or blank
     -> inventory every quantitative story with exact excerpts
+    -> inventory every materially relevant same-scale observation in visualEvidenceAudit
     -> record selected, omitted, or merged disposition for every candidate
     -> verify .work/<run-id>/source-ledger.json
     -> preserve inventoried claims and enrich without originating new stories
@@ -21,7 +22,7 @@ initialize .work/<run-id>/
     -> decide the appropriate production tool for each story
     -> author the complete selected ChartSpec set
     -> run the chart builder to render, diagnose, capture, and manifest the set
-    -> assemble one PowerPoint presentation
+    -> assemble one PowerPoint presentation from presentation-plan.json, one chart per slide
     -> save retained specs and final artifacts
     -> finalize and purge transient run data
 ```
@@ -31,7 +32,9 @@ downloads, helper scripts, logs, review captures, and package staging under the
 created `.work/<run-id>/` tree. Complete the generated source ledger and run
 `npm run run:verify-source -- <run-id>` before external research. After all
 selected ChartSpecs are authored, run `npm run run:charts -- <run-id>` to
-produce the HTML charts, final PNGs, manifest, and QA report. End with
+produce the HTML charts, final PNGs, manifest, QA report, and
+`presentation-plan.json`. The plan forbids unrequested cover, title, agenda,
+divider, and closing slides. End with
 `npm run run:finalize -- <run-id>`, which preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
 material and legacy previews. It also preserves `input.txt`. Both retained
@@ -229,6 +232,10 @@ Check that:
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence use `trend.line`; those observations cannot be
   reduced to supporting facts around a two-value chart.
+- Three or more materially relevant observations of one quantity and unit must
+  all be recorded in `visualEvidenceAudit` and preserved as primary `data[]`
+  items. Do not collapse named components, categories, or time points into one
+  aggregate, one range, one total, or one headline value.
 - Duration comparisons use `timeline.duration` so calendar overlap and elapsed
   time remain visible. Use exact start/end intervals or one verified
   `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
@@ -245,9 +252,14 @@ Check that:
 - Several categories with one before/benchmark value and one after/actual value
   use `comparison.dumbbell` when the category-level movement is the finding.
 - When two unlike drivers and one outcome are all essential, use
-  `relationship.converging-signals` instead of a common axis. Each factor and
-  the outcome renders as an independent local quantitative signal, and both
-  factor paths visibly converge at one operator. Connector width is fixed and
+  `relationship.converging-signals` instead of a common axis. The two drivers
+  and outcome must measure three distinct real-world quantities, and
+  `relationship.formula` must state the source-supported mechanism. Repeated
+  prices, repeated volumes, or one measure at different dates require change,
+  scenarios, dumbbell, or trend geometry. Each measure renders as an independent
+  local quantitative signal, and both driver paths visibly converge at one
+  operator. Generic Factor 1, Factor 2, and Outcome captions are not rendered.
+  Connector width is fixed and
   never represents magnitude. Identity mode requires an exact same-scope,
   same-period equation; directional mode requires a note when periods or scopes
   differ.
@@ -276,7 +288,8 @@ quantity and scope remain fixed. Generic declarations such as `reported change`
 or `metric` are rejected because they hide unlike measures behind one axis.
 
 When exactly two facts act as drivers of one outcome, and all three are
-essential, `relationship.converging-signals` may keep them in one visual without
+essential, measure distinct quantities, and have an explicit source-supported
+mechanism, `relationship.converging-signals` may keep them in one visual without
 a shared scale. The local signal lengths are meaningful only within each
 measure; the connector geometry communicates convergence, not relative size.
 More diffuse facts with different units, scopes, periods, or operational stages

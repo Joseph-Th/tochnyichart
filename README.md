@@ -25,7 +25,8 @@ input.txt
 
 The LLM agent is the batch orchestrator. It reads the exact project-root file,
 inventories every quantitative story with exact excerpts, records a selected,
-omitted, or merged disposition, verifies that ledger, and only then enriches the
+omitted, or merged disposition, inventories every materially relevant
+same-scale observation in `visualEvidenceAudit`, verifies that ledger, and only then enriches the
 selected input-supported stories. It renders the accepted charts, captures final
 PNG images, assembles those images into a PowerPoint presentation, and saves the
 complete delivery in the run delivery folder.
@@ -61,7 +62,8 @@ npm run run:charts -- <run-id>
 
 This command verifies source/spec coverage, routes standard and regional
 charts correctly, runs responsive browser diagnostics, captures the final PNGs,
-and writes `manifest.csv` plus `qa-report.json` in `charts/<run-id>/`.
+and writes `manifest.csv`, `presentation-plan.json`, and `qa-report.json` in
+`charts/<run-id>/`.
 It publishes through a staged directory, so a failed rebuild leaves the prior
 delivery untouched. A successful chart rebuild removes any prior presentation
 and chart-image archive because those files would contain stale images.
@@ -79,6 +81,7 @@ unless the selected source-ledger slugs and titles exactly match the ChartSpecs.
 ```text
 input.txt
     -> complete anchored source ledger
+    -> complete same-scale observation inventory
     -> verified selected, omitted, or merged decisions
     -> input-supported stories enriched with supplemental context
     -> selected chart or slide treatment
@@ -92,7 +95,9 @@ input.txt
 The chart Tool API produces individual chart artifacts. The run chart builder
 coordinates verified specifications through rendering, diagnostics, PNG
 capture, and QA reporting. PowerPoint assembly belongs to the LLM orchestration
-layer.
+layer, but it must follow `presentation-plan.json`: one slide per accepted chart,
+with no cover, title, agenda, divider, or closing slide unless the user explicitly
+requested one.
 
 The complete batch contract is in
 [`docs/batch-workflow.md`](docs/batch-workflow.md). The ledger format is defined
@@ -163,13 +168,23 @@ Before using any shared-axis comparison, complete this sentence literally:
 validator requires those fields and rejects unlike quantities, scopes, and
 periods. When two drivers and one outcome jointly carry the argument but use
 different quantities, use `relationship.converging-signals` rather than forcing
-them onto one axis. The renderer gives each factor and the outcome an independent
-local quantitative signal, then converges the factor paths at one operator.
+them onto one axis. All three items must measure distinct real-world quantities,
+and `relationship.formula` must state the source-supported mechanism. Repeated
+prices, repeated volumes, or one measure at different dates belong in change,
+scenario, dumbbell, or trend geometry. The renderer gives each measure an
+independent local quantitative signal, then converges the two driver paths at
+one operator. Labels name the measures directly; generic “Factor 1,” “Factor 2,”
+and “Outcome” captions are not rendered.
 Connector width is fixed and never implies comparable magnitude. Reserve
 `relationship.mode: "identity"` for exactly reconciling scope and periods; use
 `directional` with an explicit note when the evidence only supports the direction
 of the relationship. Keep merely secondary mixed-unit context in the unboxed
 `supportingFacts` rail.
+
+When three or more materially relevant observations share one quantity and
+unit, record every one in `visualEvidenceAudit.comparableObservations` and keep
+every one as a primary ChartSpec `data[]` item. Do not compress named components,
+categories, or time points into one aggregate, one range, or one headline value.
 
 A two-item `comparison.scenarios` chart is not automatically sufficient. It
 must add a numeric reference, basis, or source-supported numeric mechanism,
@@ -281,8 +296,11 @@ contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional 
 internals are maintainer-only and documented in `docs/regional-routing.md`.
 
 Final run delivery uses `charts/<run-id>/`. The folder contains the
-rendered HTML files, the final PNG images used in the deck, and
-`tochnyi-charts-<run-id>.pptx`. Temporary review images belong under the
+rendered HTML files, the final PNG images used in the deck, `manifest.csv`,
+`presentation-plan.json`, `qa-report.json`, and
+`tochnyi-charts-<run-id>.pptx`. Finalization reads the PowerPoint slide count
+from the file and rejects a deck that does not contain exactly the chart slides
+listed in the plan. Temporary review images belong under the
 matching `.work/<run-id>/review/` directory and are deleted at finalization.
 
 ## Authoring contract
@@ -326,7 +344,11 @@ and share stories audit `basisAvailability`; reported or retrievable
 numerator/denominator or population/affected amounts become the primary level
 geometry. The percentage remains secondary copy, and a `basis` rail alone is
 not sufficient. The total population or denominator must also be visible as a
-point, reference, benchmark, or complete composition. Before a batch ledger may
+point, reference, benchmark, or complete composition. Shares of named public
+aggregates such as GDP, the economy, population, employment, exports, imports,
+production, or capacity treat that denominator as retrievable: record
+`basisTarget`, recover the compatible total, derive the tangible numerator, and
+use level geometry. A 100% reference is not a tangible anchor. Before a batch ledger may
 classify actual levels or a basis as
 unavailable or incomparable, it must name the exact tangible value sought and
 record at least two completed, source-specific checks spanning two source
@@ -353,7 +375,11 @@ discounts, premiums, shortfalls, or overages where the prior or total benchmark
 can be recovered. Risk ranges must identify the exposed population or
 denominator, show that total on the plotted scale, and include at least one
 mechanism or consequence. Shipment or reserve volumes described as days of
-consumption must show a consumption benchmark or be converted to coverage time.
+consumption must show the demand denominator. When two or more physical-volume
+contributors appear in one story, `visualEvidenceAudit.coverageAudit` must
+disposition every volume and the chart must plot all retained components plus
+the denominator in one tangible unit. Coverage time may remain secondary copy,
+but cannot replace the decomposition.
 
 `subtitle` is optional. Omit it when it repeats the title, category labels,
 percentages, or amounts already printed on the chart. Two-part compositions use

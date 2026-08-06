@@ -84,7 +84,7 @@ function initializeSourceLedger(projectRoot, runId, snapshot) {
   const target = sourceLedgerPath(projectRoot, runId);
   if (!fs.existsSync(target)) {
     fs.writeFileSync(target, `${JSON.stringify({
-      version: '1.3',
+      version: '1.4',
       runId: normalizeRunId(runId),
       input: {
         path: 'input.txt',

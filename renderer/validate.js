@@ -742,6 +742,14 @@ function validateConvergingSignals(spec, data, errors) {
     errors.push('relationship.converging-signals requires exactly two relationshipRole driver items and one outcome item.');
   }
 
+  const quantities = data.map((item) => normalizeEditorialValue(item?.quantity)).filter(Boolean);
+  if (quantities.length === 3 && new Set(quantities).size !== 3) {
+    errors.push(
+      'relationship.converging-signals requires three distinct real-world quantities: two causal drivers and a different outcome. ' +
+      'Repeated prices, repeated volumes, or the same measure at different times are observations for comparison.change, comparison.scenarios, comparison.dumbbell, or trend.line, not factors converging on an outcome.'
+    );
+  }
+
   data.forEach((item, index) => {
     if (!RELATIONSHIP_ROLES.has(item?.relationshipRole)) errors.push(`data[${index}].relationshipRole is required for relationship.converging-signals.`);
     if (!DIRECTIONS.has(item?.direction)) errors.push(`data[${index}].direction is required for relationship.converging-signals.`);
@@ -764,8 +772,8 @@ function validateConvergingSignals(spec, data, errors) {
   if (spec.relationship.mode === 'identity' && spec.relationship.operator !== 'multiply') {
     errors.push('relationship.mode identity requires relationship.operator multiply.');
   }
-  if (spec.relationship.formula !== undefined && (typeof spec.relationship.formula !== 'string' || !spec.relationship.formula.trim())) {
-    errors.push('relationship.formula must be a non-empty string when provided.');
+  if (typeof spec.relationship.formula !== 'string' || !spec.relationship.formula.trim()) {
+    errors.push('relationship.formula is required and must state the source-supported mechanism linking both drivers to the outcome.');
   }
 
   const scopes = new Set(data.map((item) => normalizeEditorialValue(item?.scope)).filter(Boolean));
@@ -1331,6 +1339,9 @@ function validateSupportingFacts(spec, errors, warnings) {
 }
 
 const RISK_TEXT = /\b(?:risk|at risk|likely|likelihood|probability|expected\s+(?:exit|loss|failure|closure|default)|forecast\s+(?:exit|loss|failure|closure|default))\b/i;
+const PUBLIC_AGGREGATE_SHARE_PATTERN = /(?:\b(?:share|accounts? for|represents?|makes? up)\b[^.]{0,60}\b(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:\d+(?:[.,]\d+)?\s*%|\d+(?:[.,]\d+)?\s*percent|one[- ](?:tenth|fifth|quarter|third|half))\s+(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\s+(?:share|percentage)\b)/i;
+const COVERAGE_TEXT = /\b(?:coverage|covers? only|days? of (?:consumption|demand|need)|share of need|monthly (?:consumption|demand|need)|daily consumption|shortage response|replacement suppl(?:y|ies))\b/i;
+const PHYSICAL_VOLUME_TEXT = /\b(?:tons?|tonnes?|barrels?|liters?|litres?|gallons?|cubic\s+meters?|cubic\s+metres?|m3|m³)\b/i;
 
 function numericText(value) {
   return typeof value === 'string' && /\d/.test(value);
@@ -1338,6 +1349,93 @@ function numericText(value) {
 
 function normalizedNumberTokens(value) {
   return (String(value || '').match(/\d+(?:[.,]\d+)*/g) || []).map((token) => token.replace(/,/g, ''));
+}
+
+function publicAggregateShareStory(spec) {
+  const text = [
+    spec.title,
+    spec.subtitle,
+    spec.measure?.quantity,
+    spec.metadata?.keyFinding
+  ].filter(Boolean).join(' ');
+  return PUBLIC_AGGREGATE_SHARE_PATTERN.test(text);
+}
+
+function completeTangibleComposition(spec) {
+  if (!['composition.stacked', 'composition.donut'].includes(spec.recipe)) return false;
+  if (spec.measure?.valueMode !== 'level') return false;
+  if (isPercentUnit(spec.measure || {})) return false;
+  const values = (spec.data || []).map((item) => item?.value);
+  return values.length >= 2 && values.every((value) => typeof value === 'number' && Number.isFinite(value) && value >= 0);
+}
+
+function basisMagnitudeMatches(candidate, basisItem) {
+  if (!candidate || !basisItem) return false;
+  if (typeof basisItem.value === 'number' && Number.isFinite(basisItem.value)) {
+    return typeof candidate.value === 'number' && Number.isFinite(candidate.value) && nearlyEqual(candidate.value, basisItem.value);
+  }
+  return typeof basisItem.low === 'number' && typeof basisItem.high === 'number' &&
+    typeof candidate.low === 'number' && typeof candidate.high === 'number' &&
+    nearlyEqual(candidate.low, basisItem.low) && nearlyEqual(candidate.high, basisItem.high);
+}
+
+function basisItemVisible(spec, basisItem, isTotal = false) {
+  if ((spec.data || []).some((item) => basisMagnitudeMatches(item, basisItem))) return true;
+  if (typeof basisItem.value === 'number' && (spec.references || []).some((reference) => nearlyEqual(reference?.value, basisItem.value))) return true;
+  if (isTotal && typeof basisItem.value === 'number' && (spec.data || []).some((item) => nearlyEqual(item?.benchmark, basisItem.value))) return true;
+  if (isTotal && typeof basisItem.value === 'number' && ['composition.stacked', 'composition.donut'].includes(spec.recipe)) {
+    const total = (spec.data || []).reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0);
+    if (nearlyEqual(total, basisItem.value)) return true;
+  }
+  return false;
+}
+
+function validateBasisPrimaryGeometry(spec, errors) {
+  if (!spec.basis || spec.measure?.valueMode !== 'level') return;
+  const items = spec.basis.items || [];
+  const numeratorRoles = spec.basis.type === 'population' ? ['affected'] : ['numerator', 'base', 'derived'];
+  const denominatorRoles = spec.basis.type === 'population' ? ['population'] : ['denominator'];
+  const numerator = items.find((item) => numeratorRoles.includes(item?.role));
+  const denominator = items.find((item) => denominatorRoles.includes(item?.role));
+  if (numerator && !basisItemVisible(spec, numerator, false)) {
+    errors.push('The tangible numerator or affected amount in basis.items must appear in primary geometry, not only in the basis rail.');
+  }
+  if (denominator && !basisItemVisible(spec, denominator, true)) {
+    errors.push('The tangible denominator, population, or total in basis.items must appear as a plotted value, reference, benchmark, or complete composition.');
+  }
+}
+
+function validatePublicAggregateAnchoring(spec, errors) {
+  if (!publicAggregateShareStory(spec)) return;
+  if (spec.measure?.valueMode !== 'level') {
+    errors.push(
+      'A share of a named public aggregate must use tangible level geometry. Research the GDP, population, export total, production total, capacity, demand, or consumption denominator and derive the numerator value or range.'
+    );
+    return;
+  }
+  if (!spec.basis && !completeTangibleComposition(spec)) {
+    errors.push(
+      'A public-aggregate share requires a tangible basis or a complete level composition. Plot the derived numerator and the named total; a percentage range against 100% is not a meaningful anchor.'
+    );
+  }
+}
+
+function validateCoverageDecomposition(spec, errors) {
+  const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
+  if (!COVERAGE_TEXT.test(text)) return;
+  const hiddenVolumeFacts = (spec.supportingFacts || []).filter((fact) =>
+    PHYSICAL_VOLUME_TEXT.test(`${fact?.value || ''} ${fact?.label || ''}`)
+  );
+  const unit = String(spec.measure?.unit || '').toLowerCase();
+  const timeOnlyGeometry = /\b(?:day|days|week|weeks|month|months)\b/.test(unit);
+  const aggregatedSupplyFact = hiddenVolumeFacts.some((fact) =>
+    /\b(?:combined|total|inbound|imports?|shipments?|suppl(?:y|ies)|volumes?)\b/i.test(`${fact?.value || ''} ${fact?.label || ''}`)
+  );
+  if (timeOnlyGeometry && (hiddenVolumeFacts.length >= 2 || aggregatedSupplyFact)) {
+    errors.push(
+      'The coverage result is being shown only as time while the physical supply volumes are hidden in supporting facts. Plot each supply component and the demand denominator in the same tangible unit; keep days of coverage as secondary context.'
+    );
+  }
 }
 
 function validateSubtitleEconomy(spec, errors) {
@@ -1387,8 +1485,9 @@ function validateCoverageOrientation(spec, errors) {
   const unit = String(spec.measure?.unit || '').toLowerCase();
   const normalizedToTime = /\b(?:day|days|week|weeks|month|months)\b/.test(unit);
   const hasConsumptionReference = (spec.references || []).some((reference) => /\b(?:consumption|demand|need|daily|monthly)\b/i.test(reference?.label || ''));
+  const hasConsumptionData = (spec.data || []).some((item) => /\b(?:consumption|demand|need|daily|monthly)\b/i.test(item?.label || ''));
   const hasBenchmark = (spec.data || []).some((item) => typeof item?.benchmark === 'number');
-  if (!normalizedToTime && !hasConsumptionReference && !hasBenchmark) {
+  if (!normalizedToTime && !hasConsumptionReference && !hasConsumptionData && !hasBenchmark) {
     errors.push('The story is about coverage against consumption, but the primary geometry shows only raw volume. Convert each amount to days of coverage or add a visible consumption benchmark on the same scale.');
   }
 }
@@ -1638,6 +1737,8 @@ function validateSpec(input) {
   validateMeasure(spec, errors, warnings);
   validateBasis(spec, errors, warnings);
   validateValueRepresentation(spec, errors, warnings);
+  validateBasisPrimaryGeometry(spec, errors);
+  validatePublicAggregateAnchoring(spec, errors);
   validateVisual(spec, errors);
   validateReferences(spec, errors, warnings);
   validateEmphasis(spec, errors);
@@ -1646,6 +1747,7 @@ function validateSpec(input) {
   validateTemporalPriority(spec, errors);
   validateTrendEvidenceUse(spec, errors);
   validateCoverageOrientation(spec, errors);
+  validateCoverageDecomposition(spec, errors);
   validateContrastStructure(spec, errors);
   validateRiskContext(spec, errors);
   validatePrimaryMetric(spec, errors, warnings);

@@ -24,7 +24,7 @@ npm run run:verify-source -- <run-id> --specs
 
 ```json
 {
-  "version": "1.3",
+  "version": "1.4",
   "runId": "issue-2026-08-05",
   "input": {
     "path": "input.txt",
@@ -50,6 +50,27 @@ npm run run:verify-source -- <run-id> --specs
         "selectedMode": "level",
         "levelAvailability": "retrievable",
         "rationale": "The underlying market data provides the actual before and after prices."
+      },
+      "visualEvidenceAudit": {
+        "rationale": "All named same-scale observations that materially support the claim remain available for plotting.",
+        "comparableObservations": [
+          {
+            "label": "Before",
+            "specLabel": "Before",
+            "quantity": "daily insurance price",
+            "unit": "percent of goods value per day",
+            "period": "before the increase",
+            "value": 0.0035
+          },
+          {
+            "label": "After",
+            "specLabel": "After",
+            "quantity": "daily insurance price",
+            "unit": "percent of goods value per day",
+            "period": "after the increase",
+            "value": 0.0115
+          }
+        ]
       },
       "anchors": [
         "Exact sentence or passage copied from input.txt"
@@ -118,8 +139,8 @@ npm run run:verify-source -- <run-id> --specs
 Every distinct quantitative input story must appear exactly once.
 
 - `selected` requires `outputSlug`, `title`, `titleBasis`,
-  `representationAudit`, and at least one `input` evidence item with role
-  `primary`.
+  `representationAudit`, `visualEvidenceAudit`, and at least one `input`
+  evidence item with role `primary`.
 - `omitted` requires a specific `reason`.
 - `merged` requires `mergedInto` naming another candidate ID.
 
@@ -133,6 +154,61 @@ be marked `omitted` when targeted enrichment cannot supply a third comparable,
 numeric reference, tangible basis, or source-supported numeric mechanism,
 consequence, denominator, or comparison fact and the pair does not carry a
 distinct editorial conclusion.
+
+## Visual evidence audit
+
+Every selected story must inventory the same-scale observations that materially
+support its central claim before a recipe is chosen. Record them in
+`visualEvidenceAudit.comparableObservations`. Each observation requires:
+
+- `label`: the working evidence label.
+- `specLabel`: the final ChartSpec label when it differs from `label`.
+- `quantity`: the real-world quantity measured.
+- `unit`: the common unit.
+- `period`: the observation period or scenario.
+- `value`, or `low` and `high`: the actual numeric observation or interval.
+
+`visualEvidenceAudit.rationale` explains why these observations belong to one
+visual claim. Do not list merely adjacent facts with incompatible quantities.
+Conversely, do not omit named shipment components, category values, or ordered
+time points merely to justify a one-row chart.
+
+When three or more comparable observations are available, every one must remain
+a primary `data[]` item in the ChartSpec. The source verifier rejects replacing
+that richer dataset with one aggregate, one range, one total, or one headline
+value. This check is about observations, not the raw count of numeric tokens.
+A single benchmark relationship remains valid when the source genuinely offers
+only an actual value and its benchmark.
+
+Coverage stories need an additional audit when one input passage contains two
+or more physical-volume figures. Record:
+
+```json
+"coverageAudit": {
+  "rationale": "Three inbound sources are compared with the same monthly demand denominator.",
+  "denominatorLabel": "Monthly demand",
+  "sourceEvidence": [
+    {
+      "anchor": "60–100 thousand tons from India",
+      "disposition": "component",
+      "label": "India tankers"
+    },
+    {
+      "anchor": "900 thousand tons of monthly demand",
+      "disposition": "denominator",
+      "label": "Monthly demand"
+    }
+  ]
+}
+```
+
+Every physical-volume phrase in the candidate anchors must receive exactly one
+disposition: `component`, `denominator`, or `excluded`. Components and the
+denominator must match labels in `comparableObservations` and the final
+ChartSpec. An excluded volume requires a specific scope, direction, product, or
+period reason. At least two named supply components must remain when the source
+contains multiple contributors; one combined shipment range or one days-of-
+coverage mark is not a substitute.
 
 ## Representation audit
 
@@ -152,6 +228,17 @@ Rate and share stories also require:
   population and affected count, are `reported`, `retrievable`, `unavailable`,
   `incomparable`, or `not-applicable`.
 - `basisRationale`: why the selected basis status is correct.
+
+Shares of named public aggregates such as GDP, the economy, population,
+employment, exports, imports, production, or capacity also require:
+
+- `basisTarget`: the exact public total and tangible numerator to recover, such
+  as nominal GDP and the derived sector-value range.
+
+These public denominators are treated as retrievable. The ledger cannot mark
+them unavailable or incomparable merely because the reported sector perimeter
+is broad. Preserve the qualification, recover a compatible public total, and
+select level geometry. A `100%` reference is not a tangible denominator.
 
 When `basisAvailability` is `reported` or `retrievable`, the selected primary
 representation must be `level`. Derive and plot the tangible numerator and
@@ -191,6 +278,7 @@ slice.
   "selectedMode": "level",
   "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
+  "basisTarget": "Nominal GDP and the corresponding sector-value range.",
   "rationale": "The reported share and economy total allow a tangible sector amount to be derived.",
   "basisRationale": "Turnover and the economy total can be recovered from the named datasets."
 }
@@ -281,6 +369,14 @@ With `--specs`, validation requires:
 - Selected ChartSpecs do not repeat the same input anchor, publication and
   reporting period, recipe, and category or time-label sequence. When they do,
   consolidate the secondary measure or mark its ledger candidate `merged`.
+- When `visualEvidenceAudit` inventories three or more comparable observations,
+  every observation label, or its explicit `specLabel`, appears in ChartSpec
+  `data[]`. Rich same-scale evidence cannot be collapsed into a single range,
+  aggregate, total, or headline value.
+- A `relationship.converging-signals` ChartSpec has at least one source-ledger
+  evidence item with role `mechanism`. The mechanism evidence must support the
+  relationship stated in `relationship.formula`; otherwise use comparison
+  geometry.
 
 `npm run run:finalize -- <run-id>` performs this validation automatically before
 removing transient run files.

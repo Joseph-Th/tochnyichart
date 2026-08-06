@@ -41,6 +41,9 @@ parse distinct data stories
 inventory every quantitative claim with exact input excerpts
     |
     v
+inventory every materially relevant same-scale observation in visualEvidenceAudit
+    |
+    v
 record selected, omitted, or merged disposition for every candidate
     |
     v
@@ -130,6 +133,9 @@ For each candidate, identify:
 - Which evidence is primary input evidence versus external or derived context
 - Whether actual values are reported, retrievable, unavailable, incomparable,
   or not applicable, and the least normalized representation the chart should use
+- Every named same-scale observation that materially supports the central claim,
+  including the exact label that will appear in the ChartSpec when it differs
+  from the working evidence label
 - For rates and shares, whether the numerator/denominator or
   population/affected amounts are reported, retrievable, unavailable,
   incomparable, or not applicable
@@ -185,11 +191,20 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   the relevant reporting perimeter.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
+- When three or more materially relevant observations share one quantity and
+  unit, inventory all of them in `visualEvidenceAudit` and keep all of them as
+  primary `data[]` items. Do not collapse named shipment components, categories,
+  or time points into one aggregate, one range, one total, or one headline value.
 - A rate or share with a reported or retrievable tangible basis must switch to
   level geometry and plot the tangible amounts; a floating percentage plus a
   basis rail is not sufficient. The total population or denominator must also
   appear on the plotted scale as a point, reference, benchmark, or complete
   composition.
+- A share of a named public aggregate, including GDP, the economy, population,
+  employment, exports, imports, production, or capacity, must treat that total
+  as retrievable. Record `basisTarget`, recover the compatible public total,
+  derive the tangible numerator, and use level geometry. A 100% reference does
+  not satisfy this requirement.
 - Two to four exact integer counts from 0 to 400 should use
   `comparison.pictogram`, with one symbol per unit rather than a logarithmic
   bar.
@@ -202,8 +217,11 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   end dates, or one verified `timeline.anchorDate` plus exact `duration` and
   `durationUnit` values.
 - Amounts described as days of consumption, demand coverage, or share of need
-  must show that denominator as a visible reference or be converted to coverage
-  time.
+  must show the demand denominator. When the input contains two or more
+  physical-volume contributors, complete `visualEvidenceAudit.coverageAudit`,
+  disposition every reported volume, and plot all retained components plus the
+  denominator in one tangible unit. Coverage time is secondary context, not a
+  substitute for the supply-versus-demand decomposition.
 - Prices, costs, freight, margins, discounts, premiums, shortfalls, and
   overages should use segmented `comparison.benchmark-gap` geometry when the
   benchmark and actual amount are available. Derive a prior level from the
@@ -220,6 +238,10 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   operator. Connector width is fixed and never encodes magnitude. Use identity
   mode only for arithmetically reconciling evidence; otherwise use directional
   mode and disclose incompatible periods or scopes.
+- `relationship.converging-signals` requires three distinct real-world
+  quantities and a source-supported mechanism stated in `relationship.formula`.
+  Two prices, two volumes, or the same measure at different dates are not
+  drivers and an outcome; use change, scenarios, dumbbell, or trend geometry.
 - A headline built around opposing quantities, such as lower purchase volume
   and higher prices producing higher spending, cannot plot only one side and
   leave the other figures in `supportingFacts`.
@@ -381,6 +403,9 @@ After all accepted charts have final PNG images, assemble them into one PowerPoi
 The presentation should:
 
 - Use the accepted story order or a clearer editorial order derived from the assignment.
+- Follow `presentation-plan.json` exactly. The default deck contains one slide
+  per accepted chart and no cover, title, agenda, divider, or closing slide.
+  Add any non-chart slide only when the user explicitly requested it.
 - Preserve one central finding per slide.
 - Use the final generated chart image rather than recreating the chart manually in PowerPoint.
 - Keep titles, available source attribution, dates, and explanatory text consistent with the corresponding ChartSpec.
@@ -409,6 +434,7 @@ charts/<run-id>/
 ├── [slug-2].html
 ├── [slug-2].png
 ├── manifest.csv
+├── presentation-plan.json
 ├── qa-report.json
 └── tochnyi-charts-<run-id>.pptx
 ```
@@ -428,8 +454,12 @@ After the retained specifications and delivery folder are complete, run:
 npm run run:finalize -- <run-id>
 ```
 
-Finalization first reruns source-ledger validation with ChartSpec coverage. It
-then deletes `.work/<run-id>/` and removes the legacy `previews/` tree. It
+Finalization first reruns source-ledger validation with ChartSpec coverage. When
+`presentation-plan.json` exists, it also opens the generated PowerPoint package,
+counts the actual slide XML files, and requires that count to exactly match the
+plan. This rejects unrequested cover, title, agenda, divider, closing, or other
+extra slides before cleanup. It then deletes `.work/<run-id>/` and removes the
+legacy `previews/` tree. It
 preserves `input.txt` and does not delete `specs/runs/<run-id>/` or
 `charts/<run-id>/`.
 
@@ -454,6 +484,8 @@ The batch run is complete only when:
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
 - The PowerPoint deck has been assembled from those final images.
+- The PowerPoint slide count exactly matches `presentation-plan.json`; by
+  default this is one slide per accepted chart and zero non-chart slides.
 - The HTML files, final PNGs, and `.pptx` file are present in `charts/<run-id>/`.
 - The ChartSpecs are present in `specs/runs/<run-id>/`.
 - The run has been finalized, leaving no run-specific notes, scripts, logs,
