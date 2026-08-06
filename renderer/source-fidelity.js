@@ -13,6 +13,20 @@ const DECISIONS = new Set(['selected', 'omitted', 'merged']);
 const ROLES = new Set(['primary', 'comparison', 'denominator', 'mechanism', 'consequence', 'context']);
 const VALUE_MODES = new Set(['level', 'absolute-change', 'relative-change', 'rate', 'share', 'index']);
 const LEVEL_AVAILABILITY = new Set(['reported', 'retrievable', 'unavailable', 'incomparable', 'not-applicable']);
+const RESEARCH_SOURCE_TYPES = new Set([
+  'supplied-source',
+  'official-dataset',
+  'company-filing',
+  'market-data',
+  'industry-dataset',
+  'authoritative-report'
+]);
+const DATA_BEARING_SOURCE_TYPES = new Set([
+  'official-dataset',
+  'company-filing',
+  'market-data',
+  'industry-dataset'
+]);
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -112,16 +126,84 @@ function validateRepresentationAudit(candidate, prefix, errors) {
   if (!isText(audit.rationale) || audit.rationale.length > 240) {
     errors.push(`${prefix}.representationAudit.rationale must be a non-empty string of 240 characters or fewer.`);
   }
-  if (['relative-change', 'index'].includes(audit.selectedMode) &&
+  if (['rate', 'share'].includes(audit.selectedMode)) {
+    if (!LEVEL_AVAILABILITY.has(audit.basisAvailability)) {
+      errors.push(`${prefix}.representationAudit.basisAvailability is required for ${audit.selectedMode} stories.`);
+    }
+    if (!isText(audit.basisRationale) || audit.basisRationale.length > 240) {
+      errors.push(`${prefix}.representationAudit.basisRationale must be a non-empty string of 240 characters or fewer for ${audit.selectedMode} stories.`);
+    }
+  }
+  if (audit.selectedMode === 'relative-change' &&
       ['reported', 'retrievable'].includes(audit.levelAvailability)) {
     errors.push(
-      `${prefix}.representationAudit selects ${audit.selectedMode} even though actual levels are ${audit.levelAvailability}. ` +
+      `${prefix}.representationAudit selects relative-change even though actual levels are ${audit.levelAvailability}. ` +
       'Select level values for the primary geometry and keep percentage or indexed change as secondary context.'
     );
+  }
+  if (audit.selectedMode === 'index' &&
+      ['unavailable', 'incomparable'].includes(audit.levelAvailability)) {
+    errors.push(
+      `${prefix}.representationAudit cannot use a synthetic index when actual levels are ${audit.levelAvailability}. ` +
+      'Use the reported relative observations directly, retrieve tangible values, or omit the story.'
+    );
+  }
+  if (audit.selectedMode === 'index' && audit.levelAvailability === 'not-applicable') {
+    errors.push(`${prefix}.representationAudit cannot mark a published index level as not-applicable.`);
   }
   if (audit.selectedMode === 'level' &&
       ['unavailable', 'incomparable', 'not-applicable'].includes(audit.levelAvailability)) {
     errors.push(`${prefix}.representationAudit cannot select level when actual levels are ${audit.levelAvailability}.`);
+  }
+
+  const needsResearchProof =
+    (['absolute-change', 'relative-change'].includes(audit.selectedMode) && ['unavailable', 'incomparable'].includes(audit.levelAvailability)) ||
+    (['rate', 'share'].includes(audit.selectedMode) && ['unavailable', 'incomparable'].includes(audit.basisAvailability));
+  if (needsResearchProof) {
+    if (!isText(audit.tangibleTarget) || audit.tangibleTarget.length > 240) {
+      errors.push(
+        `${prefix}.representationAudit.tangibleTarget must name the exact price, count, volume, amount, numerator, or denominator sought before normalized evidence is used.`
+      );
+    }
+    if (!Array.isArray(audit.researchAttempts) || audit.researchAttempts.length < 2) {
+      errors.push(`${prefix}.representationAudit.researchAttempts must record at least two structured source checks before normalized evidence may be marked unavailable or incomparable.`);
+    } else {
+      const sources = new Set();
+      const sourceTypes = new Set();
+      audit.researchAttempts.forEach((attempt, index) => {
+        const attemptPrefix = `${prefix}.representationAudit.researchAttempts[${index}]`;
+        if (!attempt || typeof attempt !== 'object' || Array.isArray(attempt)) {
+          errors.push(`${attemptPrefix} must be an object.`);
+          return;
+        }
+        if (!isText(attempt.source)) errors.push(`${attemptPrefix}.source is required.`);
+        else sources.add(attempt.source.trim().toLowerCase());
+        if (!RESEARCH_SOURCE_TYPES.has(attempt.sourceType)) {
+          errors.push(
+            `${attemptPrefix}.sourceType must be one of ${Array.from(RESEARCH_SOURCE_TYPES).join(', ')}.`
+          );
+        } else {
+          sourceTypes.add(attempt.sourceType);
+        }
+        if (!isText(attempt.locator) || attempt.locator.length > 240) {
+          errors.push(
+            `${attemptPrefix}.locator must identify the URL, filing, table, ticker/date range, or dataset slice checked in 240 characters or fewer.`
+          );
+        }
+        if (!isText(attempt.outcome) || attempt.outcome.length > 240) {
+          errors.push(`${attemptPrefix}.outcome must explain what was found or why it was unusable in 240 characters or fewer.`);
+        }
+      });
+      if (sources.size < 2) errors.push(`${prefix}.representationAudit.researchAttempts must cover at least two distinct named sources.`);
+      if (sourceTypes.size < 2) {
+        errors.push(`${prefix}.representationAudit.researchAttempts must cover at least two distinct source types.`);
+      }
+      if (![...sourceTypes].some((sourceType) => DATA_BEARING_SOURCE_TYPES.has(sourceType))) {
+        errors.push(
+          `${prefix}.representationAudit.researchAttempts must include an official dataset, company filing, market-data source, or industry dataset capable of supplying tangible values.`
+        );
+      }
+    }
   }
 }
 
@@ -132,7 +214,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
-  if (ledger.version !== '1.1') errors.push('Source ledger version must be 1.1.');
+  if (ledger.version !== '1.3') errors.push('Source ledger version must be 1.3.');
   if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
   if (!ledger.input || ledger.input.path !== 'input.txt') errors.push('Source ledger must identify the project-root input.txt.');
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
@@ -301,6 +383,16 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
         errors.push(
           `ChartSpec ${candidate.outputSlug} measure.levelAvailability must match representationAudit.levelAvailability (${audit.levelAvailability || 'missing'}).`
         );
+      }
+      if (['rate', 'share'].includes(audit.selectedMode)) {
+        if (spec.measure?.basisAvailability !== audit.basisAvailability) {
+          errors.push(
+            `ChartSpec ${candidate.outputSlug} measure.basisAvailability must match representationAudit.basisAvailability (${audit.basisAvailability || 'missing'}).`
+          );
+        }
+        if (['reported', 'retrievable'].includes(audit.basisAvailability) && !spec.basis) {
+          errors.push(`ChartSpec ${candidate.outputSlug} must expose basis because the ledger records a ${audit.basisAvailability} tangible basis.`);
+        }
       }
       selectedSpecs.push({ candidate, spec });
     }

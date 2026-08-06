@@ -1,0 +1,68 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.benchmark-gap",
+  "title": "The Urals Discount Takes a Larger Slice of the Benchmark Price",
+  "subtitle": "The benchmark stayed at $100 per barrel in this fixture while the Russian crude price fell as the discount widened.",
+  "date": "2026-08-05",
+  "source": {
+    "name": "Illustrative crude-price benchmark fixture",
+    "period": "Before and after a shipping disruption"
+  },
+  "data": [
+    {
+      "label": "Before disruption",
+      "quantity": "crude oil price",
+      "scope": "Urals crude compared with the same benchmark barrel",
+      "period": "Before disruption",
+      "value": 74.5,
+      "benchmark": 100,
+      "displayValue": "$74.50/bbl Urals",
+      "benchmarkDisplayValue": "$100/bbl benchmark",
+      "gapDisplayValue": "$25.50 discount",
+      "tone": "warning"
+    },
+    {
+      "label": "After disruption",
+      "quantity": "crude oil price",
+      "scope": "Urals crude compared with the same benchmark barrel",
+      "period": "After disruption",
+      "value": 73.4,
+      "benchmark": 100,
+      "displayValue": "$73.40/bbl Urals",
+      "benchmarkDisplayValue": "$100/bbl benchmark",
+      "gapDisplayValue": "$26.60 discount",
+      "tone": "critical"
+    }
+  ],
+  "measure": {
+    "quantity": "crude oil price",
+    "unit": "USD/barrel",
+    "axisTitle": "Price per barrel",
+    "decimals": 2,
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "emphasis": {
+    "direction": "down",
+    "displayValue": "$1.10/bbl",
+    "label": "additional discount",
+    "position": "corner"
+  },
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "benchmark-gap"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "urals-benchmark-gap-example",
+    "topic": "benchmark discount",
+    "dataPeriod": "Before and after disruption",
+    "keyFinding": "The benchmark gap widened while the discounted actual price remained visible."
+  }
+}

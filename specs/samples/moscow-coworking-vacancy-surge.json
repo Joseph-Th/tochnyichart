@@ -38,7 +38,9 @@
     "maximum": 20,
     "baseline": "explicit",
     "valueMode": "rate",
-    "levelAvailability": "not-applicable"
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "unavailable",
+    "basisNote": "The source reports the vacancy percentages but not the vacant and total flexible-office area for both periods."
   },
   "emphasis": {
     "direction": "up",

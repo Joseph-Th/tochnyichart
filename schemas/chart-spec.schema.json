@@ -14,7 +14,9 @@
         "comparison.scenarios",
         "comparison.diverging",
         "comparison.range",
+        "comparison.benchmark-gap",
         "trend.line",
+        "timeline.duration",
         "composition.donut",
         "composition.stacked",
         "flow.waterfall",
@@ -70,6 +72,10 @@
           "low": { "type": "number" },
           "high": { "type": "number" },
           "benchmark": { "type": "number" },
+          "benchmarkDisplayValue": { "type": "string", "maxLength": 50 },
+          "gapDisplayValue": { "type": "string", "maxLength": 50 },
+          "start": { "type": "string", "format": "date" },
+          "end": { "type": "string", "format": "date" },
           "displayValue": { "type": "string", "maxLength": 50 },
           "detail": { "type": "string", "maxLength": 180 },
           "annotation": { "type": "string", "maxLength": 120 },
@@ -144,6 +150,11 @@
           "type": "string",
           "enum": ["reported", "retrievable", "unavailable", "incomparable", "not-applicable"]
         },
+        "basisAvailability": {
+          "type": "string",
+          "enum": ["reported", "retrievable", "unavailable", "incomparable", "not-applicable"]
+        },
+        "basisNote": { "type": "string", "minLength": 1, "maxLength": 180 },
         "normalizationNote": { "type": "string", "minLength": 1, "maxLength": 180 },
         "prefix": { "type": "string", "maxLength": 12 },
         "suffix": { "type": "string", "maxLength": 20 },
@@ -152,6 +163,43 @@
         "maximum": { "type": "number" },
         "baseline": { "type": "string", "enum": ["zero", "auto", "explicit"] },
         "scale": { "type": "string", "enum": ["linear", "logarithmic"] }
+      }
+    },
+    "basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "type": "string", "enum": ["ratio", "population"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "formula": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "label", "displayValue"],
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": ["numerator", "denominator", "population", "affected", "base", "derived"]
+              },
+              "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "value": { "type": "number" },
+              "low": { "type": "number" },
+              "high": { "type": "number" },
+              "displayValue": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "unit": { "type": "string", "maxLength": 40 },
+              "valueStatus": { "type": "string", "enum": ["reported", "derived", "bound", "approximate"] },
+              "tone": {
+                "type": "string",
+                "enum": ["primary", "secondary", "warning", "critical", "neutral", "positive"]
+              }
+            }
+          }
+        }
       }
     },
     "emphasis": {
@@ -188,6 +236,10 @@
           "tone": {
             "type": "string",
             "enum": ["primary", "secondary", "warning", "critical", "neutral", "positive"]
+          },
+          "role": {
+            "type": "string",
+            "enum": ["comparison", "denominator", "mechanism", "consequence", "context"]
           }
         }
       }
@@ -219,7 +271,7 @@
         "density": { "type": "string", "enum": ["minimal", "editorial", "detailed"] },
         "emphasis": {
           "type": "string",
-          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography"]
+          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap"]
         }
       }
     },
@@ -261,6 +313,34 @@
                 "valueStatus": { "const": "reported" }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "timeline.duration" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 2,
+            "maxItems": 8,
+            "items": { "required": ["start", "end"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "comparison.benchmark-gap" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 2,
+            "maxItems": 6,
+            "items": { "required": ["value", "benchmark", "quantity", "scope", "period"] }
           }
         }
       }

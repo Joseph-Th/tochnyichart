@@ -1,5 +1,5 @@
 {
-  "version": "2.5.0",
+  "version": "2.6.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -30,11 +30,25 @@
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
+      "id": "comparison.benchmark-gap",
+      "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, or overage remains visible.",
+      "data": "2 to 6 labeled items with value and benchmark in one unit, plus matching quantity and scope. Periods may advance for before-and-after comparisons.",
+      "bestFor": ["discounted prices", "premium to benchmark", "shortfall to target", "before-and-after benchmark gaps"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
       "id": "trend.line",
       "purpose": "Show a sequence over time.",
       "data": "At least 3 ordered labeled numeric values; 5 or more preferred.",
       "bestFor": ["time series", "rates", "prices", "production"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "timeline.duration",
+      "purpose": "Show dated policy, restriction, outage, contract, or operational intervals on a common calendar.",
+      "data": "2 to 8 labeled items with ISO start and end dates. Tone controls the interval color; displayValue names the duration.",
+      "bestFor": ["policy durations", "export bans", "outage windows", "project phases", "contract periods"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "composition.donut",
@@ -88,6 +102,10 @@
     {
       "id": "supportingFacts",
       "purpose": "Add up to four genuinely secondary contextual facts after a primary visual that already contains at least two quantitative or geographic marks. Supporting facts cannot be the chart."
+    },
+    {
+      "id": "basis",
+      "purpose": "Expose the tangible numerator and denominator behind a share or ratio, or the total population and affected count behind a risk estimate."
     }
   ]
 }

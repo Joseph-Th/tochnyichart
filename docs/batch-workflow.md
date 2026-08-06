@@ -53,7 +53,7 @@ preserve each inventoried claim and enrich it from reputable sources
 apply the visual-evidence gate; enrich or omit prose-only and one-point stories
     |
     v
-audit actual-level availability and record the selected value representation
+audit actual levels and the tangible basis behind rates and shares
     |
     v
 decide whether each story needs a chart and select the appropriate workflow and recipe
@@ -127,6 +127,11 @@ For each candidate, identify:
 - Which evidence is primary input evidence versus external or derived context
 - Whether actual values are reported, retrievable, unavailable, incomparable,
   or not applicable, and the least normalized representation the chart should use
+- For rates and shares, whether the numerator/denominator or
+  population/affected amounts are reported, retrievable, unavailable,
+  incomparable, or not applicable
+- Named research attempts and outcomes when levels or a basis are proposed as
+  unavailable or incomparable
 
 Do not assume every paragraph requires a chart. Merge duplicate notes when they
 describe the same finding. Exclude items that are duplicative, immaterial, or do
@@ -162,8 +167,19 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - A non-map chart must contain at least two quantitative marks.
 - A lone value must gain a source-supported prior value, target, benchmark,
   denominator, remainder, peer, range, or time series.
+- A percentage-only price, workforce, export, production, spending, or revenue
+  claim must trigger a search for the underlying tangible amounts for the same
+  scope and periods before normalized geometry is considered.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
+- A rate or share with a reported or retrievable tangible basis must expose it
+  in `basis`; a floating percentage is not sufficient.
+- A risk estimate must include the exposed population or denominator and at
+  least one mechanism or consequence.
+- Exact start and end dates should use `timeline.duration`.
+- A discount, premium, shortfall, or overage should use
+  `comparison.benchmark-gap` when the benchmark and actual amount are
+  available.
 - A prose wall, card grid, bullet grid, or one oversized number is not an
   acceptable chart.
 - Omit a story when source enrichment cannot supply legitimate visual
@@ -171,6 +187,20 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 
 The production catalog and validator disable `status.grid` and
 `headline.metric`, so these failures cannot proceed to rendering.
+
+Before accepting `unavailable` or `incomparable` for actual levels or a
+rate/share basis, state the exact `representationAudit.tangibleTarget` and
+record at least two structured source checks. Each attempt must include a named
+source, source type, concrete locator, and outcome. The attempts must cover two
+source types and include an official dataset, company filing, market-data
+source, or industry dataset capable of supplying tangible values.
+
+Synthetic 100-based indexes and fabricated 0% starting observations are not
+fallbacks. If tangible values remain unavailable, show only the reported
+relative observations in plain language or omit the story. Reserve
+`measure.valueMode: "index"` for a named index whose point levels are actually
+reported by the source, and do not use viewer-facing labels such as `100 index`
+or `index points`.
 
 ## 3. Select the production tool
 

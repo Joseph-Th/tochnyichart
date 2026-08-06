@@ -124,10 +124,17 @@ every accepted story:
 - Keep a simple two-value chart when the contrast itself is the complete story.
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
 - Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
-- Prefer reported or retrievable actual levels for primary geometry. Use percentage or indexed change as annotation, emphasis, subtitle, or supporting context.
+- For every rate or share, separately record `basisAvailability` and `basisRationale`. Recoverable numerator/denominator or population/affected amounts must appear in ChartSpec `basis`.
+- Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two structured `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. The checks must span two source types and include a data-bearing source.
+- Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods.
+- Prefer reported or retrievable actual levels for primary geometry. Use percentage change as annotation, emphasis, subtitle, or supporting context.
 - Never manufacture a `0%` before-event point or index-100 starting point merely to create a trend.
-- Use `relative-change` or `index` only when actual levels are unavailable or incomparable, and explain the limitation in `measure.normalizationNote`.
-- Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec.
+- Use `relative-change` only when actual levels are unavailable or incomparable, and explain the limitation in `measure.normalizationNote`.
+- Use `index` only for a named index whose point values are reported or retrievable. Never publish generic visible labels such as `100 index`, `91.5 index`, or `index points`.
+- Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec. Rate/share specs also declare `measure.basisAvailability` and `measure.basisNote` when the basis is unavailable, incomparable, or not applicable.
+- Risk and exit-outlook charts require a population or denominator plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
+- Use `timeline.duration` when exact start and end dates define two or more intervals.
+- Use `comparison.benchmark-gap` when a discount, premium, shortfall, or overage can be expressed with both an actual value and a benchmark total.
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
 - Keep the specification small and semantic.
@@ -152,7 +159,7 @@ Then:
 1. Preserve the expert input claim, then confirm and read the full supplied source.
 2. Extract the evidence spine and safe derivations.
 3. Fill only material evidence gaps with targeted research.
-4. Audit actual-level availability and choose the least normalized valid representation.
+4. Audit actual-level availability and any rate/share basis. Choose the least normalized valid representation and document research attempts when normalized evidence remains unavoidable.
 5. Identify one central finding and select the recipe.
 6. Author the ChartSpec with representation metadata.
 7. Validate:

@@ -139,6 +139,32 @@ test('axes that cross zero render a prominent interior zero reference', { skip: 
   }
 });
 
+test('duration timelines and benchmark gaps pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-new-recipes-'));
+  try {
+    const cases = [
+      { file: 'fuel-ban-timeline.json', marks: 2 },
+      { file: 'urals-benchmark-gap.json', marks: 6 }
+    ];
+    cases.forEach(({ file, marks }) => {
+      const outputPath = path.join(tempDir, `${path.basename(file, '.json')}.html`);
+      renderSpecFile(path.join(examplesDir, file), outputPath, { projectRoot: root });
+      const diagnostics = diagnoseHtmlResponsive(outputPath, {
+        browser,
+        viewports: REGIONAL_WORKFLOW_VIEWPORTS
+      });
+      assert.equal(diagnostics.status, 'pass', file);
+      diagnostics.runs.forEach((run) => {
+        assert.equal(run.diagnostics?.summary?.errors, 0, file);
+        assert.equal(run.diagnostics?.summary?.warnings, 0, file);
+        assert.equal(run.diagnostics?.summary?.marksChecked, marks, file);
+      });
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('categorical status evidence is rejected before browser rendering', () => {
   const spec = {
     version: '2.0',

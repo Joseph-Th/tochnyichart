@@ -117,6 +117,10 @@ Extract all facts that could clarify the central finding without changing it:
 - Forecast or expected direction
 - Relevant market or operational scale
 - Denominator needed to interpret a shortage, share, or coverage rate
+- Numerator and denominator behind a financial or operational ratio
+- Total population and affected count behind a risk estimate
+- Exact start and end dates behind a policy, outage, restriction, or contract duration
+- Actual benchmark and discounted, premium, shortfall, or overage value
 - Underlying report, dataset, or filing named by the article
 
 The evidence should remain attributable to the source and compatible in period, unit, and scope.
@@ -145,9 +149,17 @@ Choose the least normalized representation that still expresses the input-suppor
 1. Reported or retrievable actual levels, such as prices, revenue, output, volume, counts, or share values.
 2. Absolute change in the same tangible unit.
 3. A native rate or share when the rate or share is itself the measured quantity.
-4. Relative change or an index only when the underlying levels are unavailable or not meaningfully comparable.
+4. Relative change only when the underlying levels are unavailable or not meaningfully comparable.
+5. A published index level only when the source itself reports that named index. Never create an index solely as a fallback.
 
-Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, or a directly linked filing, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
+Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, market-data history, company filing, or industry dataset, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
+
+An index is valid only when it is an actual published measure, such as a named
+price or production index with reported point values. A synthetic baseline is
+not a published index. Do not show viewer-facing labels such as `100 index`,
+`91.5 index`, or `index points`. If tangible levels remain unavailable after
+research, plot only the reported relative observations with plain-language
+labels, or omit the story when those observations do not form a useful visual.
 
 For a selected source-ledger candidate, record:
 
@@ -159,9 +171,93 @@ For a selected source-ledger candidate, record:
 }
 ```
 
-The matching `ChartSpec.measure` must declare the same `valueMode` and `levelAvailability`. A `relative-change` or `index` measure also requires `normalizationNote` when levels are unavailable or incomparable.
+The matching `ChartSpec.measure` must declare the same `valueMode` and `levelAvailability`. A `relative-change` measure also requires `normalizationNote` when levels are unavailable or incomparable. A published index uses `valueMode: "index"` only with reported or retrievable point levels.
+
+For a rate or share, separately audit the tangible basis:
+
+```json
+"representationAudit": {
+  "selectedMode": "share",
+  "levelAvailability": "not-applicable",
+  "basisAvailability": "retrievable",
+  "rationale": "The claim is natively a share.",
+  "basisRationale": "The source and named official dataset provide the turnover numerator and economy denominator."
+}
+```
+
+Use `basisAvailability: "not-applicable"` only for a native quoted rate whose
+numerator and denominator would not be a meaningful tangible decomposition,
+such as a policy interest rate or a price-index growth rate. A cost-to-income
+ratio, market share, coverage rate, utilization rate, or risk estimate normally
+has a meaningful basis and should be researched.
+
+When the basis is reported or retrievable, add a ChartSpec `basis` rail:
+
+- `type: "ratio"` with `numerator` and `denominator` items.
+- `type: "population"` with `population` and `affected` items.
+
+The primary chart may still show the rate or share, but the visible basis rail
+must state the tangible amounts. This prevents a percentage from floating free
+of scale.
+
+Do not mark levels or a basis `unavailable` or `incomparable` after one failed
+search. First state the exact `tangibleTarget`, such as the share prices at the
+prior close, intraday low, and close; the employee headcount for a defined
+reporting perimeter; or export tonnes for the reported months. Then record at
+least two structured `researchAttempts` in the source ledger.
+
+Each attempt must identify:
+
+- `source`: the named source.
+- `sourceType`: `supplied-source`, `official-dataset`, `company-filing`,
+  `market-data`, `industry-dataset`, or `authoritative-report`.
+- `locator`: the URL, filing, table, ticker and date range, or dataset slice
+  actually checked.
+- `outcome`: what values were found or why they could not be used.
+
+The attempts must cover at least two source types, including at least one source
+capable of supplying tangible data: an official dataset, company filing,
+market-data source, or industry dataset. A generic web search, search-result
+snippet, or statement that a value was “not found” is not a source check.
+
+```json
+"representationAudit": {
+  "selectedMode": "relative-change",
+  "levelAvailability": "unavailable",
+  "tangibleTarget": "Monthly sunflower-oil export tonnes for June, July, and August 2026.",
+  "rationale": "The percentage changes remain the only compatible observations after the required data checks.",
+  "researchAttempts": [
+    {
+      "source": "Supplied trade article",
+      "sourceType": "supplied-source",
+      "locator": "Full article and linked tables",
+      "outcome": "The article reports percentage changes but no monthly tonnes."
+    },
+    {
+      "source": "Named oilseed-market dataset",
+      "sourceType": "industry-dataset",
+      "locator": "Russia sunflower-oil exports, monthly series, 2026",
+      "outcome": "The accessible table does not expose the relevant monthly amounts."
+    }
+  ]
+}
+```
+
+For percentage-only claims, search for the natural underlying amount before
+selecting geometry:
+
+- Share-price change: exchange prices for the exact event date and trading window.
+- Workforce reduction: a consistent bank or group headcount and the implied number of positions.
+- Export or production change: tonnes, barrels, units, or value for the same periods.
+- Spending or revenue change: currency amounts for the same scope and periods.
+- Market share or coverage: numerator, denominator, and remainder.
 
 When a share is the primary measure and the absolute component values are reported or retrievable, show both in the visible data label. A percentage-only label discards useful magnitude.
+
+For a risk or exit-outlook story, a low and high percentage alone are not a
+complete visual argument. Add the exposed population or denominator and at
+least one sourced mechanism or consequence. Use `narrative.emphasis: "risk"`
+and classify the context with `supportingFacts[].role`.
 
 For `flow.waterfall`, exact evidence is a hard constraint rather than a review preference.
 Every item must be an exact reported value and declare the same `period` and
@@ -193,6 +289,9 @@ material evidence gap. Examples include:
 - No historical series for a claimed record
 - No denominator for interpreting a shortage, share, or coverage figure
 - No scale for deciding whether an amount is material
+- No tangible basis for a rate, ratio, share, or risk estimate
+- No exact dates for a reported duration
+- No benchmark total for a reported discount, premium, shortfall, or overage
 - No explanation for a reversal that is central to the finding
 - No current status for an ongoing event
 
@@ -250,6 +349,14 @@ Examples:
 - A note containing two profit values may become a richer earnings story when the source also provides revenue, operating drivers, and a resulting dividend decision.
 - A shortage note may become a coverage-rate headline when supply and demand periods can be normalized safely.
 - A profit-to-loss reversal may remain a simple two-value diverging comparison when the sign change is the complete finding.
+- A six-month and one-month restriction should use `timeline.duration` when
+  exact start and end dates are available, so the occupied calendar windows are
+  visible rather than reduced to abstract bar lengths.
+- A discount, premium, shortfall, or overage should use
+  `comparison.benchmark-gap` when both the benchmark and actual amount are
+  available. The benchmark total, actual value, and gap must all remain visible.
+- A percentage risk range should include a population basis and a mechanism or
+  consequence. Without those, enrich it further or omit it.
 - A story with unlike units may use one primary visual plus the unboxed
   `supportingFacts` rail for secondary context. When multiple unlike measures
   are essential, split them into separate ChartSpecs.
@@ -269,9 +376,15 @@ Before authoring the `ChartSpec`, confirm:
 - The full source has been read.
 - All directly relevant evidence has been extracted.
 - Derived values are traceable and period-compatible.
-- Actual-level availability has been checked before choosing a percentage or index representation.
+- Actual-level availability has been checked before choosing a percentage representation.
+- For a rate or share, basis availability has been checked and documented.
+- Any `unavailable` or `incomparable` normalized representation names its `tangibleTarget` and has at least two structured research attempts covering two source types, including a data-bearing source.
 - The source-ledger `representationAudit` matches `measure.valueMode` and `measure.levelAvailability`.
-- Percentage or index geometry is used only when actual levels are unavailable or incomparable.
+- For rate/share stories, the ledger basis audit matches `measure.basisAvailability`, and reported or retrievable amounts appear in `basis`.
+- Relative-change geometry is used only when actual levels are unavailable or incomparable.
+- Index geometry is used only for a named, source-reported index with actual point values; synthetic 100-based baselines and viewer-facing `index` labels are absent.
+- Risk stories include a population or denominator plus a mechanism or consequence.
+- Dated intervals use `timeline.duration`; benchmark gaps use `comparison.benchmark-gap` when their defining evidence is available.
 - External research supplements rather than silently overrides the input.
 - Any direct contradiction has been escalated for editorial resolution.
 - Every selected fact supports magnitude, comparison, mechanism, or consequence.

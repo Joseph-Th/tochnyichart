@@ -108,59 +108,65 @@ test('numeric labels must expose their units unless the title or subtitle define
   const indexed = {
     version: '2.0',
     recipe: 'comparison.change',
-    title: 'Insurance prices rose 230%',
-    subtitle: 'An indexed view moves from 100 to 330.',
+    title: 'Consumer prices rose between two published readings',
+    subtitle: 'The official series moved higher during the period.',
     date: '2026-08-05',
     data: [
       {
         label: 'Before',
-        value: 100,
-        displayValue: '100',
-        quantity: 'indexed insurance price',
-        scope: 'company insurance pricing',
-        period: 'Before increase'
+        value: 105.2,
+        displayValue: '105.2',
+        quantity: 'consumer price index',
+        scope: 'official consumer-price series',
+        period: 'Previous reading'
       },
       {
         label: 'After',
-        value: 330,
-        displayValue: '330',
-        quantity: 'indexed insurance price',
-        scope: 'company insurance pricing',
-        period: 'After increase'
+        value: 108.4,
+        displayValue: '108.4',
+        quantity: 'consumer price index',
+        scope: 'official consumer-price series',
+        period: 'Latest reading'
       }
     ],
     measure: {
-      quantity: 'indexed insurance price',
-      unit: 'index points',
-      axisTitle: 'Indexed insurance price',
+      quantity: 'consumer price index',
+      unit: 'points',
+      axisTitle: 'Consumer price index',
       valueMode: 'index',
-      levelAvailability: 'unavailable',
-      normalizationNote: 'The fixture intentionally provides only an indexed series for visible-unit validation.',
-      decimals: 0,
-      baseline: 'zero'
+      levelAvailability: 'reported',
+      decimals: 1,
+      baseline: 'auto'
     },
     emphasis: {
       direction: 'up',
-      displayValue: '330',
-      label: 'After increase',
+      displayValue: '108.4',
+      label: 'Latest reading',
       position: 'corner'
     }
   };
   let result = validateSpec(indexed);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => message.includes('displayValue "330" is unitless')));
+  assert.ok(result.errors.some((message) => message.includes('displayValue "108.4" is unitless')));
 
   const explicitLabels = structuredClone(indexed);
-  explicitLabels.data[0].displayValue = '100 index points';
-  explicitLabels.data[1].displayValue = '330 index points';
-  explicitLabels.emphasis.displayValue = '330 index points';
+  explicitLabels.data[0].displayValue = '105.2 points';
+  explicitLabels.data[1].displayValue = '108.4 points';
+  explicitLabels.emphasis.displayValue = '108.4 points';
   result = validateSpec(explicitLabels);
   assert.equal(result.valid, true, result.errors.join('; '));
 
   const explicitTitle = structuredClone(indexed);
-  explicitTitle.title = 'Insurance price index rose from 100 to 330 points';
+  explicitTitle.title = 'Consumer price index rose from 105.2 to 108.4 points';
   result = validateSpec(explicitTitle);
   assert.equal(result.valid, true, result.errors.join('; '));
+
+  const genericIndexCopy = structuredClone(explicitLabels);
+  genericIndexCopy.measure.unit = 'index points';
+  genericIndexCopy.data[0].displayValue = '105.2 index points';
+  result = validateSpec(genericIndexCopy);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /generic viewer-facing labels|must not use generic "index" wording/i.test(message)));
 });
 
 test('value representation prefers actual levels over percentages and synthetic indexes', () => {
@@ -210,8 +216,43 @@ test('value representation prefers actual levels over percentages and synthetic 
   const justifiedRelative = structuredClone(relative);
   justifiedRelative.measure.levelAvailability = 'unavailable';
   justifiedRelative.measure.normalizationNote = 'The source reports only the percentage movement and no recoverable share-price level.';
+  justifiedRelative.data[0] = {
+    label: 'Intraday low', value: -8.5, displayValue: '−8.5%',
+    quantity: 'share-price change', scope: 'company shares', period: 'Intraday low'
+  };
+  justifiedRelative.data[1] = {
+    label: 'Later close', value: -3.1, displayValue: '−3.1%',
+    quantity: 'share-price change', scope: 'company shares', period: 'Later close'
+  };
   result = validateSpec(justifiedRelative);
   assert.equal(result.valid, true, result.errors.join('; '));
+
+  const syntheticIndex = structuredClone(levels);
+  syntheticIndex.title = 'Share-price move shown as a synthetic baseline';
+  syntheticIndex.data[0] = {
+    label: 'Before event', value: 100, displayValue: '100 index',
+    quantity: 'share-price index', scope: 'company shares', period: 'Before event'
+  };
+  syntheticIndex.data[1] = {
+    label: 'After event', value: 91.5, displayValue: '91.5 index',
+    quantity: 'share-price index', scope: 'company shares', period: 'After event'
+  };
+  syntheticIndex.measure = {
+    quantity: 'share-price index', unit: 'index', axisTitle: 'Before event = 100',
+    valueMode: 'index', levelAvailability: 'unavailable', decimals: 1, baseline: 'auto'
+  };
+  result = validateSpec(syntheticIndex);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /synthetic fallback|generic viewer-facing labels/i.test(message)));
+
+  const syntheticZero = structuredClone(justifiedRelative);
+  syntheticZero.data[0] = {
+    label: 'Before event', value: 0, displayValue: '0%',
+    quantity: 'share-price change', scope: 'company shares', period: 'Before event'
+  };
+  result = validateSpec(syntheticZero);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /synthetic 0% baseline/i.test(message)));
 });
 
 test('share charts expose tangible amounts when component levels are available', () => {
@@ -227,6 +268,106 @@ test('share charts expose tangible amounts when component levels are available',
   composition.data[3].displayValue = '20% · RUB 20,000';
   result = validateSpec(composition);
   assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('rate and share stories require an explicit tangible basis audit', () => {
+  const share = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Online trade represents an estimated 8–10% of the economy',
+    subtitle: 'The range must remain tied to the turnover and economy totals behind it.',
+    date: '2026-08-05',
+    data: [
+      { label: 'Lower estimate', value: 8, displayValue: '8%', quantity: 'online-trade share of the economy', scope: 'Russian economy', period: 'H1 2026' },
+      { label: 'Upper estimate', value: 10, displayValue: '10%', quantity: 'online-trade share of the economy', scope: 'Russian economy', period: 'H1 2026' }
+    ],
+    measure: {
+      quantity: 'online-trade share of the economy', unit: '%', valueMode: 'share',
+      levelAvailability: 'not-applicable', basisAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    }
+  };
+  let result = validateSpec(share);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /basis is required/i.test(message)));
+
+  share.basis = {
+    type: 'ratio',
+    label: 'Underlying amounts',
+    formula: 'Online-trade turnover ÷ economy total',
+    items: [
+      { role: 'numerator', label: 'Online-trade turnover', value: 5.9, displayValue: 'RUB 5.9tn', unit: 'trillion RUB', valueStatus: 'reported', tone: 'primary' },
+      { role: 'denominator', label: 'Implied economy total', low: 59, high: 73.75, displayValue: 'RUB 59–73.75tn', unit: 'trillion RUB', valueStatus: 'derived', tone: 'neutral' }
+    ]
+  };
+  result = validateSpec(share);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('risk ranges require a population anchor and explanatory context', () => {
+  const risk = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Small sellers face a 10–15% exit risk',
+    subtitle: 'The estimate applies to active marketplace sellers.',
+    date: '2026-08-05',
+    data: [
+      { label: 'Low estimate', value: 10, displayValue: '10%', quantity: 'seller exit risk', scope: 'active marketplace sellers', period: '2026 outlook' },
+      { label: 'High estimate', value: 15, displayValue: '15%', quantity: 'seller exit risk', scope: 'active marketplace sellers', period: '2026 outlook' }
+    ],
+    measure: {
+      quantity: 'seller exit risk', unit: '%', valueMode: 'rate', levelAvailability: 'not-applicable',
+      basisAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    },
+    basis: {
+      type: 'population',
+      label: 'Seller population at risk',
+      items: [
+        { role: 'population', label: 'Active sellers', value: 456700, displayValue: '456,700 sellers', unit: 'sellers', valueStatus: 'reported' },
+        { role: 'affected', label: 'Implied exits', low: 45670, high: 68505, displayValue: '45,670–68,505 sellers', unit: 'sellers', valueStatus: 'derived', tone: 'critical' }
+      ]
+    }
+  };
+  let result = validateSpec(risk);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /narrative\.emphasis risk/i.test(message)));
+
+  risk.narrative = { frame: 'warning', density: 'editorial', emphasis: 'risk' };
+  result = validateSpec(risk);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /mechanism or consequence/i.test(message)));
+
+  risk.supportingFacts = [{ value: 'RUB 100,000/month', label: 'The exposed cohort consists of low-turnover sellers pressured by higher commissions.', role: 'mechanism', tone: 'warning' }];
+  result = validateSpec(risk);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('dated intervals and benchmark gaps enforce their defining evidence', () => {
+  const timeline = loadExample('fuel-ban-timeline.json');
+  let result = validateSpec(timeline);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  timeline.data[1].end = '2026-07-31';
+  result = validateSpec(timeline);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /end must not precede start/i.test(message)));
+
+  const gap = loadExample('urals-benchmark-gap.json');
+  result = validateSpec(gap);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  delete gap.data[0].benchmark;
+  result = validateSpec(gap);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /benchmark is required/i.test(message)));
+});
+
+test('runtime includes basis, calendar-duration, and benchmark-gap renderers', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /function renderDurationTimeline\(/);
+  assert.match(runtime, /function renderBenchmarkGap\(/);
+  assert.match(runtime, /tochnyi-basis-rail/);
+  assert.match(css, /\.tochnyi-basis-rail\s*\{/);
+  assert.match(css, /\.tochnyi-timeline-svg/);
+  assert.match(css, /\.tochnyi-benchmark-gap-svg/);
 });
 
 test('legacy story facets are deprecated and render without standalone cards', () => {

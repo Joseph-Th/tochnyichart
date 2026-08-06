@@ -274,6 +274,27 @@ should retain tangible absolute values in `displayValue`, and single headline
 metrics may use progress or pictogram treatments only when a real denominator
 or counted population exists.
 
+Percentage evidence must also be anchored when its basis is recoverable. Rate
+and share specs declare `measure.basisAvailability`; reported or retrievable
+numerator/denominator or population/affected amounts appear in the visible
+`basis` rail. Before a batch ledger may classify actual levels or a basis as
+unavailable or incomparable, it must name the exact tangible value sought and
+record at least two structured source checks spanning two source types,
+including a data-bearing source.
+
+Percentage-only prices, workforce, exports, production, spending, and revenue
+must trigger a search for the underlying amounts for the same scope and periods.
+Synthetic 100-based indexes and fabricated 0% starting observations are
+rejected. `valueMode: "index"` is reserved for named, source-reported indices
+with actual point values, and generic visible labels such as `100 index` or
+`index points` are not permitted.
+
+Use `timeline.duration` for exact start-to-end intervals and
+`comparison.benchmark-gap` for discounts, premiums, shortfalls, or overages
+where both the benchmark total and actual amount are available. Risk ranges
+must identify the exposed population or denominator and include at least one
+mechanism or consequence.
+
 Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 
 The renderer owns:

@@ -49,7 +49,9 @@
     "scale": "linear",
     "quantity": "July-to-date consumer price increase",
     "valueMode": "rate",
-    "levelAvailability": "not-applicable"
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "not-applicable",
+    "basisNote": "Inflation is a native price-index rate; a single currency numerator and denominator would not represent the measure."
   },
   "supportingFacts": [
     {

@@ -31,7 +31,22 @@ function validLedger(workspace) {
       representationAudit: {
         selectedMode: 'relative-change',
         levelAvailability: 'unavailable',
-        rationale: 'The fixture contains only the reported percentage increase.'
+        rationale: 'The fixture contains only the reported percentage increase.',
+        tangibleTarget: 'Company-specific insurance premium amounts before and after the reported increase.',
+        researchAttempts: [
+          {
+            source: 'Company filing',
+            sourceType: 'company-filing',
+            locator: 'Fixture annual filing, insurance-cost disclosures',
+            outcome: 'The fixture filing contains the percentage but no before-and-after premium amounts.'
+          },
+          {
+            source: 'Insurance market dataset',
+            sourceType: 'industry-dataset',
+            locator: 'Fixture insurer dataset, company premium table',
+            outcome: 'The fixture dataset does not publish company-specific premium levels.'
+          }
+        ]
       },
       anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
       evidence: [
@@ -83,6 +98,100 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
     assert.equal(result.selected, 1);
     assert.equal(result.omitted, 1);
     assert.equal(result.specificationsChecked, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity requires structured tangible-value research before normalized evidence is unavailable', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-research-proof');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    delete ledger.candidates[0].representationAudit.researchAttempts;
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-research-proof'),
+      /at least two structured source checks/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects vague research notes without source types and locators', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-research-structure');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].representationAudit.researchAttempts = [
+      { source: 'Company filing', outcome: 'No values found.' },
+      { source: 'Market report', outcome: 'No values found.' }
+    ];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-research-structure'),
+      /sourceType|locator|data-bearing source/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects synthetic index fallbacks', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-synthetic-index');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].representationAudit.selectedMode = 'index';
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-synthetic-index'),
+      /cannot use a synthetic index/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity carries rate and share basis audits into ChartSpecs', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-basis');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].representationAudit = {
+      selectedMode: 'share',
+      levelAvailability: 'not-applicable',
+      basisAvailability: 'retrievable',
+      rationale: 'The claim is natively expressed as a share.',
+      basisRationale: 'The numerator and denominator can be recovered from the named dataset.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'ozon-insurance-price-increase.json');
+    fs.writeFileSync(specPath, JSON.stringify({
+      title: 'Ozon insurance prices rose 230%',
+      measure: { valueMode: 'share', levelAvailability: 'not-applicable', basisAvailability: 'retrievable' },
+      basis: {
+        type: 'ratio',
+        items: [
+          { role: 'numerator', label: 'Numerator', value: 23, displayValue: '23 units' },
+          { role: 'denominator', label: 'Denominator', value: 100, displayValue: '100 units' }
+        ]
+      }
+    }));
+    assert.equal(validateSourceLedger(root, 'issue-basis', { requireSpecs: true }).valid, true);
+
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+    delete spec.basis;
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-basis', { requireSpecs: true }),
+      /must expose basis/i
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -198,7 +307,22 @@ test('source fidelity rejects duplicate charts with the same source and series s
       representationAudit: {
         selectedMode: 'relative-change',
         levelAvailability: 'unavailable',
-        rationale: 'The fixture contains only the reported percentage decline.'
+        rationale: 'The fixture contains only the reported percentage decline.',
+        tangibleTarget: 'Event-window share prices for the prior close, intraday low, and later close.',
+        researchAttempts: [
+          {
+            source: 'Exchange data',
+            sourceType: 'market-data',
+            locator: 'Fixture ticker, event-date intraday history',
+            outcome: 'The fixture provides only the reported relative move.'
+          },
+          {
+            source: 'Company filing',
+            sourceType: 'company-filing',
+            locator: 'Fixture event filing and investor-relations release',
+            outcome: 'No event-window share-price levels are included in the fixture.'
+          }
+        ]
       },
       anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
       evidence: [

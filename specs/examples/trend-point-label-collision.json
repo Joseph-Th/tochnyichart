@@ -78,7 +78,9 @@
     "decimals": 2,
     "baseline": "zero",
     "valueMode": "rate",
-    "levelAvailability": "not-applicable"
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "not-applicable",
+    "basisNote": "The fixture uses a native CPI rate to exercise label layout; no tangible numerator and denominator are applicable."
   },
   "supportingFacts": [
     {

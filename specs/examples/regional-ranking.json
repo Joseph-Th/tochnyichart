@@ -2,7 +2,7 @@
   "version": "2.0",
   "recipe": "ranking.horizontal",
   "title": "Regional Fuel Shortage Severity",
-  "subtitle": "Illustrative ranking of affected regions using a standardized severity index.",
+  "subtitle": "Illustrative ranking of affected regions using a standardized severity score.",
   "date": "2026-07-26",
   "source": {
     "name": "Tochnyi regional reporting compilation",
@@ -56,18 +56,17 @@
     }
   ],
   "measure": {
-    "unit": "severity index",
-    "axisTitle": "Severity index",
+    "unit": "score points",
+    "axisTitle": "Severity score",
     "decimals": 0,
     "minimum": 0,
     "maximum": 100,
     "baseline": "explicit",
-    "valueMode": "index",
-    "levelAvailability": "incomparable",
-    "normalizationNote": "The composite severity score combines unlike shortage indicators, so no common physical level can replace the index.",
+    "valueMode": "level",
+    "levelAvailability": "reported",
     "quantity": "composite fuel-shortage severity score"
   },
-  "note": "This fixture demonstrates the ranking layout; replace the illustrative index with a documented scoring method before publication.",
+  "note": "This fixture demonstrates the ranking layout; replace the illustrative score with a documented scoring method before publication.",
   "narrative": {
     "frame": "warning",
     "density": "detailed",

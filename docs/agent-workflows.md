@@ -139,8 +139,9 @@ Before selecting a recipe:
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
-7. Determine whether actual levels are reported or retrievable. Prefer those levels over relative or indexed geometry and record the choice in `representationAudit`.
-8. Select one central finding, its evidence spine, the workflow, and the recipe.
+7. Determine whether actual levels are reported or retrievable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available.
+8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two named source checks and outcomes.
+9. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
 
@@ -165,9 +166,9 @@ Every route follows the same semantic stages:
 1. Preserve the expert input claim, then confirm and read supplied sources in full.
 2. Extract the relevant evidence, supplemental context, and safe derivations.
 3. Fill only material evidence gaps with conditional research.
-4. Audit the value representation. Use actual levels when reported or retrievable; never manufacture a `0%` or index-100 starting point.
+4. Audit the value representation and any rate/share basis. For percentage-only prices, workforce, exports, production, spending, or revenue, search for the underlying amounts for the same scope and periods. Use actual levels and tangible basis amounts when reported or retrievable; never manufacture a `0%` or index-100 starting point.
 5. Choose one central finding, the workflow, and the story recipe.
-6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode` and `measure.levelAvailability`.
+6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode`, `measure.levelAvailability`, and `measure.basisAvailability` for rates or shares.
 7. Validate the JSON.
 8. Render through the selected workflow.
 9. Correct semantic errors and rerun the checks.
@@ -195,6 +196,12 @@ argument.
 Check that:
 
 - The visual grammar matches the evidence and the selected recipe.
+- Any unavailable or incomparable tangible level has a named `tangibleTarget`
+  and structured research attempts spanning two source types, including a
+  data-bearing source.
+- `valueMode: "index"` is used only for a named, source-reported index with
+  actual point values. Generic visible labels such as `100 index` and `index
+  points` are absent.
 - Every comparison, trend, or ranking on a shared axis passes this literal sentence test: `Every mark
   encodes [measure.quantity] for [data.scope] in [data.period].` If the words in
   the brackets cannot stay the same for every mark, the values do not belong on
@@ -209,12 +216,20 @@ Check that:
 - Composition charts retain a tangible absolute amount in `displayValue` when
   the source provides one; percentages alone are not enough when real amounts
   are known.
+- Rates and shares expose their tangible basis in `basis` when recoverable.
+- Risk ranges include a population or denominator plus a mechanism or
+  consequence, not only two percentage endpoints.
+- Exact start/end intervals use `timeline.duration` so calendar overlap and
+  elapsed time remain visible.
+- Discounts, premiums, shortfalls, and overages use
+  `comparison.benchmark-gap` when both the benchmark and actual amount are
+  available.
 - A non-map chart must contain at least two quantitative marks. A lone metric
   must gain a real prior value, target, benchmark, denominator, remainder,
   peer, range, or time series from the source. If none exists, omit the story.
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
-`comparison.range`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`comparison.range`, `comparison.benchmark-gap`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while

@@ -46,7 +46,9 @@
     "baseline": "explicit",
     "quantity": "policy interest rate",
     "valueMode": "rate",
-    "levelAvailability": "not-applicable"
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "not-applicable",
+    "basisNote": "The policy rate is a native quoted rate, not a ratio derived from a tangible numerator and denominator."
   },
   "emphasis": {
     "direction": "down",

@@ -1,0 +1,53 @@
+{
+  "version": "2.0",
+  "recipe": "timeline.duration",
+  "title": "Fuel Export Restrictions Run on Different Clocks",
+  "subtitle": "The gasoline restriction spans six calendar months while the diesel restriction lasts one month.",
+  "date": "2026-08-05",
+  "source": {
+    "name": "Illustrative policy-duration fixture",
+    "period": "August 2026–February 2027"
+  },
+  "data": [
+    {
+      "label": "Gasoline export ban",
+      "start": "2026-08-01",
+      "end": "2027-01-31",
+      "displayValue": "6 months",
+      "tone": "critical",
+      "detail": "A longer restriction across the autumn and winter period."
+    },
+    {
+      "label": "Diesel export ban",
+      "start": "2026-08-01",
+      "end": "2026-08-31",
+      "displayValue": "1 month",
+      "tone": "warning",
+      "detail": "A shorter restriction ending after August."
+    }
+  ],
+  "measure": {
+    "quantity": "fuel export restriction duration",
+    "unit": "calendar time",
+    "decimals": 0,
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "duration"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "fuel-ban-timeline-example",
+    "topic": "policy duration",
+    "dataPeriod": "August 2026–February 2027",
+    "keyFinding": "The two fuel restrictions occupy materially different calendar windows."
+  }
+}

@@ -24,7 +24,7 @@ npm run run:verify-source -- <run-id> --specs
 
 ```json
 {
-  "version": "1.1",
+  "version": "1.3",
   "runId": "issue-2026-08-05",
   "input": {
     "path": "input.txt",
@@ -138,10 +138,71 @@ selection:
 - `rationale`: a concise explanation of why that representation is the least
   normalized form that preserves the story.
 
-When actual levels are `reported` or `retrievable`, `relative-change` and
-`index` are rejected as primary geometry. Use the actual values and retain the
-percentage or indexed change as secondary context. A synthetic `0%` before
-point or index-100 baseline is not a substitute for researching the level.
+Rate and share stories also require:
+
+- `basisAvailability`: whether the tangible numerator and denominator, or the
+  population and affected count, are `reported`, `retrievable`, `unavailable`,
+  `incomparable`, or `not-applicable`.
+- `basisRationale`: why the selected basis status is correct.
+
+When an absolute or relative change uses `unavailable` or `incomparable` levels,
+or when a rate/share uses an `unavailable` or `incomparable` basis, the audit
+also requires:
+
+- `tangibleTarget`: the exact price, count, volume, amount, numerator, or
+  denominator sought.
+- `researchAttempts`: at least two structured source checks.
+
+Each attempt requires `source`, `sourceType`, `locator`, and `outcome`.
+`sourceType` must be one of `supplied-source`, `official-dataset`,
+`company-filing`, `market-data`, `industry-dataset`, or
+`authoritative-report`. The attempts must cover at least two source types and
+must include an official dataset, company filing, market-data source, or
+industry dataset. A failed general web search or search-result snippet is not a
+source check.
+
+```json
+{
+  "selectedMode": "share",
+  "levelAvailability": "not-applicable",
+  "basisAvailability": "retrievable",
+  "rationale": "The claim is natively a share.",
+  "basisRationale": "Turnover and the economy total can be recovered from the named datasets."
+}
+```
+
+```json
+{
+  "selectedMode": "relative-change",
+  "levelAvailability": "unavailable",
+  "tangibleTarget": "Company-specific insurance premium amounts before and after the reported increase.",
+  "rationale": "The source reports the change but not the underlying price levels.",
+  "researchAttempts": [
+    {
+      "source": "Company filing",
+      "sourceType": "company-filing",
+      "locator": "Annual filing, insurance-cost note",
+      "outcome": "The filing reports the percentage increase but no before-and-after premium amounts."
+    },
+    {
+      "source": "Named insurance-market dataset",
+      "sourceType": "industry-dataset",
+      "locator": "Company premium table for the reporting period",
+      "outcome": "The dataset does not publish company-specific premium levels."
+    }
+  ]
+}
+```
+
+When actual levels are `reported` or `retrievable`, `relative-change` is rejected
+as primary geometry. Use the actual values and retain the percentage change as
+secondary context. `index` is reserved for a named, source-reported index with
+actual point values. A synthetic `0%` before point, index-100 baseline, or
+viewer-facing label such as `100 index` is not permitted.
+For a rate or share, `reported` or `retrievable` basis amounts must be exposed
+in the ChartSpec `basis` rail. Examples include cost and income behind a
+cost-to-income ratio, turnover and economy size behind an economic share, or a
+seller population and affected count behind an exit-risk estimate.
 
 The validator scans every numeric token in `input.txt`. Each number must fall
 inside a candidate `anchor` or an `ignoredEvidence.anchor`. Use
@@ -187,6 +248,8 @@ With `--specs`, validation requires:
 - Every ChartSpec title exactly matches its ledger title.
 - Every ChartSpec `measure.valueMode` and `measure.levelAvailability` exactly
   match the selected candidate's `representationAudit`.
+- Rate/share ChartSpecs also match `measure.basisAvailability`; when the basis
+  is reported or retrievable, the ChartSpec must include `basis`.
 - Selected ChartSpecs do not repeat the same input anchor, publication and
   reporting period, recipe, and category or time-label sequence. When they do,
   consolidate the secondary measure or mark its ledger candidate `merged`.

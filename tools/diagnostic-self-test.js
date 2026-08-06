@@ -83,23 +83,26 @@ try {
       {
         label: 'Midpoint',
         value: 50,
-        displayValue: '50',
-        quantity: 'diagnostic index value',
+        displayValue: '50 points',
+        quantity: 'diagnostic boundary score',
         scope: 'boundary-label diagnostic fixture',
         period: 'single diagnostic run'
       },
       {
         label: 'Axis maximum',
         value: 100,
-        displayValue: '100',
-        quantity: 'diagnostic index value',
+        displayValue: '100 points',
+        quantity: 'diagnostic boundary score',
         scope: 'boundary-label diagnostic fixture',
         period: 'single diagnostic run'
       }
     ],
     measure: {
-      quantity: 'diagnostic index value',
-      unit: 'index',
+      quantity: 'diagnostic boundary score',
+      unit: 'points',
+      axisTitle: 'Boundary score',
+      valueMode: 'level',
+      levelAvailability: 'reported',
       decimals: 0,
       minimum: 0,
       maximum: 100,
