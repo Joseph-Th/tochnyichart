@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.6.0
+version: 4.7.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -129,17 +129,19 @@ every accepted story:
   it cannot be enriched and has no distinct conclusion, merge or omit it.
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
 - Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
-- For every rate or share, separately record `basisAvailability` and `basisRationale`. When numerator/denominator or population/affected amounts are reported or retrievable, select `level` and plot those tangible amounts; the normalized rate remains secondary copy. A ChartSpec `basis` rail alone is not sufficient.
+- For every rate or share, separately record `basisAvailability` and `basisRationale`. When numerator/denominator or population/affected amounts are reported or retrievable, select `level` and plot those tangible amounts; the normalized rate remains secondary copy. The total population or denominator must appear on the primary scale as a point, reference, benchmark, or complete composition. A ChartSpec `basis` rail alone is not sufficient.
 - Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two completed, source-specific `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. Pending language and generic locators such as `website`, `search`, `dataset`, or `report` are invalid. The checks must span two source types and include a data-bearing source.
-- Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods.
+- Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods. Workforce research must include the company filing or official employee disclosure for the relevant reporting perimeter.
 - Prefer reported or retrievable actual levels for primary geometry. Use percentage change as annotation, emphasis, subtitle, or supporting context.
 - Never manufacture a `0%` before-event point or index-100 starting point merely to create a trend.
 - Use `relative-change` only when actual levels are unavailable or incomparable, and explain the limitation in `measure.normalizationNote`.
 - Use `index` only for a named index whose point values are reported or retrievable. Never publish generic visible labels such as `100 index`, `91.5 index`, or `index points`.
 - Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec. Rate/share specs also declare `measure.basisAvailability` and `measure.basisNote` when the basis is unavailable, incomparable, or not applicable.
-- Risk and exit-outlook charts require a population or denominator plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
+- Risk and exit-outlook charts require a population or denominator shown on the plotted scale plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
 - Use `comparison.pictogram` for two to four exact integer counts from 0 to 400 when one symbol per unit is clearer than an axis; do not use logarithmic bars solely to fit an extreme count ratio.
-- Use `timeline.duration` when exact start and end dates define two or more intervals.
+- Use every comparable datapoint that materially proves the title. Three or more ordered observations establishing slowdown, acceleration, reversal, or persistence require `trend.line`; do not leave the historical series in `supportingFacts`.
+- Use `timeline.duration` whenever duration or reserve runway is the comparison. Supply exact start/end dates, or a verified common `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
+- When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, convert them to coverage time or add a visible consumption benchmark on the same scale.
 - Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; never add a row that only repeats the benchmark or implied remainder.
 - Use `relationship.converging-signals` when exactly two drivers and one outcome
   are essential but use unlike quantities or units. Each factor and the outcome
@@ -148,6 +150,9 @@ every accepted story:
   represents magnitude. Use `identity` only for a same-scope, same-period
   equation; use `directional` with a note when the evidence supports the
   direction but does not reconcile exactly.
+- A headline built around opposing quantities, such as falling purchases and rising prices producing higher spending, cannot plot one side while placing the other figures in `supportingFacts`.
+- `subtitle` is optional. Omit it when it repeats the title, category labels, percentages, or amounts already visible in the marks.
+- Two-part compositions use one label treatment per segment. Do not repeat the same category, percentage, and amount inside the bar and immediately below it.
 - Apply an information-economy test: every mark must add an independent observation. Remove complement rows, duplicated totals, zero-gap closures, and other marks that merely restate labels or geometry already present.
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.

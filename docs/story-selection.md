@@ -77,6 +77,24 @@ rates, ratios, and risk estimates, audit the numerator/denominator or
 population/affected count. When those amounts are reported or retrievable,
 switch to level geometry and keep the normalized rate in secondary copy.
 
+The least normalized representation is not automatically the best story
+geometry. When the finding is that a rate is slowing, accelerating, reversing,
+or persisting, three or more comparable rate observations belong in
+`trend.line`. Do not plot two turnover levels and place the historical growth
+rates in `supportingFacts`; the growth-rate sequence is the evidence that proves
+the headline.
+
+When a risk or share is interpreted as part of a total, the total must be
+visible on the primary scale. Use a plotted population value, a reference line,
+a benchmark, or a complete composition. A basis rail alone does not let the
+reader see whether the affected range is small or large relative to the whole.
+
+When an amount is interpreted as days of consumption, share of demand, or
+coverage of need, visualize that orientation. Convert the amounts to coverage
+time when the denominator is defensible, or place a daily or monthly
+consumption benchmark on the same unit scale. Do not leave the only meaningful
+denominator in a supporting-fact sentence.
+
 An `unavailable` or `incomparable` level or basis is not a shortcut around
 research. The source ledger requires an exact `tangibleTarget` and at least two
 completed, source-specific checks covering two source types, including a
@@ -129,6 +147,11 @@ Use one of these alternatives:
 - `map.regional` when geography is itself the explanatory structure.
 - Omit the story when the source does not provide a real visual comparison.
 
+When mixed-unit facts are not secondary but jointly define the headline, use
+`relationship.converging-signals`. A claim such as fewer purchases plus higher
+prices producing higher spending is incomplete if only purchase volume is
+plotted and spending and prices are placed in supporting facts.
+
 ## The visual-evidence gate
 
 Every production chart must carry its main argument through geometry tied to
@@ -141,9 +164,14 @@ chart.
 - A rate or share with a recoverable basis must expose the underlying tangible
   amounts.
 - A risk range must identify the exposed population or denominator and at least
-  one mechanism or consequence.
-- Exact dated intervals must use calendar geometry rather than abstract bar
-  lengths.
+  one mechanism or consequence, and the total population must be visible on the
+  plotted scale.
+- Duration comparisons must use calendar geometry rather than abstract bar
+  lengths. Use exact start/end dates, or one verified `timeline.anchorDate`
+  with exact `duration` and `durationUnit` values.
+- Three or more ordered observations that establish slowdown, acceleration,
+  reversal, or persistence must be plotted as a trend rather than reduced to a
+  two-value comparison with the rest in supporting facts.
 - A discount, premium, shortfall, or overage should show both the benchmark
   total and the actual amount, not only the difference.
 - Categorical operating states must be quantified on one common dimension or
@@ -154,6 +182,18 @@ chart.
 `status.grid` and `headline.metric` are disabled in the production catalog,
 schema, and validator. Legacy generated HTML may still contain those renderers,
 but the Tool API will not accept new ChartSpecs using them.
+
+## Copy economy
+
+`subtitle` is optional. Omit it when it repeats the title, category names,
+percentages, or amounts already printed on the marks. Retain it only when it
+adds a qualification, denominator, mechanism, scope distinction, or
+interpretation that is not otherwise visible.
+
+Two-part compositions use one label treatment per segment. When both segments
+are large enough, the label, share, and tangible amount appear inside the bar.
+When a segment is too small, both labels move outside. The same information must
+not appear both inside the bar and immediately below it.
 
 ## Source coverage and title fidelity
 

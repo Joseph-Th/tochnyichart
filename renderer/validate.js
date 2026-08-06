@@ -18,6 +18,7 @@ const RELATIONSHIP_ROLES = new Set(['driver', 'outcome']);
 const RELATIONSHIP_MODES = new Set(['identity', 'directional']);
 const RELATIONSHIP_OPERATORS = new Set(['multiply', 'combine']);
 const VALUE_STATUSES = new Set(['reported', 'derived', 'bound', 'approximate']);
+const DURATION_UNITS = new Set(['days', 'weeks', 'months']);
 const SCALES = new Set(['linear', 'logarithmic']);
 const VALUE_MODES = new Set(['level', 'absolute-change', 'relative-change', 'rate', 'share', 'index']);
 const LEVEL_AVAILABILITY = new Set(['reported', 'retrievable', 'unavailable', 'incomparable', 'not-applicable']);
@@ -55,12 +56,12 @@ const DISABLED_RECIPES = new Map([
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
-  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship'
+  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
-  'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
+  'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope', 'relationshipRole'
 ]);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
@@ -82,6 +83,7 @@ const MAP_KEYS = new Set([
   'viewport', 'viewportAlignment', 'contextFit', 'landmass', 'excludeRegions', 'anchorStyle', 'leaderRouting'
 ]);
 const RELATIONSHIP_KEYS = new Set(['mode', 'operator', 'formula']);
+const TIMELINE_KEYS = new Set(['anchorDate']);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -115,6 +117,25 @@ function isDateString(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function addDurationToDate(anchorDate, duration, durationUnit) {
+  if (!isDateString(anchorDate) || typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) return null;
+  if (!DURATION_UNITS.has(durationUnit)) return null;
+  const end = new Date(`${anchorDate}T00:00:00Z`);
+  if (durationUnit === 'days') end.setUTCDate(end.getUTCDate() + duration);
+  else if (durationUnit === 'weeks') end.setUTCDate(end.getUTCDate() + duration * 7);
+  else end.setUTCMonth(end.getUTCMonth() + duration);
+  return Number.isNaN(end.getTime()) ? null : end.toISOString().slice(0, 10);
+}
+
+function timelineInterval(spec, item) {
+  if (isDateString(item?.start) && isDateString(item?.end)) {
+    return { start: item.start, end: item.end, derived: false };
+  }
+  const anchorDate = spec.timeline?.anchorDate;
+  const end = addDurationToDate(anchorDate, item?.duration, item?.durationUnit);
+  return end ? { start: anchorDate, end, derived: true } : null;
 }
 
 function isHttpUrl(value) {
@@ -275,6 +296,14 @@ function normalizeSpec(input) {
   spec.title = typeof spec.title === 'string' ? spec.title.trim() : spec.title;
   spec.subtitle = typeof spec.subtitle === 'string' ? spec.subtitle.trim() : spec.subtitle;
   spec.source = normalizeSource(spec.source);
+  if (isObject(spec.timeline)) {
+    spec.timeline = {
+      ...spec.timeline,
+      ...(spec.timeline.anchorDate !== undefined
+        ? { anchorDate: typeof spec.timeline.anchorDate === 'string' ? spec.timeline.anchorDate.trim() : spec.timeline.anchorDate }
+        : {})
+    };
+  }
 
   spec.measure = isObject(spec.measure) ? spec.measure : {};
   spec.measure.decimals = spec.measure.decimals === undefined ? 0 : spec.measure.decimals;
@@ -330,6 +359,9 @@ function normalizeSpec(input) {
           : {}),
         ...(item.start !== undefined ? { start: typeof item.start === 'string' ? item.start.trim() : item.start } : {}),
         ...(item.end !== undefined ? { end: typeof item.end === 'string' ? item.end.trim() : item.end } : {}),
+        ...(item.durationUnit !== undefined
+          ? { durationUnit: typeof item.durationUnit === 'string' ? item.durationUnit.trim().toLowerCase() : item.durationUnit }
+          : {}),
         ...(item.detail !== undefined ? { detail: typeof item.detail === 'string' ? item.detail.trim() : item.detail } : {}),
         ...(item.annotation !== undefined ? { annotation: typeof item.annotation === 'string' ? item.annotation.trim() : item.annotation } : {}),
         ...(item.period !== undefined ? { period: typeof item.period === 'string' ? item.period.trim() : item.period } : {}),
@@ -427,6 +459,7 @@ function validateStructure(input, errors) {
   if (isObject(input.metadata)) rejectUnknownKeys(input.metadata, METADATA_KEYS, 'metadata', errors);
   if (isObject(input.map)) rejectUnknownKeys(input.map, MAP_KEYS, 'map', errors);
   if (isObject(input.relationship)) rejectUnknownKeys(input.relationship, RELATIONSHIP_KEYS, 'relationship', errors);
+  if (isObject(input.timeline)) rejectUnknownKeys(input.timeline, TIMELINE_KEYS, 'timeline', errors);
 }
 
 function validateData(spec, errors, warnings) {
@@ -448,6 +481,12 @@ function validateData(spec, errors, warnings) {
       if (item[key] !== undefined && (typeof item[key] !== 'number' || !Number.isFinite(item[key]))) {
         errors.push(`${path}.${key} must be a finite number.`);
       }
+    }
+    if (item.duration !== undefined && (!Number.isInteger(item.duration) || item.duration <= 0)) {
+      errors.push(`${path}.duration must be a positive integer.`);
+    }
+    if (item.durationUnit !== undefined && !DURATION_UNITS.has(item.durationUnit)) {
+      errors.push(`${path}.durationUnit must be days, weeks, or months.`);
     }
     if (item.displayValue !== undefined && (typeof item.displayValue !== 'string' || item.displayValue.length > 50)) {
       errors.push(`${path}.displayValue must be a string of 50 characters or fewer.`);
@@ -803,13 +842,21 @@ function validateRecipe(spec, errors, warnings) {
       requireNumericValues(spec, errors);
       break;
     case 'comparison.range':
-      if (count < 2 || count > 8) errors.push('comparison.range requires 2 to 8 data items.');
+      if (count < 1 || count > 8) errors.push('comparison.range requires 1 to 8 data items.');
       data.forEach((item, index) => {
         const hasValue = typeof item?.value === 'number' && Number.isFinite(item.value);
         const hasRange = typeof item?.low === 'number' && Number.isFinite(item.low) && typeof item?.high === 'number' && Number.isFinite(item.high);
         if (!hasValue && !hasRange) errors.push(`data[${index}] requires value or both low and high for comparison.range.`);
         if (hasRange && item.low > item.high) errors.push(`data[${index}].low must not exceed high.`);
       });
+      if (count === 1) {
+        const item = data[0] || {};
+        const hasRange = typeof item.low === 'number' && Number.isFinite(item.low) && typeof item.high === 'number' && Number.isFinite(item.high);
+        const hasScaleReference = typeof item.benchmark === 'number' || (Array.isArray(spec.references) && spec.references.length > 0);
+        if (!hasRange || !hasScaleReference) {
+          errors.push('A one-row comparison.range chart requires a low-high interval plus a visible benchmark or reference that supplies the scale.');
+        }
+      }
       break;
     case 'comparison.benchmark-gap':
       if (count < 1 || count > 6) errors.push('comparison.benchmark-gap requires 1 to 6 data items.');
@@ -858,16 +905,20 @@ function validateRecipe(spec, errors, warnings) {
       if (count < 2 || count > 8) errors.push('timeline.duration requires 2 to 8 data items.');
       const endpoints = [];
       data.forEach((item, index) => {
-        if (!isDateString(item?.start)) errors.push(`data[${index}].start is required for timeline.duration.`);
-        if (!isDateString(item?.end)) errors.push(`data[${index}].end is required for timeline.duration.`);
-        if (isDateString(item?.start) && isDateString(item?.end)) {
-          const start = Date.parse(`${item.start}T00:00:00Z`);
-          const end = Date.parse(`${item.end}T00:00:00Z`);
+        const interval = timelineInterval(spec, item);
+        if (!interval) {
+          errors.push(`data[${index}] requires start and end, or duration and durationUnit with timeline.anchorDate.`);
+        } else {
+          const start = Date.parse(`${interval.start}T00:00:00Z`);
+          const end = Date.parse(`${interval.end}T00:00:00Z`);
           if (end < start) errors.push(`data[${index}].end must not precede start for timeline.duration.`);
           endpoints.push(start, end);
         }
         if (!item?.displayValue) warnings.push(`data[${index}].displayValue is recommended so the interval duration is explicit.`);
       });
+      if (spec.timeline?.anchorDate !== undefined && !isDateString(spec.timeline.anchorDate)) {
+        errors.push('timeline.anchorDate must be a real date in YYYY-MM-DD format.');
+      }
       if (new Set(endpoints).size < 2) errors.push('timeline.duration requires at least two distinct calendar endpoints.');
       break;
     }
@@ -1146,8 +1197,8 @@ function validateValueRepresentation(spec, errors, warnings) {
   if (measure.valueMode !== 'relative-change' && measure.normalizationNote) {
     warnings.push('measure.normalizationNote is only needed for relative-change representations.');
   }
-  if (!['rate', 'share'].includes(measure.valueMode) && (measure.basisAvailability || measure.basisNote || spec.basis)) {
-    warnings.push('basis fields are intended for rate or share anchoring; use supporting facts for unrelated context.');
+  if (!['rate', 'share'].includes(measure.valueMode) && (measure.basisAvailability || measure.basisNote)) {
+    warnings.push('measure.basisAvailability and measure.basisNote are only needed for rate or share representations. A semantic basis object may still document tangible level arithmetic.');
   }
 }
 
@@ -1281,6 +1332,77 @@ function validateSupportingFacts(spec, errors, warnings) {
 
 const RISK_TEXT = /\b(?:risk|at risk|likely|likelihood|probability|expected\s+(?:exit|loss|failure|closure|default)|forecast\s+(?:exit|loss|failure|closure|default))\b/i;
 
+function numericText(value) {
+  return typeof value === 'string' && /\d/.test(value);
+}
+
+function normalizedNumberTokens(value) {
+  return (String(value || '').match(/\d+(?:[.,]\d+)*/g) || []).map((token) => token.replace(/,/g, ''));
+}
+
+function validateSubtitleEconomy(spec, errors) {
+  if (!spec.subtitle) return;
+  const numbers = normalizedNumberTokens(spec.subtitle);
+  if (!numbers.length) return;
+  const visualText = [
+    spec.title,
+    ...(spec.data || []).flatMap((item) => [item?.label, item?.displayValue, item?.benchmarkDisplayValue, item?.gapDisplayValue]),
+    spec.emphasis?.displayValue,
+    spec.emphasis?.label
+  ].filter(Boolean).join(' ');
+  const visibleNumbers = new Set(normalizedNumberTokens(visualText));
+  const repeatsAllNumbers = numbers.every((number) => visibleNumbers.has(number));
+  const addsInterpretation = /\b(?:because|due to|after|before|amid|despite|while|forecast|expected|estimated|uncertain|versus|compared with|share of|coverage|covered|leaving|unable|reduced|widened|inside|per day|per month)\b/i.test(spec.subtitle);
+  if (repeatsAllNumbers && !addsInterpretation && (spec.data || []).length <= 3) {
+    errors.push('subtitle repeats values and labels already visible in the chart. Omit it or use it only for a mechanism, denominator, qualification, or interpretation that the marks do not show.');
+  }
+}
+
+function validateTemporalPriority(spec, errors) {
+  if (spec.recipe === 'timeline.duration' || (spec.data || []).length < 2) return;
+  const unit = String(spec.measure?.unit || '').toLowerCase();
+  const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.measure?.quantity || ''} ${spec.metadata?.keyFinding || ''}`;
+  const durationUnit = /\b(?:day|days|week|weeks|month|months|year|years)\b/.test(unit);
+  const durationStory = /\b(?:duration|restriction|ban|reserve|coverage|outage|shutdown|contract|deadline|window|lasts?|runs? for)\b/i.test(text);
+  if (durationUnit && durationStory) {
+    errors.push('Duration is the primary comparison. Use timeline.duration, researching an exact anchor date when needed; anchored durations may use timeline.anchorDate plus data[].duration and durationUnit.');
+  }
+}
+
+function validateTrendEvidenceUse(spec, errors) {
+  if (spec.recipe === 'trend.line') return;
+  const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
+  if (!/\b(?:growth|rate|inflation|output|sales|turnover)\b[^.]{0,80}\b(?:slow|slowed|slowing|decelerat|accelerat|trend|consecutive|again)\b|\b(?:slow|slowed|slowing|decelerat|accelerat)\b[^.]{0,80}\b(?:growth|rate)\b/i.test(text)) return;
+  const periodLike = /\b(?:19|20)\d{2}\b|\b(?:q[1-4]|h[12]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i;
+  const comparableFacts = (spec.supportingFacts || []).filter((fact) => numericText(fact?.value) && periodLike.test(fact?.label || ''));
+  const dataPeriods = new Set((spec.data || []).map((item) => normalizeEditorialValue(item?.period || item?.label)).filter(Boolean));
+  if (comparableFacts.length + dataPeriods.size >= 3) {
+    errors.push('The central claim is a multi-period slowdown or acceleration, but comparable time observations are relegated to supporting facts. Put the full series in trend.line and keep only non-series context outside the plot.');
+  }
+}
+
+function validateCoverageOrientation(spec, errors) {
+  const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''} ${(spec.supportingFacts || []).map((fact) => `${fact?.value || ''} ${fact?.label || ''}`).join(' ')}`;
+  if (!/\b(?:days? of (?:consumption|demand|need|coverage)|daily consumption|monthly (?:consumption|demand|need)|coverage rate|covers? only)\b/i.test(text)) return;
+  const unit = String(spec.measure?.unit || '').toLowerCase();
+  const normalizedToTime = /\b(?:day|days|week|weeks|month|months)\b/.test(unit);
+  const hasConsumptionReference = (spec.references || []).some((reference) => /\b(?:consumption|demand|need|daily|monthly)\b/i.test(reference?.label || ''));
+  const hasBenchmark = (spec.data || []).some((item) => typeof item?.benchmark === 'number');
+  if (!normalizedToTime && !hasConsumptionReference && !hasBenchmark) {
+    errors.push('The story is about coverage against consumption, but the primary geometry shows only raw volume. Convert each amount to days of coverage or add a visible consumption benchmark on the same scale.');
+  }
+}
+
+function validateContrastStructure(spec, errors) {
+  if (['relationship.converging-signals', 'trend.line'].includes(spec.recipe)) return;
+  const text = `${spec.title || ''} ${spec.metadata?.keyFinding || ''}`;
+  if (!/\b(?:even as|despite|while)\b/i.test(text)) return;
+  const materialFacts = (spec.supportingFacts || []).filter((fact) => numericText(fact?.value) && ['comparison', 'mechanism', 'consequence'].includes(fact?.role));
+  if ((spec.data || []).length <= 2 && materialFacts.length >= 2) {
+    errors.push('The headline depends on opposing or converging quantitative signals, but only one side is plotted. Use relationship.converging-signals when two drivers and one outcome carry the claim, or split the evidence into complete charts.');
+  }
+}
+
 function validateRiskContext(spec, errors) {
   const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.measure?.quantity || ''}`;
   const isRisk = spec.narrative?.emphasis === 'risk' || RISK_TEXT.test(text);
@@ -1298,6 +1420,18 @@ function validateRiskContext(spec, errors) {
   }
   if (!hasMechanismOrConsequence) {
     errors.push('Risk stories require at least one mechanism or consequence in supportingFacts.role or a point annotation; a bare probability range is too thin.');
+  }
+  if (hasPopulationBasis) {
+    const populationItem = (spec.basis.items || []).find((item) => item?.role === 'population');
+    const population = populationItem?.value;
+    const visibleAsDataPoint = typeof population === 'number' && (spec.data || []).some((item) => nearlyEqual(item?.value, population));
+    const visibleAsReference = typeof population === 'number' && (spec.references || []).some((reference) => nearlyEqual(reference?.value, population));
+    const visibleAsBenchmark = typeof population === 'number' && (spec.data || []).some((item) => nearlyEqual(item?.benchmark, population));
+    const visibleAsComposition = typeof population === 'number' && ['composition.stacked', 'composition.donut'].includes(spec.recipe) &&
+      nearlyEqual((spec.data || []).reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0), population);
+    if (!visibleAsDataPoint && !visibleAsReference && !visibleAsBenchmark && !visibleAsComposition) {
+      errors.push('A population basis cannot remain a secondary rail in a risk chart. Show the total population as a plotted point, reference, benchmark, or complete composition so the affected range is visibly proportional to the whole.');
+    }
   }
 }
 
@@ -1388,9 +1522,14 @@ function validateEditorialEconomy(spec, errors, warnings) {
   }
 
   const data = Array.isArray(spec.data) ? spec.data : [];
-  const hasIntervalFields = data.some((item) => item?.start !== undefined || item?.end !== undefined);
+  const hasIntervalFields = data.some((item) =>
+    item?.start !== undefined || item?.end !== undefined || item?.duration !== undefined || item?.durationUnit !== undefined
+  );
   if (hasIntervalFields && spec.recipe !== 'timeline.duration') {
     errors.push('Dated start/end intervals require timeline.duration so calendar position, overlap, and elapsed time remain visible.');
+  }
+  if (spec.timeline !== undefined && spec.recipe !== 'timeline.duration') {
+    errors.push('timeline is only supported by timeline.duration.');
   }
   const hasBenchmarkGapFields = data.some((item) =>
     item?.benchmark !== undefined || item?.benchmarkDisplayValue !== undefined || item?.gapDisplayValue !== undefined
@@ -1482,7 +1621,7 @@ function validateSpec(input) {
     errors.push(`Unknown recipe: ${String(spec.recipe)}.`);
   }
   pushLengthIssue(spec.title, 'title', 100, errors, warnings, 68);
-  pushLengthIssue(spec.subtitle, 'subtitle', 240, errors, warnings, 170);
+  if (spec.subtitle !== undefined) pushLengthIssue(spec.subtitle, 'subtitle', 240, errors, warnings, 170);
   if (!isDateString(spec.date)) errors.push('date must be a real date in YYYY-MM-DD format.');
 
   if (isObject(spec.source)) {
@@ -1503,6 +1642,11 @@ function validateSpec(input) {
   validateReferences(spec, errors, warnings);
   validateEmphasis(spec, errors);
   validateSupportingFacts(spec, errors, warnings);
+  validateSubtitleEconomy(spec, errors);
+  validateTemporalPriority(spec, errors);
+  validateTrendEvidenceUse(spec, errors);
+  validateCoverageOrientation(spec, errors);
+  validateContrastStructure(spec, errors);
   validateRiskContext(spec, errors);
   validatePrimaryMetric(spec, errors, warnings);
   validateNarrative(spec, errors);

@@ -308,6 +308,13 @@ A simple two-value chart remains correct when the contrast itself is the full
 story. The objective is information density within one claim, not maximum data
 volume or visual novelty.
 
+Comparable evidence that proves the title cannot be reduced to supporting
+facts. Three or more ordered observations establishing slowdown, acceleration,
+reversal, or persistence must be plotted as `trend.line`. Mixed-unit signals
+that jointly define a claim, such as falling purchase volume, rising prices,
+and rising spending, belong in `relationship.converging-signals` or separate
+complete charts.
+
 “Both values are percentages” is not a valid comparison rule. Shared-axis marks
 must measure the same real-world quantity for the same scope. Composition charts
 should retain tangible absolute values in `displayValue`, and single headline
@@ -318,7 +325,9 @@ Percentage evidence must also be anchored when its basis is recoverable. Rate
 and share stories audit `basisAvailability`; reported or retrievable
 numerator/denominator or population/affected amounts become the primary level
 geometry. The percentage remains secondary copy, and a `basis` rail alone is
-not sufficient. Before a batch ledger may classify actual levels or a basis as
+not sufficient. The total population or denominator must also be visible as a
+point, reference, benchmark, or complete composition. Before a batch ledger may
+classify actual levels or a basis as
 unavailable or incomparable, it must name the exact tangible value sought and
 record at least two completed, source-specific checks spanning two source
 types, including a data-bearing source. Pending or generic lookup notes are
@@ -326,6 +335,9 @@ rejected.
 
 Percentage-only prices, workforce, exports, production, spending, and revenue
 must trigger a search for the underlying amounts for the same scope and periods.
+Workforce research must include the company filing or official employee
+disclosure for the relevant reporting perimeter. Consumption and coverage
+stories must use an official or industry denominator when available.
 Synthetic 100-based indexes and fabricated 0% starting observations are
 rejected. `valueMode: "index"` is reserved for named, source-reported indices
 with actual point values, and generic visible labels such as `100 index` or
@@ -333,11 +345,20 @@ with actual point values, and generic visible labels such as `100 index` or
 
 Use `comparison.pictogram` for two to four exact counts from 0 to 400 when one
 symbol per unit makes the magnitude difference tangible. Use
-`timeline.duration` for exact start-to-end intervals and segmented
+`timeline.duration` whenever duration is the comparison. It accepts exact
+start-to-end intervals or one verified `timeline.anchorDate` plus exact
+`duration` and `durationUnit` values. Use segmented
 `comparison.benchmark-gap` geometry for prices, costs, freight, margins,
 discounts, premiums, shortfalls, or overages where the prior or total benchmark
 can be recovered. Risk ranges must identify the exposed population or
-denominator and include at least one mechanism or consequence.
+denominator, show that total on the plotted scale, and include at least one
+mechanism or consequence. Shipment or reserve volumes described as days of
+consumption must show a consumption benchmark or be converted to coverage time.
+
+`subtitle` is optional. Omit it when it repeats the title, category labels,
+percentages, or amounts already printed on the chart. Two-part compositions use
+one label treatment per segment, inside when both segments fit and outside when
+one does not.
 
 Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 

@@ -4,7 +4,7 @@
   "title": "Tochnyi ChartSpec",
   "type": "object",
   "additionalProperties": false,
-  "required": ["recipe", "title", "subtitle", "date", "data"],
+  "required": ["recipe", "title", "date", "data"],
   "properties": {
     "version": { "type": "string", "const": "2.0" },
     "recipe": {
@@ -79,6 +79,8 @@
           "gapDisplayValue": { "type": "string", "maxLength": 50 },
           "start": { "type": "string", "format": "date" },
           "end": { "type": "string", "format": "date" },
+          "duration": { "type": "integer", "minimum": 1 },
+          "durationUnit": { "type": "string", "enum": ["days", "weeks", "months"] },
           "displayValue": { "type": "string", "maxLength": 50 },
           "detail": { "type": "string", "maxLength": 180 },
           "annotation": { "type": "string", "maxLength": 120 },
@@ -109,6 +111,13 @@
         "mode": { "type": "string", "enum": ["identity", "directional"] },
         "operator": { "type": "string", "enum": ["multiply", "combine"] },
         "formula": { "type": "string", "minLength": 1, "maxLength": 140 }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "anchorDate": { "type": "string", "format": "date" }
       }
     },
     "map": {
@@ -343,7 +352,12 @@
           "data": {
             "minItems": 2,
             "maxItems": 8,
-            "items": { "required": ["start", "end"] }
+            "items": {
+              "anyOf": [
+                { "required": ["start", "end"] },
+                { "required": ["duration", "durationUnit"] }
+              ]
+            }
           }
         }
       }

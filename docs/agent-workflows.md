@@ -218,13 +218,23 @@ Check that:
 - A simpler recipe would not communicate the finding more honestly.
 - Composition charts retain a tangible absolute amount in `displayValue` when
   the source provides one; percentages alone are not enough when real amounts
-  are known.
+  are known. Two-part compositions use one label treatment per segment rather
+  than repeating the same category, percentage, and amount inside and below the
+  bar.
 - Rates and shares switch to tangible level geometry when their basis is
-  recoverable; a `basis` rail alone does not satisfy the requirement.
-- Risk ranges include a population or denominator plus a mechanism or
-  consequence, not only two percentage endpoints.
-- Exact start/end intervals use `timeline.duration` so calendar overlap and
-  elapsed time remain visible.
+  recoverable; the denominator or population must be visible on the primary
+  scale and a `basis` rail alone does not satisfy the requirement.
+- Risk ranges include a population or denominator shown on the plotted scale
+  plus a mechanism or consequence, not only two percentage endpoints.
+- Three or more ordered observations that establish slowdown, acceleration,
+  reversal, or persistence use `trend.line`; those observations cannot be
+  reduced to supporting facts around a two-value chart.
+- Duration comparisons use `timeline.duration` so calendar overlap and elapsed
+  time remain visible. Use exact start/end intervals or one verified
+  `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
+- Shipment, reserve, or shortage amounts described as days of consumption,
+  demand coverage, or share of need include a visible denominator reference or
+  are converted to coverage time.
 - Prices, costs, freight, margins, discounts, premiums, shortfalls, and
   overages use segmented `comparison.benchmark-gap` geometry when the prior or
   total benchmark can be recovered. The plotted `value` is the underlying
@@ -241,6 +251,10 @@ Check that:
   never represents magnitude. Identity mode requires an exact same-scope,
   same-period equation; directional mode requires a note when periods or scopes
   differ.
+- A headline built around opposing quantities cannot plot only one side and
+  relegate the other numeric signals to `supportingFacts`.
+- `subtitle` is optional and should be absent when it repeats the title,
+  category labels, percentages, or amounts already visible in the marks.
 - An exact two-item `comparison.scenarios` chart must add a numeric reference,
   tangible basis, or source-supported numeric mechanism, consequence,
   denominator, or comparison fact. Check whether the pair is already contained

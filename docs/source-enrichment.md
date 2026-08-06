@@ -115,11 +115,17 @@ Extract all facts that could clarify the central finding without changing it:
 - Cause or operating mechanism
 - Consequence or decision resulting from the change
 - Forecast or expected direction
+- Every comparable historical observation needed to prove a claimed slowdown,
+  acceleration, reversal, or persistence
 - Relevant market or operational scale
 - Denominator needed to interpret a shortage, share, or coverage rate
 - Numerator and denominator behind a financial or operational ratio
 - Total population and affected count behind a risk estimate
-- Exact start and end dates behind a policy, outage, restriction, or contract duration
+- Exact start and end dates behind a policy, outage, restriction, reserve
+  runway, or contract duration; when only exact durations are supplied, locate
+  the common start date
+- Company filing, employee note, or official workforce disclosure behind a
+  staffing percentage
 - Actual benchmark and discounted, premium, shortfall, or overage value
 - Underlying report, dataset, or filing named by the article
 
@@ -151,6 +157,11 @@ Choose the least normalized representation that still expresses the input-suppor
 3. A native rate or share when the rate or share is itself the measured quantity.
 4. Relative change only when the underlying levels are unavailable or not meaningfully comparable.
 5. A published index level only when the source itself reports that named index. Never create an index solely as a fallback.
+
+This hierarchy governs the value representation, not whether all material
+evidence is used. If the title is about slowing growth and the source provides
+three comparable growth rates, those rates must become a `trend.line`. Two
+turnover levels are not a substitute for the sequence that proves the slowdown.
 
 Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, market-data history, company filing, or industry dataset, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
 
@@ -198,7 +209,8 @@ When the basis is reported or retrievable, derive and plot the tangible values:
 - For a ratio or economic share, plot the numerator and denominator, or the
   derived numerator range against the denominator total.
 - For a risk or coverage estimate, plot the affected count or range and the
-  total population.
+  total population. The total must be visible on the plotted scale as a point,
+  reference, benchmark, or complete composition.
 - Keep the rate or share in `displayValue`, `emphasis`, an annotation, or the
   subtitle.
 
@@ -265,6 +277,11 @@ selecting geometry:
 - Spending or revenue change: currency amounts for the same scope and periods.
 - Market share or coverage: numerator, denominator, and remainder.
 
+For workforce reductions, one of the structured checks must be the company
+filing or official employee disclosure for the relevant reporting perimeter.
+For consumption or demand coverage, include an official or industry dataset
+capable of supplying the denominator.
+
 If the normalized claim and a tangible base allow an absolute value to be
 derived, the derived value is the primary geometry. For example, an 8–10%
 economic share plus a reported GDP total becomes a currency range, and a
@@ -277,8 +294,10 @@ or retrievable, use level geometry instead.
 
 For a risk or exit-outlook story, a low and high percentage alone are not a
 complete visual argument. Add the exposed population or denominator and at
-least one sourced mechanism or consequence. Use `narrative.emphasis: "risk"`
-and classify the context with `supportingFacts[].role`.
+least one sourced mechanism or consequence. The population cannot remain only
+in the basis rail; show it on the same visual scale. Use
+`narrative.emphasis: "risk"` and classify the context with
+`supportingFacts[].role`.
 
 For `flow.waterfall`, exact evidence is a hard constraint rather than a review preference.
 Every item must be an exact reported value and declare the same `period` and
@@ -299,7 +318,16 @@ A chart has one central finding. Supporting evidence may fill up to three of the
 
 Not every chart needs every role. Select only the facts required to make the finding understandable.
 
-Supporting evidence may appear as primary data, references, annotations, supporting facts, a subtitle, or a note. It does not need to share an axis with the main measure.
+Supporting evidence may appear as primary data, references, annotations,
+supporting facts, a subtitle, or a note. It does not need to share an axis with
+the main measure. However, a datapoint that materially proves the title is not
+supporting evidence. Comparable historical rates, the denominator that gives a
+shortage meaning, and an opposing signal named in the headline must be encoded
+as primary geometry or a visible reference.
+
+The subtitle is optional. Omit it when it repeats values, categories, or the
+title. Use it only when it adds a qualification, mechanism, denominator, scope
+distinction, or interpretation not already visible in the marks.
 
 ## 6. Search beyond the supplied material conditionally
 
@@ -370,9 +398,17 @@ Examples:
 - A note containing two profit values may become a richer earnings story when the source also provides revenue, operating drivers, and a resulting dividend decision.
 - A shortage note may become a coverage-rate headline when supply and demand periods can be normalized safely.
 - A profit-to-loss reversal may remain a simple two-value diverging comparison when the sign change is the complete finding.
-- A six-month and one-month restriction should use `timeline.duration` when
-  exact start and end dates are available, so the occupied calendar windows are
-  visible rather than reduced to abstract bar lengths.
+- A six-month and one-month restriction should use `timeline.duration`. Use
+  exact start and end dates when available; when both begin on one verified
+  date, set `timeline.anchorDate` and supply exact `duration` and
+  `durationUnit` values.
+- A reserve story expressed in days should also use timeline geometry when the
+  common observation date is known, because the calendar runway is the point.
+- Shipment volumes described as one to three days of consumption must show a
+  daily-consumption reference or be converted into coverage time.
+- Fewer purchases, higher prices, and higher spending jointly define one
+  mixed-unit claim. Use `relationship.converging-signals` rather than plotting
+  purchase declines and leaving price and spending changes in supporting facts.
 - A discount, premium, shortfall, or overage should use
   `comparison.benchmark-gap` when both the benchmark and actual amount are
   available. The benchmark total, actual value, and gap must all remain visible.

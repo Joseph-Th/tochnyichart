@@ -1,0 +1,45 @@
+{
+  "version": "2.0",
+  "recipe": "timeline.duration",
+  "title": "Gasoline restrictions run six times longer than diesel restrictions",
+  "date": "2026-08-06",
+  "source": {
+    "name": "Illustrative common-anchor duration fixture",
+    "period": "August 2026"
+  },
+  "timeline": {
+    "anchorDate": "2026-08-01"
+  },
+  "data": [
+    {
+      "label": "Gasoline",
+      "duration": 6,
+      "durationUnit": "months",
+      "displayValue": "6 months",
+      "tone": "critical"
+    },
+    {
+      "label": "Diesel",
+      "duration": 1,
+      "durationUnit": "months",
+      "displayValue": "1 month",
+      "tone": "warning"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "duration"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "anchored-duration-timeline-example",
+    "topic": "common-anchor policy duration",
+    "dataPeriod": "August 2026",
+    "keyFinding": "A shared start date turns exact policy durations into comparable calendar intervals."
+  }
+}

@@ -180,18 +180,30 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   distinct conclusion, mark it `merged` or `omitted`.
 - A percentage-only price, workforce, export, production, spending, or revenue
   claim must trigger a search for the underlying tangible amounts for the same
-  scope and periods before normalized geometry is considered.
+  scope and periods before normalized geometry is considered. Workforce
+  research must include the company filing or official employee disclosure for
+  the relevant reporting perimeter.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
 - A rate or share with a reported or retrievable tangible basis must switch to
   level geometry and plot the tangible amounts; a floating percentage plus a
-  basis rail is not sufficient.
+  basis rail is not sufficient. The total population or denominator must also
+  appear on the plotted scale as a point, reference, benchmark, or complete
+  composition.
 - Two to four exact integer counts from 0 to 400 should use
   `comparison.pictogram`, with one symbol per unit rather than a logarithmic
   bar.
-- A risk estimate must include the exposed population or denominator and at
-  least one mechanism or consequence.
-- Exact start and end dates should use `timeline.duration`.
+- A risk estimate must include the exposed population or denominator, show that
+  total on the plotted scale, and include at least one mechanism or consequence.
+- Three or more ordered observations that establish slowdown, acceleration,
+  reversal, or persistence must use `trend.line`. Do not plot two values and
+  move the rest of the series into `supportingFacts`.
+- Duration comparisons should use `timeline.duration`. Supply exact start and
+  end dates, or one verified `timeline.anchorDate` plus exact `duration` and
+  `durationUnit` values.
+- Amounts described as days of consumption, demand coverage, or share of need
+  must show that denominator as a visible reference or be converted to coverage
+  time.
 - Prices, costs, freight, margins, discounts, premiums, shortfalls, and
   overages should use segmented `comparison.benchmark-gap` geometry when the
   benchmark and actual amount are available. Derive a prior level from the
@@ -208,6 +220,14 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   operator. Connector width is fixed and never encodes magnitude. Use identity
   mode only for arithmetically reconciling evidence; otherwise use directional
   mode and disclose incompatible periods or scopes.
+- A headline built around opposing quantities, such as lower purchase volume
+  and higher prices producing higher spending, cannot plot only one side and
+  leave the other figures in `supportingFacts`.
+- `subtitle` is optional. Omit it when it repeats the title, category labels,
+  percentages, or amounts already visible in the marks.
+- Two-part compositions must use one label treatment per segment. Do not repeat
+  the same category, percentage, and amount inside the bar and immediately
+  below it.
 - Every additional mark must add independent information. Reject complements,
   remainders, totals, and zero-gap closure rows that the primary geometry
   already encodes.
@@ -227,6 +247,8 @@ source types and include an official dataset, company filing, market-data
 source, or industry dataset capable of supplying tangible values. Each locator
 and outcome must describe a completed source-specific check; pending language
 or a generic `website`, `search`, `dataset`, or `report` locator is invalid.
+Consumption or demand denominators require an official or industry dataset
+check before they may be classified unavailable.
 
 Synthetic 100-based indexes and fabricated 0% starting observations are not
 fallbacks. If tangible values remain unavailable, show only the reported

@@ -120,6 +120,90 @@ test('source fidelity requires structured tangible-value research before normali
   }
 });
 
+test('workforce percentages require a company-filing headcount check', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-workforce-research');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].claim = 'The company plans to cut 10% of staff.';
+    ledger.candidates[0].representationAudit.tangibleTarget = 'Company headcount and the implied number of positions removed.';
+    ledger.candidates[0].representationAudit.rationale = 'The percentage is reported but the workforce count has not been recovered.';
+    ledger.candidates[0].representationAudit.researchAttempts = [
+      {
+        source: 'Supplied staffing article',
+        sourceType: 'supplied-source',
+        locator: 'Full staffing article and linked materials',
+        outcome: 'The article reports the percentage reduction but no headcount.'
+      },
+      {
+        source: 'Industry employment dataset',
+        sourceType: 'industry-dataset',
+        locator: 'Company employment table for the reporting year',
+        outcome: 'The dataset does not publish a consistent company headcount.'
+      }
+    ];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-workforce-research'),
+      /company-filing check for workforce or staffing percentages/i
+    );
+
+    ledger.candidates[0].representationAudit.researchAttempts[1] = {
+      source: 'Company annual filing',
+      sourceType: 'company-filing',
+      locator: 'Annual filing, employee note and group headcount table',
+      outcome: 'The filing does not provide a headcount for the staffing perimeter used by the announced cut.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-workforce-research').valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('consumption coverage requires an official or industry denominator check', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-consumption-research');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].claim = 'Announced fuel volumes cover only a few days of consumption.';
+    ledger.candidates[0].representationAudit.tangibleTarget = 'Daily national fuel consumption for the reported shortage period.';
+    ledger.candidates[0].representationAudit.rationale = 'The shipment volumes are reported but the daily consumption denominator has not been recovered.';
+    ledger.candidates[0].representationAudit.researchAttempts = [
+      {
+        source: 'Supplied shortage article',
+        sourceType: 'supplied-source',
+        locator: 'Full shortage article and linked tables',
+        outcome: 'The article reports shipment volumes but no national daily consumption amount.'
+      },
+      {
+        source: 'Company fuel filing',
+        sourceType: 'company-filing',
+        locator: 'Annual filing, domestic sales note',
+        outcome: 'The filing covers one company and cannot supply national daily consumption.'
+      }
+    ];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-consumption-research'),
+      /official or industry dataset for consumption, demand, or coverage denominators/i
+    );
+
+    ledger.candidates[0].representationAudit.researchAttempts[1] = {
+      source: 'Official fuel balance',
+      sourceType: 'official-dataset',
+      locator: 'National motor-fuel balance, monthly domestic consumption, July 2026',
+      outcome: 'The dataset does not publish a compatible daily figure for the shortage period.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-consumption-research').valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity rejects vague research notes without source types and locators', () => {
   const root = project();
   try {

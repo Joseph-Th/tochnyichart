@@ -174,6 +174,12 @@ must include an official dataset, company filing, market-data source, or
 industry dataset. A failed general web search or search-result snippet is not a
 source check.
 
+Some tangible targets require a specific source type. Workforce or staffing
+percentages must include a `company-filing` attempt covering the employee note,
+headcount table, or defined workforce perimeter. Consumption, demand, or
+coverage denominators must include an `official-dataset` or `industry-dataset`
+attempt capable of supplying the relevant volume or population.
+
 Every attempt must describe a completed source-specific check. The validator
 rejects pending outcomes such as `to be checked`, `will check`, `TBD`, or
 `follow up`, and generic locators such as `website`, `search`, `dataset`, or

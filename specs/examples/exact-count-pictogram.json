@@ -2,7 +2,6 @@
   "version": "2.0",
   "recipe": "comparison.pictogram",
   "title": "Two Hundred Reported Events Versus One Visible Event",
-  "subtitle": "Each dot represents one event, preserving the exact 200-to-1 count difference without a logarithmic axis.",
   "date": "2026-08-06",
   "source": {
     "name": "Illustrative exact-count comparison fixture",

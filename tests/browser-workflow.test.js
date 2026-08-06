@@ -145,6 +145,8 @@ test('pictograms, duration timelines, benchmark gaps, dumbbells, and converging-
     const cases = [
       { file: 'exact-count-pictogram.json', marks: 201 },
       { file: 'fuel-ban-timeline.json', marks: 2 },
+      { file: 'anchored-duration-timeline.json', marks: 2 },
+      { file: 'population-risk-range.json', minimumMarks: 4 },
       { file: 'single-benchmark-gap.json', marks: 3 },
       { file: 'urals-benchmark-gap.json', marks: 3 },
       { file: 'marketplace-commission-dumbbell.json', marks: 12 },

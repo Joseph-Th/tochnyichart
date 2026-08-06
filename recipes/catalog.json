@@ -1,5 +1,5 @@
 {
-  "version": "2.9.0",
+  "version": "2.10.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -32,8 +32,8 @@
     {
       "id": "comparison.range",
       "purpose": "Show exact values, min-max intervals, and thresholds for one named quantity on one scale.",
-      "data": "2 to 8 items with value or low/high fields, measure.quantity, and matching scope and period; benchmark is optional.",
-      "bestFor": ["uncertainty ranges", "policy limits", "price ranges", "threshold breaches"],
+      "data": "1 to 8 items with value or low/high fields, measure.quantity, and matching scope and period. A single interval requires a visible benchmark or reference that supplies the total or threshold scale.",
+      "bestFor": ["uncertainty ranges", "population-anchored risk ranges", "policy limits", "price ranges", "threshold breaches"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
@@ -67,8 +67,8 @@
     {
       "id": "timeline.duration",
       "purpose": "Show dated policy, restriction, outage, contract, or operational intervals on a common calendar.",
-      "data": "2 to 8 labeled items with ISO start and end dates. Tone controls the interval color; displayValue names the duration.",
-      "bestFor": ["policy durations", "export bans", "outage windows", "project phases", "contract periods"],
+      "data": "2 to 8 labeled intervals with ISO start and end dates, or exact duration plus durationUnit when all intervals share timeline.anchorDate. Tone controls the interval color; displayValue names the duration.",
+      "bestFor": ["policy durations", "export bans", "outage windows", "reserve runway", "project phases", "contract periods"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {

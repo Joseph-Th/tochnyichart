@@ -215,6 +215,18 @@ function validateRepresentationAudit(candidate, prefix, errors) {
           `${prefix}.representationAudit.researchAttempts must include an official dataset, company filing, market-data source, or industry dataset capable of supplying tangible values.`
         );
       }
+      const researchSubject = `${candidate.claim || ''} ${audit.tangibleTarget || ''} ${audit.rationale || ''}`;
+      if (/\b(?:staff|workforce|employee|employees|headcount|positions?)\b/i.test(researchSubject) && !sourceTypes.has('company-filing')) {
+        errors.push(
+          `${prefix}.representationAudit.researchAttempts must include a company-filing check for workforce or staffing percentages before headcount is accepted as unavailable.`
+        );
+      }
+      if (/\b(?:daily consumption|monthly consumption|fuel need|demand volume|coverage)\b/i.test(researchSubject) &&
+          ![...sourceTypes].some((sourceType) => ['official-dataset', 'industry-dataset'].includes(sourceType))) {
+        errors.push(
+          `${prefix}.representationAudit.researchAttempts must include an official or industry dataset for consumption, demand, or coverage denominators before the basis is accepted as unavailable.`
+        );
+      }
     }
   }
 }

@@ -72,7 +72,7 @@ function renderHtml(spec, options = {}) {
   const assetPrefix = ensureTrailingSlash(options.assetPrefix || '../../lib/');
   const assetVersion = options.assetVersion ? String(options.assetVersion) : '';
   const metadata = spec.metadata || {};
-  const description = metadata.keyFinding || spec.subtitle;
+  const description = metadata.keyFinding || spec.subtitle || spec.title;
   const payload = jsonForHtml(spec);
   const regionSet = spec.recipe === 'map.regional' ? TochnyiMaps.getRegionSet(spec.map.regionSet) : null;
   const mapScripts = regionSet

@@ -382,6 +382,118 @@ test('risk ranges use affected counts when the population is retrievable', () =>
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
+test('subtitles are optional and cannot restate the visible marks', () => {
+  const concise = loadExample('exact-count-pictogram.json');
+  let result = validateSpec(concise);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.subtitle, undefined);
+
+  const repetitive = structuredClone(concise);
+  repetitive.subtitle = 'The chart compares 200 reported events with 1 visible event.';
+  result = validateSpec(repetitive);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /subtitle repeats values and labels/i.test(message)));
+});
+
+test('common-anchor durations use timelines and abstract duration bars are rejected', () => {
+  const timeline = {
+    version: '2.0',
+    recipe: 'timeline.duration',
+    title: 'Gasoline restrictions run longer than diesel restrictions',
+    date: '2026-08-06',
+    timeline: { anchorDate: '2026-08-01' },
+    data: [
+      { label: 'Gasoline', duration: 6, durationUnit: 'months', displayValue: '6 months', tone: 'critical' },
+      { label: 'Diesel', duration: 1, durationUnit: 'months', displayValue: '1 month', tone: 'warning' }
+    ],
+    narrative: { frame: 'warning', density: 'editorial', emphasis: 'duration' }
+  };
+  let result = validateSpec(timeline);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.match(renderHtml(result.normalized), /"anchorDate"\s*:\s*"2026-08-01"/);
+
+  const bars = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Gasoline export restrictions last six times longer than diesel restrictions',
+    date: '2026-08-06',
+    data: [
+      { label: 'Gasoline', value: 6, displayValue: '6 months', quantity: 'export restriction duration', scope: 'Russian fuel export policy', period: '2026 extension' },
+      { label: 'Diesel', value: 1, displayValue: '1 month', quantity: 'export restriction duration', scope: 'Russian fuel export policy', period: '2026 extension' }
+    ],
+    measure: { quantity: 'export restriction duration', unit: 'months', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' },
+    supportingFacts: [{ value: '6×', label: 'Gasoline restriction is longer.', role: 'comparison' }]
+  };
+  result = validateSpec(bars);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /duration is the primary comparison|use timeline\.duration/i.test(message)));
+});
+
+test('multi-period slowdown evidence must be plotted as a trend', () => {
+  const bars = {
+    version: '2.0',
+    recipe: 'comparison.change',
+    title: 'E-commerce growth slowed sharply despite rising turnover',
+    date: '2026-08-06',
+    data: [
+      { label: 'H1 2025', value: 4.98, displayValue: 'RUB 4.98tn', quantity: 'H1 e-commerce turnover', scope: 'Russian e-commerce market', period: 'H1 2025' },
+      { label: 'H1 2026', value: 5.9, displayValue: 'RUB 5.90tn', quantity: 'H1 e-commerce turnover', scope: 'Russian e-commerce market', period: 'H1 2026' }
+    ],
+    measure: { quantity: 'H1 e-commerce turnover', unit: 'trillion RUB', valueMode: 'level', levelAvailability: 'reported', decimals: 2, baseline: 'zero' },
+    emphasis: { direction: 'up', displayValue: '+18.4%', label: 'H1 2026 growth', position: 'between' },
+    supportingFacts: [
+      { value: '60.3%', label: 'Growth in 2024', role: 'comparison' },
+      { value: '29.4%', label: 'Growth in 2025', role: 'comparison' }
+    ]
+  };
+  const result = validateSpec(bars);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /full series in trend\.line|multi-period slowdown/i.test(message)));
+});
+
+test('coverage claims require a visible consumption orientation', () => {
+  const rawVolumes = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Foreign fuel flows cover only one to three days of consumption',
+    date: '2026-08-06',
+    data: [
+      { label: 'India tankers', low: 60, high: 100, displayValue: '60–100 thousand tons', quantity: 'announced fuel volume', scope: 'Russian shortage response', period: 'August 2026' },
+      { label: 'Morocco tanker', value: 30, displayValue: '30 thousand tons', quantity: 'announced fuel volume', scope: 'Russian shortage response', period: 'August 2026' }
+    ],
+    measure: { quantity: 'announced fuel volume', unit: 'thousand tons', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' },
+    supportingFacts: [{ value: '1–3 days', label: 'Estimated national consumption coverage', role: 'denominator' }]
+  };
+  let result = validateSpec(rawVolumes);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /coverage against consumption|days of coverage/i.test(message)));
+
+  rawVolumes.references = [{ value: 45, label: 'One day of national consumption', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(rawVolumes);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('opposing quantitative signals cannot be hidden in supporting facts', () => {
+  const thinContrast = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Fashion purchases fell even as spending rose',
+    date: '2026-08-06',
+    data: [
+      { label: 'Broad market', value: -10, displayValue: '−10%', quantity: 'purchase volume change', scope: 'Russian clothing and footwear', period: 'January–May 2026' },
+      { label: 'Hardest-hit segments', value: -15, displayValue: '−15%', quantity: 'purchase volume change', scope: 'Russian clothing and footwear', period: 'January–May 2026' }
+    ],
+    measure: { quantity: 'purchase volume change', unit: '%', valueMode: 'relative-change', levelAvailability: 'unavailable', normalizationNote: 'Matched transaction counts are unavailable.', decimals: 0, baseline: 'auto' },
+    supportingFacts: [
+      { value: '+5% to +7%', label: 'Nominal spending growth', role: 'comparison' },
+      { value: '+10% to +20%', label: 'Premium-segment price growth', role: 'mechanism' }
+    ]
+  };
+  const result = validateSpec(thinContrast);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /only one side is plotted|converging-signals/i.test(message)));
+});
+
 test('dated intervals, benchmark gaps, and dumbbells enforce their defining evidence', () => {
   const timeline = loadExample('fuel-ban-timeline.json');
   let result = validateSpec(timeline);
@@ -646,6 +758,8 @@ test('composition segments retain tangible values alongside calculated shares', 
   assert.match(runtime, /normalizedCopy\(item\.display\) !== normalizedCopy\(percentText\(share\)\)/);
   assert.doesNotMatch(runtime, /!compact && normalizedCopy\(item\.display\)/);
   assert.match(runtime, /tochnyi-stacked-binary-labels/);
+  assert.match(runtime, /compactUseExternalLabels/);
+  assert.match(runtime, /if \(!compactUseExternalLabels\) return/);
   assert.doesNotMatch(runtime, /tochnyi-stacked-focus/);
 });
 

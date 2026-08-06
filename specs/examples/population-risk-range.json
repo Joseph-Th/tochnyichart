@@ -1,0 +1,89 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.range",
+  "title": "Up to 68,500 sellers are at risk out of 456,700 active firms",
+  "date": "2026-08-06",
+  "source": {
+    "name": "Illustrative population-anchored risk fixture",
+    "period": "2026 outlook"
+  },
+  "data": [
+    {
+      "label": "Estimated exits",
+      "low": 45670,
+      "high": 68505,
+      "displayValue": "45,670–68,505 sellers · 10–15%",
+      "quantity": "seller count",
+      "scope": "active marketplace sellers",
+      "period": "2026 outlook",
+      "tone": "critical"
+    }
+  ],
+  "references": [
+    {
+      "value": 456700,
+      "label": "456,700 active sellers",
+      "tone": "neutral",
+      "lineStyle": "dashed"
+    }
+  ],
+  "measure": {
+    "quantity": "seller count",
+    "unit": "sellers",
+    "axisTitle": "Seller population",
+    "decimals": 0,
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "retrievable"
+  },
+  "basis": {
+    "type": "population",
+    "label": "Risk population",
+    "formula": "456,700 active sellers × 10–15%",
+    "items": [
+      {
+        "role": "population",
+        "label": "Active sellers",
+        "value": 456700,
+        "displayValue": "456,700 sellers",
+        "unit": "sellers",
+        "valueStatus": "reported",
+        "tone": "neutral"
+      },
+      {
+        "role": "affected",
+        "label": "Estimated exits",
+        "low": 45670,
+        "high": 68505,
+        "displayValue": "45,670–68,505 sellers",
+        "unit": "sellers",
+        "valueStatus": "derived",
+        "tone": "critical"
+      }
+    ]
+  },
+  "supportingFacts": [
+    {
+      "value": "≤100,000 RUB/month",
+      "label": "The exposed group consists of low-turnover sellers pressured by higher commissions.",
+      "tone": "warning",
+      "role": "mechanism"
+    }
+  ],
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "risk"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "population-risk-range-example",
+    "topic": "risk range against total population",
+    "dataPeriod": "2026 outlook",
+    "keyFinding": "The total seller population remains visible on the same scale as the estimated exit range."
+  }
+}
