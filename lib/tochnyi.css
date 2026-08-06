@@ -892,6 +892,39 @@ body.tochnyi-regional-matrix-page {
     font-weight: 600;
 }
 
+.tochnyi-dumbbell-svg {
+    font-family: var(--tochnyi-font);
+}
+
+.tochnyi-dumbbell-connector {
+    stroke: #b8c2cb;
+    stroke-width: 6;
+    stroke-linecap: round;
+}
+
+.tochnyi-dumbbell-connector.down { stroke: #d7a6a2; }
+.tochnyi-dumbbell-connector.up { stroke: #9fb7aa; }
+
+.tochnyi-dumbbell-start {
+    fill: #ffffff;
+    stroke: #82909d;
+    stroke-width: 3;
+}
+
+.tochnyi-dumbbell-end {
+    stroke: #ffffff;
+    stroke-width: 3;
+    filter: drop-shadow(0 2px 2px rgba(2, 3, 3, 0.12));
+}
+
+.tochnyi-dumbbell-legend {
+    fill: var(--tochnyi-gray);
+    font-family: var(--tochnyi-font);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
 .tochnyi-svg-gap-label,
 .tochnyi-duration-value {
     font-family: var(--tochnyi-font);

@@ -1,0 +1,114 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.dumbbell",
+  "title": "Marketplace commission changes varied sharply by seller category",
+  "subtitle": "The dumbbell view preserves the direction and size of each category's move from 2025 to 2026.",
+  "date": "2026-08-05",
+  "source": {
+    "name": "Illustrative marketplace commission fixture",
+    "period": "2025–2026"
+  },
+  "data": [
+    {
+      "label": "Electronics",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 12,
+      "benchmarkDisplayValue": "12%",
+      "value": 18,
+      "displayValue": "18%",
+      "gapDisplayValue": "+6 pp",
+      "tone": "critical"
+    },
+    {
+      "label": "Home goods",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 14,
+      "benchmarkDisplayValue": "14%",
+      "value": 17,
+      "displayValue": "17%",
+      "gapDisplayValue": "+3 pp",
+      "tone": "warning"
+    },
+    {
+      "label": "Clothing",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 16,
+      "benchmarkDisplayValue": "16%",
+      "value": 21,
+      "displayValue": "21%",
+      "gapDisplayValue": "+5 pp",
+      "tone": "critical"
+    },
+    {
+      "label": "Beauty",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 19,
+      "benchmarkDisplayValue": "19%",
+      "value": 18,
+      "displayValue": "18%",
+      "gapDisplayValue": "−1 pp",
+      "tone": "positive"
+    },
+    {
+      "label": "Books",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 11,
+      "benchmarkDisplayValue": "11%",
+      "value": 13,
+      "displayValue": "13%",
+      "gapDisplayValue": "+2 pp",
+      "tone": "warning"
+    },
+    {
+      "label": "Food",
+      "quantity": "marketplace commission rate",
+      "scope": "seller categories on the same marketplace",
+      "period": "2025 to 2026",
+      "benchmark": 15,
+      "benchmarkDisplayValue": "15%",
+      "value": 15,
+      "displayValue": "15%",
+      "gapDisplayValue": "No change",
+      "tone": "neutral"
+    }
+  ],
+  "measure": {
+    "quantity": "marketplace commission rate",
+    "unit": "%",
+    "axisTitle": "Commission rate",
+    "decimals": 0,
+    "baseline": "auto",
+    "scale": "linear",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "divergence",
+    "density": "editorial",
+    "emphasis": "gap"
+  },
+  "options": {
+    "height": "tall",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "marketplace-commission-dumbbell-example",
+    "topic": "multi-category before-and-after comparison",
+    "dataPeriod": "2025–2026",
+    "keyFinding": "Commission rates rose in four categories, fell in one, and were unchanged in one."
+  }
+}

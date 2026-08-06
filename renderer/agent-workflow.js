@@ -30,7 +30,7 @@ const BATCH_WORKFLOW = Object.freeze({
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'audit actual levels and the tangible basis behind every rate or share; name the tangible target and document structured source checks before declaring either unavailable or incomparable',
     'decide the appropriate production tool and chart workflow for each accepted story',
-    'author, validate, render, and diagnose one ChartSpec per accepted chart story',
+    'author one ChartSpec per accepted chart story, then use the run chart builder to validate, render, diagnose, capture, and manifest the complete selected set',
     'compare authored ChartSpecs for duplicate source, reporting context, recipe, and category or time skeleton; consolidate matches before delivery',
     'capture one final PNG image per accepted chart',
     'assemble the final PNG images into one PowerPoint presentation',
@@ -53,10 +53,11 @@ const BATCH_WORKFLOW = Object.freeze({
   sourceLedger: '.work/<run-id>/source-ledger.json',
   sourceVerificationCommand: 'npm run run:verify-source -- <run-id>',
   sourceAndSpecVerificationCommand: 'npm run run:verify-source -- <run-id> --specs',
+  chartBuildCommand: 'npm run run:charts -- <run-id>',
   finalizeCommand: 'npm run run:finalize -- <run-id>',
   coldResetCommand: 'npm run run:reset',
   retentionRule: 'specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. input.txt is also retained. Both production paths are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, and legacy previews are transient.',
-  boundary: 'The Tool API produces individual chart artifacts. The orchestration layer owns input parsing, story selection, image capture, presentation assembly, and run delivery.'
+  boundary: 'The Tool API produces individual chart artifacts. The run chart builder coordinates verified ChartSpecs through HTML, responsive diagnostics, PNG capture, manifest, and QA reporting. The orchestration layer still owns input parsing, story selection, and presentation assembly.'
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
@@ -117,6 +118,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
   Object.freeze({ when: 'Values include a min-max interval or threshold for the same named quantity, scope, and period', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
   Object.freeze({ when: 'Actual values are separated from a benchmark by a discount, premium, shortfall, or overage', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
+  Object.freeze({ when: 'Several categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
   Object.freeze({ when: 'Ordered time points', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
   Object.freeze({ when: 'Two or more exact start-to-end intervals share one calendar', use: 'timeline.duration', example: 'specs/examples/fuel-ban-timeline.json' }),
   Object.freeze({ when: 'Exact parts of one total', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
@@ -130,7 +132,7 @@ const SHARED_SCALE_CONTRACT = Object.freeze({
   requiredFields: Object.freeze(['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']),
   sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
   sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
-  periodRule: 'Scenario, diverging, range, and ranking charts use one period. comparison.change and comparison.benchmark-gap may use before-and-after periods, and trend.line may advance through ordered periods, while quantity and scope stay fixed.',
+  periodRule: 'Scenario, diverging, range, dumbbell, and ranking charts use one shared period; a dumbbell period may name the comparison interval. comparison.change and comparison.benchmark-gap may use before-and-after periods, and trend.line may advance through ordered periods, while quantity and scope stay fixed.',
   rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Select one primary quantitative story and keep secondary context inline, or split the evidence into separate charts.',
   genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
 });

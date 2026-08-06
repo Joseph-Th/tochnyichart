@@ -35,7 +35,7 @@ const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed
 const ICONS = new Set(['person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
-  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap',
+  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
   'trend.line', 'ranking.horizontal'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
@@ -237,6 +237,14 @@ function validateVisibleUnits(spec, errors) {
     errors.push(
       `data[${index}].displayValue "${item.displayValue}" is unitless while measure.unit is "${unit}"; ` +
       'add the unit to displayValue or state it explicitly in the title or subtitle.'
+    );
+  });
+  (spec.data || []).forEach((item, index) => {
+    if (!isObject(item) || !isMagnitudeOnlyDisplayValue(item.benchmarkDisplayValue)) return;
+    if (contextDefinesUnit || visibleTextContainsUnit(item.benchmarkDisplayValue, unit)) return;
+    errors.push(
+      `data[${index}].benchmarkDisplayValue "${item.benchmarkDisplayValue}" is unitless while measure.unit is "${unit}"; ` +
+      'add the unit to benchmarkDisplayValue or state it explicitly in the title or subtitle.'
     );
   });
   if (isMagnitudeOnlyDisplayValue(spec.emphasis?.displayValue) &&
@@ -659,6 +667,22 @@ function validateRecipe(spec, errors, warnings) {
       });
       if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
         errors.push('comparison.benchmark-gap requires measure.valueMode level because actual and benchmark are tangible amounts.');
+      }
+      break;
+    case 'comparison.dumbbell':
+      if (count < 3 || count > 10) errors.push('comparison.dumbbell requires 3 to 10 data items.');
+      data.forEach((item, index) => {
+        if (typeof item?.value !== 'number' || !Number.isFinite(item.value)) {
+          errors.push(`data[${index}].value is required for comparison.dumbbell.`);
+        }
+        if (typeof item?.benchmark !== 'number' || !Number.isFinite(item.benchmark)) {
+          errors.push(`data[${index}].benchmark is required for comparison.dumbbell.`);
+        }
+        if (!item?.displayValue) warnings.push(`data[${index}].displayValue is recommended so the later or actual value is explicit.`);
+        if (!item?.benchmarkDisplayValue) warnings.push(`data[${index}].benchmarkDisplayValue is recommended so the earlier or reference value is explicit.`);
+      });
+      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
+        errors.push('comparison.dumbbell requires measure.valueMode level because both endpoints are tangible values.');
       }
       break;
     case 'trend.line':
@@ -1196,13 +1220,13 @@ function validateEditorialEconomy(spec, errors, warnings) {
   const hasBenchmarkGapFields = data.some((item) =>
     item?.benchmark !== undefined || item?.benchmarkDisplayValue !== undefined || item?.gapDisplayValue !== undefined
   );
-  if (hasBenchmarkGapFields && !['comparison.benchmark-gap', 'comparison.range'].includes(spec.recipe)) {
-    errors.push('Benchmark-relative data require comparison.benchmark-gap, or comparison.range when the benchmark is only a threshold.');
+  if (hasBenchmarkGapFields && !['comparison.benchmark-gap', 'comparison.dumbbell', 'comparison.range'].includes(spec.recipe)) {
+    errors.push('Benchmark-relative data require comparison.benchmark-gap, comparison.dumbbell for several category pairs, or comparison.range when the benchmark is only a threshold.');
   }
   const benchmarkStoryText = `${spec.title || ''} ${spec.subtitle || ''} ${spec.measure?.quantity || ''}`;
   if (/\b(?:discount|premium|shortfall|overage|gap to benchmark|below benchmark|above benchmark)\b/i.test(benchmarkStoryText) &&
-      !['comparison.benchmark-gap', 'comparison.range'].includes(spec.recipe)) {
-    warnings.push('This appears to be a benchmark-gap story. Research the benchmark total and actual amount, then prefer comparison.benchmark-gap when both are available.');
+      !['comparison.benchmark-gap', 'comparison.dumbbell', 'comparison.range'].includes(spec.recipe)) {
+    warnings.push('This appears to be a benchmark-relative story. Prefer comparison.benchmark-gap for one repeated benchmark relationship or comparison.dumbbell for several category pairs.');
   }
   data.forEach((item, index) => {
     if (!isObject(item)) return;

@@ -1,6 +1,6 @@
 {
   "name": "tochnyi-charts",
-  "version": "2.16.0",
+  "version": "2.17.0",
   "private": true,
   "description": "Declarative, validated chart rendering for Tochnyi visuals",
   "type": "commonjs",
@@ -22,6 +22,7 @@
     "check:repo": "node tools/check-repository-hygiene.js",
     "run:init": "node tools/workspace.js init",
     "run:verify-source": "node tools/workspace.js verify",
+    "run:charts": "node tools/run-charts.js",
     "run:flush": "node tools/workspace.js flush",
     "run:finalize": "node tools/workspace.js finalize --legacy",
     "run:reset": "node tools/workspace.js reset --input --legacy"

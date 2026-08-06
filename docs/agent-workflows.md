@@ -19,8 +19,8 @@ initialize .work/<run-id>/
     -> preserve inventoried claims and enrich without originating new stories
     -> audit actual-level availability and record the value representation
     -> decide the appropriate production tool for each story
-    -> create and render accepted charts
-    -> capture final PNG images
+    -> author the complete selected ChartSpec set
+    -> run the chart builder to render, diagnose, capture, and manifest the set
     -> assemble one PowerPoint presentation
     -> save retained specs and final artifacts
     -> finalize and purge transient run data
@@ -29,16 +29,19 @@ initialize .work/<run-id>/
 Start each batch with `npm run run:init -- <run-id>`. Keep research notes,
 downloads, helper scripts, logs, review captures, and package staging under the
 created `.work/<run-id>/` tree. Complete the generated source ledger and run
-`npm run run:verify-source -- <run-id>` before external research. End with
+`npm run run:verify-source -- <run-id>` before external research. After all
+selected ChartSpecs are authored, run `npm run run:charts -- <run-id>` to
+produce the HTML charts, final PNGs, manifest, and QA report. End with
 `npm run run:finalize -- <run-id>`, which preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
 material and legacy previews. It also preserves `input.txt`. Both retained
 production paths are ignored by Git. Finalization fails unless selected ledger
 slugs and titles exactly match the final ChartSpecs.
 
-The Tool API described below handles individual chart production. It does not
-parse the complete batch assignment or assemble the PowerPoint deck. Those are
-agent responsibilities.
+The Tool API described below handles individual chart production. The run chart
+builder coordinates the selected set through verified rendering and capture.
+Neither component parses the complete batch assignment or assembles the
+PowerPoint deck; those remain agent responsibilities.
 
 The full batch contract is in [`docs/batch-workflow.md`](batch-workflow.md).
 The required ledger fields are in [`docs/source-ledger.md`](source-ledger.md).
@@ -224,12 +227,15 @@ Check that:
 - Discounts, premiums, shortfalls, and overages use
   `comparison.benchmark-gap` when both the benchmark and actual amount are
   available.
+- Several categories with one before/benchmark value and one after/actual value
+  use `comparison.dumbbell` when the category-level movement is the finding.
 - A non-map chart must contain at least two quantitative marks. A lone metric
   must gain a real prior value, target, benchmark, denominator, remainder,
   peer, range, or time series from the source. If none exists, omit the story.
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
-`comparison.range`, `comparison.benchmark-gap`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
+`trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while

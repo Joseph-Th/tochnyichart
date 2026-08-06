@@ -11,6 +11,7 @@ const {
   flushRunWorkspace,
   resetTransientWorkspace
 } = require('../renderer/run-workspace');
+const { buildRunCharts } = require('../renderer/run-charts');
 
 const RUN_ID = 'client-alpha.issue-7';
 
@@ -136,4 +137,115 @@ test('run ids are opaque labels and cannot escape the workspace root', () => {
   assert.throws(() => normalizeRunId('client/alpha'), /Run id/);
   assert.equal(normalizeRunId(RUN_ID), RUN_ID);
   assert.equal(normalizeRunId('2026-08-05'), '2026-08-05');
+});
+
+test('run chart builder renders selected stories in ledger order and writes QA artifacts', () => {
+  const root = temporaryProject();
+  const runId = 'batch-render';
+  try {
+    const workspace = initializeRunWorkspace(root, runId);
+    const ledger = {
+      version: '1.3',
+      runId,
+      input: { path: 'input.txt', bytes: 0, sha256: 'stub' },
+      inventoryComplete: true,
+      ignoredEvidence: [],
+      candidates: [
+        { id: 'first-story', decision: 'selected', outputSlug: 'first-story', title: 'First story' },
+        { id: 'merged-story', decision: 'merged', mergedInto: 'first-story' },
+        { id: 'regional-story', decision: 'selected', outputSlug: 'regional-story', title: 'Regional story' }
+      ]
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'first-story.json'), JSON.stringify({
+      recipe: 'comparison.change', title: 'First story'
+    }));
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'regional-story.json'), JSON.stringify({
+      recipe: 'map.regional', title: 'Regional story'
+    }));
+    fs.writeFileSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${runId}.pptx`), 'stale deck');
+    fs.writeFileSync(path.join(workspace.deliveryRoot, 'editorial-notes.txt'), 'preserve me');
+
+    const calls = [];
+    function render(kind, specPath, htmlPath) {
+      calls.push(`${kind}:${path.basename(specPath, '.json')}`);
+      fs.writeFileSync(htmlPath, '<html data-rendered="true"></html>\n');
+      return {
+        workflow: kind === 'regional' ? 'regional-breakdown' : 'standard-chart',
+        htmlPath,
+        warnings: [],
+        diagnostics: kind === 'regional'
+          ? { status: 'pass', runs: [{ errors: 0, warnings: 0 }] }
+          : undefined
+      };
+    }
+
+    const result = buildRunCharts(root, runId, {
+      dependencies: {
+        verify: () => ({ valid: true, selected: 2, merged: 1, omitted: 0, specificationsChecked: 2 }),
+        renderStandard: (specPath, htmlPath) => render('standard', specPath, htmlPath),
+        renderRegional: (specPath, htmlPath) => render('regional', specPath, htmlPath),
+        diagnose: () => ({ status: 'pass', runs: [{ diagnostics: { summary: { errors: 0, warnings: 0 } } }] }),
+        capture: (htmlPath, pngPath) => {
+          fs.writeFileSync(pngPath, 'png');
+          return { bytes: 3, dimensions: { width: 1200, height: 900 } };
+        }
+      }
+    });
+
+    assert.deepEqual(calls, ['standard:first-story', 'regional:regional-story']);
+    assert.equal(result.chartCount, 2);
+    assert.equal(result.passed, true);
+    const manifest = fs.readFileSync(result.manifestPath, 'utf8');
+    assert.ok(manifest.indexOf('first-story') < manifest.indexOf('regional-story'));
+    assert.match(manifest, /comparison\.change/);
+    assert.match(manifest, /map\.regional/);
+    const qa = JSON.parse(fs.readFileSync(result.qaPath, 'utf8'));
+    assert.equal(qa.artifacts.htmlCharts, 2);
+    assert.equal(qa.artifacts.pngCharts, 2);
+    assert.equal(qa.visualQa.diagnosticErrors, 0);
+    assert.equal(qa.presentation.requiredNext, true);
+    assert.deepEqual(qa.charts.map((chart) => chart.slug), ['first-story', 'regional-story']);
+    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'first-story.png')), true);
+    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'regional-story.png')), true);
+    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${runId}.pptx`)), false);
+    assert.equal(fs.readFileSync(path.join(workspace.deliveryRoot, 'editorial-notes.txt'), 'utf8'), 'preserve me');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('run chart builder preserves the previous delivery when staged capture fails', () => {
+  const root = temporaryProject();
+  const runId = 'atomic-render';
+  try {
+    const workspace = initializeRunWorkspace(root, runId);
+    fs.writeFileSync(workspace.ledgerPath, JSON.stringify({
+      candidates: [{ id: 'story', decision: 'selected', outputSlug: 'story', title: 'Story' }]
+    }));
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'story.json'), JSON.stringify({
+      recipe: 'comparison.change', title: 'Story'
+    }));
+    fs.writeFileSync(path.join(workspace.deliveryRoot, 'story.html'), 'previous delivery\n');
+
+    assert.throws(() => buildRunCharts(root, runId, {
+      dependencies: {
+        verify: () => ({ valid: true, selected: 1, specificationsChecked: 1 }),
+        renderStandard: (specPath, htmlPath) => {
+          fs.writeFileSync(htmlPath, '<html data-rendered="true"></html>\n');
+          return { workflow: 'standard-chart', htmlPath, warnings: [] };
+        },
+        diagnose: () => ({ status: 'pass', runs: [] }),
+        capture: () => { throw new Error('capture failed'); }
+      }
+    }), /capture failed/);
+
+    assert.equal(fs.readFileSync(path.join(workspace.deliveryRoot, 'story.html'), 'utf8'), 'previous delivery\n');
+    assert.equal(
+      fs.readdirSync(path.join(root, 'charts')).some((name) => name.startsWith(`${runId}.building-`)),
+      false
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

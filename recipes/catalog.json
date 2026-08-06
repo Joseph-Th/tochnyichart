@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
+  "version": "2.7.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -35,6 +35,13 @@
       "data": "2 to 6 labeled items with value and benchmark in one unit, plus matching quantity and scope. Periods may advance for before-and-after comparisons.",
       "bestFor": ["discounted prices", "premium to benchmark", "shortfall to target", "before-and-after benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
+      "id": "comparison.dumbbell",
+      "purpose": "Compare two values for several categories while preserving the direction and size of every category-level change.",
+      "data": "3 to 10 labeled items with value and benchmark in one unit, plus matching quantity, scope, and period. benchmark is the earlier or reference value; value is the later or actual value.",
+      "bestFor": ["before-and-after category comparisons", "peer movement", "target versus actual across several categories"],
+      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "trend.line",

@@ -15,6 +15,7 @@
         "comparison.diverging",
         "comparison.range",
         "comparison.benchmark-gap",
+        "comparison.dumbbell",
         "trend.line",
         "timeline.duration",
         "composition.donut",
@@ -340,6 +341,20 @@
           "data": {
             "minItems": 2,
             "maxItems": 6,
+            "items": { "required": ["value", "benchmark", "quantity", "scope", "period"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "comparison.dumbbell" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 3,
+            "maxItems": 10,
             "items": { "required": ["value", "benchmark", "quantity", "scope", "period"] }
           }
         }

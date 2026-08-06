@@ -73,7 +73,8 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.batchWorkflow.sourceLedger, '.work/<run-id>/source-ledger.json');
   assert.equal(orientation.batchWorkflow.sourceVerificationCommand, 'npm run run:verify-source -- <run-id>');
   assert.equal(orientation.batchWorkflow.sourceAndSpecVerificationCommand, 'npm run run:verify-source -- <run-id> --specs');
-  assert.match(orientation.batchWorkflow.boundary, /orchestration layer owns input parsing/i);
+  assert.equal(orientation.batchWorkflow.chartBuildCommand, 'npm run run:charts -- <run-id>');
+  assert.match(orientation.batchWorkflow.boundary, /orchestration layer still owns input parsing/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
     ['regional-breakdown', 'standard-chart']
@@ -90,6 +91,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.ok(standard.authoringRules.some((rule) => /Never use status, card, bullet, or facet grids/.test(rule)));
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'status.grid'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
   assert.match(standard.valueRepresentationContract.hierarchy, /actual levels/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');

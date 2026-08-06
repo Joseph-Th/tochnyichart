@@ -74,6 +74,9 @@ render and diagnose the chart HTML
 capture one final PNG image per accepted chart
     |
     v
+write the run manifest and visual QA report
+    |
+    v
 assemble the accepted images into a PowerPoint presentation
     |
     v
@@ -180,6 +183,8 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - A discount, premium, shortfall, or overage should use
   `comparison.benchmark-gap` when the benchmark and actual amount are
   available.
+- Several categories with paired before/after or benchmark/actual values should
+  use `comparison.dumbbell` when the category-level movement is the finding.
 - A prose wall, card grid, bullet grid, or one oversized number is not an
   acceptable chart.
 - Omit a story when source enrichment cannot supply legitimate visual
@@ -249,17 +254,25 @@ source verification before authoring it.
 
 ## 4. Produce each chart
 
-For every accepted chart story:
+For every accepted chart story, write a semantic `ChartSpec` to
+`specs/runs/<run-id>/[slug].json`. After the complete selected set is authored,
+run:
 
-1. Write a semantic `ChartSpec` to `specs/runs/<run-id>/[slug].json`.
-2. Validate the specification.
-3. Render it through the selected standard or regional workflow.
-4. Run the required diagnostics.
-5. Perform semantic chart QA on the rendered output.
-6. Correct semantic problems or report infrastructure defects.
-7. Capture a final PNG only after the chart passes its required checks.
+```bash
+npm run run:charts -- <run-id>
+```
 
-After all ChartSpecs are written, run:
+The run chart builder verifies source/spec coverage, preserves source-ledger
+order, routes each specification through the standard or regional workflow,
+runs responsive diagnostics, captures the approved PNG, and writes
+`manifest.csv` plus `qa-report.json` to `charts/<run-id>/`. It stops on the
+first validation, rendering, diagnostic, or capture failure rather than
+publishing a partial successful-looking run. Successful output is published by
+replacing the prior chart set only after the complete staged build passes. Any
+existing presentation or chart-image archive is removed at that point because
+it would contain stale images and must be rebuilt from the new PNGs.
+
+To inspect coverage without rendering, run:
 
 ```bash
 npm run run:verify-source -- <run-id> --specs
@@ -302,7 +315,7 @@ bounded, approximate, mixed-period, mixed-scope, or non-reconciling steps. In
 particular, an operating-profit figure is not a pre-charge net-result figure,
 and a prior-period expense cannot be used as a current-period change.
 
-Use the run delivery path for the final image:
+For an isolated manual recapture, use the run delivery path:
 
 ```bash
 node tool-api/chart.js review charts/<run-id>/[slug].html \
@@ -345,6 +358,8 @@ charts/<run-id>/
 ├── [slug-1].png
 ├── [slug-2].html
 ├── [slug-2].png
+├── manifest.csv
+├── qa-report.json
 └── tochnyi-charts-<run-id>.pptx
 ```
 

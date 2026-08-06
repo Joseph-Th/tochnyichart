@@ -139,12 +139,13 @@ test('axes that cross zero render a prominent interior zero reference', { skip: 
   }
 });
 
-test('duration timelines and benchmark gaps pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('duration timelines, benchmark gaps, and dumbbells pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-new-recipes-'));
   try {
     const cases = [
       { file: 'fuel-ban-timeline.json', marks: 2 },
-      { file: 'urals-benchmark-gap.json', marks: 6 }
+      { file: 'urals-benchmark-gap.json', marks: 6 },
+      { file: 'marketplace-commission-dumbbell.json', marks: 12 }
     ];
     cases.forEach(({ file, marks }) => {
       const outputPath = path.join(tempDir, `${path.basename(file, '.json')}.html`);

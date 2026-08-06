@@ -52,8 +52,21 @@ paths from chart dates.
 All research notes, downloads, helper scripts, logs, review captures, and package
 staging must stay under `.work/<run-id>/`. Only `specs/runs/<run-id>/` and
 `charts/<run-id>/` are retained locally. `input.txt`, generated specifications,
-charts, previews, and workspaces are ignored by Git. After delivery, finalize
-the run:
+charts, previews, and workspaces are ignored by Git. After the selected
+ChartSpecs are complete, build every chart in ledger order with one command:
+
+```bash
+npm run run:charts -- <run-id>
+```
+
+This command verifies source/spec coverage, routes standard and regional
+charts correctly, runs responsive browser diagnostics, captures the final PNGs,
+and writes `manifest.csv` plus `qa-report.json` in `charts/<run-id>/`.
+It publishes through a staged directory, so a failed rebuild leaves the prior
+delivery untouched. A successful chart rebuild removes any prior presentation
+and chart-image archive because those files would contain stale images.
+PowerPoint assembly remains an orchestration step. After delivery, finalize the
+run:
 
 ```bash
 npm run run:finalize -- <run-id>
@@ -76,8 +89,10 @@ input.txt
     -> charts/<run-id>/
 ```
 
-The chart Tool API produces individual chart artifacts. PowerPoint assembly and
-batch coordination belong to the LLM orchestration layer.
+The chart Tool API produces individual chart artifacts. The run chart builder
+coordinates verified specifications through rendering, diagnostics, PNG
+capture, and QA reporting. PowerPoint assembly belongs to the LLM orchestration
+layer.
 
 The complete batch contract is in
 [`docs/batch-workflow.md`](docs/batch-workflow.md). The ledger format is defined
@@ -150,6 +165,11 @@ periods. When heterogeneous evidence jointly carries the argument, split it
 into separate ChartSpecs. Keep secondary mixed-unit context in the unboxed
 `supportingFacts` rail rather than substituting a grid of metric cards for a
 chart.
+
+Use `comparison.dumbbell` when several categories each have two comparable
+values, such as before and after or benchmark and actual. It preserves the
+direction and magnitude of every category-level movement without duplicating a
+pair of bars for each category.
 
 Use `flow.waterfall` only for a source-supported start-to-end bridge whose
 same-scope values reconcile arithmetically. Do not infer an exact opening value
@@ -408,6 +428,7 @@ npm run quality           # full automated and visual quality pipeline
 npm run check:repo        # reject tracked inputs, generated specs, charts, and other run data
 npm run run:init -- <id>  # create one isolated transient workspace
 npm run run:verify-source -- <id> # validate the complete anchored story inventory
+npm run run:charts -- <id> # render, diagnose, capture, and manifest the complete selected chart set
 npm run run:flush -- <id> # remove one transient workspace, preserving input
 npm run run:finalize -- <id> # verify source/spec coverage, then clean transient work
 npm run run:reset         # cold reset all transient work and input

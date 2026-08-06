@@ -341,7 +341,7 @@ test('risk ranges require a population anchor and explanatory context', () => {
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
-test('dated intervals and benchmark gaps enforce their defining evidence', () => {
+test('dated intervals, benchmark gaps, and dumbbells enforce their defining evidence', () => {
   const timeline = loadExample('fuel-ban-timeline.json');
   let result = validateSpec(timeline);
   assert.equal(result.valid, true, result.errors.join('; '));
@@ -357,17 +357,33 @@ test('dated intervals and benchmark gaps enforce their defining evidence', () =>
   result = validateSpec(gap);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /benchmark is required/i.test(message)));
+
+  const dumbbell = loadExample('marketplace-commission-dumbbell.json');
+  result = validateSpec(dumbbell);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  delete dumbbell.data[2].benchmark;
+  result = validateSpec(dumbbell);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /benchmark is required for comparison\.dumbbell/i.test(message)));
+
+  const normalizedDumbbell = loadExample('marketplace-commission-dumbbell.json');
+  normalizedDumbbell.measure.valueMode = 'relative-change';
+  result = validateSpec(normalizedDumbbell);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /requires measure\.valueMode level/i.test(message)));
 });
 
-test('runtime includes basis, calendar-duration, and benchmark-gap renderers', () => {
+test('runtime includes basis, calendar-duration, benchmark-gap, and dumbbell renderers', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /function renderDurationTimeline\(/);
   assert.match(runtime, /function renderBenchmarkGap\(/);
+  assert.match(runtime, /function renderDumbbell\(/);
   assert.match(runtime, /tochnyi-basis-rail/);
   assert.match(css, /\.tochnyi-basis-rail\s*\{/);
   assert.match(css, /\.tochnyi-timeline-svg/);
   assert.match(css, /\.tochnyi-benchmark-gap-svg/);
+  assert.match(css, /\.tochnyi-dumbbell-svg/);
 });
 
 test('legacy story facets are deprecated and render without standalone cards', () => {

@@ -210,11 +210,18 @@ alone cannot reliably determine recipe and series structure.
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
 | `comparison.benchmark-gap` | Two to six actual values shown within their benchmark totals. Before-and-after periods may advance while quantity and scope stay fixed. |
+| `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
 seller registrations, revenue growth, insurance prices, and stock prices one
 measure.
+
+Use a dumbbell instead of paired bars when the reader needs to compare the
+direction and size of movement across several categories. The hollow endpoint
+represents `benchmark`; the solid endpoint represents `value`. Do not use it
+for unrelated category-specific measures or for a time series with more than
+two observations per category.
 
 ## Mixed-evidence stories
 
