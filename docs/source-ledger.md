@@ -185,8 +185,8 @@ or more physical-volume figures. Record:
 
 ```json
 "coverageAudit": {
-  "rationale": "Three inbound sources are compared with the same monthly demand denominator.",
-  "denominatorLabel": "Monthly demand",
+  "rationale": "Three inbound sources stay in tons; the reported monthly demand denominator is rate-preserved as a weekly reference for linear geometry.",
+  "denominatorLabel": "Weekly demand baseline",
   "sourceEvidence": [
     {
       "anchor": "60–100 thousand tons from India",
@@ -196,7 +196,7 @@ or more physical-volume figures. Record:
     {
       "anchor": "900 thousand tons of monthly demand",
       "disposition": "denominator",
-      "label": "Monthly demand"
+      "label": "Weekly demand baseline"
     }
   ]
 }
@@ -205,8 +205,14 @@ or more physical-volume figures. Record:
 Every physical-volume phrase in the candidate anchors must receive exactly one
 disposition: `component`, `denominator`, or `excluded`. Components and the
 denominator must match labels in `comparableObservations` and the final
-ChartSpec. An excluded volume requires a specific scope, direction, product, or
-period reason. At least two named supply components must remain when the source
+ChartSpec. The denominator may be represented by a numeric `references[]` line
+instead of a redundant `data[]` row. When a monthly or annual flow denominator
+would force an extreme scale, `comparableObservations` may contain a strictly
+rate-preserved weekly or daily derivative under the denominator label while
+`sourceEvidence` continues to point to the original reported amount. Record the
+conversion in `coverageAudit.rationale` and retain the original physical unit.
+An excluded volume requires a specific scope, direction, product, or period
+reason. At least two named supply components must remain when the source
 contains multiple contributors; one combined shipment range or one days-of-
 coverage mark is not a substitute.
 
@@ -221,6 +227,22 @@ selection:
   `incomparable`, or `not-applicable`.
 - `rationale`: a concise explanation of why that representation is the least
   normalized form that preserves the story.
+
+`incomparable` applies to the before/after observations that would form one
+pair, not to the fact that different categories sit at different absolute
+levels. Two coal grades, two grain products, or several product classes may
+have different prices while each category still has a valid earlier/current
+pair in one unit and basis. Those pairs are level evidence. When the input
+reports a current price and a percentage move, derive the prior price as
+`current / (1 + change rate)` when the basis is compatible. One or two category
+pairs normally route to `comparison.benchmark-gap`; three or more route to
+`comparison.dumbbell`.
+
+If only part of a normalized comparison has recoverable levels, do not mark the
+entire story `incomparable` merely to preserve a percentage-only chart. Use the
+recoverable level pairs when they still prove the input-anchored conclusion,
+keep unmatched normalized observations secondary, and research any unmatched
+category that is necessary to the headline.
 
 Rate and share stories also require:
 

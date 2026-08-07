@@ -139,6 +139,12 @@ every accepted story:
 - Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two completed, source-specific `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. Pending language and generic locators such as `website`, `search`, `dataset`, or `report` are invalid. The checks must span two source types and include a data-bearing source.
 - Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods. Workforce research must include the company filing or official employee disclosure for the relevant reporting perimeter.
 - Prefer reported or retrievable actual levels for primary geometry. Use percentage change as annotation, emphasis, subtitle, or supporting context.
+- For multi-category price changes, judge comparability within each category's
+  own before/after pair. Different category price levels, grades, or delivery
+  bases do not make a valid pair incomparable. A current price plus a compatible
+  percentage move makes the prior price derivable. If only some pairs are
+  recoverable, use them when they still prove the headline and keep unmatched
+  percentages secondary; otherwise research the missing headline-critical pair.
 - Never manufacture a `0%` before-event point or index-100 starting point merely to create a trend.
 - Use `relative-change` only when actual levels are unavailable or incomparable, and explain the limitation in `measure.normalizationNote`.
 - Use `index` only for a named index whose point values are reported or retrievable. Never publish generic visible labels such as `100 index`, `91.5 index`, or `index points`.
@@ -152,8 +158,13 @@ every accepted story:
   components, categories, facilities, peers, or time points with one aggregate,
   one range, one total, or one headline value.
 - Use `timeline.duration` whenever duration or reserve runway is the comparison. Supply exact start/end dates, or a verified common `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
-- When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and plot all retained components plus total need in one tangible unit. Days of coverage may remain secondary context only.
-- Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; never add a row that only repeats the benchmark or implied remainder.
+- When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and keep all retained components plus total need in primary geometry in one tangible unit. The denominator may be a numeric reference rather than a redundant row. Days of coverage may remain secondary context only.
+- Never use a logarithmic scale when the point is that the plotted amounts are small relative to a baseline. The chart must preserve the true proportional gap. If a monthly or annual flow denominator is at least about 8× the largest retained component, period-normalize that same denominator to a shorter familiar interval, usually a week or day, keep every component in the original physical unit, and use the derived denominator as a visible linear reference. Record the rate-preserving derivation in `coverageAudit.rationale`, basis, subtitle, or source evidence.
+- Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; use two rows for two category-level earlier/current pairs. Never add a row that only repeats the benchmark or implied remainder.
+- Never flatten repeated `Category · earlier` / `Category · later` observations
+  into `comparison.scenarios`. Scenarios are same-period alternatives. Use
+  `comparison.benchmark-gap` for one or two paired categories and
+  `comparison.dumbbell` for three or more.
 - Use `relationship.converging-signals` only when exactly two source-supported
   causal drivers and one different outcome measure three distinct real-world
   quantities. `relationship.formula` must state the mechanism. Repeated prices,
@@ -168,6 +179,11 @@ every accepted story:
 - A headline built around opposing quantities, such as falling purchases and rising prices producing higher spending, cannot plot one side while placing the other figures in `supportingFacts`.
 - `subtitle` is optional. Omit it when it repeats the title, category labels, percentages, or amounts already visible in the marks.
 - Two-part compositions use one label treatment per segment. Do not repeat the same category, percentage, and amount inside the bar and immediately below it.
+- Leave `options.labelMode` as `auto` unless the editorial design specifically
+  requires otherwise. Auto placement is family-coherent: labels stay outside
+  for the whole bar family when they fit; if endpoint headroom forces labels
+  inside and every bar can support that treatment, the whole family moves
+  inside. Mixed inside/outside placement is reserved for a genuine fit conflict.
 - Apply an information-economy test: every mark must add an independent observation. Remove complement rows, duplicated totals, zero-gap closures, and other marks that merely restate labels or geometry already present.
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.

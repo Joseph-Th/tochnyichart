@@ -266,12 +266,12 @@ that row.
 | Recipe | Semantic contract |
 | --- | --- |
 | `comparison.change` | Two periods of one quantity for one scope. Different periods are the intended contrast. |
-| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. |
+| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. Repeated category/time pairs are not scenarios. |
 | `comparison.pictogram` | Two to four exact integer counts from 0 to 400. Every dot or semantic symbol represents one unit on the same scope and period. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
-| `comparison.benchmark-gap` | One to six independent actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. |
-| `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. |
+| `comparison.benchmark-gap` | One to six actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. One or two category-level earlier/current price pairs also belong here, with current as `value` and prior as `benchmark`. |
+| `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
 | `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two paths converge at one operator before the outcome signal. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 
@@ -284,6 +284,12 @@ direction and size of movement across several categories. The hollow endpoint
 represents `benchmark`; the solid endpoint represents `value`. Do not use it
 for unrelated category-specific measures or for a time series with more than
 two observations per category.
+
+For only one or two paired categories, prefer `comparison.benchmark-gap` rather
+than flattening earlier and later values into separate bars. This is especially
+important for prices: a current price plus a compatible percentage move makes
+the prior price derivable, and different absolute price levels across products
+do not invalidate the within-product comparison.
 
 Use `comparison.pictogram` instead of a logarithmic bar when the story is an
 extreme ratio between two to four exact counts no larger than 400. One symbol

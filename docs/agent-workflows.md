@@ -145,8 +145,8 @@ Before selecting a recipe:
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
-7. Determine whether actual levels are reported or retrievable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available; when they are, select level geometry.
-8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two completed, source-specific checks and outcomes; pending research notes are invalid.
+7. Determine whether actual levels are reported or retrievable. For price-like changes, evaluate comparability within each category's before/after pair rather than across category magnitudes. A current price plus a compatible change rate makes the prior level derivable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available; when they are, select level geometry.
+8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two completed, source-specific checks and outcomes; pending research notes are invalid. Do not mark a multi-category price story incomparable merely because the categories have different absolute price levels.
 9. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
@@ -240,17 +240,31 @@ Check that:
   time remain visible. Use exact start/end intervals or one verified
   `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
 - Shipment, reserve, or shortage amounts described as days of consumption,
-  demand coverage, or share of need include a visible denominator reference or
-  are converted to coverage time.
+  demand coverage, or share of need include a visible denominator reference.
+  Keep the physical supply components in their original unit. A denominator may
+  be shown as a numeric reference rather than a redundant category row.
+- When the point is that amounts are small relative to a baseline, do not use a
+  logarithmic scale. The visual distance must preserve the proportional gap.
+  If a monthly or annual denominator is at least about 8× the largest retained
+  component, period-normalize that same denominator to a shorter familiar
+  interval, usually a week or day, and keep the chart linear. Record the
+  rate-preserving derivation and leave all components unchanged.
 - Prices, costs, freight, margins, discounts, premiums, shortfalls, and
   overages use segmented `comparison.benchmark-gap` geometry when the prior or
   total benchmark can be recovered. The plotted `value` is the underlying
   actual level, not the gap amount. One row is preferred when one relationship
-  fully carries the finding; no row merely repeats the total or remainder.
+  fully carries the finding; two category-level before/after pairs use two
+  benchmark-gap rows rather than four independent bars. No row merely repeats
+  the total or remainder.
 - Two to four exact counts from 0 to 400 use `comparison.pictogram` when one
   symbol per unit makes the magnitude comparison clearer than an axis.
-- Several categories with one before/benchmark value and one after/actual value
-  use `comparison.dumbbell` when the category-level movement is the finding.
+- Three or more categories with one before/benchmark value and one after/actual
+  value use `comparison.dumbbell` when the category-level movement is the
+  finding. Different category magnitudes do not invalidate within-category
+  paired comparisons.
+- Never flatten repeated category/time pairs into `comparison.scenarios`.
+  Scenarios are same-period alternatives. Use `comparison.benchmark-gap` for
+  one or two paired categories and `comparison.dumbbell` for three or more.
 - When two unlike drivers and one outcome are all essential, use
   `relationship.converging-signals` instead of a common axis. The two drivers
   and outcome must measure three distinct real-world quantities, and
@@ -267,6 +281,12 @@ Check that:
   relegate the other numeric signals to `supportingFacts`.
 - `subtitle` is optional and should be absent when it repeats the title,
   category labels, percentages, or amounts already visible in the marks.
+- Leave `options.labelMode` on `auto` for ordinary column charts. Auto placement
+  is family-coherent: all labels stay outside when they fit; when endpoint
+  headroom forces labels inside and every bar can support that treatment, the
+  whole bar family moves inside. Mixed inside/outside treatment is reserved for
+  a genuine physical-fit conflict. Use explicit `inside` or `outside` only as
+  an intentional editorial override.
 - An exact two-item `comparison.scenarios` chart must add a numeric reference,
   tangible basis, or source-supported numeric mechanism, consequence,
   denominator, or comparison fact. Check whether the pair is already contained
@@ -361,7 +381,10 @@ Composable semantic features include:
 
 - `references` for targets, averages, legal limits, or benchmarks.
 - `data[].annotation` for a concise explanation tied to a point.
-- `measure.scale = "logarithmic"` for positive values spanning orders of magnitude.
+- `measure.scale = "logarithmic"` only for genuinely multiplicative
+  comparisons spanning orders of magnitude. Never use it to make a benchmark
+  or denominator comparison fit when the intended message is that the primary
+  amounts are small relative to that baseline.
 - `supportingFacts` as an unboxed inline rail for secondary context in a
   different unit.
 - Separate ChartSpecs when mixed-unit evidence is the main story rather than

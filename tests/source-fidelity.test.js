@@ -180,6 +180,61 @@ test('source fidelity requires structured tangible-value research before normali
   }
 });
 
+test('source fidelity rejects percentage-only price geometry when the input already reports tangible prices', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-source-fidelity-price-levels-'));
+  const anchor = 'Export wheat prices fell 9.6% to 15 100 rubles per ton; barley prices fell 12.2% to 13 000 rubles per ton.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-price-levels');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'grain-price-moves',
+      claim: 'Barley prices fell faster than wheat prices.',
+      decision: 'selected',
+      outputSlug: 'grain-price-moves',
+      title: 'Barley Prices Fell Faster Than Wheat Prices',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'relative-change',
+        levelAvailability: 'incomparable',
+        rationale: 'The products have different absolute price levels.',
+        tangibleTarget: 'Current and prior wheat and barley prices.',
+        researchAttempts: [
+          {
+            source: 'Market report',
+            sourceType: 'market-data',
+            locator: 'Fixture market price table for wheat and barley',
+            outcome: 'Current prices were reported for both categories.'
+          },
+          {
+            source: 'Industry dataset',
+            sourceType: 'industry-dataset',
+            locator: 'Fixture grain assessment table for the prior period',
+            outcome: 'The categories use distinct product bases.'
+          }
+        ]
+      },
+      visualEvidenceAudit: {
+        rationale: 'The normalized changes are on the same percentage scale.',
+        comparableObservations: [
+          { label: 'Wheat', quantity: 'grain price change', unit: '%', period: 'reported interval', value: -9.6 },
+          { label: 'Barley', quantity: 'grain price change', unit: '%', period: 'reported interval', value: -12.2 }
+        ]
+      },
+      anchors: [anchor],
+      evidence: [{ statement: 'Barley prices fell faster than wheat prices.', origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-price-levels'),
+      /tangible currency price|within-category price pairs|category-specific before\/after/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('workforce percentages require a company-filing headcount check', () => {
   const root = project();
   try {
@@ -386,14 +441,18 @@ test('coverage audits retain each supply component and the demand denominator', 
     );
 
     const candidate = ledger.candidates[0];
+    candidate.visualEvidenceAudit.rationale = 'Every reported inbound component stays in tons; the monthly denominator is safely period-normalized to a weekly baseline for proportional linear geometry.';
+    candidate.visualEvidenceAudit.comparableObservations[3] = {
+      label: 'Weekly demand baseline', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 207
+    };
     candidate.visualEvidenceAudit.coverageAudit = {
-      rationale: 'The coverage result is explained by three inbound components compared with monthly demand.',
-      denominatorLabel: 'Monthly demand',
+      rationale: 'The coverage result keeps three inbound components in tons and converts the reported monthly denominator to the equivalent weekly rate.',
+      denominatorLabel: 'Weekly demand baseline',
       sourceEvidence: [
         { anchor: '60–100 thousand tons from India', disposition: 'component', label: 'India tankers' },
         { anchor: '30 thousand tons from Morocco', disposition: 'component', label: 'Morocco tanker' },
         { anchor: '10 thousand tons from Kazakhstan', disposition: 'component', label: 'Kazakhstan pledge' },
-        { anchor: '900 thousand tons of monthly demand', disposition: 'denominator', label: 'Monthly demand' }
+        { anchor: '900 thousand tons of monthly demand', disposition: 'denominator', label: 'Weekly demand baseline' }
       ]
     };
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
@@ -414,9 +473,9 @@ test('coverage audits retain each supply component and the demand denominator', 
       data: [
         { label: 'India tankers', low: 60, high: 100 },
         { label: 'Morocco tanker', value: 30 },
-        { label: 'Kazakhstan pledge', value: 10 },
-        { label: 'Monthly demand', value: 900 }
+        { label: 'Kazakhstan pledge', value: 10 }
       ],
+      references: [{ label: 'Weekly demand baseline', value: 207 }],
       measure: { unit: 'thousand tons', valueMode: 'level', levelAvailability: 'reported' }
     }));
     assert.equal(validateSourceLedger(root, 'issue-coverage-audit', { requireSpecs: true }).valid, true);

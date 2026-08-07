@@ -296,7 +296,8 @@ When the same input passage reports two or more shipment, reserve, import, or
 supply volumes, do not combine them before the evidence audit and do not reduce
 the story to `1–3 days`. Record `visualEvidenceAudit.coverageAudit` with:
 
-- `denominatorLabel`: the plotted demand or consumption total.
+- `denominatorLabel`: the visible demand or consumption benchmark. It may be a
+  plotted data row or a numeric `references[]` line.
 - `sourceEvidence`: one entry for every physical-volume phrase in the input.
 - `disposition`: `component`, `denominator`, or `excluded`.
 - `label`: the matching `comparableObservations` and ChartSpec label for each
@@ -304,9 +305,28 @@ the story to `1–3 days`. Record `visualEvidenceAudit.coverageAudit` with:
 - `reason`: a specific scope, direction, period, or product reason for every
   excluded volume.
 
-Every retained component and the denominator must remain primary ChartSpec
-data in one tangible unit. Coverage time may appear in the title, subtitle, or
-annotation only after the viewer can see why the result is small.
+Every retained component and the denominator must remain in primary geometry
+in one tangible physical unit. The denominator may be a reference line rather
+than a redundant category row. Coverage time may appear in the title, subtitle,
+or annotation only after the viewer can see why the result is small.
+
+Apply a scale-integrity check before choosing a logarithmic axis. When the
+editorial claim is that shipments, reserves, output, or another amount are
+small relative to a baseline, a logarithmic scale is not acceptable: it
+compresses the proportional gap that the chart is meant to communicate. Keep
+the comparison linear.
+
+If the reported denominator is a monthly or annual flow and is at least about
+8× the largest retained component, period-normalize the denominator to a
+shorter familiar interval before charting. Prefer a week when it places the
+largest component at a readable fraction of the reference; use a day when a
+week is still too large. Keep every component in its original physical unit and
+change only the denominator period. For example, a monthly gasoline baseline
+may become an equivalent weekly tonnage reference while the shipment values
+remain tons. Record the original denominator, conversion, and resulting
+reference in the evidence audit or basis. Do not use a shorter period merely to
+inflate the apparent importance of the components; the conversion must be a
+strict rate-preserving transformation of the same denominator.
 
 If the normalized claim and a tangible base allow an absolute value to be
 derived, the derived value is the primary geometry. For example, an 8–10%
@@ -445,13 +465,22 @@ Examples:
   One row is enough when one benchmark relationship fully carries the story;
   do not add a second row that merely restates the total or the derived
   remainder.
-- A current price plus a reported percentage move should normally use
-  `comparison.benchmark-gap`: derive the prior price as
-  `current / (1 + change rate)` and show the retained price plus the changed
-  segment. Use `comparison.dumbbell` when several categories each have a prior
-  and current value. For a quoted discount, research the undiscounted reference
-  price and plot the discounted actual price inside that total. Do not use the
-  discount amount as `value`.
+- A current price plus a reported percentage move should normally use tangible
+  price levels: derive the prior price as `current / (1 + change rate)` when the
+  rate and current price use the same basis. For one or two categories, use
+  `comparison.benchmark-gap` with the later/current price as `value` and the
+  earlier/prior price as `benchmark`. For three or more categories, use
+  `comparison.dumbbell`. Do not flatten `Category · earlier` and
+  `Category · later` into separate scenario bars. Different categories may have
+  different absolute prices, grades, or delivery bases; that does not make each
+  category's own earlier-versus-later pair incomparable. Only mark levels
+  `incomparable` when the before and after values within the same category do
+  not share a defensible basis. If only some category pairs are recoverable,
+  use those tangible pairs when they still support the input-anchored finding
+  and keep unmatched percentage observations as secondary context; otherwise
+  research the missing levels further or reframe/omit the story. For a quoted
+  discount, research the undiscounted reference price and plot the discounted
+  actual price inside that total. Do not use the discount amount as `value`.
 - Two to four exact integer counts from 0 to 400 should use
   `comparison.pictogram`, with one dot or semantic symbol per unit. Do not use a
   logarithmic bar merely to make a 200-to-1 comparison fit.
@@ -507,12 +536,19 @@ Before authoring the `ChartSpec`, confirm:
   mechanism formula; it is not a disguised time series or paired-price chart.
 - A raw rate/share is used only when its tangible basis is unavailable, incomparable, or genuinely not applicable; otherwise the chart uses level geometry.
 - Relative-change geometry is used only when actual levels are unavailable or incomparable.
+- `incomparable` is evaluated within an observation pair, not across category
+  magnitudes. Wheat and barley, two coal grades, or two product classes may sit
+  at different absolute price levels while each category still has a valid
+  before/after pair that belongs in level geometry.
 - Index geometry is used only for a named, source-reported index with actual point values; synthetic 100-based baselines and viewer-facing `index` labels are absent.
 - Risk stories include a population or denominator plus a mechanism or consequence.
 - An exact two-item `comparison.scenarios` chart has a numeric reference, basis,
   mechanism, consequence, denominator, or comparison fact, and is not a subset
   of a richer same-topic chart.
 - Dated intervals use `timeline.duration`; price, cost, freight, margin, discount, premium, shortfall, and overage stories use segmented benchmark geometry when their defining evidence is available.
+- Repeated category/time pairs are never flattened into `comparison.scenarios`.
+  Use `comparison.benchmark-gap` for one or two category pairs and
+  `comparison.dumbbell` for three or more.
 - Benchmark-gap specs plot the underlying tangible actual and total benchmark,
   use one row when one relationship is complete, and contain no complement or
   zero-gap closure rows.

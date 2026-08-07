@@ -165,6 +165,29 @@ function normalizeEditorialValue(value) {
     .trim();
 }
 
+const TEMPORAL_LABEL_TOKEN = /\b(?:before|after|prior|previous|earlier|later|current|latest|then|now|start|end|opening|closing|q[1-4]|h[12]|20\d{2}|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i;
+const TEMPORAL_LABEL_TOKEN_GLOBAL = /\b(?:before|after|prior|previous|earlier|later|current|latest|then|now|start|end|opening|closing|q[1-4]|h[12]|20\d{2}|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/gi;
+
+function temporalPairStem(label) {
+  const normalized = normalizeEditorialValue(label);
+  if (!normalized || !TEMPORAL_LABEL_TOKEN.test(normalized)) return '';
+  return normalized
+    .replace(TEMPORAL_LABEL_TOKEN_GLOBAL, ' ')
+    .replace(/\b\d{1,2}\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function pairedTemporalGroupCount(data) {
+  const groups = new Map();
+  (data || []).forEach((item) => {
+    const stem = temporalPairStem(item?.label);
+    if (!stem) return;
+    groups.set(stem, (groups.get(stem) || 0) + 1);
+  });
+  return [...groups.values()].filter((count) => count >= 2).length;
+}
+
 function percentageText(value) {
   const decimals = Math.abs(value - Math.round(value)) < 0.05 ? 0 : 1;
   return `${value.toFixed(decimals)}%`;
@@ -830,6 +853,16 @@ function validateRecipe(spec, errors, warnings) {
       if (count < 2 || count > 5) errors.push('comparison.scenarios requires 2 to 5 data items.');
       requireNumericValues(spec, errors);
       validateStandaloneScenarioPair(spec, data, errors);
+      {
+        const pairedGroups = pairedTemporalGroupCount(data);
+        if (pairedGroups >= 2) {
+          errors.push(
+            'comparison.scenarios cannot flatten repeated category/time pairs into separate bars. ' +
+            'For two categories, encode the later/current value as value and the earlier/prior value as benchmark in comparison.benchmark-gap. ' +
+            'For three or more categories, use comparison.dumbbell. This keeps each category change visually paired.'
+          );
+        }
+      }
       break;
     case 'comparison.pictogram':
       if (count < 2 || count > 4) errors.push('comparison.pictogram requires 2 to 4 data items.');
@@ -1438,6 +1471,58 @@ function validateCoverageDecomposition(spec, errors) {
   }
 }
 
+const BASELINE_LABEL_TEXT = /\b(?:baseline|benchmark|consumption|demand|need|capacity|normal|typical|average|target|total need)\b/i;
+const LONG_PERIOD_BASELINE_TEXT = /\b(?:monthly|per month|month(?:ly)? baseline|annual|annually|yearly|per year|year baseline)\b/i;
+
+function plottedMagnitude(item) {
+  const candidates = [item?.value, item?.low, item?.high]
+    .filter((value) => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  return candidates.length ? Math.max(...candidates) : null;
+}
+
+function validateBaselineScaleIntegrity(spec, errors) {
+  const storyText = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
+  const baselineData = (spec.data || []).filter((item) =>
+    BASELINE_LABEL_TEXT.test(`${item?.label || ''} ${item?.displayValue || ''}`)
+  );
+  const baselineReferences = (spec.references || []).filter((reference) =>
+    BASELINE_LABEL_TEXT.test(reference?.label || '')
+  );
+  const baselineCandidates = [
+    ...baselineData.map((item) => ({ value: plottedMagnitude(item), text: `${item?.label || ''} ${item?.displayValue || ''}` })),
+    ...baselineReferences.map((reference) => ({ value: plottedMagnitude(reference), text: reference?.label || '' }))
+  ].filter((item) => Number.isFinite(item.value));
+  if (!baselineCandidates.length) return;
+
+  const baselineLabels = new Set(baselineData.map((item) => normalizeEditorialValue(item?.label)).filter(Boolean));
+  const primaryMagnitudes = (spec.data || [])
+    .filter((item) => !baselineLabels.has(normalizeEditorialValue(item?.label)))
+    .map(plottedMagnitude)
+    .filter(Number.isFinite);
+  if (!primaryMagnitudes.length) return;
+
+  const baseline = Math.max(...baselineCandidates.map((item) => item.value));
+  const largestPrimary = Math.max(...primaryMagnitudes);
+  if (!(baseline > largestPrimary)) return;
+  const ratio = baseline / largestPrimary;
+
+  if (spec.measure?.scale === 'logarithmic' && ratio >= 2) {
+    errors.push(
+      `Coverage or supply-versus-baseline stories cannot use a logarithmic scale when the baseline is ${ratio.toFixed(1)}× the largest primary amount. ` +
+      'A log axis compresses the exact magnitude difference that the chart is supposed to communicate. Use a linear scale.'
+    );
+  }
+
+  const baselineText = `${baselineCandidates.map((item) => item.text).join(' ')} ${storyText}`;
+  if (ratio >= 8 && LONG_PERIOD_BASELINE_TEXT.test(baselineText)) {
+    errors.push(
+      `The period baseline is ${ratio.toFixed(1)}× the largest primary amount, so the natural monthly or annual denominator makes the linear chart unnecessarily unreadable. ` +
+      'Period-normalize the same denominator to a shorter familiar interval, usually a week or day, while keeping every plotted component in the original physical unit. ' +
+      'Use that normalized denominator as a visible reference or benchmark, preserve all source components, and state the derivation in basis or subtitle copy.'
+    );
+  }
+}
+
 function validateSubtitleEconomy(spec, errors) {
   if (!spec.subtitle) return;
   const numbers = normalizedNumberTokens(spec.subtitle);
@@ -1748,6 +1833,7 @@ function validateSpec(input) {
   validateTrendEvidenceUse(spec, errors);
   validateCoverageOrientation(spec, errors);
   validateCoverageDecomposition(spec, errors);
+  validateBaselineScaleIntegrity(spec, errors);
   validateContrastStructure(spec, errors);
   validateRiskContext(spec, errors);
   validatePrimaryMetric(spec, errors, warnings);

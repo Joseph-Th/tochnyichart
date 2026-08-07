@@ -10,8 +10,8 @@
     },
     {
       "id": "comparison.scenarios",
-      "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period.",
-      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period. A two-item standalone chart also needs a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact; otherwise enrich, merge, or omit it.",
+      "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period. Do not flatten repeated category/time pairs into separate scenario bars.",
+      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period. A two-item standalone chart also needs a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
       "bestFor": ["expected versus actual", "policy choices", "three-or-more scenarios", "context-rich two-value comparisons"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
@@ -39,8 +39,8 @@
     {
       "id": "comparison.benchmark-gap",
       "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, or overage remains visible.",
-      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story.",
-      "bestFor": ["discounted prices", "premium to benchmark", "shortfall to target", "independent benchmark gaps"],
+      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story. For one or two category-level before/after price pairs, encode the later/current level as value and the earlier/prior level as benchmark.",
+      "bestFor": ["discounted prices", "one or two paired price moves", "premium to benchmark", "shortfall to target", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
@@ -53,7 +53,7 @@
     {
       "id": "comparison.dumbbell",
       "purpose": "Compare two values for several categories while preserving the direction and size of every category-level change.",
-      "data": "3 to 10 labeled items with value and benchmark in one unit, plus matching quantity, scope, and period. benchmark is the earlier or reference value; value is the later or actual value.",
+      "data": "3 to 10 labeled items with value and benchmark in one unit, plus matching quantity, scope, and period. benchmark is the earlier or reference value; value is the later or actual value. Different categories may have different absolute levels; what must remain comparable is each category's own earlier-versus-later pair in the same unit and basis.",
       "bestFor": ["before-and-after category comparisons", "peer movement", "target versus actual across several categories"],
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
@@ -118,7 +118,7 @@
     },
     {
       "id": "measure.scale",
-      "purpose": "Use linear or logarithmic scale for extreme ratios."
+      "purpose": "Use logarithmic scale only for genuinely multiplicative comparisons across orders of magnitude. Never use it when the point is that an amount is a small fraction of a benchmark or denominator; preserve that proportional gap with a linear scale and period-normalize an oversized monthly or annual flow benchmark when needed."
     },
     {
       "id": "supportingFacts",

@@ -220,17 +220,36 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   must show the demand denominator. When the input contains two or more
   physical-volume contributors, complete `visualEvidenceAudit.coverageAudit`,
   disposition every reported volume, and plot all retained components plus the
-  denominator in one tangible unit. Coverage time is secondary context, not a
-  substitute for the supply-versus-demand decomposition.
+  denominator in one tangible unit. The denominator may be a visible numeric
+  reference rather than a redundant category row. Coverage time is secondary
+  context, not a substitute for the supply-versus-demand decomposition.
+- Do not use a logarithmic scale when the editorial point is that one or more
+  amounts are small relative to a baseline. Logarithmic geometry compresses the
+  proportional gap and therefore weakens the intended magnitude comparison.
+  Keep the scale linear.
+- If a monthly or annual flow denominator is at least about 8× the largest
+  retained component, period-normalize that same denominator to a shorter
+  familiar interval before charting. Prefer a week when practical, or a day if
+  a week is still too large. Keep all components in the original physical unit;
+  only the denominator period changes. Use the derived weekly/daily amount as a
+  visible reference and record the rate-preserving derivation in the evidence
+  audit or basis.
 - Prices, costs, freight, margins, discounts, premiums, shortfalls, and
   overages should use segmented `comparison.benchmark-gap` geometry when the
   benchmark and actual amount are available. Derive a prior level from the
   current amount and reported change when necessary. Plot the underlying
   actual quantity, not the gap amount itself. Use one row when one benchmark
-  relationship fully carries the finding; do not add a second row that merely
-  restates the total or derived remainder.
-- Several categories with paired before/after or benchmark/actual values should
-  use `comparison.dumbbell` when the category-level movement is the finding.
+  relationship fully carries the finding. For two category-level before/after
+  price pairs, use two benchmark-gap rows rather than four independent bars.
+  Do not add a row that merely restates the total or derived remainder.
+- Three or more categories with paired before/after or benchmark/actual values
+  should use `comparison.dumbbell` when the category-level movement is the
+  finding. Different category magnitudes, grades, or delivery bases do not make
+  the pairs incomparable when each category's before and after observations use
+  the same unit and basis.
+- Never flatten repeated `Category · earlier` / `Category · later` observations
+  into `comparison.scenarios`. Scenarios are same-period alternatives, not a
+  substitute for paired-change geometry.
 - When two drivers and one outcome are all essential but use unlike quantities
   or units, use `relationship.converging-signals` instead of forcing them onto a
   shared scale. Each factor and the outcome must render as an independent local
@@ -250,6 +269,12 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - Two-part compositions must use one label treatment per segment. Do not repeat
   the same category, percentage, and amount inside the bar and immediately
   below it.
+- Column value labels should use `options.labelMode: "auto"` by default. Auto
+  placement is family-coherent rather than bar-by-bar: keep all labels outside
+  when they fit; if endpoint headroom forces inside placement and every bar can
+  support it, move the whole bar family inside; mix inside/outside only when a
+  genuine physical-fit conflict makes one treatment impossible. Explicit
+  `inside` or `outside` is an editorial override, not a routine spacing fix.
 - Every additional mark must add independent information. Reject complements,
   remainders, totals, and zero-gap closure rows that the primary geometry
   already encodes.
@@ -271,6 +296,15 @@ and outcome must describe a completed source-specific check; pending language
 or a generic `website`, `search`, `dataset`, or `report` locator is invalid.
 Consumption or demand denominators require an official or industry dataset
 check before they may be classified unavailable.
+
+For price-like stories, `incomparable` is a within-pair judgment. If a source
+reports a current price and a percentage move for a category, derive the prior
+price when the basis is compatible. Do not call the whole story incomparable
+merely because wheat and barley, two coal grades, or other categories have
+different absolute price levels. When only some pairs are recoverable, prefer
+the recoverable tangible pairs if they still support the input-anchored
+conclusion and keep unmatched normalized observations secondary; otherwise
+continue targeted research for the missing levels.
 
 Synthetic 100-based indexes and fabricated 0% starting observations are not
 fallbacks. If tangible values remain unavailable, show only the reported

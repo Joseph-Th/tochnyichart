@@ -254,6 +254,45 @@ test('value representation prefers actual levels over percentages and synthetic 
   assert.ok(result.errors.some((message) => /synthetic 0% baseline/i.test(message)));
 });
 
+test('paired category price observations use benchmark geometry instead of flattened scenario bars', () => {
+  const flattened = {
+    version: '2.0',
+    recipe: 'comparison.scenarios',
+    title: 'Metallurgical coal prices weakened across grades',
+    date: '2026-08-05',
+    data: [
+      { label: 'Coking · 17 Jun', value: 160, displayValue: '$160/t', quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026' },
+      { label: 'Coking · 17 Jul', value: 148, displayValue: '$148/t', quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026' },
+      { label: 'PCI · 17 Jun', value: 148, displayValue: '$148/t', quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026' },
+      { label: 'PCI · 17 Jul', value: 144, displayValue: '$144/t', quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026' }
+    ],
+    measure: {
+      quantity: 'coal price', unit: 'USD/metric ton', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    }
+  };
+  let result = validateSpec(flattened);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /repeated category\/time pairs|comparison\.benchmark-gap/i.test(message)));
+
+  const paired = structuredClone(flattened);
+  paired.recipe = 'comparison.benchmark-gap';
+  paired.data = [
+    {
+      label: 'Coking coal', value: 148, benchmark: 160,
+      displayValue: '$148/t', benchmarkDisplayValue: '$160/t prior', gapDisplayValue: '$12/t decline',
+      quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026'
+    },
+    {
+      label: 'PCI coal', value: 144, benchmark: 148,
+      displayValue: '$144/t', benchmarkDisplayValue: '$148/t prior', gapDisplayValue: '$4/t decline',
+      quantity: 'coal price', scope: 'Far East export coal', period: '17 June–17 July 2026'
+    }
+  ];
+  result = validateSpec(paired);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
 test('share charts expose tangible amounts when component levels are available', () => {
   const composition = loadExample('budget-composition.json');
   composition.measure.levelAvailability = 'reported';
@@ -518,22 +557,32 @@ test('multi-component coverage stories keep supply components and demand in prim
   const decomposed = {
     version: '2.0',
     recipe: 'comparison.range',
-    title: 'Replacement shipments covered only a fraction of monthly fuel demand',
-    subtitle: 'The announced components together equate to roughly one to three days of demand.',
+    title: 'Replacement shipments covered only a fraction of weekly fuel demand',
+    subtitle: 'Weekly demand is derived from the reported monthly baseline so the linear scale preserves proportional magnitude.',
     date: '2026-08-06',
     data: [
       { label: 'India tankers', low: 60, high: 100, displayValue: '60–100 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
       { label: 'Morocco tanker', value: 30, displayValue: '30 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
-      { label: 'Kazakhstan pledge', value: 10, displayValue: '10 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' },
-      { label: 'Monthly demand', value: 900, displayValue: '900 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026', tone: 'critical' }
+      { label: 'Kazakhstan pledge', value: 10, displayValue: '10 thousand tons', quantity: 'fuel volume', scope: 'national shortage response', period: 'August 2026' }
     ],
+    references: [{ value: 207, label: 'Weekly demand baseline', tone: 'critical', lineStyle: 'dashed' }],
     measure: {
       quantity: 'fuel volume', unit: 'thousand tons', valueMode: 'level',
-      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear'
     }
   };
   result = validateSpec(decomposed);
   assert.equal(result.valid, true, result.errors.join('; '));
+
+  const distorted = structuredClone(decomposed);
+  distorted.title = 'Replacement shipments are small beside the monthly demand baseline';
+  distorted.subtitle = 'The monthly baseline is 900 thousand tons.';
+  distorted.references = [{ value: 900, label: 'Monthly demand baseline', tone: 'critical', lineStyle: 'dashed' }];
+  distorted.measure.scale = 'logarithmic';
+  result = validateSpec(distorted);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /logarithmic scale|compresses the exact magnitude difference/i.test(message)));
+  assert.ok(result.errors.some((message) => /period-normalize|shorter familiar interval/i.test(message)));
 });
 
 test('opposing quantitative signals cannot be hidden in supporting facts', () => {
@@ -1139,6 +1188,68 @@ test('column labels fall outside when an inside label cannot physically fit', ()
   assert.equal(tallLoss.locationY, 0.5);
   assert.equal(tallLoss.centerYPercent, 50);
   assert.equal(tallLoss.dy, 0);
+});
+
+test('auto column labels choose one coherent placement for near-equal bars', () => {
+  const plan = { chartHeight: 540, compact: false, labelMode: 'auto' };
+  const bounds = { minimum: 0, maximum: 100 };
+
+  const nearTop = [
+    { value: 78, display: '78' },
+    { value: 80, display: '80' }
+  ];
+  const nearTopMode = VisualPlan.columnLabelGroupMode(
+    nearTop,
+    bounds,
+    plan,
+    { plotHeight: 300, labelHeight: 50.8, fontSize: 28 }
+  );
+  assert.equal(nearTopMode, 'inside');
+  nearTop.forEach((item) => {
+    const placement = VisualPlan.columnLabelPlacement(
+      item,
+      bounds,
+      { ...plan, labelMode: nearTopMode },
+      { plotHeight: 300, labelHeight: 50.8, fontSize: 28 }
+    );
+    assert.equal(placement.placement, 'inside');
+  });
+
+  const roomy = [
+    { value: 42, display: '42' },
+    { value: 48, display: '48' }
+  ];
+  assert.equal(
+    VisualPlan.columnLabelGroupMode(roomy, bounds, plan, { plotHeight: 300, labelHeight: 50.8, fontSize: 28 }),
+    'outside'
+  );
+
+  const compactLongLabels = [
+    { value: 78, display: 'about 78,000 rubles' },
+    { value: 80, display: 'over 80,000 rubles' }
+  ];
+  assert.equal(
+    VisualPlan.columnLabelGroupMode(
+      compactLongLabels,
+      bounds,
+      { chartHeight: 622, compact: true, labelMode: 'auto' },
+      { plotHeight: 360, labelMaxWidth: 90, fontSize: 16 }
+    ),
+    'inside'
+  );
+});
+
+test('auto column labels allow mixed placement only for a genuine fit conflict', () => {
+  const plan = { chartHeight: 540, compact: false, labelMode: 'auto' };
+  const bounds = { minimum: 0, maximum: 100 };
+  const data = [
+    { value: 12, display: '12' },
+    { value: 92, display: '92' }
+  ];
+  assert.equal(
+    VisualPlan.columnLabelGroupMode(data, bounds, plan, { plotHeight: 300, labelHeight: 50.8, fontSize: 28 }),
+    'auto'
+  );
 });
 
 test('Russia region registry exposes stable ISO-style identifiers', () => {

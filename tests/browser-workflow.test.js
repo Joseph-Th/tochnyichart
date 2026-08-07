@@ -95,6 +95,51 @@ test('trend value labels clear measured plot points at every responsive viewport
   }
 });
 
+test('near-equal column bars resolve to one family label placement', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-column-label-family-'));
+  try {
+    const specPath = path.join(tempDir, 'column-label-family.json');
+    const outputPath = path.join(tempDir, 'column-label-family.html');
+    fs.writeFileSync(specPath, JSON.stringify({
+      version: '2.0',
+      recipe: 'comparison.scenarios',
+      title: 'Two near-equal values use one label treatment',
+      subtitle: 'A numeric comparison fact makes this two-item scenario comparison independently useful.',
+      date: '2026-08-06',
+      data: [
+        {
+          label: 'Option A', value: 78, displayValue: '78 units',
+          quantity: 'capacity', scope: 'same system', period: '2026'
+        },
+        {
+          label: 'Option B', value: 80, displayValue: '80 units',
+          quantity: 'capacity', scope: 'same system', period: '2026'
+        }
+      ],
+      supportingFacts: [{ value: '100 units', label: 'Capacity ceiling', role: 'comparison' }],
+      measure: {
+        quantity: 'capacity', unit: 'units', valueMode: 'level',
+        levelAvailability: 'reported', minimum: 0, maximum: 100, baseline: 'zero'
+      },
+      options: { animate: false, labelMode: 'auto' }
+    }));
+    const validated = validateSpec(JSON.parse(fs.readFileSync(specPath, 'utf8')));
+    assert.equal(validated.valid, true, validated.errors.join('; '));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, {
+      browser,
+      viewports: REGIONAL_WORKFLOW_VIEWPORTS
+    });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.ok(['inside', 'outside'].includes(run.columnAttributes?.['data-column-label-mode']));
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('axes that cross zero render a prominent interior zero reference', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-zero-reference-'));
   try {

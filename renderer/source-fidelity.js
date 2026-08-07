@@ -31,6 +31,9 @@ const PENDING_RESEARCH_TEXT = /\b(?:to be checked|to check|pending|not yet check
 const GENERIC_RESEARCH_LOCATOR = /^(?:homepage|website|search|web search|database|dataset|report|article|filing|statistics|table)$/i;
 const PUBLIC_AGGREGATE_SHARE_PATTERN = /(?:\b(?:share|accounts? for|represents?|makes? up)\b[^.]{0,60}\b(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:\d+(?:[.,]\d+)?\s*%|\d+(?:[.,]\d+)?\s*percent|one[- ](?:tenth|fifth|quarter|third|half))\s+(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\s+(?:share|percentage)\b)/i;
 const COVERAGE_TEXT = /\b(?:coverage|covers? only|days? of (?:consumption|demand|need)|share of need|monthly (?:consumption|demand|need)|daily consumption|shortage response|replacement suppl(?:y|ies))\b/i;
+const PRICE_STORY_TEXT = /\b(?:price|prices|pricing|cost|costs|tariff|tariffs|freight|margin|margins|profitability)\b/i;
+const PERCENT_VALUE_TEXT = /\d+(?:[.,]\d+)?\s*%/i;
+const TANGIBLE_CURRENCY_LEVEL_TEXT = /(?:[$€£₽¥]\s*\d|\b\d[\d\s,.]*\s*(?:rubles?|roubles?|rubs?|usd|dollars?|euros?|eur|pounds?|gbp|yuan|cny)\b)/i;
 const VOLUME_NUMBER = String.raw`\d+(?:[\s,]\d{3})*(?:[.,]\d+)?`;
 const PHYSICAL_VOLUME_PATTERN = new RegExp(
   String.raw`\b${VOLUME_NUMBER}(?:\s*(?:-|–|—|to)\s*${VOLUME_NUMBER})?\s*(?:thousand|million|billion)?\s*(?:metric\s+)?(?:tons?|tonnes?|barrels?|liters?|litres?|gallons?|cubic\s+meters?|cubic\s+metres?|m3|m³)\b`,
@@ -109,6 +112,17 @@ function isPublicAggregateShareCandidate(candidate) {
 
 function isCoverageCandidate(candidate) {
   return COVERAGE_TEXT.test(candidateNarrative(candidate));
+}
+
+function hasRecoverablePriceLevelInInput(candidate) {
+  const headline = [candidate?.claim, candidate?.title].filter(isText).join(' ');
+  if (!PRICE_STORY_TEXT.test(headline)) return false;
+  return (candidate?.anchors || []).some((anchor) =>
+    isText(anchor) &&
+    PRICE_STORY_TEXT.test(anchor) &&
+    PERCENT_VALUE_TEXT.test(anchor) &&
+    TANGIBLE_CURRENCY_LEVEL_TEXT.test(anchor)
+  );
 }
 
 function physicalVolumePhrases(candidate) {
@@ -217,6 +231,14 @@ function validateRepresentationAudit(candidate, prefix, errors) {
     errors.push(
       `${prefix}.representationAudit selects relative-change even though actual levels are ${audit.levelAvailability}. ` +
       'Select level values for the primary geometry and keep percentage or indexed change as secondary context.'
+    );
+  }
+  if (audit.selectedMode === 'relative-change' &&
+      ['unavailable', 'incomparable'].includes(audit.levelAvailability) &&
+      hasRecoverablePriceLevelInInput(candidate)) {
+    errors.push(
+      `${prefix}.representationAudit cannot classify the whole price story as ${audit.levelAvailability} because the input anchor already contains a tangible currency price alongside a percentage move. ` +
+      'Recover category-specific before/after price pairs, deriving the prior level from current / (1 + change rate) when valid. Different products, grades, or delivery bases do not make within-category price pairs incomparable. Use level geometry for the recoverable pairs and keep unmatched percentage observations as secondary context or research them further.'
     );
   }
   if (audit.selectedMode === 'index' &&
@@ -432,14 +454,28 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
   const observations = candidate?.visualEvidenceAudit?.comparableObservations;
   if (!Array.isArray(observations) || observations.length < 3) return;
   const data = Array.isArray(spec?.data) ? spec.data : [];
+  const references = Array.isArray(spec?.references) ? spec.references : [];
+  const denominatorLabel = normalizedSeriesLabel(candidate?.visualEvidenceAudit?.coverageAudit?.denominatorLabel);
   const plottedLabels = new Set(data.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const referenceLabels = new Set(references.map((reference) => normalizedSeriesLabel(reference?.label)).filter(Boolean));
   const missing = observations
-    .filter((observation) => !plottedLabels.has(normalizedSeriesLabel(observation?.specLabel || observation?.label)))
+    .filter((observation) => {
+      const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
+      if (plottedLabels.has(label)) return false;
+      return !(label === denominatorLabel && referenceLabels.has(label));
+    })
     .map((observation) => observation?.specLabel || observation?.label)
     .filter(Boolean);
   const mismatched = observations.filter((observation) => {
     const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
     const item = data.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
+    if (!item && label === denominatorLabel) {
+      const reference = references.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
+      if (!reference) return false;
+      return typeof observation.value !== 'number' || !Number.isFinite(observation.value) ||
+        typeof reference.value !== 'number' || !Number.isFinite(reference.value) ||
+        Math.abs(reference.value - observation.value) > 1e-9;
+    }
     if (!item) return false;
     if (typeof observation.value === 'number' && Number.isFinite(observation.value)) {
       return typeof item.value !== 'number' || !Number.isFinite(item.value) ||
@@ -448,10 +484,10 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     return typeof item.low !== 'number' || typeof item.high !== 'number' ||
       Math.abs(item.low - observation.low) > 1e-9 || Math.abs(item.high - observation.high) > 1e-9;
   }).map((observation) => observation?.specLabel || observation?.label).filter(Boolean);
-  if (data.length < observations.length || missing.length || mismatched.length) {
+  if (missing.length || mismatched.length) {
     errors.push(
       `ChartSpec ${candidate.outputSlug} collapses a richer same-scale dataset. ` +
-      `The source ledger inventories ${observations.length} comparable observations, so all must remain primary data items. ` +
+      `The source ledger inventories ${observations.length} comparable observations, so all must remain in primary geometry; a coverage denominator may be a visible numeric reference instead of a redundant data row. ` +
       `${missing.length ? `Missing plotted labels: ${missing.join(', ')}. ` : ''}` +
       `${mismatched.length ? `Changed plotted values or ranges: ${mismatched.join(', ')}. ` : ''}` +
       'Do not replace named components or time points with one aggregate, one range, or one headline value.'
@@ -524,14 +560,16 @@ function validateCoverageSpecCoverage(candidate, spec, errors) {
     .filter((entry) => entry?.disposition === 'component' && isText(entry.label))
     .map((entry) => entry.label);
   const plottedLabels = new Set((spec?.data || []).map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const referenceLabels = new Set((spec?.references || []).map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
   const missingComponents = componentLabels.filter((label) => !plottedLabels.has(normalizedSeriesLabel(label)));
-  const denominatorMissing = !plottedLabels.has(normalizedSeriesLabel(coverageAudit.denominatorLabel));
+  const normalizedDenominator = normalizedSeriesLabel(coverageAudit.denominatorLabel);
+  const denominatorMissing = !plottedLabels.has(normalizedDenominator) && !referenceLabels.has(normalizedDenominator);
   if (missingComponents.length || denominatorMissing) {
     errors.push(
       `ChartSpec ${candidate.outputSlug} does not show the full supply-versus-demand decomposition. ` +
       `${missingComponents.length ? `Missing supply components: ${missingComponents.join(', ')}. ` : ''}` +
       `${denominatorMissing ? `Missing demand denominator: ${coverageAudit.denominatorLabel}. ` : ''}` +
-      'Plot every retained component and the total need in primary geometry.'
+      'Plot every retained component and show the total need as a plotted value or visible numeric reference in primary geometry.'
     );
   }
   const unit = String(spec?.measure?.unit || '').toLowerCase();

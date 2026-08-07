@@ -188,7 +188,11 @@
         "minimum": { "type": "number" },
         "maximum": { "type": "number" },
         "baseline": { "type": "string", "enum": ["zero", "auto", "explicit"] },
-        "scale": { "type": "string", "enum": ["linear", "logarithmic"] }
+        "scale": {
+          "type": "string",
+          "enum": ["linear", "logarithmic"],
+          "description": "Use logarithmic only for genuinely multiplicative comparisons. Do not use logarithmic scale when the story is about an amount as a fraction of a benchmark or denominator; those comparisons must preserve proportional magnitude on a linear axis."
+        }
       }
     },
     "basis": {
@@ -310,7 +314,11 @@
         "showLegend": { "type": "boolean" },
         "showLabels": { "type": "boolean" },
         "animate": { "type": "boolean" },
-        "labelMode": { "type": "string", "enum": ["auto", "inside", "outside"] }
+        "labelMode": {
+          "type": "string",
+          "enum": ["auto", "inside", "outside"],
+          "description": "Column-label preference. auto is family-coherent: keep all labels outside when they fit, move the full bar family inside when endpoint headroom requires it and all bars can support inside labels, and mix placements only for a genuine physical-fit conflict."
+        }
       }
     },
     "metadata": {
