@@ -38,15 +38,15 @@
     },
     {
       "id": "comparison.benchmark-gap",
-      "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, or overage remains visible.",
-      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story. For one or two category-level before/after price pairs, encode the later/current level as value and the earlier/prior level as benchmark.",
-      "bestFor": ["discounted prices", "one or two paired price moves", "premium to benchmark", "shortfall to target", "independent benchmark gaps"],
+      "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, overage, or same-total policy allocation remains visible.",
+      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story. For one or two category-level before/after price pairs, encode the later/current level as value and the earlier/prior level as benchmark. Two meaningful policy, target, or payout shares may use separate rows against one shared tangible total when that gives the viewer a stronger anchor than a single hypothetical composition.",
+      "bestFor": ["discounted prices", "one or two paired price moves", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "relationship.converging-signals",
       "purpose": "Visualize two source-supported causal drivers converging on a different outcome without forcing them onto a shared axis.",
-      "data": "Exactly 3 items: two relationshipRole driver items and one outcome item, all with distinct real-world quantities. relationship.formula must state the source-supported mechanism. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Repeated prices, repeated volumes, and the same measure at different dates must use change, scenarios, dumbbell, or trend geometry. Each item is drawn on its own local quantitative signal; connectors encode the relationship, not comparable magnitude.",
+      "data": "Exactly 3 items: two relationshipRole driver items and one outcome item, all with distinct real-world quantities. relationship.formula must state the source-supported mechanism. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Repeated prices, repeated volumes, and the same measure at different dates must use change, scenarios, dumbbell, or trend geometry. Each item is drawn on its own local quantitative signal; the two driver connectors join directly into one outcome path, and connector width encodes no magnitude.",
       "bestFor": ["two factors shaping one outcome", "volume and price driving revenue", "activity and intensity driving emissions", "mixed-measure causal relationships"],
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
@@ -80,8 +80,8 @@
     },
     {
       "id": "composition.stacked",
-      "purpose": "Show exact parts of one total in a compact horizontal composition.",
-      "data": "2 to 6 positive labeled numeric values.",
+      "purpose": "Show exact parts of one total in a compact horizontal composition when the mix itself is the finding.",
+      "data": "2 to 6 positive labeled numeric values. Do not use a single hypothetical split when the source provides a meaningful policy, target, prior, or alternative share against the same tangible total; in that case prefer shared-total benchmark geometry.",
       "bestFor": ["served versus unmet", "delayed versus on-time", "debt composition", "two-part shares"],
       "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }
     },

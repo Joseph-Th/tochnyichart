@@ -160,7 +160,7 @@ every accepted story:
 - Use `timeline.duration` whenever duration or reserve runway is the comparison. Supply exact start/end dates, or a verified common `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
 - When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and keep all retained components plus total need in primary geometry in one tangible unit. The denominator may be a numeric reference rather than a redundant row. Days of coverage may remain secondary context only.
 - Never use a logarithmic scale when the point is that the plotted amounts are small relative to a baseline. The chart must preserve the true proportional gap. If a monthly or annual flow denominator is at least about 8× the largest retained component, period-normalize that same denominator to a shorter familiar interval, usually a week or day, keep every component in the original physical unit, and use the derived denominator as a visible linear reference. Record the rate-preserving derivation in `coverageAudit.rationale`, basis, subtitle, or source evidence.
-- Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, and overages when the prior or total benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; use two rows for two category-level earlier/current pairs. Never add a row that only repeats the benchmark or implied remainder.
+- Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, overages, and meaningful policy or payout shares against one known total when the benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; use two rows for two category-level earlier/current pairs. When two meaningful policy, target, or allocation shares use the same tangible total, compare their derived amounts against that shared total rather than showing only one hypothetical split as a composition. Never add a row that only repeats the benchmark or implied remainder.
 - Never flatten repeated `Category · earlier` / `Category · later` observations
   into `comparison.scenarios`. Scenarios are same-period alternatives. Use
   `comparison.benchmark-gap` for one or two paired categories and
@@ -170,15 +170,15 @@ every accepted story:
   quantities. `relationship.formula` must state the mechanism. Repeated prices,
   repeated volumes, or one measure at different dates require change,
   scenarios, dumbbell, or trend geometry. Each measure renders as an independent
-  local quantitative signal, with both driver paths visibly converging at one
-  operator. The renderer names the measures directly and does not add generic
+  local quantitative signal, with both driver paths joining directly into one
+  outcome path and no decorative merge hub. The renderer names the measures directly and does not add generic
   Factor 1, Factor 2, or Outcome captions. Connector width is fixed and never
   represents magnitude. Use `identity` only for a same-scope, same-period
   equation; use `directional` with a note when the evidence supports the
   direction but does not reconcile exactly.
 - A headline built around opposing quantities, such as falling purchases and rising prices producing higher spending, cannot plot one side while placing the other figures in `supportingFacts`.
 - `subtitle` is optional. Omit it when it repeats the title, category labels, percentages, or amounts already visible in the marks.
-- Two-part compositions use one label treatment per segment. Do not repeat the same category, percentage, and amount inside the bar and immediately below it.
+- Two-part compositions use one label treatment per segment. Use them when the part-versus-remainder split itself is the finding. If a meaningful policy, target, prior, or alternative share exists against the same tangible total and gives the viewer a stronger anchor, derive the comparable amounts and prefer shared-total benchmark-gap geometry. Do not repeat the same category, percentage, and amount inside the bar and immediately below it.
 - Leave `options.labelMode` as `auto` unless the editorial design specifically
   requires otherwise. Auto placement is family-coherent: labels stay outside
   for the whole bar family when they fit; if endpoint headroom forces labels

@@ -96,8 +96,11 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
   assert.match(standard.visualEvidenceContract.standalonePairRule, /two-item comparison\.scenarios/i);
   assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
+  assert.match(standard.visualEvidenceContract.compositionRule, /policy|target|alternative/i);
+  assert.match(standard.visualEvidenceContract.compositionRule, /shared-total benchmark geometry/i);
   assert.match(standard.sourceEnrichment.benchmarkGapRule, /one segmented row|one row/i);
   assert.match(standard.sourceEnrichment.relationshipRule, /independent local quantitative signal/i);
+  assert.match(standard.sourceEnrichment.relationshipRule, /join directly|no decorative hub/i);
   assert.match(standard.sourceEnrichment.standalonePairRule, /merge or omit/i);
   assert.match(standard.valueRepresentationContract.hierarchy, /actual levels/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');

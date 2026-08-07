@@ -271,8 +271,8 @@ Check that:
   `relationship.formula` must state the source-supported mechanism. Repeated
   prices, repeated volumes, or one measure at different dates require change,
   scenarios, dumbbell, or trend geometry. Each measure renders as an independent
-  local quantitative signal, and both driver paths visibly converge at one
-  operator. Generic Factor 1, Factor 2, and Outcome captions are not rendered.
+  local quantitative signal, and both driver paths join directly into one
+  outcome path without a decorative hub. Generic Factor 1, Factor 2, and Outcome captions are not rendered.
   Connector width is fixed and
   never represents magnitude. Identity mode requires an exact same-scope,
   same-period equation; directional mode requires a note when periods or scopes
@@ -368,7 +368,7 @@ The guide returns recipe selection rules and a validated example path for each r
 | Positive and negative values of one quantity, scope, and period | `comparison.diverging` |
 | Min-max interval, limit, or threshold for one quantity, scope, and period | `comparison.range` |
 | Ordered time points | `trend.line` |
-| Exact parts of one total | `composition.stacked` |
+| Exact parts of one total when the mix itself is the finding and there is no more informative same-total policy, target, prior, or alternative comparator | `composition.stacked` |
 | Multi-part composition where shape matters | `composition.donut` |
 | Starting value, additions or losses, ending value | `flow.waterfall` |
 | Ranked categories with long labels | `ranking.horizontal` |
@@ -390,7 +390,11 @@ Composable semantic features include:
 - Separate ChartSpecs when mixed-unit evidence is the main story rather than
   context.
 - `composition.stacked` for a bounded share when both numerator and remainder
-  can be encoded as tangible parts.
+  can be encoded as tangible parts and the part-versus-remainder split itself is
+  the finding. If the source provides a meaningful policy, target, prior, or
+  alternative share against the same tangible total, derive those amounts and
+  prefer shared-total `comparison.benchmark-gap` rows when they give the viewer
+  a stronger anchor.
 - `data[].displayValue` for the tangible amount in composition charts; the
   renderer shows it together with the calculated share.
 

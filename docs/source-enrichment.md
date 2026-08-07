@@ -494,11 +494,19 @@ Examples:
   points, two volume observations, or the same measure at different dates are
   not causal factors; use change, scenarios, dumbbell, or trend geometry. Each factor
   and the outcome must be drawn as an independent local quantitative signal,
-  with the two factor paths visibly converging at one operator. Connector width
-  is fixed and never represents magnitude. Use identity mode only for exact
+  with the two factor paths joining directly into one outcome path. Do not add a
+  decorative hub or node at the merge. Connector width is fixed and never
+  represents magnitude. Use identity mode only for exact
   same-scope, same-period reconciliation. Use directional mode with a note when
   the measures support a mechanism or direction but use incompatible periods or
   scopes. Split more diffuse mixed evidence into separate ChartSpecs.
+- Before using `composition.stacked` for a hypothetical allocation, check
+  whether the source supplies a meaningful policy, target, prior, or alternative
+  share against the same tangible total. If it does and the comparator improves
+  orientation, derive the tangible amount for each share and compare those rows
+  against the shared total with `comparison.benchmark-gap`. Keep a composition
+  when the mix itself is the finding rather than treating every allocation as a
+  scenario comparison.
 - A same-period two-value pair should not receive its own
   `comparison.scenarios` chart merely because two values exist. Search for a
   third comparable item, numeric reference or threshold, tangible basis, or a

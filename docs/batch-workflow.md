@@ -253,8 +253,9 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - When two drivers and one outcome are all essential but use unlike quantities
   or units, use `relationship.converging-signals` instead of forcing them onto a
   shared scale. Each factor and the outcome must render as an independent local
-  quantitative signal, with both factor paths visibly converging at one
-  operator. Connector width is fixed and never encodes magnitude. Use identity
+  quantitative signal, with both driver paths joining directly into one outcome
+  path. The merge is connector geometry, not a decorative hub or node.
+  Connector width is fixed and never encodes magnitude. Use identity
   mode only for arithmetically reconciling evidence; otherwise use directional
   mode and disclose incompatible periods or scopes.
 - `relationship.converging-signals` requires three distinct real-world

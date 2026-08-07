@@ -844,6 +844,8 @@ test('runtime includes pictogram, basis, calendar-duration, benchmark-gap, dumbb
   assert.match(css, /\.tochnyi-converging-signals-svg\s*\{/);
   assert.doesNotMatch(runtime, /renderDriverOutcome/);
   assert.doesNotMatch(css, /\.tochnyi-relationship-node\s*\{/);
+  assert.doesNotMatch(runtime, /tochnyi-signal-hub|tochnyi-signal-operator/);
+  assert.doesNotMatch(css, /\.tochnyi-signal-hub\s*\{|\.tochnyi-signal-operator\s*\{/);
   assert.match(css, /\.tochnyi-count-card\[data-tone="critical"\] \.tochnyi-count-dot \{ background: #cc0000; \}/);
   assert.doesNotMatch(css, /\.tochnyi-count-value[^\{]*\{[^}]*background:/s);
 });

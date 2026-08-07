@@ -829,18 +829,6 @@ body.tochnyi-regional-matrix-page {
     stroke-width: 7;
 }
 
-.tochnyi-signal-hub {
-    fill: #ffffff;
-    stroke: var(--tochnyi-blue);
-    stroke-width: 5;
-}
-
-.tochnyi-signal-operator {
-    fill: var(--tochnyi-blue);
-    font-size: 31px;
-    font-weight: 800;
-}
-
 .tochnyi-signal-label {
     fill: var(--tochnyi-black);
     font-size: 17px;

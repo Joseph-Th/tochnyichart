@@ -270,9 +270,9 @@ that row.
 | `comparison.pictogram` | Two to four exact integer counts from 0 to 400. Every dot or semantic symbol represents one unit on the same scope and period. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
-| `comparison.benchmark-gap` | One to six actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. One or two category-level earlier/current price pairs also belong here, with current as `value` and prior as `benchmark`. |
+| `comparison.benchmark-gap` | One to six actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. One or two category-level earlier/current price pairs also belong here, with current as `value` and prior as `benchmark`. Two meaningful policy, target, or payout shares may use separate rows against the same tangible total when that common total gives the viewer a stronger anchor than a single hypothetical split. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
-| `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two paths converge at one operator before the outcome signal. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
+| `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two driver paths join directly into one outcome path with no decorative merge node. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
@@ -314,6 +314,13 @@ the reader can already see. A discount chart must show the discounted price
 inside the undiscounted reference price, not chart the discount amount as if it
 were the price.
 
+The same geometry is useful when a policy, target, payout, or allocation story
+contains two meaningful shares of one known total. Derive the tangible amount
+for each share and compare both rows against the shared total. This is usually
+more informative than showing only one hypothetical part-versus-remainder split.
+Do not force this conversion when the composition itself is the finding or when
+the supposed comparator is merely decorative.
+
 ## Mixed-evidence stories
 
 Do not turn heterogeneous facts into standalone metric cards. Select the one
@@ -321,7 +328,7 @@ quantity that carries the primary visual argument. Put genuinely secondary
 facts in `supportingFacts`, which renders as an unboxed inline context rail.
 When exactly two unlike drivers and one outcome form one coherent claim, use
 `relationship.converging-signals`; it draws each measure on its own local scale,
-then visibly converges the two paths into the outcome. The labels should name
+then joins the two driver paths directly into one outcome path. The labels should name
 the measures directly; generic role captions such as “Factor 1,” “Factor 2,”
 and “Outcome” add no information and are not rendered. The local signal
 lengths are not comparable across measures, and the connector width is fixed.
@@ -438,6 +445,14 @@ visual. Two-part compositions receive direct labels for both segments. The
 validator rejects `primaryMetric` and supporting facts that merely restate a
 segment value or calculated share, preventing the composition from collapsing
 into a single-number card with bullet points.
+
+Before choosing `composition.stacked` for a hypothetical allocation, check
+whether the source also provides a meaningful policy, target, prior, or
+alternative share against the same tangible total. If that comparator is part
+of the story and materially helps the viewer orient the magnitude, derive the
+comparable amounts and prefer shared-total `comparison.benchmark-gap` rows.
+Keep `composition.stacked` when the mix or part-versus-remainder relationship is
+itself the central finding.
 
 ## Regional maps
 
