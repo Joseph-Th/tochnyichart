@@ -227,6 +227,35 @@ test('source fidelity forces spatial multi-region findings through regional-brea
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
     assert.equal(validateSourceLedger(root, 'issue-routing-audit').valid, true);
 
+    const regionalLabels = [
+      'Belgorod', 'Kursk', 'Bryansk', 'Tambov', 'Ryazan', 'Krasnodar', 'Dagestan',
+      'Kemerovo', 'Krasnoyarsk', 'Zabaykalsky', 'Omsk', 'Volgograd', 'Astrakhan'
+    ];
+    ledger.candidates[0].visualEvidenceAudit.comparableObservations = regionalLabels.map((label, index) => ({
+      label,
+      quantity: 'restriction duration',
+      unit: 'hours',
+      period: 'August 2026',
+      value: index + 1
+    }));
+    ledger.candidates[0].visualEvidenceAudit.rationale = 'The regional workflow retains the complete same-scale geographic evidence inventory.';
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(
+      validateSourceLedger(root, 'issue-routing-audit').valid,
+      true,
+      'regional source audits may inventory more than 12 observations when the region set supports them'
+    );
+
+    ledger.candidates[0].visualEvidenceAudit = {
+      rationale: 'Three border regions have same-period restriction durations on one scale.',
+      comparableObservations: [
+        { label: 'Belgorod', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 12 },
+        { label: 'Kursk', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 20 },
+        { label: 'Bryansk', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 30 }
+      ]
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+
     fs.writeFileSync(path.join(workspace.specificationRoot, 'border-restrictions.json'), JSON.stringify({
       title: 'Restrictions spread across border Russia',
       recipe: 'ranking.horizontal',

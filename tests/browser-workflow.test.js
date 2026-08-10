@@ -15,6 +15,7 @@ const {
   REGIONAL_WORKFLOW_VIEWPORTS,
   renderRegionalBreakdown
 } = require('../renderer/regional-workflow');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 
 const root = path.join(__dirname, '..');
 const examplesDir = path.join(root, 'specs', 'examples');
@@ -52,6 +53,40 @@ test('standard and regional workflows pass browser comparison checks', { skip: b
     assert.ok(collisions.length > 0 && collisions.every((value) => value === 0));
     assert.ok(fallbacks.length > 0 && fallbacks.every((value) => value === 0));
     assert.ok(regional.diagnostics.runs.every((run) => run.workflow === 'regional-breakdown'));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('regional browser workflow separates highlighted regions from callout cards', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-highlight-only-'));
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(examplesDir, 'russia-regional-map.json'), 'utf8'));
+    const regionSet = TochnyiMaps.getRegionSet('russia');
+    const regionIds = Object.keys(regionSet.regions)
+      .filter((regionId) => !(regionSet.nonContinentalRegionIds || []).includes(regionId))
+      .slice(0, 16);
+    spec.data = regionIds.map((regionId, index) => ({
+      label: regionSet.regions[regionId],
+      regionId,
+      status: index % 2 ? 'strained' : 'critical',
+      displayValue: index < 4 ? `Callout ${index + 1}` : undefined,
+      detail: index < 4 ? 'Representative regional evidence.' : undefined,
+      callout: index < 4 ? 'auto' : 'none'
+    }));
+    const specPath = path.join(tempDir, 'regional-highlight-only.json');
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    const result = renderRegionalBreakdown(
+      specPath,
+      path.join(tempDir, 'regional-highlight-only.html'),
+      { projectRoot: root, browser }
+    );
+    assert.equal(result.diagnostics.status, 'pass');
+    result.diagnostics.runs.forEach((run) => {
+      assert.equal(run.activeItems, 16);
+      assert.equal(run.calloutCount, 4);
+      assert.equal(run.errors, 0);
+    });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

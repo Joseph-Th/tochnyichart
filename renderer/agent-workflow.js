@@ -289,6 +289,7 @@ const REGIONAL_STATUSES = Object.freeze([
 ]);
 
 const REGIONAL_OVERRIDES = Object.freeze([
+  'data[].callout',
   'data[].calloutSide'
 ]);
 
@@ -364,11 +365,11 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     workflow: REGIONAL_WORKFLOW,
     recipe: 'map.regional',
     command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
-    startHere: 'Use this path only when geography is part of the finding and each highlighted region needs a map callout.',
+    startHere: 'Use this path when geography is part of the finding. Keep all materially reported regions highlighted; reserve callout cards for the locations that need explicit evidence labels.',
     steps: [
       'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
-      'Author editorial content and region IDs; leave layout and routing to the renderer.',
+      'Author every materially reported region. Use data[].callout = "none" for fill-only highlights and leave card placement and routing to the renderer.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
       'Use the generic review command with --screenshot to capture the final PNG into charts/<run-id>/.'
     ],
@@ -386,11 +387,11 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>] --no-diagnose`,
       screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
     },
-    authoringRule: 'Specify editorial content and stable continental region IDs. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
+    authoringRule: 'Specify editorial content and stable continental region IDs. The data array is the geographic evidence inventory, not a list of boxes: keep reported regions in data[] even when they do not need callouts. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
     requiredDataItem: ['label', 'regionId or regionIds'],
-    recommendedDataItem: ['status', 'displayValue', 'detail'],
-    evidenceRule: 'Each callout should include at least one of status, displayValue, detail, or value. Status maps are clearest when they include status, displayValue, and detail.',
+    recommendedDataItem: ['status', 'displayValue', 'detail', 'callout'],
+    evidenceRule: 'Every materially reported region should remain represented in data[]. At most 12 items may have callout cards; use callout: "none" on lower-priority regions so their fill remains visible without a box. Visible callouts should include at least one of status, displayValue, detail, or value.',
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     minimalMap: { regionSet: regionSet.id },
     overrideOnlyWhenNeeded: [...REGIONAL_OVERRIDES],
@@ -415,7 +416,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.12',
+    version: '1.13',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -426,7 +427,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
     batchWorkflow: clone(BATCH_WORKFLOW),
     decision: [
       {
-        if: 'The story needs a map of administrative regions with callout cards.',
+        if: 'Administrative regions are part of the finding and spatial location changes the interpretation; some highlighted regions may be fill-only without callout cards.',
         workflow: REGIONAL_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
         renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`
@@ -485,7 +486,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.12',
+    version: '1.13',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,

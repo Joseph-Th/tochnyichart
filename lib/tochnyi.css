@@ -1728,14 +1728,18 @@ body.tochnyi-regional-matrix-page {
     line-height: 1.18;
 }
 
-.tochnyi-map-stage.is-dense .tochnyi-map-callout {
+.tochnyi-map-stage.is-dense .tochnyi-map-callout,
+.tochnyi-map-stage.is-callout-compact .tochnyi-map-callout {
     min-height: 62px;
     padding: 8px 9px 7px;
 }
 
-.tochnyi-map-stage.is-dense .tochnyi-map-callout-header strong { font-size: 13px; }
-.tochnyi-map-stage.is-dense .tochnyi-map-value { font-size: 17px; }
-.tochnyi-map-stage.is-dense .tochnyi-map-callout p { font-size: 10px; line-height: 1.12; }
+.tochnyi-map-stage.is-dense .tochnyi-map-callout-header strong,
+.tochnyi-map-stage.is-callout-compact .tochnyi-map-callout-header strong { font-size: 13px; }
+.tochnyi-map-stage.is-dense .tochnyi-map-value,
+.tochnyi-map-stage.is-callout-compact .tochnyi-map-value { font-size: 17px; }
+.tochnyi-map-stage.is-dense .tochnyi-map-callout p,
+.tochnyi-map-stage.is-callout-compact .tochnyi-map-callout p { font-size: 10px; line-height: 1.12; }
 
 .tochnyi-map-summary {
     position: absolute;

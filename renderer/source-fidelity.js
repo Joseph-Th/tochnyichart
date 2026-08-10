@@ -465,8 +465,16 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     errors.push(`${prefix}.visualEvidenceAudit.comparableObservations must inventory at least one same-scale observation available for the central claim.`);
     return;
   }
-  if (audit.comparableObservations.length > 12) {
-    errors.push(`${prefix}.visualEvidenceAudit.comparableObservations may contain at most 12 observations.`);
+  const regionalWorkflow = candidate?.routingAudit?.workflow === 'regional-breakdown';
+  const regionalSet = regionalWorkflow
+    ? TochnyiMaps.getRegionSet(candidate?.routingAudit?.regionSet)
+    : null;
+  const observationLimit = regionalSet ? Object.keys(regionalSet.regions).length : 12;
+  if (audit.comparableObservations.length > observationLimit) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.comparableObservations may contain at most ${observationLimit} observations` +
+      (regionalSet ? ` for region set ${regionalSet.id}.` : '.')
+    );
   }
   const labels = new Set();
   audit.comparableObservations.forEach((observation, index) => {

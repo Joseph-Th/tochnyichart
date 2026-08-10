@@ -101,8 +101,8 @@
     },
     {
       "id": "map.regional",
-      "purpose": "Show a geographic breakdown across named continental administrative regions with collision-managed callout cards.",
-      "data": "1 to 12 items with a regionId or regionIds plus status, tone, value, or concise evidence.",
+      "purpose": "Show a geographic breakdown across named continental administrative regions. All reported regions can remain highlighted while callout cards are reserved for the most informative locations.",
+      "data": "One item per reported regional observation, up to the region-set size. Each item needs regionId or regionIds plus status, tone, value, or concise evidence. At most 12 items may render callout cards; set data[].callout to none for fill-only highlights that should remain on the map without a box.",
       "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
       "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
     }

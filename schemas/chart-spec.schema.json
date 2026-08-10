@@ -43,7 +43,7 @@
     "data": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 12,
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -58,6 +58,7 @@
             "uniqueItems": true,
             "items": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{2,3}$" }
           },
+          "callout": { "type": "string", "enum": ["auto", "none"] },
           "calloutSide": { "type": "string", "enum": ["auto", "left", "right"] },
           "calloutOrder": { "type": "integer", "minimum": 0, "maximum": 99 },
           "label": { "type": "string", "minLength": 1, "maxLength": 80 },
@@ -334,6 +335,25 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "not": {
+          "properties": { "recipe": { "const": "map.regional" } }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "maxItems": 12,
+            "items": {
+              "properties": {
+                "callout": false
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": { "recipe": { "const": "flow.waterfall" } }

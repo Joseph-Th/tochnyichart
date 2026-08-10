@@ -92,11 +92,17 @@ rejects a later ranking or bar chart that contradicts that routing decision.
 | Question | Route |
 | --- | --- |
 | Does the explanation depend on where administrative regions are located? | `regional-breakdown` |
-| Does each highlighted region need a callout attached to the map? | `regional-breakdown` |
+| Does the story benefit from highlighting administrative regions, even if only some need callout cards? | `regional-breakdown` |
 | Is geography only a label, rank, status, or comparison category? | `standard-chart` |
 | Is the story a number, change, trend, composition, flow, or causal chain? | `standard-chart` |
 
 Do not combine both routes in one chart.
+
+For `map.regional`, treat `data[]` as the complete regional evidence inventory,
+not as the set of cards. Keep materially reported regions in `data[]` so they
+remain highlighted. Use `data[].callout: "none"` when a region should stay on
+the map without a box. Reserve callouts for the locations whose value, status,
+or explanation needs explicit labeling; the validator allows at most 12 cards.
 
 ## 2. Public authoring surface
 

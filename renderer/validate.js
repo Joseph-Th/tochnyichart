@@ -29,6 +29,7 @@ const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
 const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence']);
+const ITEM_CALLOUTS = new Set(['auto', 'none']);
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
 const MAP_SUMMARY_POSITIONS = new Set(['auto', 'right', 'below', 'none']);
@@ -64,7 +65,7 @@ const ROOT_KEYS = new Set([
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const DATA_KEYS = new Set([
-  'id', 'regionId', 'regionIds', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
+  'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope', 'relationshipRole'
 ]);
@@ -495,7 +496,7 @@ function validateData(spec, errors, warnings) {
     return;
   }
   if (spec.data.length === 0) errors.push('data must contain at least one item.');
-  if (spec.data.length > 12) errors.push('data cannot contain more than 12 items.');
+  if (spec.recipe !== 'map.regional' && spec.data.length > 12) errors.push('data cannot contain more than 12 items for this recipe.');
 
   spec.data.forEach((item, index) => {
     const path = `data[${index}]`;
@@ -556,6 +557,11 @@ function validateData(spec, errors, warnings) {
         });
         if (new Set(item.regionIds).size !== item.regionIds.length) errors.push(`${path}.regionIds cannot contain duplicates.`);
       }
+    }
+    if (item.callout !== undefined && spec.recipe !== 'map.regional') {
+      errors.push(`${path}.callout is only supported by map.regional.`);
+    } else if (item.callout !== undefined && !ITEM_CALLOUTS.has(item.callout)) {
+      errors.push(`${path}.callout is not supported.`);
     }
     if (item.calloutSide !== undefined && !CALLOUT_SIDES.has(item.calloutSide)) errors.push(`${path}.calloutSide is not supported.`);
     if (item.calloutOrder !== undefined && (!Number.isInteger(item.calloutOrder) || item.calloutOrder < 0 || item.calloutOrder > 99)) errors.push(`${path}.calloutOrder must be an integer from 0 to 99.`);
@@ -1168,15 +1174,23 @@ function validateRecipe(spec, errors, warnings) {
       });
       break;
     case 'map.regional': {
-      if (count < 1 || count > 12) errors.push('map.regional requires 1 to 12 data items.');
       const regionSet = TochnyiMaps.getRegionSet(spec.map?.regionSet);
+      const regionLimit = regionSet ? Object.keys(regionSet.regions).length : 100;
+      if (count < 1 || count > regionLimit) errors.push(`map.regional requires 1 to ${regionLimit} data items for this region set.`);
+      const calloutCount = spec.map?.callouts === 'none'
+        ? 0
+        : data.filter((item) => item?.callout !== 'none').length;
+      if (calloutCount > 12) {
+        errors.push('map.regional supports at most 12 callout cards. Keep all reported regions in data[] and set callout: "none" on lower-priority regions so they remain highlighted without a box.');
+      }
       const usedRegions = new Set();
       data.forEach((item, index) => {
         const regionIds = Array.isArray(item?.regionIds)
           ? item.regionIds
           : (typeof item?.regionId === 'string' ? [item.regionId] : []);
         if (!regionIds.length) errors.push(`data[${index}] requires regionId or regionIds for map.regional.`);
-        if (!item?.detail && !item?.displayValue && item?.value === undefined && !item?.status) {
+        const rendersCallout = spec.map?.callouts !== 'none' && item?.callout !== 'none';
+        if (rendersCallout && !item?.detail && !item?.displayValue && item?.value === undefined && !item?.status) {
           warnings.push(`data[${index}] has no detail, displayValue, numeric value, or status; its callout may be uninformative.`);
         }
         regionIds.forEach((regionId) => {

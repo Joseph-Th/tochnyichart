@@ -389,8 +389,13 @@ source verifier requires `geographyRole: "explanatory"` and
 `workflow: "regional-breakdown"`. It also rejects a later ranking/bar ChartSpec
 that tries to bypass that route.
 For regional candidates, use `regional-guide` and `regions` to obtain stable
-region IDs before authoring the ChartSpec. Do not proceed to rendering until
-each accepted story has exactly one recorded workflow decision.
+region IDs before authoring the ChartSpec. Keep every materially reported
+continental region in `data[]`; the regional data array is the evidence
+inventory, not a callout inventory. Use `data[].callout: "none"` for regions
+that should remain highlighted without a box. Do not delete reported regions
+merely to make the card layout fit. At most 12 regional items may render
+callout cards. Do not proceed to rendering until each accepted story has exactly
+one recorded workflow decision.
 
 Do not write a ChartSpec whose output slug is absent from the source ledger.
 Do not add a chart discovered during research. If a new input-supported story

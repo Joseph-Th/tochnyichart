@@ -1038,6 +1038,40 @@ test('Russian regional maps normalize to continental context and reject detached
   }
 });
 
+test('regional maps keep all reported regions highlighted while limiting callout cards', () => {
+  const base = loadExample('russia-regional-map.json');
+  const regionSet = TochnyiMaps.getRegionSet('russia');
+  const regionIds = Object.keys(regionSet.regions)
+    .filter((regionId) => !(regionSet.nonContinentalRegionIds || []).includes(regionId))
+    .slice(0, 16);
+  base.data = regionIds.map((regionId, index) => ({
+    label: regionSet.regions[regionId],
+    regionId,
+    status: index % 2 ? 'strained' : 'critical',
+    displayValue: index < 4 ? `Callout ${index + 1}` : undefined,
+    detail: index < 4 ? 'Representative regional evidence.' : undefined,
+    callout: index < 4 ? 'auto' : 'none'
+  }));
+  const result = validateSpec(base);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(base.data.filter((item) => TochnyiMaps.shouldRenderCallout(item, base.map)).length, 4);
+  assert.equal(base.data.length, 16);
+
+  const tooManyCards = structuredClone(base);
+  tooManyCards.data.forEach((item) => { item.callout = 'auto'; });
+  const invalid = validateSpec(tooManyCards);
+  assert.equal(invalid.valid, false);
+  assert.ok(invalid.errors.some((message) => message.includes('at most 12 callout cards')));
+});
+
+test('per-item callout visibility is regional-only', () => {
+  const spec = loadExample('ai95-price-spike.json');
+  spec.data[0].callout = 'none';
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('callout is only supported by map.regional')));
+});
+
 test('generated shells contain no chart implementation or inline styles', () => {
   for (const file of exampleFiles) {
     const validated = validateSpec(loadExample(file));
@@ -1436,6 +1470,34 @@ test('regional map callouts preserve geographic order by default', () => {
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'balanced' }, false, entries), 'balanced');
 });
 
+test('automatic regional callout sides use stage-space geography and lock distant regions', () => {
+  assert.equal(TochnyiMaps.resolveCalloutSide({}, { x: 240, y: 200 }, 1200), 'left');
+  assert.equal(TochnyiMaps.resolveCalloutSide({}, { x: 960, y: 200 }, 1200), 'right');
+  assert.equal(TochnyiMaps.resolveCalloutSide({ calloutSide: 'right' }, { x: 240, y: 200 }, 1200), 'right');
+
+  const geometry = {
+    width: 1200,
+    cardWidth: 200,
+    cardInset: 10,
+    topLeft: 10,
+    topRight: 10,
+    bottom: 600,
+    gap: 10,
+    attachmentInset: 16,
+    desiredLeft: 2
+  };
+  const entries = [
+    { index: 0, item: {}, point: { x: 300, y: 180 }, height: 80, side: 'left' },
+    { index: 1, item: {}, point: { x: 570, y: 260 }, height: 80, side: 'left' },
+    { index: 2, item: {}, point: { x: 630, y: 340 }, height: 80, side: 'right' },
+    { index: 3, item: {}, point: { x: 900, y: 420 }, height: 80, side: 'right' }
+  ];
+  const optimized = TochnyiMaps.optimizeCalloutPlacement(entries, geometry);
+  assert.ok(optimized.left.some((entry) => entry.index === 0), 'far-west regions stay on the left');
+  assert.ok(optimized.right.some((entry) => entry.index === 3), 'far-east regions stay on the right');
+  assert.ok(optimized.geographicSideLocks >= 2);
+});
+
 test('regional map leader routing automatically fans out crowded anchor clusters', () => {
   const entries = [100, 104, 109, 113, 119].map((y, index) => ({
     index,
@@ -1502,7 +1564,7 @@ test('dense regional maps switch to ordered edge ports', () => {
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'indexed' }, entries), 'indexed');
 });
 
-test('dense map callout placement minimizes crossings across balanced side assignments', () => {
+test('dense map callout placement does not force distant anchors across the map to balance columns', () => {
   const points = [
     [409, 419], [296, 461], [344, 432], [308, 476], [463, 428],
     [434, 425], [254, 441], [575, 441], [359, 430], [278, 487]
@@ -1538,13 +1600,12 @@ test('dense map callout placement minimizes crossings across balanced side assig
     side: entry.point.x < geometry.width / 2 ? 'left' : 'right'
   }));
   const optimized = TochnyiMaps.optimizeCalloutPlacement(optimizedEntries, geometry);
-  assert.equal(optimized.left.length, 5);
-  assert.equal(optimized.right.length, 5);
+  assert.equal(optimized.left.length, 9);
+  assert.equal(optimized.right.length, 1);
   assert.equal(optimized.predictedCrossings, 0);
-  assert.equal(optimized.assignmentEvaluations, 252);
+  assert.ok(optimized.geographicSideLocks >= 9);
   assert.ok(Number.isFinite(optimized.maximumAttachmentSlope));
-  assert.ok(optimized.maximumAttachmentSlope < 2.1);
-  assert.ok(optimized.attachmentSharpness < 1.3);
+  assert.equal(optimized.right[0].index, 7, 'only the near-center anchor may cross to the other column');
   assert.ok(optimized.left.every((entry) => entry.side === 'left'));
   assert.ok(optimized.right.every((entry) => entry.side === 'right'));
 
@@ -1573,6 +1634,7 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(standard.portGap, 22);
   assert.equal(standard.minimumCardStub, 18);
   assert.equal(standard.leaderClearance, 14);
+  assert.equal(standard.compactColumnThreshold, 5);
   assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 9);
   assert.equal(standard.calloutBottomInset, 22);
 });
@@ -1682,8 +1744,10 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
   });
   assert.equal(plan.usePortRouting, false);
   assert.equal(plan.placementMode, 'crossing-optimized-direct');
-  assert.equal(plan.sides.left.length, 4);
-  assert.equal(plan.sides.right.length, 4);
+  assert.equal(plan.sides.left.length + plan.sides.right.length, 8);
+  assert.ok(plan.sides.left.some((entry) => entry.index === 0));
+  assert.ok(plan.sides.right.some((entry) => entry.index === 7));
+  assert.ok(plan.placement.geographicSideLocks >= 2);
   assert.equal(plan.leftDistribution, 'geographic');
   assert.equal(plan.rightDistribution, 'geographic');
   assert.ok(plan.placement.assignmentEvaluations > 0);

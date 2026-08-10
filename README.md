@@ -117,7 +117,7 @@ There are two intentionally separate workflows:
 | Story | Workflow | First command | Render command |
 | --- | --- | --- | --- |
 | Number, comparison, ranking, status list, composition, trend, flow, or sequence without a map | `standard-chart` | `node tool-api/chart.js guide` | `node tool-api/chart.js render <spec.json> [output.html]` |
-| Administrative regions are part of the finding and need map callouts | `regional-breakdown` | `node tool-api/chart.js regional-guide russia` | `node tool-api/chart.js regional <spec.json> [output.html]` |
+| Administrative regions are part of the finding | `regional-breakdown` | `node tool-api/chart.js regional-guide russia` | `node tool-api/chart.js regional <spec.json> [output.html]` |
 
 Verify and read the full primary source before choosing the workflow and recipe.
 Then choose one workflow before writing the spec. A `map.regional` spec is

@@ -13,10 +13,18 @@ placement, and leaders at render time.
 The regional policy is centralized in `lib/tochnyi-maps.js`:
 
 - `map.regional` defaults to the `russia` region set.
-- Port routing is selected automatically only at nine or more active callouts.
+- Port routing is selected automatically only at nine or more visible callouts.
+- Highlight count and callout count are separate. `data[].callout: "none"`
+  keeps a region active on the map without creating a card or leader. Layout
+  density and routing mode are based on visible callout count, not the number
+  of highlighted regions.
 - Medium callout sets use direct or lane-separated single-cubic splines so the
   connection from region to card stays visually short, smooth, and legible.
 - Dense layout begins at nine callouts.
+- If five or more geographically assigned callouts land in one column, the
+  runtime compacts that column's card typography and padding before planning
+  leaders. This preserves the geographic side assignment instead of solving a
+  vertical packing problem by sending distant regions across the map.
 - Standard and dense layouts use different card widths, gaps, attachment insets,
   port spacing, minimum card stubs, and obstacle clearances.
 - Automatic callout distribution preserves geographic packing. Balanced packing
@@ -45,9 +53,18 @@ The semantic `map.leaderRouting` field accepts these values:
 
 In automatic mode, sparse and medium maps use direct or lane-separated routing
 with one smooth cubic per callout. Dense maps at nine or more callouts use port
-routing, enumerate balanced side assignments, and score the candidates before
-committing to card placement. Fixed `data[].calloutSide` values remain fixed;
-automatic entries can move to the side that produces a clearer result.
+routing and score candidate placements before committing to card placement.
+Automatic side choice is geography-first: the runtime resolves each region's
+anchor into full stage coordinates and assigns the nearer left or right card
+column. Regions with a strong distance advantage are side-locked. Only regions
+inside the central crossover band may switch sides to remove crossings or
+crowding. Fixed `data[].calloutSide` values remain fixed.
+
+This distinction matters because the map canvas is narrower than the full
+regional stage whenever callout columns are present. Never compare a
+map-canvas X coordinate directly with the full-stage midpoint; doing so biases
+eastern regions toward the left column and can force the optimizer into long
+cross-map leaders.
 
 Port leaders use one monotonic cubic from the geographic anchor to a dedicated
 card-edge port, followed by a short horizontal terminal stub. Standard layouts
@@ -115,6 +132,9 @@ normalizes them to fields such as:
 | --- | --- |
 | `routing` | Resolved direct, lanes, ports, or indexed routing. |
 | `placement` | Resolved geographic or crossing-optimized placement. |
+| `activeItems` | Number of regional data items highlighted on the map. |
+| `calloutCount` | Number of those items that render cards and leaders. |
+| `geographicSideLocks` | Number of visible callouts locked to their nearer geographic side. |
 | `predictedCrossings` | Crossings predicted by the planner before browser rendering. |
 | `renderedCrossings` | Crossings measured after SVG leader rendering. |
 | `finalCollisions` | Final leader/shape or card collision count. |
@@ -138,7 +158,8 @@ The dense planner evaluates a bounded set of balanced assignments. Its hot path
 is intentionally deterministic so tests can compare both behavior and runtime.
 Keep performance healthy by:
 
-- Keeping callout count within the semantic limit of twelve items.
+- Keeping visible callout-card count within the semantic limit of twelve while
+  retaining additional reported regions as fill-only highlights when useful.
 - Keeping callout copy concise so card heights do not inflate the search space.
 - Reusing the centralized policy instead of adding recipe-specific branches.
 - Measuring planner changes with `npm run test:performance`.

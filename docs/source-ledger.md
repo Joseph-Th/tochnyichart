@@ -213,6 +213,13 @@ visual claim. Do not list merely adjacent facts with incompatible quantities.
 Conversely, do not omit named shipment components, category values, or ordered
 time points merely to justify a one-row chart.
 
+Standard-chart candidates may inventory at most 12 comparable observations.
+For `regional-breakdown`, the audit may inventory up to the selected region
+set's full administrative-region count. This is intentional: the regional
+evidence inventory can be larger than the visible callout set. Keep all
+materially reported regions in the audit and later use `data[].callout: "none"`
+for fill-only highlights that do not need a card.
+
 When three or more comparable observations are available, every one must remain
 a primary `data[]` item in the ChartSpec. The source verifier rejects replacing
 that richer dataset with one aggregate, one range, one total, or one headline

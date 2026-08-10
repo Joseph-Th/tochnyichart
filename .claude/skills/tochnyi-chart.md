@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.8.0
+version: 4.9.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -107,6 +107,10 @@ candidate as `routingAudit`:
 2. For every regional candidate, run `regional-guide` and `regions`, then use
    `recipe: "map.regional"`, `map.regionSet`, and stable `regionId` or
    `regionIds`; also set `routingAudit.regionSet: "russia"`.
+   Keep every materially reported continental region in `data[]`. The data
+   array is the map evidence inventory, not a box inventory. Use
+   `data[].callout: "none"` for fill-only highlights and reserve callout cards
+   for the most informative regions; at most 12 cards may be visible.
 3. If a story contains geographic names but is routed to `standard-chart`, the
    rationale must explicitly explain why location is not explanatory.
 4. Do not use missing coordinates, a status-list shape, a ranking shape, or an

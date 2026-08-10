@@ -491,12 +491,23 @@ items. Detached-region evidence must use a non-map recipe.
 
 Regional maps also enforce these information-economy rules:
 
-- No competing summary card. The callouts carry the evidence.
+- Keep every materially reported continental region in `data[]`. A map fill is
+  a valid geographic evidence mark even when that region does not need a card.
+- Use `data[].callout: "none"` for fill-only highlights. Reserve callout cards
+  for representative, exceptional, quantified, or otherwise high-value
+  locations. A regional chart may therefore highlight many more regions than
+  it boxes.
+- No competing summary card. Callouts carry the explicit labeled evidence; the
+  remaining highlighted regions carry the spatial extent.
 - Compact logo, title, subtitle, date, and watermark.
 - A wider canvas and narrower callout columns to protect the map’s aspect ratio.
 - Direct leaders for sparse maps unless an explicit routing mode is required.
-- Card side assignment and order are optimized together for crossings, route
-  length, attachment slope, and geographic coherence before leaders are drawn.
+- Automatic card sides are assigned in the full stage coordinate system to the
+  geographically nearer column. Regions with a strong left/right distance
+  advantage are locked to that side; only near-center regions may switch sides
+  during crossing optimization.
+- Card order is optimized for crossings, route length, attachment slope, and
+  geographic coherence after those side constraints are established.
 - Region polygons are not obstacles; a leader may cross geography if the route
   is clearer and does not collide with another leader.
 - Dense maps use crossing-aware edge ports.
