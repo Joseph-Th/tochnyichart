@@ -239,6 +239,78 @@ test('benchmark gaps reserve enough left gutter for long category labels', { ski
   }
 });
 
+test('reference labels clear nearby axis ticks and their own reference lines', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-reference-label-clearance-'));
+  try {
+    const specPath = path.join(tempDir, 'reference-label-clearance.json');
+    const outputPath = path.join(tempDir, 'reference-label-clearance.html');
+    fs.writeFileSync(specPath, JSON.stringify({
+      version: '2.0',
+      recipe: 'composition.components',
+      title: 'Two components reconcile to a reported total',
+      date: '2026-08-09',
+      data: [
+        {
+          label: 'Recurring component', value: 539, displayValue: '539 units',
+          quantity: 'reported component', scope: 'same total', period: '2026'
+        },
+        {
+          label: 'Special component', value: 396, displayValue: '396 units',
+          quantity: 'reported component', scope: 'same total', period: '2026'
+        }
+      ],
+      references: [{ value: 935, label: 'Reported total · 935 units', lineStyle: 'dashed', tone: 'neutral' }],
+      measure: {
+        quantity: 'reported component', unit: 'units', axisTitle: 'Component value',
+        valueMode: 'level', levelAvailability: 'reported', minimum: 0, maximum: 1150,
+        decimals: 0, baseline: 'zero', scale: 'linear'
+      },
+      narrative: { frame: 'comparison', density: 'minimal', emphasis: 'composition' },
+      options: { height: 'standard', showLabels: true, animate: false }
+    }));
+    const validated = validateSpec(JSON.parse(fs.readFileSync(specPath, 'utf8')));
+    assert.equal(validated.valid, true, validated.errors.join('; '));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, {
+      browser,
+      viewports: REGIONAL_WORKFLOW_VIEWPORTS
+    });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.diagnostics?.summary?.warnings, 0);
+      assert.equal(run.diagnostics?.issues?.some((issue) =>
+        ['text-line-collision', 'text-text-overlap'].includes(issue.code) &&
+        issue.elements?.some((element) => element.text === 'Reported total · 935 units')
+      ), false);
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('regional overlay callouts keep a bottom gutter above notes', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-note-gutter-'));
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(examplesDir, 'russia-regional-map.json'), 'utf8'));
+    spec.note = 'Detached-region context belongs below the map and must never cover a callout.';
+    const specPath = path.join(tempDir, 'regional-note-gutter.json');
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    const result = renderRegionalBreakdown(
+      specPath,
+      path.join(tempDir, 'regional-note-gutter.html'),
+      { projectRoot: root, browser }
+    );
+    assert.equal(result.diagnostics.status, 'pass');
+    result.diagnostics.runs.forEach((run) => {
+      assert.equal(run.errors, 0);
+      assert.equal(run.warnings, 0);
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('categorical status evidence is rejected before browser rendering', () => {
   const spec = {
     version: '2.0',

@@ -228,7 +228,9 @@ The guide returns the standard recipes and a validated example path for each rec
 Then:
 
 1. Preserve the expert input claim, then confirm and read the full supplied source.
-2. Extract the evidence spine and safe derivations.
+2. Extract the evidence spine and safe derivations. Explicitly inventory
+   same-unit actual/current/latest values that can orient forecasts or targets,
+   and mixed-unit quantitative inputs that materially explain a derived outcome.
 3. Fill only material evidence gaps with targeted research.
 4. Audit actual-level availability and any rate/share basis. Choose the least normalized valid representation and document research attempts when normalized evidence remains unavoidable.
 5. Identify one central finding and select the recipe.
@@ -307,6 +309,18 @@ because its actual segment, gap segment, and benchmark marker are distinct
 marks. Categorical evidence must be quantified on a common dimension or routed
 to `map.regional` when geography explains the finding. Omit the story when
 legitimate visual structure cannot be found.
+
+For forecast, target, outlook, guidance, and scenario stories, search for a
+same-unit actual/current/latest realized observation. When available, it must
+appear on the plotted scale as primary geometry or a numeric reference; do not
+leave it only in `supportingFacts`.
+
+Do not count the same geometry twice. A range low/high endpoint, floor, ceiling,
+total, remainder, or zero-gap endpoint already encoded by the primary mark is
+not an independent anchor. If two quantitative inputs in different units
+materially explain an outcome, such as quantity × unit price = value, keep the
+inputs in the main argument and prefer `relationship.converging-signals` with
+an explicit formula rather than manufacturing a redundant same-scale point.
 
 The production catalog, schema, and validator disable `status.grid` and
 `headline.metric`. For `composition.stacked`, the proportional bar and direct

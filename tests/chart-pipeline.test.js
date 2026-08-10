@@ -1336,25 +1336,37 @@ test('auto column labels allow mixed placement only for a genuine fit conflict',
   );
 });
 
-test('benchmark labels always use below-bar lanes and stagger only when horizontal text would collide', () => {
+test('benchmark labels center inside their encoded areas and fall back to lanes only when space is tight', () => {
+  const centered = VisualPlan.benchmarkGapLabelPlan(
+    ['Actual', 'Gap', 'Benchmark'],
+    [420, 610, 800],
+    { left: 200, right: 930 },
+    [
+      { left: 200, right: 420, role: 'actual' },
+      { left: 420, right: 800, role: 'gap' },
+      { role: 'benchmark' }
+    ]
+  );
+  assert.deepEqual(centered.map((entry) => entry.placement), ['inside', 'inside', 'above']);
+  assert.equal(centered[0].x, 310);
+  assert.equal(centered[1].x, 610);
+  assert.equal(centered[2].x, 800);
+  centered.forEach((entry) => assert.equal(entry.textAnchor, 'middle'));
+
   const crowded = VisualPlan.benchmarkGapLabelPlan(
     ['500 mg/kg temporary', '+490 mg/kg', '10 mg/kg standard'],
-    [700, 540, 520],
-    { left: 200, right: 930 }
+    [540, 542, 520],
+    { left: 200, right: 930 },
+    [
+      { left: 200, right: 260, role: 'actual' },
+      { left: 500, right: 548, role: 'gap' },
+      { role: 'benchmark' }
+    ]
   );
-  assert.equal(crowded.length, 3);
-  crowded.forEach((entry) => {
-    assert.ok(entry.lane >= 0);
-    assert.equal(entry.textAnchor, 'middle');
-  });
-  assert.ok(new Set(crowded.map((entry) => entry.lane)).size > 1, 'crowded labels should be vertically staggered');
-
-  const roomy = VisualPlan.benchmarkGapLabelPlan(
-    ['Actual', 'Gap', 'Benchmark'],
-    [300, 550, 800],
-    { left: 200, right: 930 }
-  );
-  assert.deepEqual(roomy.map((entry) => entry.lane), [0, 0, 0]);
+  assert.equal(crowded[0].placement, 'below');
+  assert.equal(crowded[1].placement, 'below');
+  assert.equal(crowded[2].placement, 'above');
+  assert.notEqual(crowded[0].lane, crowded[1].lane, 'tight fallback labels should stagger instead of stacking');
 });
 
 test('Russia region registry exposes stable ISO-style identifiers', () => {
@@ -1561,7 +1573,8 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(standard.portGap, 22);
   assert.equal(standard.minimumCardStub, 18);
   assert.equal(standard.leaderClearance, 14);
-  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 6);
+  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 9);
+  assert.equal(standard.calloutBottomInset, 22);
 });
 
 test('supporting context switches prose values to a stacked text treatment', () => {
@@ -1667,8 +1680,8 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
     summaryShown: false,
     summaryOnRight: false
   });
-  assert.equal(plan.usePortRouting, true);
-  assert.equal(plan.placementMode, 'crossing-optimized-ports');
+  assert.equal(plan.usePortRouting, false);
+  assert.equal(plan.placementMode, 'crossing-optimized-direct');
   assert.equal(plan.sides.left.length, 4);
   assert.equal(plan.sides.right.length, 4);
   assert.equal(plan.leftDistribution, 'geographic');
@@ -1676,7 +1689,7 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
   assert.ok(plan.placement.assignmentEvaluations > 0);
 });
 
-test('medium regional maps use the bounded port spline before direct lanes become visually unstable', () => {
+test('medium regional maps keep direct smooth lanes and reserve ports for dense callout sets', () => {
   const entries = new Array(7).fill(null).map((_, index) => ({
     index,
     item: {},
@@ -1695,16 +1708,16 @@ test('medium regional maps use the bounded port spline before direct lanes becom
     summaryShown: false,
     summaryOnRight: false
   });
-  assert.equal(plan.usePortRouting, true);
-  assert.equal(plan.placementMode, 'crossing-optimized-ports');
+  assert.equal(plan.usePortRouting, false);
+  assert.equal(plan.placementMode, 'crossing-optimized-direct');
   const routed = TochnyiMaps.planLeaderRoutes(plan.sides.left.concat(plan.sides.right), {
     routing: 'auto',
     top: 20,
     bottom: 590,
     gap: 22
   });
-  assert.equal(routed.routing, 'ports',
-    'placement and route construction must use the same centralized threshold');
+  assert.notEqual(routed.routing, 'ports',
+    'medium maps should stay on simple smooth-lane geometry below the dense threshold');
 });
 
 test('sparse regional maps optimize callout order before drawing direct leaders', () => {
@@ -2335,27 +2348,13 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
   assert.match(leftPath.path, /^M 520 310 C /);
   assert.ok(leftPath.path.endsWith(' ' + leftPath.approachX + ' 120 H 220'));
   assert.doesNotMatch(leftPath.path, /\s[LVQ]\s/);
-  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 3,
-    'lane routes separate source fan-out, lane travel, and card approach');
-  assert.ok(leftPath.approachX > 240 && leftPath.approachX < 520);
-  assert.ok(leftPath.fanX > leftPath.approachX && leftPath.fanX < 520);
+  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 1,
+    'medium-map lane routes should be one efficient cubic plus a short horizontal card stub');
+  assert.ok(leftPath.approachX > 220 && leftPath.approachX < 520);
+  assert.equal(leftPath.fanX, 520);
   assert.equal(leftPath.routeY, 338);
-  for (let index = 0; index < leftPath.routeSegments.length - 1; index += 1) {
-    const first = leftPath.routeSegments[index];
-    const second = leftPath.routeSegments[index + 1];
-    const incoming = {
-      x: first.end.x - first.control2.x,
-      y: first.end.y - first.control2.y
-    };
-    const outgoing = {
-      x: second.control1.x - second.start.x,
-      y: second.control1.y - second.start.y
-    };
-    const cross = incoming.x * outgoing.y - incoming.y * outgoing.x;
-    const dot = incoming.x * outgoing.x + incoming.y * outgoing.y;
-    assert.ok(Math.abs(cross) < 0.001, 'adjacent cubic sections must share one tangent');
-    assert.ok(dot > 0, 'adjacent cubic tangents must point in the same direction');
-  }
+  assert.equal(leftPath.routeSegments.length, 2,
+    'one cubic plus the terminal horizontal stub are the only logical route segments');
 
   const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'right',
@@ -2371,10 +2370,10 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
   assert.match(rightPath.path, /^M 610 330 C /);
   assert.ok(rightPath.path.endsWith(' ' + rightPath.approachX + ' 450 H 980'));
   assert.doesNotMatch(rightPath.path, /\s[LVQ]\s/);
-  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 3,
-    'lane routes separate source fan-out, lane travel, and card approach');
-  assert.ok(rightPath.approachX > 610 && rightPath.approachX < 960);
-  assert.ok(rightPath.fanX > 610 && rightPath.fanX < rightPath.approachX);
+  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 1,
+    'right-side medium-map routes should use the same single-cubic grammar');
+  assert.ok(rightPath.approachX > 610 && rightPath.approachX < 980);
+  assert.equal(rightPath.fanX, 610);
   assert.equal(rightPath.routeY, 366);
 
   const directPath = TochnyiMaps.buildOrthogonalLeaderPath({
@@ -2409,7 +2408,7 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /planRegionalBreakdown\(entries/);
   assert.match(runtime, /data-map-workflow', 'regional-breakdown'/);
-  assert.match(maps, /portRoutingThreshold:\s*6/);
+  assert.match(maps, /portRoutingThreshold:\s*9/);
   assert.match(maps, /function planRegionalBreakdown\(/);
   assert.match(maps, /optimizeCalloutPlacement\(all, placementOptions\)/);
   assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'geographic'/);
@@ -3063,6 +3062,23 @@ test('layout diagnostics fail unresolved labels and ignore their own SVG marks',
   assert.equal(issues.some((issue) => issue.code === 'text-line-collision'), false);
 });
 
+test('layout diagnostics treat a reference label crossing its own line as an error', () => {
+  const label = {
+    id: 'reference-label', source: 'amcharts', role: 'reference-label', text: 'July total · ₽935bn', group: 'reference-1',
+    rect: normalizeRect({ left: 40, top: 20, right: 160, bottom: 44 })
+  };
+  const line = {
+    id: 'reference-line', source: 'amcharts', role: 'reference-line', group: 'reference-1', line: true,
+    rect: normalizeRect({ left: 0, top: 31, right: 200, bottom: 33 })
+  };
+  const issues = diagnoseBoxes({
+    labels: [label],
+    objects: [line],
+    boundaries: [{ source: 'amcharts', rect: normalizeRect({ left: 0, top: 0, right: 220, bottom: 100 }) }]
+  });
+  assert.ok(issues.some((issue) => issue.code === 'text-line-collision' && issue.severity === 'error'));
+});
+
 test('layout diagnostics detect overlap between SVG labels', () => {
   const labels = [
     { id: 'low', source: 'svg-0', role: 'range-value', text: '21.0%', rect: normalizeRect({ left: 50, top: 20, right: 105, bottom: 40 }) },
@@ -3198,6 +3214,80 @@ test('range and waterfall semantics are enforced', () => {
   result = validateSpec(waterfall);
   assert.equal(result.valid, false);
   assert.ok(result.errors.includes('flow.waterfall must begin with a start item.'));
+});
+
+test('range charts reject endpoint duplicates masquerading as independent anchors', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Transaction value remains within the reported range',
+    date: '2026-08-09',
+    data: [
+      {
+        label: 'Reported value range',
+        low: 7.7,
+        high: 13.5,
+        displayValue: '₽7.7–13.5bn',
+        quantity: 'transaction value',
+        scope: 'same transaction',
+        period: '2026'
+      },
+      {
+        label: 'Auction floor',
+        value: 7.7,
+        displayValue: '₽7.7bn',
+        quantity: 'transaction value',
+        scope: 'same transaction',
+        period: '2026'
+      }
+    ],
+    measure: {
+      quantity: 'transaction value', unit: 'billion rubles', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 1, baseline: 'zero', scale: 'linear'
+    },
+    narrative: { frame: 'comparison', density: 'minimal', emphasis: 'range' },
+    options: { height: 'standard', showLabels: true, animate: false }
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /merely repeats an endpoint/i.test(message)));
+});
+
+test('forecast and target ranges promote an available actual value into primary geometry', () => {
+  const base = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Inflation forecast lifted for 2026',
+    date: '2026-08-09',
+    data: [
+      {
+        label: 'Previous forecast', low: 4.5, high: 5.5, displayValue: '4.5–5.5%',
+        quantity: 'annual inflation rate', scope: 'same economy', period: '2026'
+      },
+      {
+        label: 'Revised forecast', low: 6, high: 7, displayValue: '6–7%',
+        quantity: 'annual inflation rate', scope: 'same economy', period: '2026'
+      }
+    ],
+    measure: {
+      quantity: 'annual inflation rate', unit: '%', valueMode: 'rate', levelAvailability: 'not-applicable',
+      basisAvailability: 'not-applicable', basisNote: 'Inflation is a native price-index rate rather than a single numerator/denominator ratio.',
+      decimals: 1, baseline: 'zero', scale: 'linear'
+    },
+    supportingFacts: [
+      { value: '4.84%', label: 'Actual year-to-date inflation so far.', tone: 'neutral', role: 'comparison' }
+    ],
+    narrative: { frame: 'comparison', density: 'minimal', emphasis: 'range' },
+    options: { height: 'standard', showLabels: true, animate: false }
+  };
+  let result = validateSpec(base);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /promote an available same-unit realized\/current observation/i.test(message)));
+
+  const anchored = structuredClone(base);
+  anchored.references = [{ value: 4.84, label: 'Actual YTD · 4.84%', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(anchored);
+  assert.equal(result.valid, true, result.errors.join('; '));
 });
 
 test('waterfall contract rejects inferred, uncertain, mixed-period, and non-reconciling bridges', () => {

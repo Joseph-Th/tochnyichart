@@ -268,10 +268,10 @@ that row.
 | `comparison.change` | Two periods of one quantity for one scope only when one value cannot be read naturally as the positive actual/current level against a prior, standard, limit, target, or other benchmark. Typical uses are sign-crossing levels, zero-to-nonzero movement, and native rate/index changes. |
 | `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. Repeated category/time pairs are not scenarios. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
-| `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
+| `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. A one-row range needs a genuinely independent reference; a point or reference equal to the low/high endpoint is redundant. Forecast and target ranges should include an available same-unit actual/current value as a numeric reference. |
 | `comparison.benchmark-gap` | One to six actual/current values shown against meaningful benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. One or two category-level earlier/current pairs also belong here, with current as `value` and prior as `benchmark`. Two meaningful policy, target, or payout shares may use separate rows against the same tangible total when that common total gives the viewer a stronger anchor than a single hypothetical split. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
-| `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two driver paths join directly into one outcome path with no decorative merge node. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
+| `relationship.converging-signals` | Exactly two quantitative drivers or formula inputs and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism or identity, including material derivations such as quantity × unit price = value. Each measure is drawn as an independent local quantitative signal; the two input paths join directly into one outcome path with no decorative merge node. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 | `composition.components` | Two to six positive additive components of one reported total. Every component starts at zero; one numeric reference shows the reconciled total. Use this instead of a waterfall when the point is component magnitude rather than a running balance. |
 | `flow.waterfall` | One existing balance or level moves through exact reported changes into an ending value. Do not use it for a set of positive components that merely add to one total. |
@@ -307,6 +307,19 @@ pair is a subset of an existing same-topic chart, especially a regional map or
 larger category comparison. If the pair cannot be enriched and does not carry a
 distinct editorial conclusion, mark it `merged` or `omitted` rather than giving
 it a standalone slide.
+
+For forecasts, targets, outlooks, guidance, and scenario ranges, search for the
+same-unit actual/current/latest realized observation before accepting the chart.
+When available, it belongs on the plotted scale as a numeric reference. An
+actual value in `supportingFacts` is not enough because the viewer should be
+able to see where the forecast sits relative to what has already happened.
+
+Do not count a range endpoint twice. A floor equal to the range low, a ceiling
+equal to the range high, an implied remainder, or another value already encoded
+by the primary geometry is not a second observation. If mixed-unit quantitative
+inputs materially explain the reported outcome, keep them in the main visual
+through `relationship.converging-signals` rather than manufacturing a duplicate
+same-scale anchor.
 
 Use one `comparison.benchmark-gap` row when the benchmark marker and segmented
 bar already express the complete relationship. `value` is the tangible actual

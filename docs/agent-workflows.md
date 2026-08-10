@@ -281,10 +281,11 @@ Check that:
 - Never flatten repeated category/time pairs into `comparison.scenarios`.
   Scenarios are same-period alternatives. Use `comparison.benchmark-gap` for
   one or two paired categories and `comparison.dumbbell` for three or more.
-- When two unlike drivers and one outcome are all essential, use
+- When two unlike quantitative drivers or formula inputs and one outcome are all essential, use
   `relationship.converging-signals` instead of a common axis. The two drivers
   and outcome must measure three distinct real-world quantities, and
-  `relationship.formula` must state the source-supported mechanism. Repeated
+  `relationship.formula` must state the source-supported mechanism or identity,
+  including material derivations such as quantity × unit price = value. Repeated
   prices, repeated volumes, or one measure at different dates require change,
   scenarios, dumbbell, or trend geometry. Each measure renders as an independent
   local quantitative signal, and both driver paths join directly into one
@@ -313,6 +314,13 @@ Check that:
   time series from the source. A single-row benchmark-gap qualifies because its
   actual segment, gap segment, and benchmark marker are separate marks. If no
   valid structure exists, omit the story.
+- For forecasts, targets, outlooks, guidance, and scenario ranges, search for a
+  same-unit actual/current/latest realized observation. If available, show it
+  on the visual scale as a numeric reference; do not leave it only in
+  `supportingFacts`.
+- A range endpoint, floor, ceiling, total, remainder, or zero-gap endpoint that
+  is already encoded by the primary geometry does not count as an independent
+  anchor. Do not add a duplicate endpoint merely to make a thin chart pass.
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
@@ -323,9 +331,9 @@ non-change comparisons must share a period; trend periods may advance while
 quantity and scope remain fixed. Generic declarations such as `reported change`
 or `metric` are rejected because they hide unlike measures behind one axis.
 
-When exactly two facts act as drivers of one outcome, and all three are
-essential, measure distinct quantities, and have an explicit source-supported
-mechanism, `relationship.converging-signals` may keep them in one visual without
+When exactly two quantitative facts act as drivers or formula inputs of one
+outcome, and all three are essential, measure distinct quantities, and have an
+explicit source-supported mechanism or identity, `relationship.converging-signals` may keep them in one visual without
 a shared scale. The local signal lengths are meaningful only within each
 measure; the connector geometry communicates convergence, not relative size.
 More diffuse facts with different units, scopes, periods, or operational stages

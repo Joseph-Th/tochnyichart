@@ -65,6 +65,9 @@ read the full primary source
 extract evidence and safe derivations
     |
     v
+identify orientation anchors and material formula inputs
+    |
+    v
 identify any useful enrichment gap
     |
     v
@@ -115,6 +118,8 @@ Extract all facts that could clarify the central finding without changing it:
 - Cause or operating mechanism
 - Consequence or decision resulting from the change
 - Forecast or expected direction
+- Same-unit actual/current/latest realized values that orient any forecast,
+  target, outlook, guidance, or scenario range
 - Every comparable historical observation needed to prove a claimed slowdown,
   acceleration, reversal, or persistence
 - Relevant market or operational scale
@@ -127,6 +132,8 @@ Extract all facts that could clarify the central finding without changing it:
 - Company filing, employee note, or official workforce disclosure behind a
   staffing percentage
 - Actual benchmark and discounted, premium, shortfall, or overage value
+- Quantitative formula inputs that materially explain a reported or derived
+  outcome, such as area and price per square metre for a transaction value
 - Underlying report, dataset, or filing named by the article
 
 The evidence should remain attributable to the source and compatible in period, unit, and scope.
@@ -146,6 +153,14 @@ Calculate values that are directly supported by sourced inputs and materially cl
 
 Retain the source inputs and formula in working notes. Do not imply more precision than the source supports. When the source uses terms such as `about`, `almost`, `more than`, or a range, preserve that uncertainty in the display value and explanatory copy.
 
+When two quantitative inputs in different units materially explain the headline
+outcome, do not derive the outcome and then hide the inputs in supporting text.
+Keep the inputs in the main visual argument, normally with
+`relationship.converging-signals` and an explicit `relationship.formula` when
+the identity or mechanism is source-supported. A range endpoint, floor, ceiling,
+remainder, or total that is already encoded by the primary mark is not an
+independent anchor and does not make a thin chart more informative.
+
 Do not derive values that depend on unstated assumptions, incompatible periods, or unrelated datasets.
 
 ## 4. Audit the value representation
@@ -162,6 +177,12 @@ This hierarchy governs the value representation, not whether all material
 evidence is used. If the title is about slowing growth and the source provides
 three comparable growth rates, those rates must become a `trend.line`. Two
 turnover levels are not a substitute for the sequence that proves the slowdown.
+
+Forecast, target, outlook, guidance, and scenario stories need an orientation
+check before recipe selection. Search the input and source for the same-unit
+actual/current/latest realized observation. If it exists, show it on the visual
+scale as primary geometry or a numeric reference. Do not leave the actual value
+in `supportingFacts` while plotting only forecast bands or scenarios.
 
 Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, market-data history, company filing, or industry dataset, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
 

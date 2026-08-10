@@ -44,6 +44,9 @@ inventory every quantitative claim with exact input excerpts
 inventory every materially relevant same-scale observation in visualEvidenceAudit
     |
     v
+inventory same-unit orientation anchors and material mixed-unit formula inputs
+    |
+    v
 record selected, omitted, or merged disposition for every candidate
     |
     v
@@ -174,6 +177,10 @@ primary claim.
 Before accepting a chart candidate, apply the visual-evidence gate:
 
 - A non-map chart must contain at least two quantitative marks.
+- Forecast, target, outlook, guidance, and scenario stories must search for a
+  same-unit actual/current/latest realized observation. When one exists, put it
+  on the visual scale as primary geometry or a numeric reference; leaving it in
+  `supportingFacts` is not sufficient orientation.
 - A lone value must gain a source-supported prior value, target, benchmark,
   denominator, peer, range, or time series. A single-row
   `comparison.benchmark-gap` is valid because the actual segment, gap segment,
@@ -191,6 +198,13 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   the relevant reporting perimeter.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
+- A low/high range endpoint, floor, ceiling, total, remainder, or zero-gap value
+  that is already encoded by the primary geometry is not an independent anchor.
+  Do not add a duplicate endpoint merely to make a thin chart appear richer.
+- When two quantitative inputs in different units materially explain a headline
+  outcome, such as area × price per square metre = transaction value, keep the
+  inputs in the primary visual argument. Prefer `relationship.converging-signals`
+  with an explicit formula when both inputs and the outcome are material.
 - When three or more materially relevant observations share one quantity and
   unit, inventory all of them in `visualEvidenceAudit` and keep all of them as
   primary `data[]` items. Do not collapse named shipment components, categories,

@@ -120,6 +120,62 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('source fidelity requires forecast stories to promote input-reported actual rates into references', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-forecast-anchor-'));
+  const anchor = 'The 2026 inflation forecast was raised from 4.5–5.5% to 6–7%; actual inflation so far is 4.84%.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'forecast-anchor');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'inflation-forecast',
+      claim: 'The 2026 inflation forecast was raised.',
+      decision: 'selected',
+      outputSlug: 'inflation-forecast',
+      title: 'The 2026 inflation forecast was raised to 6–7%',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'rate',
+        levelAvailability: 'not-applicable',
+        basisAvailability: 'not-applicable',
+        basisRationale: 'Inflation is a native price-index rate rather than a single numerator/denominator ratio.',
+        rationale: 'The source reports forecast and actual inflation rates directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The forecast revision is expressed as two comparable rate ranges.',
+        comparableObservations: [
+          { label: 'Previous forecast', quantity: 'annual inflation rate', unit: 'percent', period: '2026', low: 4.5, high: 5.5 },
+          { label: 'Revised forecast', quantity: 'annual inflation rate', unit: 'percent', period: '2026', low: 6, high: 7 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'The story is a national forecast comparison with no spatial finding.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'inflation-forecast.json');
+    const baseSpec = {
+      title: 'The 2026 inflation forecast was raised to 6–7%',
+      measure: { valueMode: 'rate', levelAvailability: 'not-applicable', basisAvailability: 'not-applicable' }
+    };
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'forecast-anchor', { requireSpecs: true }),
+      /realized\/current rate outside primary geometry/i
+    );
+
+    baseSpec.references = [{ value: 4.84, label: 'Actual inflation so far' }];
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.equal(validateSourceLedger(root, 'forecast-anchor', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity forces spatial multi-region findings through regional-breakdown', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-routing-audit-'));
   const anchor = 'Restrictions spread across border Russia: Belgorod logged 12 hours, Kursk 20 hours, and Bryansk 30 hours.';

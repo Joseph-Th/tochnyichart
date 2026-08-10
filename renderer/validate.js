@@ -846,6 +846,8 @@ function hasNumericVisibleValue(value) {
 const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
 const BENCHMARK_CUE_PATTERN = /\b(?:benchmark|baseline|standard|limit|target|threshold|cap|ceiling|floor|maximum|minimum|norm|allowance|permitted|legal)\b/i;
 const COMPONENT_DECOMPOSITION_PATTERN = /\b(?:component|components|contribution|contributions|accounted for|breakdown|excluding|included|special tax|taxes|fees|surcharge|subtotal|total cost|total revenue|total spending|cost build[- ]?up)\b/i;
+const FORECAST_CUE_PATTERN = /\b(?:forecast|target|outlook|projection|guidance|expected range|scenario range)\b/i;
+const REALIZED_ANCHOR_CUE_PATTERN = /\b(?:actual|realized|current|latest|so far|to date|year[- ]to[- ]date|through|reported)\b/i;
 
 function isCountLikeMeasure(spec) {
   const text = `${spec?.measure?.quantity || ''} ${spec?.measure?.unit || ''}`;
@@ -900,6 +902,85 @@ function validateStandaloneScenarioPair(spec, data, errors) {
   validateExactCountPairStrength(spec, data, errors);
 }
 
+function numericValueFromDisplay(value) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/−/g, '-').replace(',', '.');
+  const match = normalized.match(/[+\-]?\s*\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const parsed = Number(match[0].replace(/\s+/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function validateForecastOrientationAnchor(spec, errors) {
+  const editorial = [
+    spec.title,
+    spec.subtitle,
+    ...(spec.data || []).map((item) => item?.label)
+  ].filter(Boolean).join(' ');
+  if (!FORECAST_CUE_PATTERN.test(editorial)) return;
+
+  const unit = spec.measure?.unit || spec.measure?.suffix || spec.measure?.prefix || '';
+  const realizedFacts = (spec.supportingFacts || []).filter((fact) => {
+    const copy = `${fact?.label || ''} ${fact?.value || ''}`;
+    if (!REALIZED_ANCHOR_CUE_PATTERN.test(copy)) return false;
+    if (numericValueFromDisplay(fact?.value) === null) return false;
+    return !unit || visibleTextContainsUnit(fact?.value || '', unit);
+  });
+  if (!realizedFacts.length) return;
+
+  const references = Array.isArray(spec.references) ? spec.references : [];
+  const hasPromotedAnchor = realizedFacts.some((fact) => {
+    const value = numericValueFromDisplay(fact.value);
+    return references.some((reference) =>
+      typeof reference?.value === 'number' && Number.isFinite(reference.value) &&
+      Math.abs(reference.value - value) < 1e-9
+    );
+  });
+  if (!hasPromotedAnchor) {
+    errors.push(
+      'Forecast, target, and outlook charts must promote an available same-unit realized/current observation into primary geometry as a numeric reference. ' +
+      'Do not leave the actual value in supportingFacts while plotting only forecast bands or scenarios.'
+    );
+  }
+}
+
+function validateRangeInformationDensity(spec, data, errors) {
+  if (spec.recipe !== 'comparison.range') return;
+  const ranges = data.filter((item) =>
+    typeof item?.low === 'number' && Number.isFinite(item.low) &&
+    typeof item?.high === 'number' && Number.isFinite(item.high)
+  );
+  const points = data.filter((item) => typeof item?.value === 'number' && Number.isFinite(item.value));
+
+  points.forEach((point) => {
+    const duplicate = ranges.find((range) =>
+      (Math.abs(point.value - range.low) < 1e-9 || Math.abs(point.value - range.high) < 1e-9) &&
+      normalizeEditorialValue(point.quantity) === normalizeEditorialValue(range.quantity) &&
+      normalizeEditorialValue(point.scope) === normalizeEditorialValue(range.scope) &&
+      normalizeEditorialValue(point.period) === normalizeEditorialValue(range.period)
+    );
+    if (!duplicate) return;
+    errors.push(
+      `comparison.range data row "${point.label}" merely repeats an endpoint of "${duplicate.label}". ` +
+      'An endpoint is already encoded by the range and does not count as an independent anchor. Research a real comparator or benchmark, or use relationship geometry when mixed-unit inputs explain the result.'
+    );
+  });
+
+  if (data.length === 1 && ranges.length === 1 && Array.isArray(spec.references) && spec.references.length) {
+    const range = ranges[0];
+    const independentReferences = spec.references.filter((reference) =>
+      typeof reference?.value === 'number' && Number.isFinite(reference.value) &&
+      Math.abs(reference.value - range.low) > 1e-9 &&
+      Math.abs(reference.value - range.high) > 1e-9
+    );
+    if (!independentReferences.length) {
+      errors.push(
+        'A one-row comparison.range needs an independent numeric orientation anchor. A reference placed exactly on the low or high endpoint is redundant and does not make the chart informative.'
+      );
+    }
+  }
+}
+
 function validateRecipe(spec, errors, warnings) {
   const count = Array.isArray(spec.data) ? spec.data.length : 0;
   const data = Array.isArray(spec.data) ? spec.data : [];
@@ -945,6 +1026,7 @@ function validateRecipe(spec, errors, warnings) {
           errors.push('A one-row comparison.range chart requires a low-high interval plus a visible benchmark or reference that supplies the scale.');
         }
       }
+      validateRangeInformationDensity(spec, data, errors);
       break;
     case 'comparison.benchmark-gap':
       if (count < 1 || count > 6) errors.push('comparison.benchmark-gap requires 1 to 6 data items.');
@@ -1112,6 +1194,7 @@ function validateRecipe(spec, errors, warnings) {
     default:
       errors.push(`recipe must be one of: ${[...recipeIds, ...LEGACY_RECIPES].join(', ')}.`);
   }
+  validateForecastOrientationAnchor(spec, errors);
 }
 
 function validateMeasure(spec, errors, warnings) {

@@ -992,6 +992,21 @@ body.tochnyi-regional-matrix-page {
     font-weight: 600;
 }
 
+.tochnyi-svg-benchmark-actual-label.placement-inside,
+.tochnyi-svg-gap-label.placement-inside {
+    fill: #ffffff;
+    font-weight: 700;
+}
+
+.tochnyi-svg-benchmark-actual-label.placement-below {
+    fill: var(--tochnyi-blue);
+}
+
+.tochnyi-svg-benchmark-label.placement-above {
+    fill: #4f5962;
+    font-weight: 700;
+}
+
 .tochnyi-dumbbell-svg {
     font-family: var(--tochnyi-font);
 }

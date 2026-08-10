@@ -40,6 +40,8 @@ const PUBLIC_AGGREGATE_SHARE_PATTERN = /(?:\b(?:share|accounts? for|represents?|
 const COVERAGE_TEXT = /\b(?:coverage|covers? only|days? of (?:consumption|demand|need)|share of need|monthly (?:consumption|demand|need)|daily consumption|shortage response|replacement suppl(?:y|ies))\b/i;
 const PRICE_STORY_TEXT = /\b(?:price|prices|pricing|cost|costs|tariff|tariffs|freight|margin|margins|profitability)\b/i;
 const PERCENT_VALUE_TEXT = /\d+(?:[.,]\d+)?\s*%/i;
+const FORECAST_STORY_TEXT = /\b(?:forecast|target|outlook|projection|guidance|expected range|scenario range)\b/i;
+const REALIZED_RATE_TEXT = /\b(?:actual|realized|current|latest|so far|to date|year[- ]to[- ]date)\b[^.]{0,100}\d+(?:[.,]\d+)?\s*%/i;
 const TANGIBLE_CURRENCY_LEVEL_TEXT = /(?:[$€£₽¥]\s*\d|\b\d[\d\s,.]*\s*(?:rubles?|roubles?|rubs?|usd|dollars?|euros?|eur|pounds?|gbp|yuan|cny)\b)/i;
 const VOLUME_NUMBER = String.raw`\d+(?:[\s,]\d{3})*(?:[.,]\d+)?`;
 const PHYSICAL_VOLUME_PATTERN = new RegExp(
@@ -708,6 +710,24 @@ function validateCoverageSpecCoverage(candidate, spec, errors) {
   }
 }
 
+function validateForecastOrientationSpecCoverage(candidate, spec, errors) {
+  const narrative = candidateNarrative(candidate);
+  if (!FORECAST_STORY_TEXT.test(narrative)) return;
+  const hasRealizedRateInInput = (candidate?.anchors || []).some((anchor) =>
+    isText(anchor) && REALIZED_RATE_TEXT.test(anchor)
+  );
+  if (!hasRealizedRateInInput) return;
+  const hasNumericReference = Array.isArray(spec?.references) && spec.references.some((reference) =>
+    typeof reference?.value === 'number' && Number.isFinite(reference.value)
+  );
+  if (!hasNumericReference) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} leaves an input-reported realized/current rate outside primary geometry. ` +
+      'Forecast, target, and outlook stories with a same-unit actual/current observation must plot it as a numeric reference rather than leaving it in supporting context.'
+    );
+  }
+}
+
 function validateSourceLedger(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const snapshot = readInputSnapshot(projectRoot);
@@ -903,6 +923,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       validateRelationshipEvidence(candidate, spec, errors);
       validatePublicAggregateSpecCoverage(candidate, spec, errors);
       validateCoverageSpecCoverage(candidate, spec, errors);
+      validateForecastOrientationSpecCoverage(candidate, spec, errors);
       validateRoutingSpecCoverage(candidate, spec, errors);
       selectedSpecs.push({ candidate, spec });
     }

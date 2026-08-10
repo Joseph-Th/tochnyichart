@@ -13,7 +13,9 @@ placement, and leaders at render time.
 The regional policy is centralized in `lib/tochnyi-maps.js`:
 
 - `map.regional` defaults to the `russia` region set.
-- Port routing is selected automatically at six or more active callouts.
+- Port routing is selected automatically only at nine or more active callouts.
+- Medium callout sets use direct or lane-separated single-cubic splines so the
+  connection from region to card stays visually short, smooth, and legible.
 - Dense layout begins at nine callouts.
 - Standard and dense layouts use different card widths, gaps, attachment insets,
   port spacing, minimum card stubs, and obstacle clearances.
@@ -35,13 +37,14 @@ The semantic `map.leaderRouting` field accepts these values:
 
 | Mode | Use |
 | --- | --- |
-| `auto` | Use direct routing for sparse maps and port routing for dense maps. |
+| `auto` | Use direct or lane-separated single-cubic routing for sparse/medium maps and port routing only for dense maps. |
 | `direct` | Sparse callouts with readable independent leaders. |
-| `lanes` | Orthogonal leaders with separated vertical corridors. |
+| `lanes` | Smooth single-cubic leaders with separated card-approach lanes. |
 | `ports` | Dense maps with ordered card-edge attachments and crossing-aware side assignment. |
 | `indexed` | Explicit legacy/local marker routing; use only for a verified special case. |
 
-In automatic mode, sparse maps use direct routing. Dense maps use port
+In automatic mode, sparse and medium maps use direct or lane-separated routing
+with one smooth cubic per callout. Dense maps at nine or more callouts use port
 routing, enumerate balanced side assignments, and score the candidates before
 committing to card placement. Fixed `data[].calloutSide` values remain fixed;
 automatic entries can move to the side that produces a clearer result.
@@ -76,6 +79,10 @@ ChartSpec. Use a non-map recipe for detached-region evidence.
 The regional page reserves more width for the map than standard charts. It uses
 a compact logo, date, title, subtitle, and watermark; narrower callout columns;
 and a shorter desktop map stage. These are renderer-owned regional defaults.
+Desktop callout packing also reserves a bottom gutter inside the clipped map
+stage. Diagnostics fail any overlay callout that reaches the stage boundary or
+the note/footer area, preventing a bottom card from being visually cut off by
+copy placed below the map.
 
 ## Summary and information economy
 
