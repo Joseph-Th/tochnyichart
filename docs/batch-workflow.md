@@ -280,8 +280,9 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - When two drivers and one outcome are all essential but use unlike quantities
   or units, use `relationship.converging-signals` instead of forcing them onto a
   shared scale. Each factor and the outcome must render as an independent local
-  quantitative signal, with both driver paths joining directly into one outcome
-  path. The merge is connector geometry, not a decorative hub or node.
+  quantitative signal, with both driver paths meeting near the outcome rather
+  than continuing as a separate output connector. The merge is connector
+  geometry, not a decorative hub, node, or third quantitative path.
   Connector width is fixed and never encodes magnitude. Use identity
   mode only for arithmetically reconciling evidence; otherwise use directional
   mode and disclose incompatible periods or scopes.
@@ -394,8 +395,10 @@ continental region in `data[]`; the regional data array is the evidence
 inventory, not a callout inventory. Use `data[].callout: "none"` for regions
 that should remain highlighted without a box. Do not delete reported regions
 merely to make the card layout fit. At most 12 regional items may render
-callout cards. Do not proceed to rendering until each accepted story has exactly
-one recorded workflow decision.
+callout cards. Arrange visible callouts in deliberate reading order: use
+`data[].calloutOrder` when the desired card sequence differs from `data[]` order.
+Automatic leaders stay direct and do not render origin dots. Do not proceed to
+rendering until each accepted story has exactly one recorded workflow decision.
 
 Do not write a ChartSpec whose output slug is absent from the source ledger.
 Do not add a chart discovered during research. If a new input-supported story

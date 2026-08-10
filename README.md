@@ -177,9 +177,11 @@ and `relationship.formula` must state the source-supported mechanism. Repeated
 prices, repeated volumes, or one measure at different dates belong in change,
 scenario, dumbbell, or trend geometry. The renderer gives each measure an
 independent local quantitative signal, then converges the two driver paths at
-one operator. Labels name the measures directly; generic “Factor 1,” “Factor 2,”
-and “Outcome” captions are not rendered.
-Connector width is fixed and never implies comparable magnitude. Reserve
+one operator near the outcome. There is no additional connector from the merge
+point into the outcome signal, because that extra line reads as a third
+quantitative path. Labels name the measures directly; generic “Factor 1,”
+“Factor 2,” and “Outcome” captions are not rendered. Connector width is fixed
+and never implies comparable magnitude. Reserve
 `relationship.mode: "identity"` for exactly reconciling scope and periods; use
 `directional` with an explicit note when the evidence only supports the direction
 of the relationship. Keep merely secondary mixed-unit context in the unboxed

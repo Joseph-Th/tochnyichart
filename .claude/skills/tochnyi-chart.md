@@ -110,7 +110,10 @@ candidate as `routingAudit`:
    Keep every materially reported continental region in `data[]`. The data
    array is the map evidence inventory, not a box inventory. Use
    `data[].callout: "none"` for fill-only highlights and reserve callout cards
-   for the most informative regions; at most 12 cards may be visible.
+   for the most informative regions; at most 12 cards may be visible. Put visible
+   cards in deliberate reading order. Use `data[].calloutOrder` when that order
+   differs from `data[]` order. Automatic leaders stay direct and never render
+   origin dots.
 3. If a story contains geographic names but is routed to `standard-chart`, the
    rationale must explicitly explain why location is not explanatory.
 4. Do not use missing coordinates, a status-list shape, a ranking shape, or an
@@ -195,8 +198,8 @@ candidate as `routingAudit`:
   quantities. `relationship.formula` must state the mechanism. Repeated prices,
   repeated volumes, or one measure at different dates require change,
   scenarios, dumbbell, or trend geometry. Each measure renders as an independent
-  local quantitative signal, with both driver paths joining directly into one
-  outcome path and no decorative merge hub. The renderer names the measures directly and does not add generic
+  local quantitative signal. Both driver paths meet near the outcome, with no
+  decorative merge hub and no separate output connector into the outcome signal. The renderer names the measures directly and does not add generic
   Factor 1, Factor 2, or Outcome captions. Connector width is fixed and never
   represents magnitude. Use `identity` only for a same-scope, same-period
   equation; use `directional` with a note when the evidence supports the
@@ -354,6 +357,7 @@ Do not author coordinates, card positions, route points, manual lanes, partial f
 Use these semantic overrides only when the story requires them:
 
 - `data[].calloutSide`
+- `data[].calloutOrder`
 
 Run:
 

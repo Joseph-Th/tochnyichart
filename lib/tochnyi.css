@@ -730,10 +730,6 @@ body.tochnyi-regional-matrix-page {
     stroke-linecap: round;
 }
 
-.tochnyi-signal-link.outcome {
-    stroke: var(--tochnyi-blue);
-    stroke-width: 7;
-}
 
 .tochnyi-signal-label {
     fill: var(--tochnyi-black);

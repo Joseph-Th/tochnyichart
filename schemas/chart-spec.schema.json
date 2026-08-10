@@ -135,8 +135,8 @@
         "viewportAlignment": { "type": "string", "const": "context" },
         "contextFit": { "type": "string", "const": "all" },
         "landmass": { "type": "string", "const": "continental" },
-        "anchorStyle": { "type": "string", "enum": ["auto", "none", "dot"] },
-        "leaderRouting": { "type": "string", "enum": ["auto", "direct", "lanes", "ports", "indexed"] },
+        "anchorStyle": { "type": "string", "enum": ["auto", "none"] },
+        "leaderRouting": { "type": "string", "enum": ["auto", "direct", "ports", "indexed"] },
         "excludeRegions": {
           "type": "array",
           "maxItems": 0,

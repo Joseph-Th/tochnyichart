@@ -13,22 +13,20 @@ placement, and leaders at render time.
 The regional policy is centralized in `lib/tochnyi-maps.js`:
 
 - `map.regional` defaults to the `russia` region set.
-- Port routing is selected automatically only at nine or more visible callouts.
+- Port routing is opt-in only. `auto` always stays on direct editorial leaders, including dense visible-callout sets.
 - Highlight count and callout count are separate. `data[].callout: "none"`
   keeps a region active on the map without creating a card or leader. Layout
   density and routing mode are based on visible callout count, not the number
   of highlighted regions.
-- Medium callout sets use direct or lane-separated single-cubic splines so the
-  connection from region to card stays visually short, smooth, and legible.
-- Dense layout begins at nine callouts.
+- Callout sets use simple direct leaders by default so the connection from region to card stays visually short, smooth, and legible.
+- Dense card typography still begins at nine callouts, but dense card count no longer switches the map into port routing by itself.
 - If five or more geographically assigned callouts land in one column, the
   runtime compacts that column's card typography and padding before planning
   leaders. This preserves the geographic side assignment instead of solving a
   vertical packing problem by sending distant regions across the map.
 - Standard and dense layouts use different card widths, gaps, attachment insets,
   port spacing, minimum card stubs, and obstacle clearances.
-- Automatic callout distribution preserves geographic packing. Balanced packing
-  is an explicit exception rather than the default.
+- Automatic callout distribution preserves the author’s data order within each side column unless `calloutOrder` is supplied. Balanced packing is an explicit exception rather than the default.
 - The default anchor style is no centroid dot; the filled region is already the
   geographic mark.
 - Regional maps are north-up and use a deterministic static projection.
@@ -45,20 +43,12 @@ The semantic `map.leaderRouting` field accepts these values:
 
 | Mode | Use |
 | --- | --- |
-| `auto` | Use direct or lane-separated single-cubic routing for sparse/medium maps and port routing only for dense maps. |
+| `auto` | Use direct editorial leaders. Cards stay on the nearest side and preserve `calloutOrder` or data order within each column. |
 | `direct` | Sparse callouts with readable independent leaders. |
-| `lanes` | Smooth single-cubic leaders with separated card-approach lanes. |
-| `ports` | Dense maps with ordered card-edge attachments and crossing-aware side assignment. |
+| `ports` | Explicit dense-map port routing for a verified special case. Never the default. |
 | `indexed` | Explicit legacy/local marker routing; use only for a verified special case. |
 
-In automatic mode, sparse and medium maps use direct or lane-separated routing
-with one smooth cubic per callout. Dense maps at nine or more callouts use port
-routing and score candidate placements before committing to card placement.
-Automatic side choice is geography-first: the runtime resolves each region's
-anchor into full stage coordinates and assigns the nearer left or right card
-column. Regions with a strong distance advantage are side-locked. Only regions
-inside the central crossover band may switch sides to remove crossings or
-crowding. Fixed `data[].calloutSide` values remain fixed.
+In automatic mode, maps use one smooth direct leader per callout. The runtime resolves each region's anchor into full stage coordinates, assigns the nearest left or right card column, and preserves explicit `data[].calloutOrder` or the ChartSpec data order inside that column. This makes the layout read like a hand-arranged annotation system instead of a crossing optimizer. Fixed `data[].calloutSide` values remain fixed.
 
 This distinction matters because the map canvas is narrower than the full
 regional stage whenever callout columns are present. Never compare a
@@ -66,24 +56,11 @@ map-canvas X coordinate directly with the full-stage midpoint; doing so biases
 eastern regions toward the left column and can force the optimizer into long
 cross-map leaders.
 
-Port leaders use one monotonic cubic from the geographic anchor to a dedicated
-card-edge port, followed by a short horizontal terminal stub. Standard layouts
-reserve 18 px for that stub and dense layouts reserve 16 px. The planner
-preserves geographic order within each card column and separates the ports
-before route construction.
+Default leaders use the shortest smooth cubic to the card edge, followed by a short horizontal terminal stub. The default router does not route around highlighted region polygons and does not try to eliminate every line crossing. Region fills are evidence, not physical barriers; efficient paths to readable boxes are more important than treating the map as an obstacle course.
 
-The regional runtime does not route around highlighted region polygons. Region
-fills are evidence, not physical barriers, and treating clustered neighboring
-regions as obstacles was a source of unstable hooks and corrective S-curves.
-The direct cubic is used whenever it does not cross or sustain crowding against
-an already planned leader. When a leader needs separation, the runtime tests a
-small deterministic set of single-cubic fan curves above and below the direct
-envelope and chooses the least intrusive clear route. It does not use grid or
-A* detours in the production regional path.
+Explicit `ports` mode still uses one monotonic cubic from the geographic anchor to a dedicated card-edge port, followed by a short horizontal terminal stub. It is reserved for a verified special case, not normal weekly chart production.
 
-The naturalness contract still rejects self-intersection, horizontal direction
-reversal, control-point backtracking, and terminal box turns. Brief close passes
-are allowed; sustained crowding is the failure condition used by diagnostics.
+The naturalness contract rejects self-intersection, horizontal direction reversal, control-point backtracking, and terminal box turns. Brief close passes are allowed; sustained crowding is the failure condition used by diagnostics.
 
 ## Map framing
 
@@ -108,7 +85,7 @@ renderer-owned as `hide`, and `map.summaryPosition` is `none`. Any essential
 regional fact must live in a callout. Material non-geographic context belongs in
 a separate standard chart, not in a competing blue card over the map.
 
-Automatic callout distribution uses geographic packing. The explicit
+Automatic callout distribution uses editorial order within side columns. The explicit
 `balanced` mode remains available for a verified special case, but it should not
 be used merely to fill empty space because it can create unnecessary leader
 motion.
@@ -130,8 +107,8 @@ normalizes them to fields such as:
 
 | Field | Meaning |
 | --- | --- |
-| `routing` | Resolved direct, lanes, ports, or indexed routing. |
-| `placement` | Resolved geographic or crossing-optimized placement. |
+| `routing` | Resolved direct, ports, or indexed routing. |
+| `placement` | Resolved direct-editorial or explicit crossing-optimized port placement. |
 | `activeItems` | Number of regional data items highlighted on the map. |
 | `calloutCount` | Number of those items that render cards and leaders. |
 | `geographicSideLocks` | Number of visible callouts locked to their nearer geographic side. |

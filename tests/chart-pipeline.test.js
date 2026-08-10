@@ -929,6 +929,8 @@ test('runtime includes component, basis, calendar-duration, benchmark-gap, dumbb
   assert.doesNotMatch(runtime, /renderDriverOutcome/);
   assert.doesNotMatch(css, /\.tochnyi-relationship-node\s*\{/);
   assert.doesNotMatch(runtime, /tochnyi-signal-hub|tochnyi-signal-operator/);
+  assert.doesNotMatch(runtime, /class: 'tochnyi-signal-link outcome'/);
+  assert.doesNotMatch(css, /\.tochnyi-signal-link\.outcome/);
   assert.doesNotMatch(css, /\.tochnyi-signal-hub\s*\{|\.tochnyi-signal-operator\s*\{/);
 });
 
@@ -1424,10 +1426,10 @@ test('regional maps use a restrained non-flag-like status palette', () => {
   assert.ok(policy.inactiveFillOpacity < policy.activeFillOpacity);
 });
 
-test('regional maps suppress centroid dots unless explicitly requested', () => {
+test('regional maps suppress centroid dots', () => {
   assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'auto' }), 'none');
   assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'none' }), 'none');
-  assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'dot');
+  assert.equal(TochnyiMaps.resolveAnchorStyle({ anchorStyle: 'dot' }), 'none');
 });
 
 test('regional maps permanently suppress competing summary cards', () => {
@@ -1462,7 +1464,7 @@ test('regional maps permanently suppress competing summary cards', () => {
   }).show, false);
 });
 
-test('regional map callouts preserve geographic order by default', () => {
+test('regional map callout distribution defaults to geographic packing', () => {
   const entries = new Array(5).fill(null).map((_, index) => ({ index }));
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, false, entries), 'geographic');
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, true, entries), 'geographic');
@@ -1498,25 +1500,19 @@ test('automatic regional callout sides use stage-space geography and lock distan
   assert.ok(optimized.geographicSideLocks >= 2);
 });
 
-test('regional map leader routing automatically fans out crowded anchor clusters', () => {
+test('regional map auto routing stays direct even for crowded anchor clusters', () => {
   const entries = [100, 104, 109, 113, 119].map((y, index) => ({
     index,
     side: 'left',
     point: { x: 500 + index * 20, y },
     endY: 95 + index * 18
   }));
-  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries, { gap: 16 }), 'lanes');
+  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, entries, { gap: 16 }), 'direct');
   const planned = TochnyiMaps.planLeaderRoutes(entries, {
     routing: 'auto', top: 80, bottom: 180, gap: 16
   });
-  assert.equal(planned.routing, 'lanes');
-  assert.ok(planned.every((entry) => entry.sideCount === entries.length));
-  const destinationOrder = planned.slice().sort((first, second) => first.endY - second.endY);
-  assert.deepEqual(
-    destinationOrder.map((entry) => entry.approachLaneIndex),
-    [4, 3, 2, 1, 0],
-    'card approaches are nested from outermost at the top to innermost at the bottom'
-  );
+  assert.equal(planned.routing, 'direct');
+  assert.ok(planned.every((entry) => entry.sideCount === 1));
 
   const separated = [90, 140, 190].map((y, index) => ({
     index,
@@ -1526,21 +1522,10 @@ test('regional map leader routing automatically fans out crowded anchor clusters
   }));
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'auto' }, separated, { gap: 16 }), 'direct');
 
-  const lanePlan = TochnyiMaps.planLeaderRoutes(entries, {
-    routing: 'lanes', top: 80, bottom: 180, gap: 16
-  });
-  assert.equal(lanePlan.routing, 'lanes');
-  assert.deepEqual(lanePlan.map((entry) => entry.laneIndex).sort((a, b) => a - b), [0, 1, 2, 3, 4]);
-  assert.ok(lanePlan.every((entry) => entry.sideCount === entries.length));
-  const routeYs = lanePlan.slice().sort((a, b) => a.routeY - b.routeY).map((entry) => entry.routeY);
-  for (let index = 1; index < routeYs.length; index += 1) {
-    assert.ok(routeYs[index] - routeYs[index - 1] >= 15.9, 'explicit lane corridors must retain visible separation');
-  }
   assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'direct' }, entries), 'direct');
-  assert.equal(TochnyiMaps.resolveLeaderRouting({ leaderRouting: 'lanes' }, entries), 'lanes');
 });
 
-test('dense regional maps switch to ordered edge ports', () => {
+test('regional maps use ordered edge ports only when explicitly requested', () => {
   const entries = new Array(10).fill(null).map((_, index) => ({
     index,
     side: index < 5 ? 'left' : 'right',
@@ -1551,9 +1536,13 @@ test('dense regional maps switch to ordered edge ports', () => {
   const planned = TochnyiMaps.planLeaderRoutes(entries, {
     routing: 'auto', top: 80, bottom: 540, gap: 22
   });
-  assert.equal(planned.routing, 'ports');
+  assert.notEqual(planned.routing, 'ports');
+  const explicitPorts = TochnyiMaps.planLeaderRoutes(entries, {
+    routing: 'ports', top: 80, bottom: 540, gap: 22
+  });
+  assert.equal(explicitPorts.routing, 'ports');
   ['left', 'right'].forEach((side) => {
-    const sideEntries = planned.filter((entry) => entry.side === side)
+    const sideEntries = explicitPorts.filter((entry) => entry.side === side)
       .sort((first, second) => first.point.y - second.point.y);
     for (let index = 1; index < sideEntries.length; index += 1) {
       assert.ok(sideEntries[index].portY > sideEntries[index - 1].portY);
@@ -1635,7 +1624,7 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(standard.minimumCardStub, 18);
   assert.equal(standard.leaderClearance, 14);
   assert.equal(standard.compactColumnThreshold, 5);
-  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 9);
+  assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, Infinity);
   assert.equal(standard.calloutBottomInset, 22);
 });
 
@@ -1743,17 +1732,17 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
     summaryOnRight: false
   });
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'crossing-optimized-direct');
+  assert.equal(plan.placementMode, 'direct-editorial');
   assert.equal(plan.sides.left.length + plan.sides.right.length, 8);
   assert.ok(plan.sides.left.some((entry) => entry.index === 0));
   assert.ok(plan.sides.right.some((entry) => entry.index === 7));
-  assert.ok(plan.placement.geographicSideLocks >= 2);
+  assert.equal(plan.placement.geographicSideLocks, 0);
   assert.equal(plan.leftDistribution, 'geographic');
   assert.equal(plan.rightDistribution, 'geographic');
   assert.ok(plan.placement.assignmentEvaluations > 0);
 });
 
-test('medium regional maps keep direct smooth lanes and reserve ports for dense callout sets', () => {
+test('medium regional maps keep direct leaders unless ports are explicit', () => {
   const entries = new Array(7).fill(null).map((_, index) => ({
     index,
     item: {},
@@ -1773,7 +1762,7 @@ test('medium regional maps keep direct smooth lanes and reserve ports for dense 
     summaryOnRight: false
   });
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'crossing-optimized-direct');
+  assert.equal(plan.placementMode, 'direct-editorial');
   const routed = TochnyiMaps.planLeaderRoutes(plan.sides.left.concat(plan.sides.right), {
     routing: 'auto',
     top: 20,
@@ -1784,7 +1773,7 @@ test('medium regional maps keep direct smooth lanes and reserve ports for dense 
     'medium maps should stay on simple smooth-lane geometry below the dense threshold');
 });
 
-test('sparse regional maps optimize callout order before drawing direct leaders', () => {
+test('sparse regional maps preserve editorial callout order for direct leaders', () => {
   const entries = [
     { index: 0, item: { calloutSide: 'left' }, point: { x: 430, y: 390 }, height: 92, side: 'left' },
     { index: 1, item: { calloutSide: 'left' }, point: { x: 455, y: 190 }, height: 92, side: 'left' },
@@ -1802,28 +1791,34 @@ test('sparse regional maps optimize callout order before drawing direct leaders'
     summaryShown: false,
     summaryOnRight: false
   };
-  const baseline = TochnyiMaps.scoreCalloutPlacement(
-    entries.slice(0, 2),
-    entries.slice(2),
-    {
-      width: geometry.width,
-      cardWidth: geometry.cardWidth,
-      topLeft: geometry.topLeft,
-      topRight: geometry.topRight,
-      bottom: geometry.bottom,
-      gap: 10,
-      leftDistribution: 'geographic',
-      rightDistribution: 'geographic',
-      preserveOrder: true
-    }
-  );
   const plan = TochnyiMaps.planRegionalBreakdown(entries, geometry);
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'crossing-optimized-direct');
-  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [1, 0]);
+  assert.equal(plan.placementMode, 'direct-editorial');
+  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [0, 1]);
   assert.deepEqual(plan.sides.right.map((entry) => entry.index), [2, 3]);
-  assert.equal(plan.placement.predictedCrossings, 0);
-  assert.ok(plan.placement.predictedLength <= baseline.length);
+  assert.equal(plan.placement.assignmentEvaluations, 1);
+});
+
+test('regional calloutOrder overrides data order without geographic re-sorting', () => {
+  const entries = [
+    { index: 0, item: { calloutSide: 'left', calloutOrder: 2 }, point: { x: 430, y: 120 }, height: 82, side: 'left' },
+    { index: 1, item: { calloutSide: 'left', calloutOrder: 0 }, point: { x: 450, y: 420 }, height: 82, side: 'left' },
+    { index: 2, item: { calloutSide: 'left', calloutOrder: 1 }, point: { x: 440, y: 260 }, height: 82, side: 'left' }
+  ];
+  const plan = TochnyiMaps.planRegionalBreakdown(entries, {
+    map: { leaderRouting: 'auto', calloutDistribution: 'auto' },
+    dense: false,
+    width: 1190,
+    cardWidth: 204,
+    topLeft: 20,
+    topRight: 20,
+    bottom: 590,
+    summaryShown: false,
+    summaryOnRight: false
+  });
+  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [1, 2, 0]);
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  assert.match(runtime, /ordering === 'optimized' \|\| ordering === 'source'/);
 });
 
 test('edge-port leaders use a smooth region curve and readable horizontal card connection', () => {
@@ -2472,10 +2467,10 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /planRegionalBreakdown\(entries/);
   assert.match(runtime, /data-map-workflow', 'regional-breakdown'/);
-  assert.match(maps, /portRoutingThreshold:\s*9/);
+  assert.match(maps, /portRoutingThreshold:\s*Infinity/);
   assert.match(maps, /function planRegionalBreakdown\(/);
-  assert.match(maps, /optimizeCalloutPlacement\(all, placementOptions\)/);
-  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'geographic'/);
+  assert.match(maps, /simpleCalloutPlacement\(all, placementOptions\)/);
+  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'source'/);
   assert.match(runtime, /data-map-callout-placement',/);
   assert.match(runtime, /data-map-callout-predicted-crossings/);
   assert.match(runtime, /data-map-callout-assignment-evaluations/);
@@ -2802,9 +2797,21 @@ test('regional map specs validate known regions and load map tooling', () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.anchorStyle is not supported')));
 
+  const legacyDotAnchorStyle = loadExample('russia-regional-map.json');
+  legacyDotAnchorStyle.map.anchorStyle = 'dot';
+  result = validateSpec(legacyDotAnchorStyle);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.anchorStyle is not supported')));
+
   const invalidLeaderRouting = loadExample('russia-regional-map.json');
   invalidLeaderRouting.map.leaderRouting = 'spaghetti';
   result = validateSpec(invalidLeaderRouting);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
+
+  const legacyLaneRouting = loadExample('russia-regional-map.json');
+  legacyLaneRouting.map.leaderRouting = 'lanes';
+  result = validateSpec(legacyLaneRouting);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('map.leaderRouting is not supported')));
 

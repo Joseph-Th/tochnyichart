@@ -341,7 +341,7 @@ When exactly two quantitative facts act as drivers or formula inputs of one
 outcome, and all three are essential, measure distinct quantities, and have an
 explicit source-supported mechanism or identity, `relationship.converging-signals` may keep them in one visual without
 a shared scale. The local signal lengths are meaningful only within each
-measure; the connector geometry communicates convergence, not relative size.
+measure; connector geometry communicates convergence, not relative size, and stops at the merge rather than drawing a separate output line into the outcome signal.
 More diffuse facts with different units, scopes, periods, or operational stages
 belong in separate ChartSpecs. When mixed-unit facts are secondary context, keep
 the primary chart simple and place them in the unboxed `supportingFacts` rail.
@@ -479,15 +479,17 @@ map geometry and cannot be active map items. Use a separate standard chart,
 
 Regional summary cards are permanently disabled. The callout cards carry the
 evidence, while the compact header, smaller watermark, and wide regional canvas
-reserve more room for the map. Automatic sparse routing preserves geographic
-card order and favors direct leaders; dense maps switch to crossing-aware ports.
-A leader may exit its own highlighted region, but every other highlighted
-region is a routing obstacle. The planner prefers one continuous spline and
-only adds detours when another highlighted region or leader requires them.
+reserve more room for the map. Automatic routing always uses short direct
+leaders. Cards stay on their nearest side and follow `calloutOrder` when it is
+supplied, otherwise ChartSpec data order within that side column. Highlighted
+regions are evidence, not routing obstacles, and automatic routing does not
+introduce detours merely to eliminate crossings. Leader-origin dots are never
+rendered. Use explicit `ports` routing only for a verified special case.
 
 Use a semantic override only when the story requires it:
 
 - `data[].calloutSide`
+- `data[].calloutOrder`
 
 Run:
 

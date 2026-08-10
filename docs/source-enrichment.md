@@ -529,8 +529,9 @@ Examples:
   points, two volume observations, or the same measure at different dates are
   not causal factors; use change, scenarios, dumbbell, or trend geometry. Each factor
   and the outcome must be drawn as an independent local quantitative signal,
-  with the two factor paths joining directly into one outcome path. Do not add a
-  decorative hub or node at the merge. Connector width is fixed and never
+  with the two factor paths meeting near the outcome and no separate output
+  connector into the outcome signal. Do not add a decorative hub or node at the
+  merge. Connector width is fixed and never
   represents magnitude. Use identity mode only for exact
   same-scope, same-period reconciliation. Use directional mode with a note when
   the measures support a mechanism or direction but use incompatible periods or

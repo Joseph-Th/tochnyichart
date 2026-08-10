@@ -106,7 +106,7 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   exactCountRule: 'Do not use dot-counting or pictogram charts. A selected exact-count story with only two comparable counts must be enriched with a third comparable count, tangible denominator or population, benchmark, or time series. Different-unit percentage context does not make a two-count chart analytically strong.',
   componentRule: 'When several positive reported values are additive components of one total, use composition.components: every component begins at zero and the reported total is one numeric reference. Do not route a simple component decomposition through flow.waterfall, because later component bars would float on the running total.',
   pairedChangeRule: 'Repeated category/time pairs are not scenarios. For one or two categories with earlier/current or benchmark/actual values, use comparison.benchmark-gap. For three or more categories, use comparison.dumbbell. Never flatten Category · earlier and Category · later into independent scenario bars.',
-  relationshipRule: 'Use relationship.converging-signals when two source-supported quantitative drivers or formula inputs and one different outcome measure three distinct real-world quantities. relationship.formula must state the mechanism. This includes material identities such as quantity × unit price = value as well as directional causal relationships. Repeated prices, repeated volumes, or the same measure at different dates belong in change, scenarios, dumbbell, or trend geometry. Each measure is drawn as an independent local quantitative signal; the two driver paths join directly into one outcome path with no decorative hub or node. Generic Factor 1, Factor 2, and Outcome captions are not rendered. Connector width never encodes magnitude. Use identity mode only when scope and period reconcile exactly; otherwise use directional mode and disclose the mismatch in note.',
+  relationshipRule: 'Use relationship.converging-signals when two source-supported quantitative drivers or formula inputs and one different outcome measure three distinct real-world quantities. relationship.formula must state the mechanism. This includes material identities such as quantity × unit price = value as well as directional causal relationships. Repeated prices, repeated volumes, or the same measure at different dates belong in change, scenarios, dumbbell, or trend geometry. Each measure is drawn as an independent local quantitative signal; the two driver paths meet near the outcome with no decorative hub, node, or separate output connector into the outcome signal. Generic Factor 1, Factor 2, and Outcome captions are not rendered. Connector width never encodes magnitude. Use identity mode only when scope and period reconcile exactly; otherwise use directional mode and disclose the mismatch in note.',
   redundancyRule: 'Every plotted mark must add information that is not already encoded by another mark. A benchmark marker already communicates the total endpoint; a segmented gap already communicates the remainder. Derived complements, zero-gap closure rows, and duplicated totals belong in direct labels or supporting context, not as additional marks.',
   durationRule: 'When duration is the comparison, use timeline.duration rather than abstract bars. Use exact start and end dates when available. When several intervals share a verified start date, use timeline.anchorDate with data[].duration and durationUnit; research the anchor date when it is material and not supplied.',
   evidenceUtilizationRule: 'Any comparable datapoint that materially defines the title must be primary geometry, not a supporting fact. Inventory all materially relevant same-scale observations in visualEvidenceAudit. When three or more exist, every one must remain a primary data item; do not replace named components, categories, or time points with one aggregate, range, total, or headline. Three or more ordered observations establishing slowdown, acceleration, reversal, or persistence require a trend. Supporting facts are only for evidence that is genuinely secondary to the plotted claim.',
@@ -290,15 +290,15 @@ const REGIONAL_STATUSES = Object.freeze([
 
 const REGIONAL_OVERRIDES = Object.freeze([
   'data[].callout',
-  'data[].calloutSide'
+  'data[].calloutSide',
+  'data[].calloutOrder'
 ]);
 
 const REGIONAL_AUTOMATIC = Object.freeze([
   'callout placement',
-  'column ordering',
+  'column packing after editorial/data order is resolved',
   'leader routing',
-  'obstacle avoidance',
-  'curve simplification',
+  'short direct leader drawing',
   'card attachment smoothing',
   'summary visibility',
   'responsive diagnostics'
@@ -369,7 +369,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     steps: [
       'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
-      'Author every materially reported region. Use data[].callout = "none" for fill-only highlights and leave card placement and routing to the renderer.',
+      'Author every materially reported region. Use data[].callout = "none" for fill-only highlights. Order visible cards deliberately; use data[].calloutOrder when the desired reading sequence differs from data order. Leave card geometry and direct leader drawing to the renderer.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
       'Use the generic review command with --screenshot to capture the final PNG into charts/<run-id>/.'
     ],
@@ -387,10 +387,10 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>] --no-diagnose`,
       screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
     },
-    authoringRule: 'Specify editorial content and stable continental region IDs. The data array is the geographic evidence inventory, not a list of boxes: keep reported regions in data[] even when they do not need callouts. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
+    authoringRule: 'Specify editorial content and stable continental region IDs. The data array is the geographic evidence inventory, not a list of boxes: keep reported regions in data[] even when they do not need callouts. Visible card order follows calloutOrder when supplied, otherwise data order within each side column. Order important cards deliberately for reading priority; do not let geographic Y-position silently rewrite the editorial sequence. Regional maps never render origin dots on leaders. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
     requiredDataItem: ['label', 'regionId or regionIds'],
-    recommendedDataItem: ['status', 'displayValue', 'detail', 'callout'],
+    recommendedDataItem: ['status', 'displayValue', 'detail', 'callout', 'calloutOrder'],
     evidenceRule: 'Every materially reported region should remain represented in data[]. At most 12 items may have callout cards; use callout: "none" on lower-priority regions so their fill remains visible without a box. Visible callouts should include at least one of status, displayValue, detail, or value.',
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     minimalMap: { regionSet: regionSet.id },
