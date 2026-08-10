@@ -13,7 +13,7 @@ placement, and leaders at render time.
 The regional policy is centralized in `lib/tochnyi-maps.js`:
 
 - `map.regional` defaults to the `russia` region set.
-- Port routing is selected automatically at eight or more active callouts.
+- Port routing is selected automatically at six or more active callouts.
 - Dense layout begins at nine callouts.
 - Standard and dense layouts use different card widths, gaps, attachment insets,
   port spacing, minimum card stubs, and obstacle clearances.
@@ -46,25 +46,24 @@ routing, enumerate balanced side assignments, and score the candidates before
 committing to card placement. Fixed `data[].calloutSide` values remain fixed;
 automatic entries can move to the side that produces a clearer result.
 
-Port leaders use a smooth curve from the geographic anchor to a dedicated
-card-edge port, followed by a visible horizontal terminal stub. The planner
-preserves geographic order within each card column, separates ports, and scores
-crossings, attachment sharpness, route length, side displacement, and local
-curve naturalness. Detour candidates fan away from a nearby leader before
-turning, and routes with very short intermediate spline runs are penalized so a
-collision-free result does not introduce a tight local S-curve. The naturalness
-contract also rejects control-point backtracking and terminal box turns, where a
-leader reaches the card edge and then makes a short corrective vertical turn.
-When one obstacle can be cleared with one continuous fan spline, a multi-segment
-corrective path is not eligible merely because it is collision-free. Region
-polygons are evidence rather than physical barriers: leaders may cross
-geography. Only leader-to-leader and card collisions trigger detours.
+Port leaders use one monotonic cubic from the geographic anchor to a dedicated
+card-edge port, followed by a short horizontal terminal stub. Standard layouts
+reserve 18 px for that stub and dense layouts reserve 16 px. The planner
+preserves geographic order within each card column and separates the ports
+before route construction.
 
-If leaders collide, the runtime first tries bounded in-envelope corridors. It
-only expands outside the endpoint vertical envelope when no collision-free
-route exists inside it. Detours may use bounded grid search, then simplify and
-smooth the resulting path. A source-exit segment is kept only when removing it
-would cause a collision.
+The regional runtime does not route around highlighted region polygons. Region
+fills are evidence, not physical barriers, and treating clustered neighboring
+regions as obstacles was a source of unstable hooks and corrective S-curves.
+The direct cubic is used whenever it does not cross or sustain crowding against
+an already planned leader. When a leader needs separation, the runtime tests a
+small deterministic set of single-cubic fan curves above and below the direct
+envelope and chooses the least intrusive clear route. It does not use grid or
+A* detours in the production regional path.
+
+The naturalness contract still rejects self-intersection, horizontal direction
+reversal, control-point backtracking, and terminal box turns. Brief close passes
+are allowed; sustained crowding is the failure condition used by diagnostics.
 
 ## Map framing
 

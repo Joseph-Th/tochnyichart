@@ -184,11 +184,11 @@ test('axes that cross zero render a prominent interior zero reference', { skip: 
   }
 });
 
-test('pictograms, duration timelines, benchmark gaps, dumbbells, and converging-signal relationships pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('components, duration timelines, benchmark gaps, dumbbells, and converging-signal relationships pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-new-recipes-'));
   try {
     const cases = [
-      { file: 'exact-count-pictogram.json', marks: 201 },
+      { file: 'additive-components.json', minimumMarks: 2 },
       { file: 'fuel-ban-timeline.json', marks: 2 },
       { file: 'anchored-duration-timeline.json', marks: 2 },
       { file: 'population-risk-range.json', minimumMarks: 4 },
@@ -214,6 +214,25 @@ test('pictograms, duration timelines, benchmark gaps, dumbbells, and converging-
           assert.equal(run.diagnostics?.summary?.marksChecked, marks, file);
         }
       });
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('benchmark gaps reserve enough left gutter for long category labels', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-benchmark-label-gutter-'));
+  try {
+    const outputPath = path.join(tempDir, 'diesel-import-subsidy-gap.html');
+    renderSpecFile(path.join(root, 'specs', 'samples', 'diesel-import-subsidy-gap.json'), outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, {
+      browser,
+      viewports: REGIONAL_WORKFLOW_VIEWPORTS
+    });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.diagnostics?.summary?.warnings, 0);
     });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });

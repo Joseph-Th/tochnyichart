@@ -30,7 +30,8 @@ const BATCH_WORKFLOW = Object.freeze({
     'merge duplicates and omit weak, irrelevant, or non-visual stories',
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'audit actual levels and the tangible basis behind every rate or share; name the tangible target and document structured source checks before declaring either unavailable or incomparable',
-    'decide the appropriate production tool and chart workflow for each accepted story',
+    'record routingAudit for every accepted story, classifying geography as none, categorical, or explanatory and selecting standard-chart or regional-breakdown before authoring',
+    'decide the appropriate production tool and chart workflow for each accepted story; explanatory geography must use regional-breakdown',
     'author one ChartSpec per accepted chart story, then use the run chart builder to validate, render, diagnose, capture, and manifest the complete selected set',
     'compare authored ChartSpecs for duplicate source, reporting context, recipe, and category or time skeleton; consolidate matches before delivery',
     'capture one final PNG image per accepted chart',
@@ -93,11 +94,14 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   ]),
   relevanceRule: 'Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.',
   complexityRule: 'Do not add irrelevant facts or choose a complex recipe merely for decoration. A chart still needs a genuine visual comparison: enrich a one-point or text-only story with a source-supported comparator, denominator, benchmark, composition, or time series; otherwise omit it. When three or more named same-scale observations already exist, preserve all of them instead of reducing them to one aggregate or range.',
+  routingRule: 'Every selected story must record routingAudit before ChartSpec authoring. When multiple named administrative regions combine with a spatial finding such as spread, border contrast, clustering, distribution, adjacency, or concentration, geographyRole is explanatory and workflow must be regional-breakdown. A standard ranking cannot override that decision.',
   standalonePairRule: 'A same-period two-value comparison is not automatically a standalone chart. Before selecting comparison.scenarios with two items, search for a third comparable, numeric reference, denominator, mechanism, or consequence and check whether the pair belongs inside an existing same-topic chart. If none exists, merge or omit it.',
   representationRule: 'Before recipe selection, determine whether actual levels and any rate/share basis are reported or retrievable. Prefer tangible values for primary geometry. Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying amounts. For multi-category price changes, comparability is evaluated within each category pair: different category price levels, grades, or delivery bases do not make a valid earlier/current pair incomparable. Workforce research must include the company filing or employee disclosure for the relevant reporting perimeter. A claim of unavailable or incomparable requires an exact tangibleTarget and at least two completed structured researchAttempts covering two source types, including a data-bearing source.',
   completedResearchRule: 'Research attempts must name the exact URL, filing, table, ticker/date range, or dataset slice actually checked and record a completed outcome. Pending language such as to be checked, will check, TBD, or generic web search is invalid evidence.',
   basisRule: 'For rates and shares, identify the numerator and denominator or the total and affected population. Shares of named public aggregates such as GDP, the economy, population, employment, exports, imports, production, or capacity must be treated as having a retrievable denominator: record basisTarget, recover the compatible public total, derive the tangible numerator, and use level geometry. A 100% reference is not an anchor. The numerator and denominator must both appear in primary geometry; a basis rail alone is not sufficient.',
-  benchmarkGapRule: 'For prices, costs, freight, margins, discounts, premiums, shortfalls, overages, and policy or payout shares against one known total, research the underlying benchmark total and actual amount. In comparison.benchmark-gap, value is the tangible actual level and benchmark is the total reference level; the gap amount belongs in gapDisplayValue. Prefer one segmented row when that relationship fully carries the story. When two meaningful policy, target, or allocation shares use the same tangible total, compare the two derived amounts against that shared total rather than showing only one hypothetical split as a composition. Use two rows for two category-level earlier/current price pairs rather than four separate bars. Do not add a row that merely restates the benchmark or the mathematically implied remainder.',
+  benchmarkGapRule: 'For two positive level values, first ask whether one is naturally the current/actual value and the other a prior, standard, limit, target, or other benchmark. If so, prefer one comparison.benchmark-gap row over two independent bars. For prices, costs, freight, margins, discounts, premiums, shortfalls, overages, and policy or payout shares against one known total, research the benchmark and actual amount. value is the tangible actual/current level, benchmark is the reference level, and gapDisplayValue names the difference. Do not add a row that merely restates the benchmark or implied remainder.',
+  exactCountRule: 'Do not use dot-counting or pictogram charts. A selected exact-count story with only two comparable counts must be enriched with a third comparable count, tangible denominator or population, benchmark, or time series. Different-unit percentage context does not make a two-count chart analytically strong.',
+  componentRule: 'When several positive reported values are additive components of one total, use composition.components: every component begins at zero and the reported total is one numeric reference. Do not route a simple component decomposition through flow.waterfall, because later component bars would float on the running total.',
   pairedChangeRule: 'Repeated category/time pairs are not scenarios. For one or two categories with earlier/current or benchmark/actual values, use comparison.benchmark-gap. For three or more categories, use comparison.dumbbell. Never flatten Category · earlier and Category · later into independent scenario bars.',
   relationshipRule: 'Use relationship.converging-signals only when two source-supported causal drivers and one different outcome measure three distinct real-world quantities. relationship.formula must state the mechanism. Repeated prices, repeated volumes, or the same measure at different dates belong in change, scenarios, dumbbell, or trend geometry. Each measure is drawn as an independent local quantitative signal; the two driver paths join directly into one outcome path with no decorative hub or node. Generic Factor 1, Factor 2, and Outcome captions are not rendered. Connector width never encodes magnitude. Use identity mode only when scope and period reconcile exactly; otherwise use directional mode and disclose the mismatch in note.',
   redundancyRule: 'Every plotted mark must add information that is not already encoded by another mark. A benchmark marker already communicates the total endpoint; a segmented gap already communicates the remainder. Derived complements, zero-gap closure rows, and duplicated totals belong in direct labels or supporting context, not as additional marks.',
@@ -116,7 +120,7 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, peer, range, or time series. One actual-plus-benchmark relationship is sufficient for a single-row comparison.benchmark-gap because the actual segment, gap segment, and benchmark marker provide multiple marks. If no valid structure exists, omit the story.',
   richDataRule: 'When visualEvidenceAudit inventories three or more materially relevant observations of one quantity and unit, every observation must remain a primary data item. A one-row aggregate, total, range, or coverage conversion is not an acceptable substitute for the richer dataset.',
   standalonePairRule: 'A two-item comparison.scenarios chart needs more than two bars. It must add a numeric reference, basis, source-supported mechanism, consequence, denominator, or comparison fact. When the pair is a subset of a richer same-topic story, merge it instead of creating another slide.',
-  exactCountRule: 'When two to four exact integer counts from 0 to 400 form the story, use comparison.pictogram with one dot or semantic symbol per unit. Do not use logarithmic bars merely to fit an extreme count ratio.',
+  exactCountRule: 'Dot-counting is disabled. Two exact count categories are too thin unless the story also supplies a tangible denominator/population or meaningful benchmark. Prefer three or more same-scale counts, a denominator-anchored comparison, or a time series; otherwise merge or omit the story.',
   baselineScaleRule: 'Logarithmic scale is forbidden when a benchmark or denominator is present specifically to show that the primary amounts are a small fraction of it. Use a linear axis. When a long-period flow benchmark overwhelms the primary marks, shorten only the benchmark period with a rate-preserving conversion rather than compressing the scale.',
   categoricalRule: 'Categorical operating states cannot use a text grid. Quantify a common dimension, use map.regional when place explains the finding, or do not chart the story.',
   compositionRule: 'A composition must lead with proportional marks and one label treatment per segment. Use it when the part-versus-remainder or multi-part mix itself is the finding. Before selecting composition.stacked for a hypothetical allocation, check for a source-supported policy, target, prior, or alternative share against the same tangible total; when that comparator materially improves orientation, derive the comparable amounts and use shared-total benchmark geometry instead. Do not repeat the same percentage, amount, and category both inside the bar and immediately below it. It cannot collapse into a primaryMetric or use supporting facts to restate segment values.',
@@ -128,13 +132,13 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   labelPlacementRule: 'For column charts, auto label placement is family-coherent: keep all value labels outside when they fit, move the full bar family inside when endpoint headroom forces it and all bars can support inside labels, and mix inside/outside only when a genuine physical-fit conflict makes one treatment impossible.',
   supportingFactsRule: 'supportingFacts may explain cause or consequence only after the primary visual already carries the argument. Comparable time points, denominators, opposing signals, and other figures required to understand the title cannot be parked there.',
   redundancyRule: 'Reject any row whose value is only the complement, remainder, total, or zero-gap endpoint already encoded by the primary geometry.',
-  rejectedRecipes: Object.freeze(['status.grid', 'headline.metric'])
+  rejectedRecipes: Object.freeze(['status.grid', 'headline.metric', 'comparison.pictogram'])
 });
 
 const STANDARD_SELECTION_RULES = Object.freeze([
-  Object.freeze({ when: 'Two values showing change in the same named quantity for the same scope', use: 'comparison.change', example: 'specs/examples/ai95-price-spike.json' }),
+  Object.freeze({ when: 'Two positive level values where one is naturally current/actual and the other is prior, standard, limit, target, or benchmark', use: 'comparison.benchmark-gap', example: 'specs/examples/ai95-price-spike.json' }),
+  Object.freeze({ when: 'Two values showing change in the same named quantity where benchmark-gap semantics do not apply, such as sign-crossing levels, zero-to-nonzero movement, or a native rate/index', use: 'comparison.change', example: 'specs/examples/net-position-crossing-zero.json' }),
   Object.freeze({ when: 'Three to five same-period actual, expected, target, or alternative values for the same named quantity and scope; never repeated category/time pairs. Two values require a numeric reference, basis, mechanism, consequence, denominator, or comparison fact.', use: 'comparison.scenarios', example: 'specs/examples/central-bank-scenarios.json' }),
-  Object.freeze({ when: 'Two to four exact integer counts from 0 to 400 where one symbol per unit makes the magnitude difference tangible', use: 'comparison.pictogram', example: 'specs/examples/exact-count-pictogram.json' }),
   Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
   Object.freeze({ when: 'Values include a min-max interval or threshold for the same named quantity, scope, and period. One interval is allowed only when a visible benchmark or total supplies the scale.', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
   Object.freeze({ when: 'One or more actual values sit inside benchmark totals, including one or two category-level earlier/current price pairs or two meaningful policy/target shares against the same tangible total; one segmented row is preferred when one relationship fully carries the story', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
@@ -144,7 +148,8 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Two or more intervals share one calendar, using exact start/end dates or one verified common anchor plus exact durations', use: 'timeline.duration', example: 'specs/examples/fuel-ban-timeline.json' }),
   Object.freeze({ when: 'Exact parts of one total when the composition itself is the finding and no more informative same-total policy, target, prior, or alternative comparator should anchor the viewer', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
-  Object.freeze({ when: 'A source-supported exact start-to-end bridge with same-period, same-scope steps', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
+  Object.freeze({ when: 'Two to six positive additive components reconcile to one reported total and component magnitudes should be compared from zero', use: 'composition.components', example: 'specs/examples/additive-components.json' }),
+  Object.freeze({ when: 'A source-supported existing balance moves through genuine positive and/or negative same-period changes into an ending value', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
   Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
 ]);
 
@@ -178,7 +183,7 @@ const VALUE_REPRESENTATION_CONTRACT = Object.freeze({
 
 
 const WATERFALL_CONTRACT = Object.freeze({
-  useWhen: 'Only for one exact quantity changing through mutually exclusive, same-period, same-scope steps into a reported ending value.',
+  useWhen: 'Only for one existing balance or level changing through mutually exclusive, same-period, same-scope steps into a reported ending value.',
   requiredItemFields: Object.freeze(['role', 'value', 'valueStatus', 'period', 'scope']),
   valueStatus: 'Every waterfall item must be valueStatus "reported". Derived, bounded, approximate, or inferred values belong in a simpler recipe with supporting facts.',
   reconciliation: 'The renderer checks and reconciles start + every change = each subtotal and the final end, within the declared display precision.',
@@ -186,9 +191,10 @@ const WATERFALL_CONTRACT = Object.freeze({
     'the source says more than, about, roughly, almost, or otherwise gives a bound or approximation',
     'a step belongs to a prior or different reporting period',
     'the opening value is reconstructed from incomplete charges',
-    'the steps are unlike facts rather than additive components of one measure'
+    'the steps are unlike facts rather than additive components of one measure',
+    'all intermediate steps are simply positive components of one total; use composition.components so each component is seated at zero'
   ]),
-  fallback: 'Use comparison.change, comparison.scenarios, comparison.range, or a separate chart when the bridge cannot be proven. Omit the story if only one unsupported value remains.'
+  fallback: 'Use composition.components for positive additive components, or comparison.change, comparison.scenarios, comparison.range, or a separate chart when a true balance bridge cannot be proven. Omit the story if only one unsupported value remains.'
 });
 
 const COMPOSABLE_FEATURES = Object.freeze([
@@ -197,13 +203,14 @@ const COMPOSABLE_FEATURES = Object.freeze([
   Object.freeze({ need: 'Values span orders of magnitude and the story is multiplicative rather than amount-as-a-fraction-of-baseline', add: 'measure.scale = logarithmic; never use it to make a denominator comparison fit' }),
   Object.freeze({ need: 'Important context uses different units but remains secondary', add: 'supportingFacts after a primary visual with at least two marks' }),
   Object.freeze({ need: 'Mixed-unit facts jointly carry the main story', add: 'use relationship.converging-signals for exactly two drivers and one outcome; otherwise split them into separate ChartSpecs' }),
-  Object.freeze({ need: 'An extreme comparison uses two to four exact counts no larger than 400', add: 'comparison.pictogram with one dot or semantic symbol per unit' }),
+  Object.freeze({ need: 'A story has only two exact count categories', add: 'research a third comparable count, tangible denominator/population, benchmark, or time series; dot-counting is not an available production treatment' }),
   Object.freeze({ need: 'A lone percentage has a meaningful denominator', add: 'encode numerator and remainder with composition.stacked rather than a headline number' }),
   Object.freeze({ need: 'A composition is expressed as percentages', add: 'data[].displayValue with the tangible absolute amount as well' }),
   Object.freeze({ need: 'A rate or share has a tangible numerator and denominator', add: 'switch to level geometry and plot the tangible amounts; keep the rate or share as secondary copy' }),
   Object.freeze({ need: 'Duration or reserve runway defines the comparison', add: 'timeline.duration with exact start/end dates, or timeline.anchorDate plus data[].duration and durationUnit for a common verified start' }),
   Object.freeze({ need: 'An amount is meaningful only relative to daily consumption, monthly demand, or total need', add: 'keep the physical amount and add a visible linear reference in the same unit; if a monthly or annual reference is too large, period-normalize only the denominator to a week or day' }),
-  Object.freeze({ need: 'A discount, premium, shortfall, or overage is measured against a total benchmark', add: 'comparison.benchmark-gap' })
+  Object.freeze({ need: 'A discount, premium, shortfall, overage, standard, limit, prior level, or target supplies a meaningful reference for one positive actual/current level', add: 'comparison.benchmark-gap' }),
+  Object.freeze({ need: 'Positive additive components reconcile to one total', add: 'composition.components with zero-seated bars and the total as one reference' })
 ]);
 
 const SHARED_AUTHORING_RULES = Object.freeze([
@@ -215,6 +222,7 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Escalate only direct material contradictions from reputable sources and preserve both positions instead of silently rewriting the report.',
   'Read supplied sources before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
   'Search beyond the primary source to fill a named material evidence gap or add useful attribution and context, and reject adjacent context that does not strengthen the central claim.',
+  'Record routingAudit for every selected story before ChartSpec authoring. Classify geography as none, categorical, or explanatory. Multiple named regions plus a spatial finding such as spread, border contrast, clustering, distribution, adjacency, or concentration require regional-breakdown.',
   'Do not add irrelevant data or decorative complexity. Do require a real visual comparison: a one-point or prose-only story must be enriched with source-supported structure or omitted.',
   'Never place unlike quantities, scopes, denominators, or accounting bases on one numeric axis. Apply the shared-scale sentence test before choosing any comparison, trend, or ranking recipe.',
   'Audit value representation before recipe selection. Declare measure.valueMode and measure.levelAvailability, matching the selected story representationAudit.',
@@ -223,6 +231,8 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'When actual levels are reported or retrievable, plot the actual values and move percentage change into emphasis, annotation, subtitle, or supportingFacts.',
   'For price-like category changes, evaluate comparability within each category pair. A current price plus a compatible percentage move makes the prior price derivable. Different category levels, grades, or delivery bases do not make valid within-category pairs incomparable.',
   'Do not flatten repeated category/time pairs into comparison.scenarios. Use comparison.benchmark-gap for one or two category pairs and comparison.dumbbell for three or more.',
+  'Prefer comparison.benchmark-gap over comparison.change when two positive level values can be read naturally as current/actual versus prior, standard, limit, target, or benchmark. Do not default to two independent bars.',
+  'Do not use dot-counting or comparison.pictogram. Two exact count categories require a third comparable count, a tangible denominator/population, a benchmark, or a time series before they deserve a standalone chart.',
   'For percentage-only prices, workforce, exports, production, spending, and revenue, search for the underlying amounts for the same scope and periods before selecting geometry.',
   'For workforce percentages, check the company filing, employee note, or official workforce disclosure before accepting headcount as unavailable.',
   'Never invent a 0% before-event point or index-100 starting point merely to create a trend. Use actual levels or only the reported relative observations.',
@@ -240,7 +250,8 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'When a headline depends on opposing quantities, such as falling volume and rising price producing higher spending, use relationship.converging-signals or split the evidence. Do not plot only one side and leave the rest in supportingFacts.',
   'Use comparison.benchmark-gap when a discount, premium, shortfall, or overage is the finding so both the benchmark total and actual amount remain visible.',
   'Use comparison.benchmark-gap for one or two category-level earlier/current price pairs; use comparison.dumbbell for three or more paired categories.',
-  'Use flow.waterfall only when the strict waterfall contract is satisfied: every step is exact and reported, period and scope match, and the bridge reconciles.',
+  'Use composition.components for positive additive components of one reported total so every component is seated at zero; show the total as one numeric reference.',
+  'Use flow.waterfall only for a genuine existing balance moving through exact reported changes. Do not use it for a simple positive component decomposition.',
   'Keep the title, subtitle, labels, and details concise enough to survive responsive layouts.',
   'Revise the ChartSpec for data, copy, recipe, or semantic errors.',
   'If a valid ChartSpec still fails rendering or diagnostics, report an infrastructure issue. Do not inspect or modify renderer internals unless the task explicitly assigns the maintainer role.'
@@ -252,6 +263,7 @@ const SHARED_STAGES = Object.freeze([
   Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract relevant supplemental evidence and safe derivations.' }),
   Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond supplied sources to fill a named material evidence gap or add useful attribution and context.' }),
   Object.freeze({ id: 'audit-representation', action: 'Determine whether actual levels are reported or retrievable, record the representation audit, and prefer tangible values over normalized changes.' }),
+  Object.freeze({ id: 'audit-routing', action: 'Record routingAudit, including geographyRole and workflow; explanatory geography must route to regional-breakdown before a recipe is selected.' }),
   Object.freeze({ id: 'analyze', action: 'Choose one central finding, its evidence spine, the workflow, and the recipe.' }),
   Object.freeze({ id: 'author', action: 'Write the smallest semantic ChartSpec that expresses that story.' }),
   Object.freeze({ id: 'validate', command: `${TOOL_API_ENTRYPOINT} validate <spec.json>` }),
@@ -395,7 +407,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.11',
+    version: '1.12',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -465,7 +477,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.11',
+    version: '1.12',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,

@@ -128,8 +128,12 @@ comparison still belongs to `regional-breakdown` when the distribution across
 administrative regions changes the finding. Use `standard-chart` only when
 place names are labels or categories and geography adds no explanatory value.
 For batch work, record this decision for every story in a routing matrix before
-authoring specs; any standard-chart decision involving place names needs an
-explicit rationale.
+authoring specs and write the same decision to the selected source-ledger
+candidate as `routingAudit`. The ledger is machine-enforced: multiple named
+administrative regions plus a spatial claim such as spread, border contrast,
+clustering, adjacency, distribution, or concentration require
+`geographyRole: "explanatory"` and `workflow: "regional-breakdown"`. Any
+standard-chart decision involving place names needs an explicit rationale.
 
 The per-chart lifecycle inside that batch is:
 
@@ -365,14 +369,21 @@ rejected. `valueMode: "index"` is reserved for named, source-reported indices
 with actual point values, and generic visible labels such as `100 index` or
 `index points` are not permitted.
 
-Use `comparison.pictogram` for two to four exact counts from 0 to 400 when one
-symbol per unit makes the magnitude difference tangible. Use
+Do not use dot-counting or pictograms. Two exact count categories require a
+third comparable count, a tangible denominator/population, a meaningful
+benchmark, or a time series before they deserve a standalone chart. A numeric
+fact in a different unit does not satisfy this evidence gate. Use
 `timeline.duration` whenever duration is the comparison. It accepts exact
 start-to-end intervals or one verified `timeline.anchorDate` plus exact
 `duration` and `durationUnit` values. Use segmented
 `comparison.benchmark-gap` geometry for prices, costs, freight, margins,
 discounts, premiums, shortfalls, or overages where the prior or total benchmark
-can be recovered. Risk ranges must identify the exposed population or
+can be recovered. More generally, when two positive level values are naturally
+current/actual versus prior, standard, limit, target, or another reference,
+prefer one benchmark-gap row over two independent change bars. Positive
+additive components of one total use `composition.components` so every
+component starts at zero; `flow.waterfall` is reserved for a genuine running
+balance. Risk ranges must identify the exposed population or
 denominator, show that total on the plotted scale, and include at least one
 mechanism or consequence. Shipment or reserve volumes described as days of
 consumption must show the demand denominator. When two or more physical-volume

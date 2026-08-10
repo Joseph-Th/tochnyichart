@@ -439,13 +439,14 @@ test('risk ranges use affected counts when the population is retrievable', () =>
 });
 
 test('subtitles are optional and cannot restate the visible marks', () => {
-  const concise = loadExample('exact-count-pictogram.json');
+  const concise = loadExample('additive-components.json');
+  delete concise.subtitle;
   let result = validateSpec(concise);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.normalized.subtitle, undefined);
 
   const repetitive = structuredClone(concise);
-  repetitive.subtitle = 'The chart compares 200 reported events with 1 visible event.';
+  repetitive.subtitle = 'Recurring revenue is 539 billion rubles and quarterly special taxes are 396 billion rubles.';
   result = validateSpec(repetitive);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /subtitle repeats values and labels/i.test(message)));
@@ -787,16 +788,94 @@ test('thin two-item scenario charts must be enriched, merged, or omitted', () =>
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
-test('exact-count pictograms preserve one symbol per unit and reject transformed substitutes', () => {
-  const pictogram = loadExample('exact-count-pictogram.json');
+test('dot-counting is disabled and thin exact-count pairs require a tangible anchor', () => {
+  const pictogram = {
+    version: '2.0',
+    recipe: 'comparison.pictogram',
+    title: 'Two exact counts',
+    date: '2026-08-09',
+    data: [
+      { label: 'Brand A', value: 2, displayValue: '2 models', quantity: 'models banned', scope: 'same regulatory action', period: 'August 2026' },
+      { label: 'Brand B', value: 4, displayValue: '4 models', quantity: 'models banned', scope: 'same regulatory action', period: 'August 2026' }
+    ],
+    measure: { quantity: 'models banned', unit: 'models', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' }
+  };
   let result = validateSpec(pictogram);
-  assert.equal(result.valid, true, result.errors.join('; '));
-  assert.equal(result.normalized.data.reduce((sum, item) => sum + item.value, 0), 201);
-
-  pictogram.data[0].value = 401;
-  result = validateSpec(pictogram);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /0 to 400/i.test(message)));
+  assert.ok(result.errors.some((message) => /pictogram is disabled|dot-counting/i.test(message)));
+
+  const thinCounts = structuredClone(pictogram);
+  thinCounts.recipe = 'comparison.scenarios';
+  thinCounts.supportingFacts = [
+    { value: '−66.5%', label: 'Broader market sales declined.', role: 'consequence' }
+  ];
+  result = validateSpec(thinCounts);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /two exact count categories are not enough/i.test(message)));
+
+  thinCounts.references = [{ value: 20, label: 'Models reviewed', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(thinCounts);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('two positive level values prefer one benchmark bar over two independent change bars', () => {
+  const twoBars = {
+    version: '2.0',
+    recipe: 'comparison.change',
+    title: 'Temporary sulfur limit exceeds the current standard',
+    date: '2026-08-09',
+    data: [
+      { label: 'Current standard', value: 10, displayValue: '10 mg/kg', quantity: 'maximum sulfur concentration', scope: 'same fuel standard', period: 'Current standard' },
+      { label: 'Temporary limit', value: 500, displayValue: '500 mg/kg', quantity: 'maximum sulfur concentration', scope: 'same fuel standard', period: 'Temporary permission' }
+    ],
+    measure: { quantity: 'maximum sulfur concentration', unit: 'mg/kg', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' },
+    emphasis: { direction: 'up', displayValue: '50×', label: 'higher limit', position: 'between' }
+  };
+  let result = validateSpec(twoBars);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /benchmark-gap instead of two independent bars/i.test(message)));
+
+  const benchmark = {
+    ...twoBars,
+    recipe: 'comparison.benchmark-gap',
+    data: [{
+      label: 'Temporary sulfur limit', value: 500, benchmark: 10,
+      displayValue: '500 mg/kg temporary', benchmarkDisplayValue: '10 mg/kg standard', gapDisplayValue: '+490 mg/kg',
+      quantity: 'maximum sulfur concentration', scope: 'same fuel standard', period: 'Temporary permission versus current standard'
+    }],
+    narrative: { frame: 'warning', density: 'editorial', emphasis: 'benchmark-gap' }
+  };
+  delete benchmark.emphasis;
+  result = validateSpec(benchmark);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('positive additive components use zero-seated component geometry rather than a floating waterfall', () => {
+  const components = loadExample('additive-components.json');
+  let result = validateSpec(components);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.measure.baseline, 'zero');
+  assert.equal(result.normalized.references[0].value, 935);
+
+  const badTotal = structuredClone(components);
+  badTotal.references[0].value = 900;
+  result = validateSpec(badTotal);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /must reconcile to its total reference/i.test(message)));
+
+  const floating = {
+    version: '2.0', recipe: 'flow.waterfall',
+    title: 'Quarterly special taxes accounted for part of July revenue', date: '2026-08-09',
+    data: [
+      { label: 'Recurring revenue', value: 539, role: 'start', valueStatus: 'reported', period: 'July 2026', scope: 'July oil-and-gas revenue', displayValue: '539 billion rubles' },
+      { label: 'Quarterly special taxes', value: 396, role: 'change', valueStatus: 'reported', period: 'July 2026', scope: 'July oil-and-gas revenue', displayValue: '+396 billion rubles' },
+      { label: 'July total', value: 935, role: 'end', valueStatus: 'reported', period: 'July 2026', scope: 'July oil-and-gas revenue', displayValue: '935 billion rubles' }
+    ],
+    measure: { quantity: 'July oil-and-gas revenue', unit: 'billion rubles', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' }
+  };
+  result = validateSpec(floating);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /positive component decomposition|composition\.components/i.test(message)));
 });
 
 test('price movements and benchmark-relative stories require segmented gap geometry', () => {
@@ -826,28 +905,31 @@ test('price movements and benchmark-relative stories require segmented gap geome
   assert.ok(result.errors.some((message) => /benchmark-relative stories must use/i.test(message)));
 });
 
-test('runtime includes pictogram, basis, calendar-duration, benchmark-gap, dumbbell, and converging-signal renderers', () => {
+test('runtime includes component, basis, calendar-duration, benchmark-gap, dumbbell, and converging-signal renderers', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.equal(recipeIds.includes('comparison.pictogram'), false);
+  assert.equal(recipeIds.includes('composition.components'), true);
   assert.match(runtime, /function renderDurationTimeline\(/);
   assert.match(runtime, /function renderBenchmarkGap\(/);
   assert.match(runtime, /function renderDumbbell\(/);
-  assert.match(runtime, /function renderPictogramComparison\(/);
   assert.match(runtime, /function renderConvergingSignals\(/);
+  assert.match(runtime, /case 'composition\.components'/);
+  assert.match(runtime, /benchmarkGapLabelPlan/);
+  assert.match(runtime, /#78aee3/);
+  assert.doesNotMatch(runtime, /renderPictogramComparison/);
+  assert.doesNotMatch(css, /\.tochnyi-count-(?:comparison|card|symbols|dot|icon)/);
   assert.doesNotMatch(runtime, /'OUTCOME · '| 'FACTOR '/);
   assert.match(runtime, /tochnyi-basis-rail/);
   assert.match(css, /\.tochnyi-basis-rail\s*\{/);
   assert.match(css, /\.tochnyi-timeline-svg/);
   assert.match(css, /\.tochnyi-benchmark-gap-svg/);
   assert.match(css, /\.tochnyi-dumbbell-svg/);
-  assert.match(css, /\.tochnyi-count-comparison\s*\{/);
   assert.match(css, /\.tochnyi-converging-signals-svg\s*\{/);
   assert.doesNotMatch(runtime, /renderDriverOutcome/);
   assert.doesNotMatch(css, /\.tochnyi-relationship-node\s*\{/);
   assert.doesNotMatch(runtime, /tochnyi-signal-hub|tochnyi-signal-operator/);
   assert.doesNotMatch(css, /\.tochnyi-signal-hub\s*\{|\.tochnyi-signal-operator\s*\{/);
-  assert.match(css, /\.tochnyi-count-card\[data-tone="critical"\] \.tochnyi-count-dot \{ background: #cc0000; \}/);
-  assert.doesNotMatch(css, /\.tochnyi-count-value[^\{]*\{[^}]*background:/s);
 });
 
 test('legacy story facets are deprecated and render without standalone cards', () => {
@@ -1254,6 +1336,27 @@ test('auto column labels allow mixed placement only for a genuine fit conflict',
   );
 });
 
+test('benchmark labels always use below-bar lanes and stagger only when horizontal text would collide', () => {
+  const crowded = VisualPlan.benchmarkGapLabelPlan(
+    ['500 mg/kg temporary', '+490 mg/kg', '10 mg/kg standard'],
+    [700, 540, 520],
+    { left: 200, right: 930 }
+  );
+  assert.equal(crowded.length, 3);
+  crowded.forEach((entry) => {
+    assert.ok(entry.lane >= 0);
+    assert.equal(entry.textAnchor, 'middle');
+  });
+  assert.ok(new Set(crowded.map((entry) => entry.lane)).size > 1, 'crowded labels should be vertically staggered');
+
+  const roomy = VisualPlan.benchmarkGapLabelPlan(
+    ['Actual', 'Gap', 'Benchmark'],
+    [300, 550, 800],
+    { left: 200, right: 930 }
+  );
+  assert.deepEqual(roomy.map((entry) => entry.lane), [0, 0, 0]);
+});
+
 test('Russia region registry exposes stable ISO-style identifiers', () => {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   assert.ok(regionSet);
@@ -1449,13 +1552,14 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(dense.cardGap, 7);
   assert.equal(dense.attachmentInset, 14);
   assert.equal(dense.portGap, 18);
-  assert.equal(dense.minimumCardStub, 36);
+  assert.equal(dense.minimumCardStub, 16);
   assert.equal(dense.leaderClearance, 16);
   assert.equal(dense.shapeClearance, 2);
   assert.equal(standard.dense, false);
   assert.equal(standard.cardWidth, 204);
   assert.equal(standard.cardGap, 10);
   assert.equal(standard.portGap, 22);
+  assert.equal(standard.minimumCardStub, 18);
   assert.equal(standard.leaderClearance, 14);
   assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, 6);
 });
@@ -1654,15 +1758,17 @@ test('edge-port leaders use a smooth region curve and readable horizontal card c
     mapEdgeX: 240,
     cardX: 220,
     endY: 180,
-    portOffset: 10
+    portOffset: 10,
+    minimumCardStub: 18,
+    simpleRouting: true
   });
   assert.match(leftPath.path, /^M 520 310 C /);
-  assert.match(leftPath.path, / 252 180 H 220$/);
-  assert.equal(leftPath.portX, 252);
+  assert.match(leftPath.path, / 238 180 H 220$/);
+  assert.equal(leftPath.portX, 238);
   assert.equal(leftPath.portY, 180);
-  assert.equal(leftPath.cardStubLength, 32);
+  assert.equal(leftPath.cardStubLength, 18);
   assert.ok(leftPath.firstControlX < 520);
-  assert.ok(leftPath.secondControlX > 252);
+  assert.ok(leftPath.secondControlX > 238);
 
   const rightPath = TochnyiMaps.buildPortLeaderPath({
     side: 'right',
@@ -1672,14 +1778,16 @@ test('edge-port leaders use a smooth region curve and readable horizontal card c
     mapEdgeX: 960,
     cardX: 980,
     endY: 450,
-    portOffset: 10
+    portOffset: 10,
+    minimumCardStub: 18,
+    simpleRouting: true
   });
   assert.match(rightPath.path, /^M 610 330 C /);
-  assert.match(rightPath.path, / 948 450 H 980$/);
-  assert.equal(rightPath.portX, 948);
-  assert.equal(rightPath.cardStubLength, 32);
+  assert.match(rightPath.path, / 962 450 H 980$/);
+  assert.equal(rightPath.portX, 962);
+  assert.equal(rightPath.cardStubLength, 18);
   assert.ok(rightPath.firstControlX > 610);
-  assert.ok(rightPath.secondControlX < 948);
+  assert.ok(rightPath.secondControlX < 962);
 });
 
 test('port detours do not reverse into their terminal card stub', () => {
@@ -1770,6 +1878,7 @@ test('leader detours fan out before turning around a nearby route', () => {
     routeLeft: 246,
     routeRight: 900,
     samplesPerSegment: 48,
+    simpleRouting: true,
     preferSmooth: true,
     avoidRoutes: [priorRoute]
   });
@@ -1787,8 +1896,8 @@ test('leader detours fan out before turning around a nearby route', () => {
     'the route to the callout must contain one cubic spline, not a chain of corrective bends');
   assert.equal(routed.routeSegments.length, 2,
     'one spline plus the horizontal card stub is the complete route');
-  assert.ok(routed.minimumRouteGap >= 13.9,
-    'the detour must preserve the configured leader clearance');
+  assert.ok(routed.routeCrowding < 8 && routed.routeCrowdedLength < 18,
+    'the detour must avoid sustained visual crowding');
   assert.ok(Math.min(...chordLengths) >= 28,
     'the route must fan out before turning instead of using tiny local S-curves');
 });
@@ -1888,6 +1997,7 @@ test('successive crowded leaders remain single logical splines', () => {
     routeLeft: 246,
     routeRight: 900,
     samplesPerSegment: 48,
+    simpleRouting: true,
     preferSmooth: true
   };
   const secondRoute = TochnyiMaps.buildPortLeaderPath({
@@ -1923,7 +2033,8 @@ test('successive crowded leaders remain single logical splines', () => {
     assert.equal(route.routeSegments.length, 2);
     assert.equal(route.routeCrossings, 0);
     assert.equal(route.selfIntersection, false);
-    assert.ok(route.minimumRouteGap >= 13.9);
+    assert.ok(route.routeCrowding < 8);
+    assert.ok(route.routeCrowdedLength < 18);
   });
 });
 
@@ -2313,12 +2424,12 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /minimumCardStub:\s*regionalPolicy\.minimumCardStub/);
   assert.match(runtime, /cardTop:\s*entry\.top/);
   assert.match(runtime, /cardBottom:\s*entry\.top \+ entry\.height/);
-  assert.match(runtime, /data-map-port-curve-model', 'bounded-tangent-spline'/);
+  assert.match(runtime, /data-map-port-curve-model', 'single-cubic-port'/);
   assert.match(runtime, /data-map-port-min-card-stub/);
   assert.match(runtime, /data-map-port-near-card-routes/);
   assert.match(runtime, /data-map-port-adaptive-stub-routes/);
   assert.match(runtime, /data-adaptive-card-stub/);
-  assert.match(runtime, /data-map-port-directionality', 'strict-envelope-first'/);
+  assert.match(runtime, /data-map-port-directionality', 'monotonic-single-spline'/);
   assert.match(runtime, /data-map-port-strict-envelope-routes/);
   assert.match(runtime, /data-map-port-expanded-envelope-routes/);
   assert.match(runtime, /data-route-envelope/);
@@ -2329,9 +2440,10 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-card-stub-length/);
   assert.match(runtime, /projectedFeatureBounds\(/);
   assert.match(runtime, /data-map-port-obstacle-avoidance/);
-  assert.match(runtime, /obstacles:\s*routeObstacles/);
-  assert.match(runtime, /sourceObstacles:\s*sourceRouteObstacles/);
-  assert.match(runtime, /highlighted-regions-and-leader-lines/);
+  assert.match(runtime, /simpleRouting:\s*true/);
+  assert.match(runtime, /leader-lines-only/);
+  assert.doesNotMatch(runtime, /obstacles:\s*routeObstacles/);
+  assert.doesNotMatch(runtime, /sourceObstacles:\s*sourceRouteObstacles/);
   assert.match(runtime, /data-map-port-avoided-obstacles/);
   assert.match(runtime, /data-map-port-avoided-routes/);
   assert.match(runtime, /data-map-port-grid-routes/);
@@ -2343,8 +2455,8 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(runtime, /data-route-direct-collisions/);
   assert.match(runtime, /data-route-final-collisions/);
   assert.match(runtime, /data-route-self-intersection/);
-  assert.match(runtime, /exactContains:/);
-  assert.match(runtime, /shapeClearance = regionalPolicy\.shapeClearance/);
+  assert.doesNotMatch(runtime, /exactContains:/);
+  assert.doesNotMatch(runtime, /shapeClearance = regionalPolicy\.shapeClearance/);
   assert.match(runtime, /routeLeft:/);
   assert.match(runtime, /routeRight:/);
   assert.doesNotMatch(runtime, /tochnyi-map-edge-port/);
@@ -3028,7 +3140,7 @@ test('renderer writes a reviewable chart file', () => {
   const output = path.join(tempDir, 'example.html');
   const result = renderSpecFile(path.join(examplesDir, 'ai95-price-spike.json'), output);
   assert.equal(fs.existsSync(output), true);
-  assert.equal(result.recipe, 'comparison.change');
+  assert.equal(result.recipe, 'comparison.benchmark-gap');
   const html = fs.readFileSync(output, 'utf8');
   const fingerprint = assetFingerprint(path.join(__dirname, '..'));
   assert.match(html, new RegExp(`data-assets-version="${fingerprint}"`));
@@ -3061,8 +3173,11 @@ test('unknown schema fields and numeric strings are rejected', () => {
 });
 
 test('recipe constraints are enforced', () => {
-  const spec = loadExample('ai95-price-spike.json');
-  spec.data.push({ label: 'Third point', value: 90000 });
+  const spec = loadExample('net-position-crossing-zero.json');
+  spec.data.push({
+    label: 'Third point', value: 4, displayValue: '+4 million units',
+    quantity: 'net operating position', scope: 'same reporting entity', period: 'Third period'
+  });
   const result = validateSpec(spec);
   assert.equal(result.valid, false);
   assert.ok(result.errors.includes('comparison.change requires exactly 2 data items.'));

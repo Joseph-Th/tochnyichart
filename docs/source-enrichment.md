@@ -465,6 +465,12 @@ Examples:
   One row is enough when one benchmark relationship fully carries the story;
   do not add a second row that merely restates the total or the derived
   remainder.
+- The same preference applies beyond prices: when two positive level values are
+  naturally current/actual versus prior, standard, limit, target, or another
+  reference, prefer one `comparison.benchmark-gap` row to two independent
+  `comparison.change` bars. Reserve `comparison.change` for sign-crossing,
+  zero-to-nonzero, native-rate, or index cases where benchmark semantics are not
+  the clearest reading.
 - A current price plus a reported percentage move should normally use tangible
   price levels: derive the prior price as `current / (1 + change rate)` when the
   rate and current price use the same basis. For one or two categories, use
@@ -481,9 +487,17 @@ Examples:
   research the missing levels further or reframe/omit the story. For a quoted
   discount, research the undiscounted reference price and plot the discounted
   actual price inside that total. Do not use the discount amount as `value`.
-- Two to four exact integer counts from 0 to 400 should use
-  `comparison.pictogram`, with one dot or semantic symbol per unit. Do not use a
-  logarithmic bar merely to make a 200-to-1 comparison fit.
+- Do not use dot-counting or pictograms. If the source offers only two exact
+  count categories, research a third same-scale count, a tangible
+  population/network denominator, a meaningful benchmark, or a time series.
+  A percentage or market statistic in another unit is secondary evidence, not
+  enough structure for a standalone two-count chart. If a stronger anchor
+  cannot be found, merge or omit the story.
+- When several positive values simply add to one reported total, use
+  `composition.components`. Every component begins at zero and the reported
+  total is a single numeric reference. Do not use `flow.waterfall` for that
+  decomposition; waterfall is reserved for a genuine balance moving through
+  exact changes.
 - A percentage risk range should include a population basis and a mechanism or
   consequence. Without those, enrich it further or omit it.
 - A story with unlike units may use one primary visual plus the unboxed
@@ -516,6 +530,19 @@ Examples:
 - Apply an information-economy test before authoring: remove any proposed row
   that is only a complement, remainder, duplicated total, or zero-gap endpoint
   already encoded by a segmented bar or benchmark marker.
+
+## Geography-first enrichment
+
+Source enrichment also determines whether geography is explanatory. Record a
+`routingAudit` for every selected story before recipe selection. When multiple
+named administrative regions combine with a claim about spread, border
+contrast, clustering, adjacency, geographic distribution, or concentration,
+classify geography as `explanatory` and use `regional-breakdown`. Do not turn
+the same evidence into a ranking merely because the quantities are rankable.
+
+Use `categorical` only when place names behave like ordinary categories and
+their location does not change the conclusion. The source verifier enforces the
+routing decision against the final ChartSpec.
 
 Do not default to bars because the input contains numbers. Do not select a more complex recipe solely to make the output look more interesting.
 

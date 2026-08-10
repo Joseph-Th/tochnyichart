@@ -24,7 +24,7 @@ npm run run:verify-source -- <run-id> --specs
 
 ```json
 {
-  "version": "1.4",
+  "version": "1.5",
   "runId": "issue-2026-08-05",
   "input": {
     "path": "input.txt",
@@ -71,6 +71,11 @@ npm run run:verify-source -- <run-id> --specs
             "value": 0.0115
           }
         ]
+      },
+      "routingAudit": {
+        "geographyRole": "none",
+        "workflow": "standard-chart",
+        "rationale": "The story compares one company measure over time; administrative geography does not explain the finding."
       },
       "anchors": [
         "Exact sentence or passage copied from input.txt"
@@ -139,7 +144,7 @@ npm run run:verify-source -- <run-id> --specs
 Every distinct quantitative input story must appear exactly once.
 
 - `selected` requires `outputSlug`, `title`, `titleBasis`,
-  `representationAudit`, `visualEvidenceAudit`, and at least one `input`
+  `representationAudit`, `visualEvidenceAudit`, `routingAudit`, and at least one `input`
   evidence item with role `primary`.
 - `omitted` requires a specific `reason`.
 - `merged` requires `mergedInto` naming another candidate ID.
@@ -154,6 +159,41 @@ be marked `omitted` when targeted enrichment cannot supply a third comparable,
 numeric reference, tangible basis, or source-supported numeric mechanism,
 consequence, denominator, or comparison fact and the pair does not carry a
 distinct editorial conclusion.
+
+## Routing audit
+
+Every selected story must classify geography before a ChartSpec recipe is
+chosen. `routingAudit` is machine-checked and has this form:
+
+```json
+{
+  "geographyRole": "none",
+  "workflow": "standard-chart",
+  "rationale": "Place names are not part of the explanatory structure."
+}
+```
+
+`geographyRole` is one of `none`, `categorical`, or `explanatory`. `workflow`
+is `standard-chart` or `regional-breakdown`. When the story contains multiple
+named administrative regions and the claim depends on spread, border contrast,
+clustering, adjacency, geographic distribution, or concentration, geography is
+`explanatory`; the workflow must be `regional-breakdown`, and `regionSet` must
+be `russia`. A later ranking or bar-chart choice cannot override that decision.
+
+Use `categorical` only when places function as ordinary labels and their spatial
+relationship does not change the conclusion. The source verifier rejects
+calling several named regions `none`, and it rejects a standard ChartSpec when
+the ledger selected explanatory regional routing.
+
+## Exact-count quality gate
+
+Two small exact counts are not enough structure for a standalone chart. A
+selected candidate with exactly two count observations must also have a
+tangible population/denominator or a meaningful numeric benchmark. Otherwise
+continue targeted research for a third comparable count or a time series, then
+update `visualEvidenceAudit`. If that evidence does not exist, merge or omit the
+story. A percentage or market statistic in a different unit is secondary
+context and does not satisfy this gate.
 
 ## Visual evidence audit
 

@@ -68,8 +68,9 @@ This includes stories that otherwise look like status lists, rankings, or
 comparisons. Use `standard-chart` only when place names are labels or categories
 and a map would add no explanatory value.
 
-Before writing any ChartSpec for a batch, create a routing matrix for every
-accepted story:
+Before writing any ChartSpec for a batch, record `routingAudit` on every
+selected source-ledger candidate. The routing matrix below is still useful as a
+working view, but `routingAudit` is the machine-enforced decision record:
 
 | Story | Geographic evidence | Does where change the finding? | Workflow | Rationale |
 | --- | --- | --- | --- | --- |
@@ -81,6 +82,12 @@ for the regional workflow; the renderer supplies the map geometry and callout
 routing. For every story containing geographic names, a `standard-chart`
 decision must state why geography is not explanatory. Do not write or render
 specifications until each story has exactly one workflow decision.
+
+When multiple named administrative regions combine with a claim about spread,
+border contrast, clustering, adjacency, distribution, or concentration,
+`routingAudit.geographyRole` must be `explanatory`, `workflow` must be
+`regional-breakdown`, and `regionSet` must be `russia`. Source/spec verification
+rejects a later ranking or bar chart that contradicts that routing decision.
 
 | Question | Route |
 | --- | --- |
@@ -256,8 +263,17 @@ Check that:
   fully carries the finding; two category-level before/after pairs use two
   benchmark-gap rows rather than four independent bars. No row merely repeats
   the total or remainder.
-- Two to four exact counts from 0 to 400 use `comparison.pictogram` when one
-  symbol per unit makes the magnitude comparison clearer than an axis.
+- More generally, when two positive levels are naturally current/actual versus
+  prior, standard, limit, target, or another reference, use one
+  `comparison.benchmark-gap` row rather than two `comparison.change` bars.
+- Do not use dot-counting or pictograms. Two exact count categories must gain a
+  third comparable count, a tangible denominator/population, a benchmark, or a
+  time series before they deserve a standalone chart. Different-unit numeric
+  context does not satisfy this gate.
+- Positive additive components of one total use `composition.components` so
+  every component starts at zero and the reported total is one reference.
+  `flow.waterfall` is reserved for a genuine running balance moving through
+  exact changes.
 - Three or more categories with one before/benchmark value and one after/actual
   value use `comparison.dumbbell` when the category-level movement is the
   finding. Different category magnitudes do not invalidate within-category
@@ -298,9 +314,9 @@ Check that:
   actual segment, gap segment, and benchmark marker are separate marks. If no
   valid structure exists, omit the story.
 
-For `comparison.change`, `comparison.scenarios`, `comparison.pictogram`, `comparison.diverging`,
+For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
-`trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`composition.components`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while

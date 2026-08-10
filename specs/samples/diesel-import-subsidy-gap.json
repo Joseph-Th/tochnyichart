@@ -1,8 +1,7 @@
 {
   "version": "2.0",
-  "recipe": "comparison.scenarios",
+  "recipe": "comparison.benchmark-gap",
   "title": "Importers Get 3.6 Times More Fuel Support",
-  "subtitle": "The proposed diesel import subsidy is 39,740 rubles per ton above the payment made to domestic producers.",
   "date": "2026-08-02",
   "source": {
     "name": "Russian government subsidy proposal, compiled by Tochnyi",
@@ -10,21 +9,15 @@
   },
   "data": [
     {
-      "label": "Domestic producer subsidy",
-      "quantity": "per-ton diesel subsidy",
-      "scope": "Russian diesel subsidy schemes",
-      "period": "July 2026 proposal",
-      "value": 15440,
-      "displayValue": "15,440",
-      "tone": "neutral"
-    },
-    {
       "label": "Proposed import subsidy",
       "quantity": "per-ton diesel subsidy",
       "scope": "Russian diesel subsidy schemes",
       "period": "July 2026 proposal",
       "value": 55180,
-      "displayValue": "55,180",
+      "benchmark": 15440,
+      "displayValue": "55,180 RUB/t import",
+      "benchmarkDisplayValue": "15,440 RUB/t domestic",
+      "gapDisplayValue": "+39,740 RUB/t",
       "tone": "critical"
     }
   ],
@@ -33,9 +26,9 @@
     "unit": "RUB/ton",
     "axisTitle": "Subsidy, rubles per ton",
     "decimals": 0,
-    "minimum": 0,
-    "maximum": 60000,
-    "baseline": "explicit"
+    "baseline": "zero",
+    "valueMode": "level",
+    "levelAvailability": "reported"
   },
   "emphasis": {
     "direction": "up",
@@ -54,7 +47,7 @@
   "narrative": {
     "frame": "comparison",
     "density": "editorial",
-    "emphasis": "gap"
+    "emphasis": "benchmark-gap"
   },
   "options": {
     "height": "standard",

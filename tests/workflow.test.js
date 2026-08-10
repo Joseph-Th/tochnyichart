@@ -62,8 +62,11 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.sharedContract.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.deepEqual(
     orientation.sharedContract.visualEvidenceContract.rejectedRecipes,
-    ['status.grid', 'headline.metric']
+    ['status.grid', 'headline.metric', 'comparison.pictogram']
   );
+  assert.match(orientation.sharedContract.sourceEnrichment.routingRule, /explanatory.*regional-breakdown/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.exactCountRule, /dot-counting|third comparable count/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.componentRule, /composition\.components|begins at zero/i);
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
   assert.match(orientation.batchWorkflow.inputAuthority, /expert-authored editorial evidence/i);
   assert.match(orientation.batchWorkflow.inputAuthority, /external silence is not contradiction/i);
@@ -98,7 +101,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
   assert.match(standard.visualEvidenceContract.compositionRule, /policy|target|alternative/i);
   assert.match(standard.visualEvidenceContract.compositionRule, /shared-total benchmark geometry/i);
-  assert.match(standard.sourceEnrichment.benchmarkGapRule, /one segmented row|one row/i);
+  assert.match(standard.sourceEnrichment.benchmarkGapRule, /prefer one comparison\.benchmark-gap row|two positive level values/i);
   assert.match(standard.sourceEnrichment.relationshipRule, /independent local quantitative signal/i);
   assert.match(standard.sourceEnrichment.relationshipRule, /join directly|no decorative hub/i);
   assert.match(standard.sourceEnrichment.standalonePairRule, /merge or omit/i);
@@ -144,7 +147,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.sourceEnrichment.coreRule, /expert-authored editorial evidence/i);
   assert.match(manifest.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.match(manifest.sourceEnrichment.redundancyRule, /duplicated totals|zero-gap/i);
-  assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric']);
+  assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric', 'comparison.pictogram']);
   assert.match(manifest.sourceEnrichment.attributionRule, /omit source/i);
   assert.match(manifest.sourceEnrichment.attributionRule, /presentation copy/i);
   assert.ok(manifest.excludedWork.some((entry) => entry.includes('renderer/')));
@@ -167,7 +170,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.11');
+  assert.equal(manifest.version, '1.12');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
@@ -184,7 +187,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
 
 test('workflow validation reports the correct route for each recipe family', () => {
   const standard = validateStandardSpec(example('ai95-price-spike.json'));
-  assert.equal(standard.validation.normalized.recipe, 'comparison.change');
+  assert.equal(standard.validation.normalized.recipe, 'comparison.benchmark-gap');
   const regional = validateRegionalSpec(example('russia-regional-map.json'));
   assert.equal(regional.validation.normalized.recipe, 'map.regional');
 
@@ -214,7 +217,7 @@ test('standard and regional workflow wrappers preserve renderer output contracts
     const standardCore = renderSpecFile(example('ai95-price-spike.json'), standardCorePath, { projectRoot: root });
     const standard = renderStandardChart(example('ai95-price-spike.json'), standardPath, { projectRoot: root });
     assert.equal(standard.workflow, 'standard-chart');
-    assert.equal(standard.recipe, 'comparison.change');
+    assert.equal(standard.recipe, 'comparison.benchmark-gap');
     assert.equal(standard.review.valid, true);
     assert.ok(standard.bytes > 0);
     assert.equal(standardCore.recipe, standard.recipe);

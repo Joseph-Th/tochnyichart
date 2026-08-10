@@ -60,6 +60,11 @@ function validLedger(workspace) {
           }
         ]
       },
+      routingAudit: {
+        geographyRole: 'none',
+        workflow: 'standard-chart',
+        rationale: 'The selected claim is company-specific and contains no geographic evidence.'
+      },
       anchors: ['Ozon insurance prices rose 230%, while shares initially fell 8.5%.'],
       evidence: [
         {
@@ -110,6 +115,146 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
     assert.equal(result.selected, 1);
     assert.equal(result.omitted, 1);
     assert.equal(result.specificationsChecked, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity forces spatial multi-region findings through regional-breakdown', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-routing-audit-'));
+  const anchor = 'Restrictions spread across border Russia: Belgorod logged 12 hours, Kursk 20 hours, and Bryansk 30 hours.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-routing-audit');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'border-restrictions',
+      claim: 'Restrictions spread across border Russia.',
+      decision: 'selected',
+      outputSlug: 'border-restrictions',
+      title: 'Restrictions spread across border Russia',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level',
+        levelAvailability: 'reported',
+        rationale: 'The source reports comparable restriction durations by region.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Three border regions have same-period restriction durations on one scale.',
+        comparableObservations: [
+          { label: 'Belgorod', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 12 },
+          { label: 'Kursk', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 20 },
+          { label: 'Bryansk', quantity: 'restriction duration', unit: 'hours', period: 'August 2026', value: 30 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'categorical',
+        workflow: 'standard-chart',
+        rationale: 'The regions were initially treated as ranking labels.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-routing-audit'),
+      /geography as explanatory|spatial finding|regional-breakdown/i
+    );
+
+    ledger.candidates[0].routingAudit = {
+      geographyRole: 'explanatory',
+      workflow: 'regional-breakdown',
+      regionSet: 'russia',
+      rationale: 'The headline is explicitly about a border-region spatial pattern.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-routing-audit').valid, true);
+
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'border-restrictions.json'), JSON.stringify({
+      title: 'Restrictions spread across border Russia',
+      recipe: 'ranking.horizontal',
+      data: [
+        { label: 'Belgorod', value: 12 },
+        { label: 'Kursk', value: 20 },
+        { label: 'Bryansk', value: 30 }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-routing-audit', { requireSpecs: true }),
+      /must use map\.regional|cannot bypass an explanatory geography decision/i
+    );
+
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'border-restrictions.json'), JSON.stringify({
+      title: 'Restrictions spread across border Russia',
+      recipe: 'map.regional',
+      map: { regionSet: 'russia' },
+      data: [
+        { label: 'Belgorod', regionId: 'RU-BEL', value: 12 },
+        { label: 'Kursk', regionId: 'RU-KRS', value: 20 },
+        { label: 'Bryansk', regionId: 'RU-BRY', value: 30 }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.equal(validateSourceLedger(root, 'issue-routing-audit', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects two-count stories without a denominator, benchmark, third count, or time series', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-exact-count-quality-'));
+  const anchor = 'Regulator banned 2 Alpha truck models and 4 Beta truck models.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-exact-count-quality');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'truck-model-counts',
+      claim: 'Regulator banned truck models from two brands.',
+      decision: 'selected',
+      outputSlug: 'truck-model-counts',
+      title: 'Regulator banned six truck models',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level',
+        levelAvailability: 'reported',
+        rationale: 'The source reports exact model counts.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The draft contains two brand-level model counts.',
+        comparableObservations: [
+          { label: 'Alpha', quantity: 'truck models banned', unit: 'models', period: 'August 2026', value: 2 },
+          { label: 'Beta', quantity: 'truck models banned', unit: 'models', period: 'August 2026', value: 4 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'none',
+        workflow: 'standard-chart',
+        rationale: 'The story is about manufacturers, not geography.'
+      },
+      anchors: [anchor],
+      evidence: [
+        { statement: anchor, origin: 'input', role: 'primary', anchor },
+        { statement: 'Broader truck sales fell 66.5%.', origin: 'external', role: 'consequence', source: 'Market report' }
+      ]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-exact-count-quality'),
+      /only two exact count observations|third comparable count|denominator or benchmark/i
+    );
+
+    ledger.candidates[0].evidence.push({
+      statement: 'The regulator reviewed a total of 20 truck models in the same action.',
+      origin: 'external',
+      role: 'denominator',
+      source: 'Regulator notice'
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-exact-count-quality').valid, true);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -348,6 +493,11 @@ test('public aggregate shares require a tangible denominator and level geometry'
           label: 'Economic share', quantity: 'economic activity share', unit: '%', period: '2026 estimate', low: 8, high: 10
         }]
       },
+      routingAudit: {
+        geographyRole: 'none',
+        workflow: 'standard-chart',
+        rationale: 'The claim is a national aggregate rather than a subnational spatial pattern.'
+      },
       anchors: [anchor],
       evidence: [{ statement: 'E-commerce represents 8–10% of the economy.', origin: 'input', role: 'primary', anchor }]
     }];
@@ -430,6 +580,11 @@ test('coverage audits retain each supply component and the demand denominator', 
           { label: 'Kazakhstan pledge', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 10 },
           { label: 'Monthly demand', quantity: 'fuel volume', unit: 'thousand tons', period: 'August 2026', value: 900 }
         ]
+      },
+      routingAudit: {
+        geographyRole: 'none',
+        workflow: 'standard-chart',
+        rationale: 'Origin countries are supply-source categories; spatial distribution is not the finding.'
       },
       anchors: [anchor],
       evidence: [{ statement: 'The input reports three replacement sources against monthly demand.', origin: 'input', role: 'primary', anchor }]

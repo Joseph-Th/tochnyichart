@@ -108,6 +108,9 @@ try {
       maximum: 100,
       baseline: 'explicit'
     },
+    supportingFacts: [
+      { value: '100-point ceiling', label: 'Diagnostic axis bound', role: 'comparison' }
+    ],
     narrative: { frame: 'neutral', density: 'editorial', emphasis: 'magnitude' },
     options: {
       height: 'standard',

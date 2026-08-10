@@ -97,19 +97,25 @@ Use `standard-chart` only when place names are labels or categories and a map
 adds no explanatory value.
 
 Before authoring any ChartSpec, perform a geography-first routing preflight for
-every accepted story:
+every accepted story and write the decision into the selected source-ledger
+candidate as `routingAudit`:
 
-1. Record the story, its geographic evidence, whether geography changes the
-   finding, the selected workflow, and a one-sentence rationale in a routing
-   matrix.
+1. Set `routingAudit.geographyRole` to `none`, `categorical`, or `explanatory`;
+   set `routingAudit.workflow` to `standard-chart` or `regional-breakdown`; and
+   record a one-sentence rationale. A routing matrix may mirror these fields for
+   review, but the ledger is the machine-enforced decision record.
 2. For every regional candidate, run `regional-guide` and `regions`, then use
    `recipe: "map.regional"`, `map.regionSet`, and stable `regionId` or
-   `regionIds`.
+   `regionIds`; also set `routingAudit.regionSet: "russia"`.
 3. If a story contains geographic names but is routed to `standard-chart`, the
    rationale must explicitly explain why location is not explanatory.
 4. Do not use missing coordinates, a status-list shape, a ranking shape, or an
    existing draft spec as a reason to choose the standard workflow.
-5. Do not write or render specs until every accepted story has exactly one
+5. Multiple named administrative regions plus a claim about spread, border
+   contrast, clustering, adjacency, distribution, or concentration require
+   `geographyRole: "explanatory"` and `regional-breakdown`; a later ranking or
+   bar ChartSpec cannot override that route.
+6. Do not write or render specs until every accepted story has exactly one
    recorded workflow decision.
 
 ## Shared authoring rules
@@ -126,8 +132,11 @@ every accepted story:
 - Prefer an underlying official dataset, company filing, or named report before another article from the same publisher.
 - Use only context that materially clarifies magnitude, comparison, mechanism, or consequence.
 - Do not add facts or select a complex recipe merely to make the output more visually interesting.
-- A two-value before/after `comparison.change` may stand alone when the movement
-  itself is the finding. A same-period two-item `comparison.scenarios` chart is
+- A two-value positive level comparison should normally become one
+  `comparison.benchmark-gap` row when one value is naturally current/actual and
+  the other is a prior level, standard, limit, target, or reference. Reserve
+  `comparison.change` for sign-crossing levels, zero-to-nonzero movement, or
+  native rate/index changes where benchmark semantics do not fit. A same-period two-item `comparison.scenarios` chart is
   different: it must add a numeric reference, tangible basis, or
   source-supported numeric mechanism, consequence, denominator, or comparison
   fact. Check whether the pair belongs inside an existing same-topic chart; if
@@ -150,7 +159,11 @@ every accepted story:
 - Use `index` only for a named index whose point values are reported or retrievable. Never publish generic visible labels such as `100 index`, `91.5 index`, or `index points`.
 - Declare `measure.valueMode` and `measure.levelAvailability` in every authored quantitative ChartSpec. Rate/share specs also declare `measure.basisAvailability` and `measure.basisNote` when the basis is unavailable, incomparable, or not applicable.
 - Risk and exit-outlook charts require a population or denominator shown on the plotted scale plus at least one mechanism or consequence; use `narrative.emphasis: "risk"` and typed supporting-fact roles.
-- Use `comparison.pictogram` for two to four exact integer counts from 0 to 400 when one symbol per unit is clearer than an axis; do not use logarithmic bars solely to fit an extreme count ratio.
+- Do not use dot-counting or `comparison.pictogram`. Two exact count categories
+  must gain a third same-scale count, a tangible population/network denominator,
+  a meaningful benchmark, or a time series before they deserve a standalone
+  chart. A percentage or other numeric fact in a different unit does not satisfy
+  this evidence gate.
 - Use every comparable datapoint that materially proves the title. Three or more ordered observations establishing slowdown, acceleration, reversal, or persistence require `trend.line`; do not leave the historical series in `supportingFacts`.
 - Record every materially relevant same-scale observation in
   `visualEvidenceAudit.comparableObservations`. When three or more exist, keep
@@ -161,6 +174,14 @@ every accepted story:
 - When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and keep all retained components plus total need in primary geometry in one tangible unit. The denominator may be a numeric reference rather than a redundant row. Days of coverage may remain secondary context only.
 - Never use a logarithmic scale when the point is that the plotted amounts are small relative to a baseline. The chart must preserve the true proportional gap. If a monthly or annual flow denominator is at least about 8× the largest retained component, period-normalize that same denominator to a shorter familiar interval, usually a week or day, keep every component in the original physical unit, and use the derived denominator as a visible linear reference. Record the rate-preserving derivation in `coverageAudit.rationale`, basis, subtitle, or source evidence.
 - Use segmented `comparison.benchmark-gap` geometry for prices, costs, freight, margins, discounts, premiums, shortfalls, overages, and meaningful policy or payout shares against one known total when the benchmark can be recovered. Derive a prior level as `current / (1 + change rate)` when supported by the reported current value and change. Plot the underlying actual level inside the total benchmark, not the gap amount itself. Prefer one row when one relationship fully carries the story; use two rows for two category-level earlier/current pairs. When two meaningful policy, target, or allocation shares use the same tangible total, compare their derived amounts against that shared total rather than showing only one hypothetical split as a composition. Never add a row that only repeats the benchmark or implied remainder.
+- Benchmark actual, gap, and benchmark labels use the renderer's fixed below-bar
+  lanes. Do not manually move one label inside the bar or above it; collision
+  handling vertically staggers only conflicting labels. The actual segment is
+  primary blue and a primary-toned gap uses a lighter blue for separation.
+- Use `composition.components` when positive values are additive components of
+  one reported total. Every component begins at zero and the total is a single
+  numeric reference. Use `flow.waterfall` only for a genuine existing balance
+  moving through exact changes; do not use it for simple component decomposition.
 - Never flatten repeated `Category · earlier` / `Category · later` observations
   into `comparison.scenarios`. Scenarios are same-period alternatives. Use
   `comparison.benchmark-gap` for one or two paired categories and

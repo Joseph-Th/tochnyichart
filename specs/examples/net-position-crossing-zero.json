@@ -1,0 +1,63 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.change",
+  "title": "The Net Position Crossed From Deficit to Surplus",
+  "subtitle": "A sign-crossing change needs a common zero baseline rather than benchmark-gap geometry.",
+  "date": "2026-08-09",
+  "source": {
+    "name": "Illustrative sign-crossing fixture",
+    "period": "Two reporting periods"
+  },
+  "data": [
+    {
+      "label": "Earlier period",
+      "value": -2,
+      "displayValue": "−2 million units",
+      "tone": "critical",
+      "quantity": "net operating position",
+      "scope": "same reporting entity",
+      "period": "Earlier period"
+    },
+    {
+      "label": "Later period",
+      "value": 3,
+      "displayValue": "+3 million units",
+      "tone": "positive",
+      "quantity": "net operating position",
+      "scope": "same reporting entity",
+      "period": "Later period"
+    }
+  ],
+  "measure": {
+    "quantity": "net operating position",
+    "unit": "million units",
+    "axisTitle": "Net operating position",
+    "valueMode": "level",
+    "levelAvailability": "reported",
+    "decimals": 0,
+    "baseline": "auto",
+    "scale": "linear"
+  },
+  "emphasis": {
+    "direction": "up",
+    "displayValue": "+5 million units",
+    "label": "change",
+    "position": "between"
+  },
+  "narrative": {
+    "frame": "recovery",
+    "density": "minimal",
+    "emphasis": "direction"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "net-position-crossing-zero-example",
+    "topic": "sign-crossing change",
+    "dataPeriod": "Two reporting periods",
+    "keyFinding": "The measured level moved from below zero to above zero."
+  }
+}

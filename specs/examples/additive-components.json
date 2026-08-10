@@ -1,0 +1,65 @@
+{
+  "version": "2.0",
+  "recipe": "composition.components",
+  "title": "Two Components Make Up the Reported July Total",
+  "subtitle": "Both components start at zero; the total is a reference rather than a floating waterfall endpoint.",
+  "date": "2026-08-09",
+  "source": {
+    "name": "Illustrative additive-component fixture",
+    "period": "July 2026"
+  },
+  "data": [
+    {
+      "label": "Recurring revenue",
+      "value": 539,
+      "displayValue": "539 billion rubles",
+      "tone": "primary",
+      "quantity": "July budget revenue component",
+      "scope": "same July budget-revenue total",
+      "period": "July 2026"
+    },
+    {
+      "label": "Quarterly special taxes",
+      "value": 396,
+      "displayValue": "396 billion rubles",
+      "tone": "secondary",
+      "quantity": "July budget revenue component",
+      "scope": "same July budget-revenue total",
+      "period": "July 2026"
+    }
+  ],
+  "references": [
+    {
+      "value": 935,
+      "label": "July total",
+      "tone": "neutral",
+      "lineStyle": "dashed"
+    }
+  ],
+  "measure": {
+    "quantity": "July budget revenue component",
+    "unit": "billion rubles",
+    "axisTitle": "Revenue component",
+    "valueMode": "level",
+    "levelAvailability": "reported",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "comparison",
+    "density": "minimal",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "standard",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "additive-components-example",
+    "topic": "additive component decomposition",
+    "dataPeriod": "July 2026",
+    "keyFinding": "The two positive components reconcile exactly to the reported total while remaining comparable from zero."
+  }
+}

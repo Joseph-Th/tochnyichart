@@ -39,8 +39,8 @@ const MAP_LEADER_ROUTING = new Set(['auto', 'direct', 'lanes', 'ports', 'indexed
 const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 'money', 'ship', 'fuel', 'factory', 'warning', 'trend', 'document']);
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
-  'comparison.change', 'comparison.scenarios', 'comparison.pictogram', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
-  'trend.line', 'ranking.horizontal'
+  'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
+  'trend.line', 'ranking.horizontal', 'composition.components'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -51,6 +51,10 @@ const DISABLED_RECIPES = new Map([
   [
     'headline.metric',
     'headline.metric is disabled for production. A single number is not enough visual evidence. Add a real comparator, denominator, benchmark, or time series and select a multi-mark recipe.'
+  ],
+  [
+    'comparison.pictogram',
+    'comparison.pictogram is disabled for production. Dot-counting charts do not provide enough analytical structure. Enrich exact-count stories with a third comparable count, a denominator or population, a benchmark, or a time series, then use a quantitative comparison recipe; otherwise merge or omit the story.'
   ]
 ]);
 
@@ -594,6 +598,20 @@ function validateWaterfall(spec, data, errors) {
   if (!['end', 'subtotal'].includes(data[data.length - 1]?.role)) errors.push('flow.waterfall must end with an end or subtotal item.');
   if (!data.some((item) => item?.role === 'change')) errors.push('flow.waterfall requires at least one change item; use a comparison for start and end values without a bridge.');
 
+  const changeItems = data.filter((item) => item?.role === 'change');
+  const allPositiveChanges = changeItems.length > 0 && changeItems.every((item) => typeof item.value === 'number' && item.value > 0);
+  const decompositionCopy = [
+    spec.title,
+    spec.subtitle,
+    spec.metadata?.keyFinding,
+    ...data.flatMap((item) => [item?.label, item?.annotation])
+  ].filter(Boolean).join(' ');
+  if (allPositiveChanges && COMPONENT_DECOMPOSITION_PATTERN.test(decompositionCopy)) {
+    errors.push(
+      'flow.waterfall is not appropriate for a positive component decomposition. Use composition.components so every component bar is seated at zero and the reported total is shown as the single numeric reference.'
+    );
+  }
+
   const firstPeriod = data[0]?.period;
   const firstScope = data[0]?.scope;
   data.forEach((item, index) => {
@@ -825,6 +843,47 @@ function hasNumericVisibleValue(value) {
   return typeof value === 'string' && /\d/.test(value);
 }
 
+const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
+const BENCHMARK_CUE_PATTERN = /\b(?:benchmark|baseline|standard|limit|target|threshold|cap|ceiling|floor|maximum|minimum|norm|allowance|permitted|legal)\b/i;
+const COMPONENT_DECOMPOSITION_PATTERN = /\b(?:component|components|contribution|contributions|accounted for|breakdown|excluding|included|special tax|taxes|fees|surcharge|subtotal|total cost|total revenue|total spending|cost build[- ]?up)\b/i;
+
+function isCountLikeMeasure(spec) {
+  const text = `${spec?.measure?.quantity || ''} ${spec?.measure?.unit || ''}`;
+  return COUNT_UNIT_PATTERN.test(text);
+}
+
+function validateExactCountPairStrength(spec, data, errors) {
+  if (data.length !== 2 || !isCountLikeMeasure(spec)) return;
+  const exactCounts = data.every((item) => Number.isInteger(item?.value) && item.value >= 0);
+  if (!exactCounts) return;
+  const hasReference = Array.isArray(spec.references) && spec.references.some((reference) =>
+    typeof reference?.value === 'number' && Number.isFinite(reference.value)
+  );
+  const hasBasis = isObject(spec.basis) && Array.isArray(spec.basis.items) && spec.basis.items.length >= 2;
+  if (!hasReference && !hasBasis) {
+    errors.push(
+      'Two exact count categories are not enough for a standalone chart. Add a third comparable count, a tangible denominator or population, a benchmark/reference, or a time series. Mechanism or consequence facts in another unit do not rescue a thin count comparison.'
+    );
+  }
+}
+
+function validateBenchmarkPreference(spec, data, errors) {
+  if (spec.recipe !== 'comparison.change' || spec.measure?.valueMode !== 'level' || data.length !== 2) return;
+  const values = data.map((item) => item?.value);
+  if (!values.every((value) => typeof value === 'number' && Number.isFinite(value) && value > 0)) return;
+  const editorial = [
+    spec.title,
+    spec.subtitle,
+    ...data.flatMap((item) => [item?.label, item?.period, item?.annotation])
+  ].filter(Boolean).join(' ');
+  const cue = BENCHMARK_CUE_PATTERN.test(editorial)
+    ? ' The copy already identifies a standard, limit, target, baseline, or other benchmark.'
+    : '';
+  errors.push(
+    'Two positive level values should use comparison.benchmark-gap instead of two independent bars. Encode the later/current/actual level as value and the earlier/reference level as benchmark so the difference is carried by one compact benchmark bar.' + cue
+  );
+}
+
 function validateStandaloneScenarioPair(spec, data, errors) {
   if (spec.recipe !== 'comparison.scenarios' || data.length !== 2) return;
   const hasReference = Array.isArray(spec.references) && spec.references.length > 0;
@@ -838,6 +897,7 @@ function validateStandaloneScenarioPair(spec, data, errors) {
       'A two-item comparison.scenarios chart is too thin to stand alone. Add a source-supported numeric reference, basis, mechanism, consequence, denominator, or comparison fact; otherwise merge it into a richer same-topic chart or omit it.'
     );
   }
+  validateExactCountPairStrength(spec, data, errors);
 }
 
 function validateRecipe(spec, errors, warnings) {
@@ -847,6 +907,7 @@ function validateRecipe(spec, errors, warnings) {
     case 'comparison.change':
       if (count !== 2) errors.push('comparison.change requires exactly 2 data items.');
       requireNumericValues(spec, errors);
+      validateBenchmarkPreference(spec, data, errors);
       if (!spec.emphasis) warnings.push('comparison.change is clearer with an emphasis object.');
       break;
     case 'comparison.scenarios':
@@ -862,20 +923,6 @@ function validateRecipe(spec, errors, warnings) {
             'For three or more categories, use comparison.dumbbell. This keeps each category change visually paired.'
           );
         }
-      }
-      break;
-    case 'comparison.pictogram':
-      if (count < 2 || count > 4) errors.push('comparison.pictogram requires 2 to 4 data items.');
-      data.forEach((item, index) => {
-        if (!Number.isInteger(item?.value) || item.value < 0 || item.value > 400) {
-          errors.push(`data[${index}].value must be a non-negative integer from 0 to 400 for comparison.pictogram.`);
-        }
-      });
-      if (!data.some((item) => Number.isInteger(item?.value) && item.value > 0)) {
-        errors.push('comparison.pictogram requires at least one positive count.');
-      }
-      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
-        errors.push('comparison.pictogram requires measure.valueMode level because every symbol represents one tangible unit.');
       }
       break;
     case 'comparison.diverging':
@@ -981,6 +1028,36 @@ function validateRecipe(spec, errors, warnings) {
       if (spec.measure?.unit === '%' && Math.abs(sum - 100) > 0.5) warnings.push(`Stacked percentages total ${sum}, not 100.`);
       if (spec.primaryMetric) {
         errors.push('composition.stacked cannot use primaryMetric. The proportional marks and direct segment labels must carry the story; do not collapse a composition into one headline number.');
+      }
+      break;
+    }
+    case 'composition.components': {
+      if (count < 2 || count > 6) errors.push('composition.components requires 2 to 6 component data items.');
+      requireNumericValues(spec, errors);
+      if (data.some((item) => typeof item?.value === 'number' && item.value <= 0)) {
+        errors.push('composition.components values must all be greater than zero because each bar is an additive component seated at zero.');
+      }
+      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
+        errors.push('composition.components requires measure.valueMode level because the bars are tangible additive components.');
+      }
+      if (spec.measure?.baseline !== 'zero') {
+        errors.push('composition.components requires measure.baseline zero so every component is visibly seated at zero.');
+      }
+      const totalReferences = Array.isArray(spec.references)
+        ? spec.references.filter((reference) => typeof reference?.value === 'number' && Number.isFinite(reference.value))
+        : [];
+      if (totalReferences.length !== 1) {
+        errors.push('composition.components requires exactly one numeric reference representing the reported total.');
+      } else {
+        const componentTotal = data.reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0);
+        const decimals = Number.isInteger(spec.measure?.decimals) ? spec.measure.decimals : 0;
+        const tolerance = Math.max(1e-9, 0.5 * (10 ** -decimals));
+        if (Math.abs(componentTotal - totalReferences[0].value) > tolerance) {
+          errors.push(`composition.components must reconcile to its total reference; component sum is ${componentTotal}, reference is ${totalReferences[0].value}.`);
+        }
+      }
+      if (spec.primaryMetric) {
+        errors.push('composition.components cannot use primaryMetric for the total. The zero-seated component bars and total reference must carry the decomposition directly.');
       }
       break;
     }
@@ -1303,9 +1380,7 @@ function validateVisual(spec, errors) {
   if (spec.visual.filled !== undefined && (spec.visual.filled < 0 || spec.visual.filled > 100)) errors.push('visual.filled must be from 0 to 100.');
   if (spec.visual.columns !== undefined && (spec.visual.columns < 2 || spec.visual.columns > 20)) errors.push('visual.columns must be from 2 to 20.');
   if (spec.visual.type === 'pictogram') {
-    if (!['headline.metric', 'comparison.pictogram'].includes(spec.recipe)) {
-      errors.push('visual.type pictogram is only supported by headline.metric or comparison.pictogram.');
-    }
+    if (spec.recipe !== 'headline.metric') errors.push('visual.type pictogram is only supported by headline.metric.');
     if (spec.recipe === 'headline.metric') {
       if (!spec.visual.icon) errors.push('visual.icon is required for a headline pictogram.');
       if (!spec.visual.total) errors.push('visual.total is required for a headline pictogram.');

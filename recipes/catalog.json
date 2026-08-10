@@ -1,11 +1,11 @@
 {
-  "version": "2.10.0",
+  "version": "2.11.0",
   "recipes": [
     {
       "id": "comparison.change",
-      "purpose": "Show a before-and-after change in one named quantity for one shared scope.",
-      "data": "Exactly 2 labeled numeric values with measure.quantity, matching scope, and explicit periods.",
-      "bestFor": ["price moves", "year-over-year change", "before versus after"],
+      "purpose": "Show a true two-period change when the values cannot be expressed more clearly as one non-negative actual value against a prior or reference benchmark.",
+      "data": "Exactly 2 labeled numeric values with measure.quantity, matching scope, and explicit periods. For two positive level values, prefer comparison.benchmark-gap with the later/current value as value and the earlier/reference value as benchmark.",
+      "bestFor": ["sign-crossing changes", "zero-to-nonzero changes", "native rates or indexes where benchmark-gap level semantics do not apply"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
     {
@@ -14,13 +14,6 @@
       "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period. A two-item standalone chart also needs a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
       "bestFor": ["expected versus actual", "policy choices", "three-or-more scenarios", "context-rich two-value comparisons"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
-    },
-    {
-      "id": "comparison.pictogram",
-      "purpose": "Compare small-to-medium exact counts with one visible symbol per unit so extreme count ratios remain tangible.",
-      "data": "2 to 4 labeled non-negative integer values from 0 to 400 with measure.quantity and matching scope and period.",
-      "bestFor": ["200 versus 1", "people affected", "facilities hit", "small exact populations"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "comparison.diverging",
@@ -38,9 +31,9 @@
     },
     {
       "id": "comparison.benchmark-gap",
-      "purpose": "Show an actual value as part of a benchmark total so the discount, premium, shortfall, overage, or same-total policy allocation remains visible.",
-      "data": "1 to 6 labeled items with an underlying actual value and benchmark total in one unit, plus matching quantity and scope. Use one item when the benchmark and its implied gap fully carry the story. For one or two category-level before/after price pairs, encode the later/current level as value and the earlier/prior level as benchmark. Two meaningful policy, target, or payout shares may use separate rows against one shared tangible total when that gives the viewer a stronger anchor than a single hypothetical composition.",
-      "bestFor": ["discounted prices", "one or two paired price moves", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
+      "purpose": "Show one non-negative actual or current level against a meaningful benchmark so the gap, premium, shortfall, overage, or before-versus-after difference is visible in one compact bar.",
+      "data": "1 to 6 labeled items with an underlying actual/current value and benchmark/reference value in one unit, plus matching quantity and scope. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior. For one or two category-level before/after pairs, encode the later/current level as value and the earlier/prior level as benchmark. Two meaningful policy, target, or payout shares may use separate rows against one shared tangible total when that gives the viewer a stronger anchor than a hypothetical composition.",
+      "bestFor": ["two positive before-after levels", "standards and limits", "discounted prices", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
@@ -86,10 +79,17 @@
       "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }
     },
     {
+      "id": "composition.components",
+      "purpose": "Compare exact positive additive components of one reported total with every component seated at zero and the total shown as a numeric reference.",
+      "data": "2 to 6 positive labeled component values with one shared quantity, scope, and period. Exactly one numeric reference must equal the reported total within display precision. Do not include the total as a redundant data row.",
+      "bestFor": ["tax components", "cost components", "revenue components", "budget components where component magnitude matters"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
       "id": "flow.waterfall",
-      "purpose": "Explain how one exact reported quantity changes through same-period, same-scope additive steps into a reported ending amount.",
-      "data": "2 to 8 ordered items with role start, change, subtotal, or end; every item also needs reported valueStatus, period, and scope, and the values must reconcile.",
-      "bestFor": ["collateral erosion", "cost build-up", "funding gaps", "profit bridges"],
+      "purpose": "Explain how an existing balance or level moves through exact positive and negative changes into a reported ending amount.",
+      "data": "2 to 8 ordered items with role start, change, subtotal, or end; every item also needs reported valueStatus, period, and scope, and the values must reconcile. Do not use waterfall when the intermediate values are simply positive components of one total; use composition.components so every component starts at zero.",
+      "bestFor": ["collateral erosion", "funding gaps", "profit bridges", "balance movements with genuine increases and decreases"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {

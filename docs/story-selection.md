@@ -265,15 +265,16 @@ that row.
 
 | Recipe | Semantic contract |
 | --- | --- |
-| `comparison.change` | Two periods of one quantity for one scope. Different periods are the intended contrast. |
+| `comparison.change` | Two periods of one quantity for one scope only when one value cannot be read naturally as the positive actual/current level against a prior, standard, limit, target, or other benchmark. Typical uses are sign-crossing levels, zero-to-nonzero movement, and native rate/index changes. |
 | `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. Repeated category/time pairs are not scenarios. |
-| `comparison.pictogram` | Two to four exact integer counts from 0 to 400. Every dot or semantic symbol represents one unit on the same scope and period. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. |
-| `comparison.benchmark-gap` | One to six actual values shown within benchmark totals. One row is preferred when one actual-plus-gap relationship fully carries the story. One or two category-level earlier/current price pairs also belong here, with current as `value` and prior as `benchmark`. Two meaningful policy, target, or payout shares may use separate rows against the same tangible total when that common total gives the viewer a stronger anchor than a single hypothetical split. |
+| `comparison.benchmark-gap` | One to six actual/current values shown against meaningful benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. One or two category-level earlier/current pairs also belong here, with current as `value` and prior as `benchmark`. Two meaningful policy, target, or payout shares may use separate rows against the same tangible total when that common total gives the viewer a stronger anchor than a single hypothetical split. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
 | `relationship.converging-signals` | Exactly two causal drivers and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism. Each measure is drawn as an independent local quantitative signal; the two driver paths join directly into one outcome path with no decorative merge node. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
+| `composition.components` | Two to six positive additive components of one reported total. Every component starts at zero; one numeric reference shows the reconciled total. Use this instead of a waterfall when the point is component magnitude rather than a running balance. |
+| `flow.waterfall` | One existing balance or level moves through exact reported changes into an ending value. Do not use it for a set of positive components that merely add to one total. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
 seller registrations, revenue growth, insurance prices, and stock prices one
@@ -291,10 +292,12 @@ important for prices: a current price plus a compatible percentage move makes
 the prior price derivable, and different absolute price levels across products
 do not invalidate the within-product comparison.
 
-Use `comparison.pictogram` instead of a logarithmic bar when the story is an
-extreme ratio between two to four exact counts no larger than 400. One symbol
-equals one unit, so `200` versus `1` remains literal rather than visually
-compressed by a transformed axis.
+Do not use dot-counting or pictograms as a production treatment. Two exact count
+categories are normally too thin to justify a standalone chart. Research a
+third same-scale count, a tangible population or network denominator, a
+meaningful benchmark, or a time series. A percentage in another unit may be
+useful context, but it does not create enough quantitative structure by itself.
+If targeted research cannot supply a stronger anchor, merge or omit the story.
 
 An exact two-item `comparison.scenarios` pair is not automatically a chart.
 Before selecting it, look for one of the following: a third comparable item, a
@@ -313,6 +316,19 @@ the benchmark or is simply `benchmark - value`. Those rows duplicate geometry
 the reader can already see. A discount chart must show the discounted price
 inside the undiscounted reference price, not chart the discount amount as if it
 were the price.
+
+The benchmark renderer uses one fixed label system: the actual/current value,
+gap, and benchmark labels all sit beneath the bar. When their horizontal text
+boxes would collide, the renderer moves only the conflicting label to a lower
+text lane. Do not solve collisions by putting one label inside the bar or
+another above it. The actual segment uses the primary blue; a primary-toned gap
+uses a lighter blue so adjacent segments remain visually distinct.
+
+When several positive values simply add to one reported total, use
+`composition.components`. Each component is a zero-based bar and the total is a
+single numeric reference. A waterfall is reserved for a genuine running balance
+with changes to an existing level; using it for a simple decomposition makes
+later components float above zero and misstates their magnitude.
 
 The same geometry is useful when a policy, target, payout, or allocation story
 contains two meaningful shares of one known total. Derive the tangible amount

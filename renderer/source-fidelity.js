@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const TochnyiMaps = require('../lib/tochnyi-maps');
 const {
   normalizeRunId,
   readInputSnapshot,
@@ -27,6 +28,12 @@ const DATA_BEARING_SOURCE_TYPES = new Set([
   'market-data',
   'industry-dataset'
 ]);
+const GEOGRAPHY_ROLES = new Set(['none', 'categorical', 'explanatory']);
+const CHART_WORKFLOWS = new Set(['standard-chart', 'regional-breakdown']);
+const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
+const BENCHMARK_EVIDENCE_PATTERN = /\b(?:benchmark|baseline|total|population|capacity|available|target|limit|threshold|cap|ceiling|floor|maximum|minimum|network|fleet|market)\b/i;
+const SPATIAL_FINDING_PATTERN = /\b(?:across|border|borderland|frontier|spread|cluster|adjacent|neighbor|neighbour|geograph|spatial|regional pattern|corridor|distributed|concentrat|east|west|north|south)\b/i;
+const ADMIN_LABEL_PATTERN = /\b(?:oblast|krai|republic|federal district|region|district|city)\b/i;
 const PENDING_RESEARCH_TEXT = /\b(?:to be checked|to check|pending|not yet checked|not yet reviewed|will check|needs? checking|needs? review|follow up|tbd|todo|unknown source|generic search)\b/i;
 const GENERIC_RESEARCH_LOCATOR = /^(?:homepage|website|search|web search|database|dataset|report|article|filing|statistics|table)$/i;
 const PUBLIC_AGGREGATE_SHARE_PATTERN = /(?:\b(?:share|accounts? for|represents?|makes? up)\b[^.]{0,60}\b(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:\d+(?:[.,]\d+)?\s*%|\d+(?:[.,]\d+)?\s*percent|one[- ](?:tenth|fifth|quarter|third|half))\s+(?:of|in)\s+(?:the\s+)?(?:[a-z-]+\s+){0,3}(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\b|\b(?:economy|gdp|gross domestic product|population|workforce|employment|exports?|imports?|production|capacity)\s+(?:share|percentage)\b)/i;
@@ -104,6 +111,126 @@ function candidateNarrative(candidate) {
     ...(candidate?.anchors || []),
     ...(candidate?.evidence || []).map((item) => item?.statement)
   ].filter(isText).join(' ');
+}
+
+function normalizePlaceText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[.()]/g, ' ')
+    .replace(/[\u2012\u2013\u2014\u2212]/g, '-')
+    .replace(/[^a-z0-9-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function russianRegionNames() {
+  const regionSet = TochnyiMaps.getRegionSet('russia');
+  if (!regionSet || !regionSet.regions) return [];
+  return Object.values(regionSet.regions)
+    .filter(isText)
+    .map(normalizePlaceText)
+    .filter((name) => name.length >= 4);
+}
+
+const RUSSIAN_REGION_NAMES = russianRegionNames();
+
+function looksGeographicLabel(label) {
+  if (!isText(label)) return false;
+  const normalized = normalizePlaceText(label);
+  if (ADMIN_LABEL_PATTERN.test(label)) return true;
+  const aliases = ['moscow', 'moskva', 'st petersburg', 'saint petersburg', 'petersburg'];
+  if (aliases.some((name) => normalized.includes(name))) return true;
+  return RUSSIAN_REGION_NAMES.some((name) => normalized.includes(name));
+}
+
+function geographicObservationCount(candidate) {
+  const observations = candidate?.visualEvidenceAudit?.comparableObservations;
+  if (!Array.isArray(observations)) return 0;
+  return observations.filter((observation) => looksGeographicLabel(observation?.label || observation?.specLabel)).length;
+}
+
+function validateRoutingAudit(candidate, prefix, errors) {
+  const audit = candidate.routingAudit;
+  if (!audit || typeof audit !== 'object' || Array.isArray(audit)) {
+    errors.push(`${prefix}.routingAudit is required for every selected story so geography-first routing is explicit and machine-checkable.`);
+    return;
+  }
+  if (!GEOGRAPHY_ROLES.has(audit.geographyRole)) {
+    errors.push(`${prefix}.routingAudit.geographyRole must be none, categorical, or explanatory.`);
+  }
+  if (!CHART_WORKFLOWS.has(audit.workflow)) {
+    errors.push(`${prefix}.routingAudit.workflow must be standard-chart or regional-breakdown.`);
+  }
+  if (!isText(audit.rationale) || audit.rationale.length > 240) {
+    errors.push(`${prefix}.routingAudit.rationale must explain the routing decision in 240 characters or fewer.`);
+  }
+
+  const geographicCount = geographicObservationCount(candidate);
+  const narrative = candidateNarrative(candidate);
+  if (geographicCount >= 2 && audit.geographyRole === 'none') {
+    errors.push(
+      `${prefix}.routingAudit.geographyRole cannot be none because the evidence contains ${geographicCount} named administrative geographies. ` +
+      'Classify them as categorical labels or explanatory geography before choosing a workflow.'
+    );
+  }
+  if (geographicCount >= 2 && SPATIAL_FINDING_PATTERN.test(narrative) && audit.geographyRole !== 'explanatory') {
+    errors.push(
+      `${prefix}.routingAudit must classify geography as explanatory because the story combines multiple named regions with a spatial finding such as spread, border contrast, clustering, distribution, or concentration.`
+    );
+  }
+  if (audit.geographyRole === 'explanatory' && audit.workflow !== 'regional-breakdown') {
+    errors.push(`${prefix}.routingAudit.workflow must be regional-breakdown when geographyRole is explanatory.`);
+  }
+  if (audit.workflow === 'regional-breakdown') {
+    if (audit.geographyRole !== 'explanatory') {
+      errors.push(`${prefix}.routingAudit.geographyRole must be explanatory for regional-breakdown.`);
+    }
+    if (audit.regionSet !== 'russia') {
+      errors.push(`${prefix}.routingAudit.regionSet must be russia for the available regional workflow.`);
+    }
+  } else if (audit.regionSet !== undefined) {
+    errors.push(`${prefix}.routingAudit.regionSet is only valid for regional-breakdown.`);
+  }
+}
+
+function validateExactCountCandidateReadiness(candidate, prefix, errors) {
+  const observations = candidate?.visualEvidenceAudit?.comparableObservations;
+  if (!Array.isArray(observations) || observations.length !== 2) return;
+  const exactCounts = observations.every((observation) => {
+    const unitText = `${observation?.quantity || ''} ${observation?.unit || ''}`;
+    return Number.isInteger(observation?.value) && observation.value >= 0 && COUNT_UNIT_PATTERN.test(unitText);
+  });
+  if (!exactCounts) return;
+  const evidence = Array.isArray(candidate.evidence) ? candidate.evidence : [];
+  const hasDenominator = evidence.some((item) => item?.role === 'denominator' && /\d/.test(String(item?.statement || '')));
+  const hasBenchmark = evidence.some((item) =>
+    ['comparison', 'denominator'].includes(item?.role) &&
+    /\d/.test(String(item?.statement || '')) &&
+    BENCHMARK_EVIDENCE_PATTERN.test(String(item?.statement || ''))
+  );
+  if (!hasDenominator && !hasBenchmark) {
+    errors.push(
+      `${prefix} has only two exact count observations and no tangible denominator or benchmark. ` +
+      'Research a third comparable count, population/network total, benchmark, or time series before selecting the story; otherwise merge or omit it. Different-unit percentage context is not enough.'
+    );
+  }
+}
+
+function validateRoutingSpecCoverage(candidate, spec, errors) {
+  const audit = candidate?.routingAudit || {};
+  if (audit.workflow === 'regional-breakdown') {
+    if (spec?.recipe !== 'map.regional') {
+      errors.push(
+        `ChartSpec ${candidate.outputSlug} must use map.regional because routingAudit selected regional-breakdown. ` +
+        'A ranking or bar chart cannot bypass an explanatory geography decision.'
+      );
+    }
+    if (spec?.map?.regionSet !== audit.regionSet) {
+      errors.push(`ChartSpec ${candidate.outputSlug} map.regionSet must match routingAudit.regionSet (${audit.regionSet || 'missing'}).`);
+    }
+  } else if (audit.workflow === 'standard-chart' && spec?.recipe === 'map.regional') {
+    errors.push(`ChartSpec ${candidate.outputSlug} uses map.regional even though routingAudit selected standard-chart.`);
+  }
 }
 
 function isPublicAggregateShareCandidate(candidate) {
@@ -588,7 +715,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
-  if (ledger.version !== '1.4') errors.push('Source ledger version must be 1.4.');
+  if (ledger.version !== '1.5') errors.push('Source ledger version must be 1.5.');
   if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
   if (!ledger.input || ledger.input.path !== 'input.txt') errors.push('Source ledger must identify the project-root input.txt.');
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
@@ -684,6 +811,8 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       }
       validateRepresentationAudit(candidate, prefix, errors);
       validateVisualEvidenceAudit(candidate, prefix, errors);
+      validateRoutingAudit(candidate, prefix, errors);
+      validateExactCountCandidateReadiness(candidate, prefix, errors);
       validatePublicAggregateBasisEvidence(candidate, prefix, errors);
       selected.push(candidate);
     } else if (candidate.decision === 'omitted') {
@@ -774,6 +903,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       validateRelationshipEvidence(candidate, spec, errors);
       validatePublicAggregateSpecCoverage(candidate, spec, errors);
       validateCoverageSpecCoverage(candidate, spec, errors);
+      validateRoutingSpecCoverage(candidate, spec, errors);
       selectedSpecs.push({ candidate, spec });
     }
 

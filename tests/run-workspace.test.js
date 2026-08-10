@@ -166,7 +166,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
   try {
     const workspace = initializeRunWorkspace(root, runId);
     const ledger = {
-      version: '1.4',
+      version: '1.5',
       runId,
       input: { path: 'input.txt', bytes: 0, sha256: 'stub' },
       inventoryComplete: true,

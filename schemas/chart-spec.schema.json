@@ -12,7 +12,6 @@
       "enum": [
         "comparison.change",
         "comparison.scenarios",
-        "comparison.pictogram",
         "comparison.diverging",
         "comparison.range",
         "comparison.benchmark-gap",
@@ -22,6 +21,7 @@
         "timeline.duration",
         "composition.donut",
         "composition.stacked",
+        "composition.components",
         "flow.waterfall",
         "ranking.horizontal",
         "map.regional"

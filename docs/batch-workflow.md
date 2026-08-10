@@ -205,9 +205,11 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   as retrievable. Record `basisTarget`, recover the compatible public total,
   derive the tangible numerator, and use level geometry. A 100% reference does
   not satisfy this requirement.
-- Two to four exact integer counts from 0 to 400 should use
-  `comparison.pictogram`, with one symbol per unit rather than a logarithmic
-  bar.
+- Do not use dot-counting or pictograms. A story with only two exact count
+  categories must gain a third comparable count, a tangible denominator or
+  population, a meaningful benchmark, or a time series before it is selected
+  as a standalone chart. Different-unit percentage context does not satisfy
+  this evidence gate.
 - A risk estimate must include the exposed population or denominator, show that
   total on the plotted scale, and include at least one mechanism or consequence.
 - Three or more ordered observations that establish slowdown, acceleration,
@@ -242,6 +244,17 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   relationship fully carries the finding. For two category-level before/after
   price pairs, use two benchmark-gap rows rather than four independent bars.
   Do not add a row that merely restates the total or derived remainder.
+- More generally, when two positive level values are naturally current/actual
+  versus prior, standard, limit, target, or another reference, prefer one
+  `comparison.benchmark-gap` row over two independent `comparison.change` bars.
+  Reserve `comparison.change` for cases where benchmark semantics do not fit,
+  such as sign-crossing levels, zero-to-nonzero movement, or native rates and
+  indexes.
+- When several positive values are additive components of one reported total,
+  use `composition.components`. Every component is seated at zero and the total
+  is a single numeric reference. Do not use `flow.waterfall` for a simple
+  component decomposition; waterfall is for a genuine running balance moving
+  through exact changes.
 - Three or more categories with paired before/after or benchmark/actual values
   should use `comparison.dumbbell` when the category-level movement is the
   finding. Different category magnitudes, grades, or delivery bases do not make
@@ -340,8 +353,14 @@ and spatial distribution, concentration, adjacency, regional contrast, or
 location-specific callouts affect interpretation. Use `standard-chart` only
 when place names are labels or categories and a map adds no explanatory value.
 
-Before writing specifications, create a routing matrix for every accepted story
-with these columns:
+Before writing specifications, record `routingAudit` on every selected source
+ledger candidate. The routing matrix may still be used as a working view, but
+the ledger is the machine-enforced source of truth. `routingAudit` must classify
+`geographyRole` as `none`, `categorical`, or `explanatory`, select
+`standard-chart` or `regional-breakdown`, and include a short rationale. For a
+regional story also set `regionSet: "russia"`.
+
+The corresponding working matrix columns are:
 
 ```text
 story | geographic evidence | does where change the finding? | workflow | rationale
@@ -350,6 +369,11 @@ story | geographic evidence | does where change the finding? | workflow | ration
 For a story containing geographic names, a `standard-chart` rationale must
 explicitly explain why geography is not explanatory. Do not let missing
 coordinates, a preselected recipe, or an existing draft spec decide the route.
+When multiple named administrative regions combine with a claim about spread,
+border contrast, clustering, adjacency, distribution, or concentration, the
+source verifier requires `geographyRole: "explanatory"` and
+`workflow: "regional-breakdown"`. It also rejects a later ranking/bar ChartSpec
+that tries to bypass that route.
 For regional candidates, use `regional-guide` and `regions` to obtain stable
 region IDs before authoring the ChartSpec. Do not proceed to rendering until
 each accepted story has exactly one recorded workflow decision.

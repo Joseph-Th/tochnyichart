@@ -75,7 +75,7 @@ initialize .work/<run-id>/
     -> record selected, omitted, or merged disposition
     -> verify the source ledger before research
     -> preserve input-supported claims and enrich without originating stories
-    -> choose the appropriate tool and chart workflow for each accepted story
+    -> record routingAudit and choose the appropriate tool and chart workflow for each accepted story
     -> render and diagnose chart HTML
     -> capture final PNG images
     -> assemble one PowerPoint presentation
@@ -141,6 +141,30 @@ resolution.
 Do not add facts merely to make a chart more complex or visually varied. A simple comparison is correct when the contrast itself is the complete story.
 
 The complete contract, safe-derivation rules, research order, and relevance test are in [`docs/source-enrichment.md`](../docs/source-enrichment.md).
+
+Every selected source-ledger candidate must record `routingAudit` before its
+ChartSpec is authored. Multiple named administrative regions plus a spatial
+finding such as spread, border contrast, clustering, adjacency, distribution,
+or concentration require `geographyRole: "explanatory"` and
+`workflow: "regional-breakdown"`; source/spec verification rejects a later
+ranking or bar chart that contradicts that route.
+
+For two positive level values, prefer one `comparison.benchmark-gap` row when
+one value is naturally the current or actual value and the other is a prior
+level, standard, limit, target, or benchmark. Do not default to two independent
+bars. Benchmark labels use the renderer's fixed below-bar lanes and collision
+handling.
+
+Do not use dot-counting charts. A story with only two exact count categories
+must gain a third comparable count, a tangible denominator or population, a
+meaningful benchmark, or a time series before it is selected as a standalone
+chart. Different-unit numeric context does not satisfy this gate.
+
+When positive values are additive components of one reported total, use
+`composition.components`. Every component starts at zero and the total is one
+numeric reference. `flow.waterfall` is reserved for a genuine existing balance
+moving through exact changes; it must not be used for a simple component
+decomposition.
 
 `flow.waterfall` is a strict exception to ordinary numeric charting. Use it
 only for one exact reported quantity moving through additive steps to a
