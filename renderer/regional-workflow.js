@@ -55,7 +55,10 @@ function summarizeDiagnosticRun(run) {
     geographicSideLocks: numberAttribute(attributes, 'data-map-callout-geographic-side-locks'),
     predictedCrossings: numberAttribute(attributes, 'data-map-callout-predicted-crossings'),
     predictedCrowding: numberAttribute(attributes, 'data-map-callout-predicted-crowding'),
-    renderedCrossings: numberAttribute(attributes, 'data-map-port-rendered-crossings'),
+    renderedCrossings: firstNumberAttribute(attributes, [
+      'data-map-leader-rendered-crossings',
+      'data-map-port-rendered-crossings'
+    ]),
     routeCrowding: firstNumberAttribute(attributes, [
       'data-map-leader-crowding-score',
       'data-map-port-crowding-score'
@@ -110,6 +113,7 @@ function renderRegionalBreakdown(specPath, outputPath, options = {}) {
     });
   }
   const unnaturalRoutes = runs.filter((run) =>
+    (run.renderedCrossings || 0) > 0 ||
     (run.directionReversalRoutes || 0) > 0 ||
     (run.controlReversalRoutes || 0) > 0 ||
     (run.terminalBoxTurnRoutes || 0) > 0

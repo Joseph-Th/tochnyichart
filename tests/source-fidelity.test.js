@@ -120,6 +120,91 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('directional relationship mechanism evidence must explicitly link a driver to the plotted outcome', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-relationship-linkage-'));
+  const anchor = 'Twenty logistics sites were hit, 1.18 million square metres were damaged, and the company later sought partner warehouses of at least 200 square metres.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-relationship-linkage');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'warehouse-response',
+      claim: 'The company sought partner warehouses of at least 200 square metres.',
+      decision: 'selected',
+      outputSlug: 'warehouse-response',
+      title: 'The company sought 200 m²+ partner warehouses',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'All three quantities are reported directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The draft attempts to connect disruption magnitudes to a later warehouse threshold.',
+        comparableObservations: [
+          { label: 'Sites hit', quantity: 'logistics sites hit', unit: 'sites', period: 'disruption period', value: 20 },
+          { label: 'Area damaged', quantity: 'warehouse area damaged', unit: 'million square metres', period: 'disruption period', value: 1.18 },
+          { label: 'Partner-space minimum', quantity: 'minimum partner warehouse area', unit: 'square metres', period: 'later search', value: 200 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'The story is operational, not geographic.'
+      },
+      anchors: [anchor],
+      evidence: [
+        { statement: anchor, origin: 'input', role: 'primary', anchor },
+        { statement: 'Twenty sites were hit and 1.18 million square metres of warehouse area were damaged.', origin: 'external', role: 'mechanism', source: 'Fixture source' }
+      ]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'warehouse-response.json'), JSON.stringify({
+      title: 'The company sought 200 m²+ partner warehouses',
+      recipe: 'relationship.converging-signals',
+      relationship: { mode: 'directional', operator: 'combine', formula: 'Site losses plus damaged area led to the partner-space threshold' },
+      data: [
+        { label: 'Sites hit', relationshipRole: 'driver', value: 20, displayValue: '20 sites' },
+        { label: 'Area damaged', relationshipRole: 'driver', value: 1.18, displayValue: '1.18 million m²' },
+        { label: 'Partner-space minimum', relationshipRole: 'outcome', value: 200, displayValue: '200 m²' }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-relationship-linkage', { requireSpecs: true }),
+      /does not explicitly link the plotted outcome to at least one plotted driver|causal connector geometry/i
+    );
+
+    ledger.candidates[0].evidence[1].statement = 'After 20 sites were hit, the company said the disruption drove its search for partner warehouses of at least 200 square metres.';
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-relationship-linkage', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity blocks selected stories with a material external contradiction', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-material-conflict');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].evidence.push({
+      statement: 'A reputable external report directly contradicts the input-supported claim.',
+      origin: 'external',
+      role: 'comparison',
+      source: 'Independent regulatory filing',
+      conflictStatus: 'material'
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-material-conflict'),
+      /material contradiction.*cannot be selected or visualized|editorial resolution/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity requires forecast stories to promote input-reported actual rates into references', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-forecast-anchor-'));
   const anchor = 'The 2026 inflation forecast was raised from 4.5–5.5% to 6–7%; actual inflation so far is 4.84%.';
@@ -288,6 +373,166 @@ test('source fidelity forces spatial multi-region findings through regional-brea
   }
 });
 
+test('source fidelity treats dense administrative-region evidence as a regional distribution without relying on cue words', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-density-'));
+  const anchor = 'Mobile sessions without restrictions were 12% in Bryansk, Kursk and Belgorod, 49% in Moscow and Moscow Oblast, and 58.9% in Leningrad Oblast.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'regional-density');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'mobile-access-readings',
+      claim: 'Mobile access readings varied materially.',
+      decision: 'selected',
+      outputSlug: 'mobile-access-readings',
+      title: 'Mobile access readings varied materially',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'rate',
+        levelAvailability: 'not-applicable',
+        basisAvailability: 'not-applicable',
+        basisRationale: 'The fixture treats the published session-access reading as a native monitoring rate.',
+        rationale: 'The source reports comparable session-access rates directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The source reports comparable readings for several administrative geographies.',
+        comparableObservations: [
+          { label: 'Bryansk, Kursk and Belgorod', quantity: 'mobile sessions without restrictions', unit: 'percent', period: 'July 2026', value: 12 },
+          { label: 'Moscow and Moscow Oblast', quantity: 'mobile sessions without restrictions', unit: 'percent', period: 'July 2026', value: 49 },
+          { label: 'Leningrad Oblast', quantity: 'mobile sessions without restrictions', unit: 'percent', period: 'July 2026', value: 58.9 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'categorical',
+        workflow: 'standard-chart',
+        rationale: 'The draft treated the locations as ordinary ranking labels.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'regional-density'),
+      /three or more administrative regions|regional distribution|regional-breakdown/i
+    );
+
+    ledger.candidates[0].routingAudit = {
+      geographyRole: 'explanatory',
+      workflow: 'regional-breakdown',
+      regionSet: 'russia',
+      rationale: 'Several administrative regions define the comparable evidence, so location is part of the finding.'
+    };
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'regional-density').valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects a lone normalized rate or share plus its derived complement as a standalone chart', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-thin-share-'));
+  const anchor = 'Whitelisted access accounted for 90% of mobile connections.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'thin-share');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'whitelist-share',
+      claim: 'Whitelisted access accounted for 90% of mobile connections.',
+      decision: 'selected',
+      outputSlug: 'whitelist-share',
+      title: 'Whitelisted access accounted for 90% of mobile connections',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'share',
+        levelAvailability: 'unavailable',
+        basisAvailability: 'unavailable',
+        basisRationale: 'The fixture source does not publish the connection-count denominator.',
+        tangibleTarget: 'Total mobile connections and whitelisted connections for the reported cohort.',
+        rationale: 'Only the normalized share is available after the required data checks.',
+        researchAttempts: [
+          {
+            source: 'Fixture article',
+            sourceType: 'supplied-source',
+            locator: 'https://example.test/fixture-mobile-access',
+            outcome: 'The article reports the 90% share but not the underlying connection counts.'
+          },
+          {
+            source: 'Fixture network dataset',
+            sourceType: 'industry-dataset',
+            locator: 'Fixture mobile-access dataset, reported-cohort connection table',
+            outcome: 'The public table reports normalized shares but not cohort connection counts.'
+          }
+        ]
+      },
+      visualEvidenceAudit: {
+        rationale: 'The initial draft contains only one independent normalized observation.',
+        comparableObservations: [
+          { label: 'Whitelisted access', quantity: 'share of mobile connections using whitelisted access', unit: 'percent', period: 'reported period', value: 90 }
+        ]
+      },
+      routingAudit: {
+        geographyRole: 'none',
+        workflow: 'standard-chart',
+        rationale: 'The fixture has no administrative geography.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'thin-share'),
+      /only one independent share observation|derived complement|same-unit peer/i
+    );
+
+    ledger.candidates[0].visualEvidenceAudit.comparableObservations.push({
+      label: 'Peer network',
+      quantity: 'share of mobile connections using whitelisted access',
+      unit: 'percent',
+      period: 'reported period',
+      value: 65
+    });
+    ledger.candidates[0].evidence.push({
+      statement: 'A comparable peer network reported 65% of connections using whitelisted access.',
+      origin: 'external',
+      role: 'comparison',
+      source: 'Fixture network dataset'
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'thin-share').valid, true);
+
+    const specPath = path.join(workspace.specificationRoot, 'whitelist-share.json');
+    fs.writeFileSync(specPath, JSON.stringify({
+      title: 'Whitelisted access accounted for 90% of mobile connections',
+      recipe: 'composition.stacked',
+      data: [
+        { label: 'Whitelisted access', value: 90 },
+        { label: 'Derived remainder', value: 10 }
+      ],
+      measure: { valueMode: 'share', levelAvailability: 'unavailable', basisAvailability: 'unavailable' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'thin-share', { requireSpecs: true }),
+      /collapses a richer same-scale dataset|Missing plotted labels: Peer network/i
+    );
+
+    fs.writeFileSync(specPath, JSON.stringify({
+      title: 'Whitelisted access accounted for 90% of mobile connections',
+      recipe: 'comparison.change',
+      data: [
+        { label: 'Whitelisted access', value: 90 },
+        { label: 'Peer network', value: 65 }
+      ],
+      measure: { valueMode: 'share', levelAvailability: 'unavailable', basisAvailability: 'unavailable' }
+    }));
+    assert.equal(validateSourceLedger(root, 'thin-share', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity rejects two-count stories without a denominator, benchmark, third count, or time series', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-exact-count-quality-'));
   const anchor = 'Regulator banned 2 Alpha truck models and 4 Beta truck models.';
@@ -369,6 +614,124 @@ test('source fidelity rejects collapsing a richer same-scale dataset into one pl
       () => validateSourceLedger(root, 'issue-rich-evidence', { requireSpecs: true }),
       /collapses a richer same-scale dataset|all must remain primary data items/i
     );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity requires story-defining thresholds to be inventoried and plotted', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-threshold-anchor-'));
+  const anchor = 'Wheat offers fell from 14,000 rubles per ton to 8,000 rubles per ton, below the profitability threshold of 10,000 rubles per ton.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-threshold-anchor');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'wheat-threshold',
+      claim: 'Wheat offers fell below the 10,000-ruble profitability threshold.',
+      decision: 'selected',
+      outputSlug: 'wheat-threshold',
+      title: 'Wheat offers fell below the 10,000-ruble profitability threshold',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The prior and current offer prices are reported directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The prior and current offer prices show the move through the profitability threshold.',
+        comparableObservations: [
+          { label: 'Before', quantity: 'wheat offer price', unit: 'RUB/t', period: 'before', value: 14000 },
+          { label: 'After', quantity: 'wheat offer price', unit: 'RUB/t', period: 'after', value: 8000 }
+        ]
+      },
+      routingAudit: { geographyRole: 'none', workflow: 'standard-chart', rationale: 'This is a price comparison, not a geographic story.' },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-threshold-anchor'),
+      /orientationAnchors is required|numeric threshold/i
+    );
+
+    ledger.candidates[0].visualEvidenceAudit.orientationAnchors = [{
+      label: 'Profitability threshold', role: 'threshold', quantity: 'wheat offer price', unit: 'RUB/t', period: 'comparison window', value: 10000
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-threshold-anchor').valid, true);
+
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'wheat-threshold.json'), JSON.stringify({
+      title: 'Wheat offers fell below the 10,000-ruble profitability threshold',
+      data: [
+        { label: 'Before', value: 14000 },
+        { label: 'After', value: 8000 }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-threshold-anchor', { requireSpecs: true }),
+      /drops the source-ledger orientation anchor|profitability threshold/i
+    );
+
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'wheat-threshold.json'), JSON.stringify({
+      title: 'Wheat offers fell below the 10,000-ruble profitability threshold',
+      data: [
+        { label: 'Before', value: 14000 },
+        { label: 'After', value: 8000 }
+      ],
+      references: [{ value: 10000, label: 'Profitability threshold' }],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.equal(validateSourceLedger(root, 'issue-threshold-anchor', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity rejects short tiny-count series without an independent anchor', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-small-count-series-'));
+  const anchor = 'Restrictions covered 1 truck model in February 2025, 6 in July 2025, and 6 in August 2026.';
+  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'issue-small-count-series');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    ledger.candidates = [{
+      id: 'truck-restrictions',
+      claim: 'Truck-model restrictions expanded over time.',
+      decision: 'selected',
+      outputSlug: 'truck-restrictions',
+      title: 'Truck-model restrictions expanded over time',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The action counts are reported directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Three dated restriction counts are available.',
+        comparableObservations: [
+          { label: 'Feb 2025', quantity: 'restricted truck models', unit: 'models', period: 'February 2025', value: 1 },
+          { label: 'Jul 2025', quantity: 'restricted truck models', unit: 'models', period: 'July 2025', value: 6 },
+          { label: 'Aug 2026', quantity: 'restricted truck models', unit: 'models', period: 'August 2026', value: 6 }
+        ]
+      },
+      routingAudit: { geographyRole: 'none', workflow: 'standard-chart', rationale: 'The story concerns regulation over time.' },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.throws(
+      () => validateSourceLedger(root, 'issue-small-count-series'),
+      /small exact-count observations|visually self-evident|portfolio\/universe/i
+    );
+
+    ledger.candidates[0].evidence.push({
+      statement: 'The regulator reviewed a total portfolio of 20 truck models in the same program.',
+      origin: 'external', role: 'denominator', source: 'Regulator notice'
+    });
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    assert.equal(validateSourceLedger(root, 'issue-small-count-series').valid, true);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

@@ -138,8 +138,8 @@ test('near-equal column bars resolve to one family label placement', { skip: bro
     fs.writeFileSync(specPath, JSON.stringify({
       version: '2.0',
       recipe: 'comparison.scenarios',
-      title: 'Two near-equal values use one label treatment',
-      subtitle: 'A numeric comparison fact makes this two-item scenario comparison independently useful.',
+      title: 'Near-equal values use one label treatment',
+      subtitle: 'Three independent scenario values test one coherent label-placement family.',
       date: '2026-08-06',
       data: [
         {
@@ -148,6 +148,10 @@ test('near-equal column bars resolve to one family label placement', { skip: bro
         },
         {
           label: 'Option B', value: 80, displayValue: '80 units',
+          quantity: 'capacity', scope: 'same system', period: '2026'
+        },
+        {
+          label: 'Option C', value: 79, displayValue: '79 units',
           quantity: 'capacity', scope: 'same system', period: '2026'
         }
       ],
@@ -248,7 +252,50 @@ test('components, duration timelines, benchmark gaps, dumbbells, and converging-
         } else {
           assert.equal(run.diagnostics?.summary?.marksChecked, marks, file);
         }
+        if (file === 'converging-signals.json') {
+          assert.equal(run.relationshipAttributes?.['data-relationship-continuation'], 'true');
+        }
       });
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ranking outside value labels reserve enough gutter for complete trailing units', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-ranking-value-gutter-'));
+  try {
+    const specPath = path.join(tempDir, 'ranking-value-gutter.json');
+    const outputPath = path.join(tempDir, 'ranking-value-gutter.html');
+    fs.writeFileSync(specPath, JSON.stringify({
+      version: '2.0', recipe: 'ranking.horizontal',
+      title: 'Station closures by operator type', date: '2026-08-10',
+      data: [
+        { label: 'Large independent chains', value: 105, displayValue: '105 stations', quantity: 'closed gas stations', scope: 'same station network', period: '2026 year to date' },
+        { label: 'Small independent chains', value: 82, displayValue: '82 stations', quantity: 'closed gas stations', scope: 'same station network', period: '2026 year to date' },
+        { label: 'Medium independent chains', value: 69, displayValue: '69 stations', quantity: 'closed gas stations', scope: 'same station network', period: '2026 year to date' }
+      ],
+      measure: {
+        quantity: 'closed gas stations', unit: 'stations', axisTitle: 'Stations closed',
+        valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear'
+      },
+      narrative: { frame: 'comparison', density: 'editorial', emphasis: 'ranking' },
+      options: { height: 'standard', sort: 'descending', showLabels: true, animate: false, labelMode: 'outside' }
+    }));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.diagnostics?.summary?.warnings, 0);
+      const gutter = Number(run.rankingAttributes?.['data-ranking-value-label-gutter']);
+      const estimated = Number(run.rankingAttributes?.['data-ranking-value-label-estimated-width']);
+      assert.ok(Number.isFinite(gutter) && Number.isFinite(estimated));
+      assert.ok(gutter >= estimated + 30, `expected ranking gutter ${gutter} to clear estimated label width ${estimated}`);
+      assert.equal(run.diagnostics?.issues?.some((issue) =>
+        ['label-clipped', 'text-truncated'].includes(issue.code) &&
+        issue.elements?.some((element) => /105 stati/i.test(element.text || ''))
+      ), false);
     });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -294,7 +341,10 @@ test('reference labels clear nearby axis ticks and their own reference lines', {
           quantity: 'reported component', scope: 'same total', period: '2026'
         }
       ],
-      references: [{ value: 935, label: 'Reported total · 935 units', lineStyle: 'dashed', tone: 'neutral' }],
+      references: [
+        { value: 935, label: 'Reported total · 935 units', lineStyle: 'dashed', tone: 'neutral' },
+        { value: 684, label: 'Prior total · 684 units', lineStyle: 'dashed', tone: 'neutral' }
+      ],
       measure: {
         quantity: 'reported component', unit: 'units', axisTitle: 'Component value',
         valueMode: 'level', levelAvailability: 'reported', minimum: 0, maximum: 1150,

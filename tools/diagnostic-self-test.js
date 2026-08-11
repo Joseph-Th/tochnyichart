@@ -81,6 +81,14 @@ try {
     source: { name: 'Diagnostic fixture' },
     data: [
       {
+        label: 'Lower point',
+        value: 20,
+        displayValue: '20 points',
+        quantity: 'diagnostic boundary score',
+        scope: 'boundary-label diagnostic fixture',
+        period: 'single diagnostic run'
+      },
+      {
         label: 'Midpoint',
         value: 50,
         displayValue: '50 points',

@@ -1,5 +1,5 @@
 {
-  "version": "2.11.0",
+  "version": "2.12.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -11,8 +11,8 @@
     {
       "id": "comparison.scenarios",
       "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period. Do not flatten repeated category/time pairs into separate scenario bars.",
-      "data": "2 to 5 labeled numeric values with measure.quantity and matching scope and period. A two-item standalone chart also needs a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
-      "bestFor": ["expected versus actual", "policy choices", "three-or-more scenarios", "context-rich two-value comparisons"],
+      "data": "3 to 5 independent labeled numeric values with measure.quantity and matching scope and period. Two generic bars are invalid even with supporting copy or a derived total. A defensible two-value relationship must use a relationship-specific recipe such as comparison.benchmark-gap, comparison.change, comparison.diverging, or timeline.duration; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
+      "bestFor": ["three-or-more scenarios", "policy alternatives", "multi-option forecasts", "target sets"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
     {
@@ -25,21 +25,21 @@
     {
       "id": "comparison.range",
       "purpose": "Show exact values, min-max intervals, and thresholds for one named quantity on one scale.",
-      "data": "1 to 8 items with value or low/high fields, measure.quantity, and matching scope and period. A single interval requires a visible benchmark or reference that supplies the total or threshold scale and is invalid when visualEvidenceAudit contains three or more named comparable observations.",
+      "data": "1 to 8 items with value or low/high fields, measure.quantity, and matching scope and period. A single interval requires a visible benchmark or reference that supplies the total or threshold scale and is invalid when visualEvidenceAudit contains three or more named comparable observations. When the finding is a threshold breach, the threshold itself must remain visible as a reference, benchmark, or threshold mark; before/after values do not substitute for it.",
       "bestFor": ["uncertainty ranges", "population-anchored risk ranges", "policy limits", "price ranges", "threshold breaches"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "comparison.benchmark-gap",
       "purpose": "Show one non-negative actual or current level against a meaningful benchmark so the gap, premium, shortfall, overage, or before-versus-after difference is visible in one compact bar.",
-      "data": "1 to 6 labeled items with an underlying actual/current value and benchmark/reference value in one unit, plus matching quantity and scope. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior. For one or two category-level before/after pairs, encode the later/current level as value and the earlier/prior level as benchmark. Two meaningful policy, target, or payout shares may use separate rows against one shared tangible total when that gives the viewer a stronger anchor than a hypothetical composition.",
+      "data": "1 to 6 labeled items with an underlying actual/current value and a benchmark/reference value measuring the same quantity in the same unit, plus matching scope and period. gapDisplayValue must describe the arithmetic difference or percentage context, never a ratio, per-unit equivalence, or cross-unit conversion. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior. For one or two category-level before/after pairs, encode the later/current level as value and the earlier/prior level as benchmark.",
       "bestFor": ["two positive before-after levels", "standards and limits", "discounted prices", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "relationship.converging-signals",
       "purpose": "Visualize two source-supported causal drivers converging on a different outcome without forcing them onto a shared axis.",
-      "data": "Exactly 3 items: two relationshipRole driver items and one outcome item, all with distinct real-world quantities. relationship.formula must state the source-supported mechanism. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Repeated prices, repeated volumes, and the same measure at different dates must use change, scenarios, dumbbell, or trend geometry. Each item is drawn on its own local quantitative signal; the two driver connectors join directly into one outcome path, and connector width encodes no magnitude.",
+      "data": "Exactly 3 items: two relationshipRole driver items and one outcome item, all with distinct real-world quantities. relationship.formula must state the source-supported mechanism. Directional mode additionally requires mechanism evidence that explicitly links the plotted outcome to at least one plotted driver; chronology or adjacent facts do not justify causal connectors. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Repeated prices, repeated volumes, and the same measure at different dates must use change, scenarios, dumbbell, or trend geometry. Each item is drawn on its own local quantitative signal; the two driver connectors meet and continue briefly toward the outcome in the same connector color, and connector width encodes no magnitude.",
       "bestFor": ["two factors shaping one outcome", "volume and price driving revenue", "activity and intensity driving emissions", "mixed-measure causal relationships"],
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
@@ -53,7 +53,7 @@
     {
       "id": "trend.line",
       "purpose": "Show a sequence over time.",
-      "data": "At least 3 ordered labeled numeric values; 5 or more preferred.",
+      "data": "At least 3 ordered labeled numeric values; 5 or more preferred. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",
       "bestFor": ["time series", "rates", "prices", "production"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
@@ -81,7 +81,7 @@
     {
       "id": "composition.components",
       "purpose": "Compare exact positive additive components of one reported total with every component seated at zero and the total shown as a numeric reference.",
-      "data": "2 to 6 positive labeled component values with one shared quantity, scope, and period. Exactly one numeric reference must equal the reported total within display precision. Do not include the total as a redundant data row.",
+      "data": "2 to 6 positive labeled component values with one shared quantity, scope, and period. Exactly one numeric reference must equal the reported total within display precision. With exactly two components, add an independent same-scale benchmark or denominator beyond that derived sum; otherwise recover a third component, use another recipe, merge, or omit. Do not include the total as a redundant data row.",
       "bestFor": ["tax components", "cost components", "revenue components", "budget components where component magnitude matters"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
@@ -122,7 +122,7 @@
     },
     {
       "id": "supportingFacts",
-      "purpose": "Add up to four genuinely secondary contextual facts after a primary visual that already contains at least two quantitative or geographic marks. Supporting facts cannot be the chart."
+      "purpose": "Add up to four genuinely secondary contextual facts after a primary visual that already satisfies its recipe-specific evidence gate. Supporting facts cannot rescue two generic bars or become the chart."
     },
     {
       "id": "basis",

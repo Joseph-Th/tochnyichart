@@ -83,11 +83,15 @@ routing. For every story containing geographic names, a `standard-chart`
 decision must state why geography is not explanatory. Do not write or render
 specifications until each story has exactly one workflow decision.
 
-When multiple named administrative regions combine with a claim about spread,
-border contrast, clustering, adjacency, distribution, or concentration,
-`routingAudit.geographyRole` must be `explanatory`, `workflow` must be
-`regional-breakdown`, and `regionSet` must be `russia`. Source/spec verification
-rejects a later ranking or bar chart that contradicts that routing decision.
+Three or more distinct named administrative regions in comparable evidence are
+already a regional distribution. In that case `routingAudit.geographyRole` must
+be `explanatory`, `workflow` must be `regional-breakdown`, and `regionSet` must
+be `russia`, even when the prose describes the result as a ranking or comparison
+and never uses an explicit spatial cue. Grouped labels count every named region.
+With two named regions, a claim about spread, border contrast, clustering,
+adjacency, distribution, or concentration also forces regional routing.
+Source/spec verification rejects a later ranking or bar chart that contradicts
+either rule.
 
 | Question | Route |
 | --- | --- |
@@ -148,13 +152,14 @@ to locate a second report is not a contradiction. Do not label an input claim
 `uncorroborated`, `unsupported`, or `not independently confirmed`, and do not
 replace it with an easier-to-source fact, solely because search results are
 silent. Only a direct material contradiction from a reputable source should be
-escalated for editorial resolution.
+marked `conflictStatus: "material"` in external evidence and escalated for
+editorial resolution. A conflicted candidate must not be selected or visualized.
 
 Before selecting a recipe:
 
 1. Preserve the expert input claim and confirm that every supplied URL used for supplementation matches the entity, event, period, and finding.
-2. Read the full primary source.
-3. Extract the main result, comparator, components, cause, consequence, forecast, scale, denominator, and underlying dataset when they are relevant to the same claim.
+2. Read the full primary source and perform a source-family sweep before splitting the material into separate visuals. Collect related regional, peer, historical, denominator, and same-unit comparison observations first.
+3. Extract the main result, comparator, components, cause, consequence, forecast, scale, denominator, and underlying dataset when they are relevant to the same claim. Merge a proposed chart when it is only a summary, complement, subset, or single-point restatement of richer same-topic evidence.
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
@@ -174,7 +179,20 @@ full linked source
 
 Do not search for additional data merely to make a chart more complex. Additional context must concern the same entity, market, or causal event; use a compatible period and scope; fill a defined evidence role; materially clarify interpretation; and have a traceable source.
 
-The evidence spine has one central finding and may use supporting facts for magnitude, comparison, mechanism, or consequence. Not every chart needs all four roles. A simple two-value chart is correct when the contrast itself is the complete story.
+The evidence spine has one central finding and may use supporting facts for
+magnitude, comparison, mechanism, or consequence. Not every chart needs all four
+roles. Two generic categorical bars are not sufficient. A two-value chart is
+valid only when a relationship-specific recipe makes the relationship itself
+the geometry; otherwise recover a third independent same-scale observation,
+merge, or omit.
+
+For a rate or share whose tangible basis remains unavailable or incomparable,
+one reported percentage plus its derived complement is still only one
+independent observation. Recover a same-unit peer, regional observation,
+prior/current point, benchmark, or target. If the full source already contains
+that richer comparison, it belongs in primary geometry rather than
+`supportingFacts`; if it belongs to a richer same-topic visual, merge the thin
+claim instead of creating another slide.
 
 The complete policy is in [`docs/source-enrichment.md`](source-enrichment.md).
 
@@ -190,8 +208,12 @@ Every route follows the same semantic stages:
 6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode`, `measure.levelAvailability`, and `measure.basisAvailability` for rates or shares.
 7. Validate the JSON.
 8. Render through the selected workflow.
-9. Correct semantic errors and rerun the checks.
-10. For a batch run, capture the final PNG into `charts/<run-id>/` after
+9. Run the claim-to-geometry check: state the headline and identify the exact
+   marks that prove it. Reject a chart whose geometry only shows adjacent facts
+   while the title asserts a mechanism or consequence that the evidence does
+   not support.
+10. Correct semantic errors and rerun the checks.
+11. For a batch run, capture the final PNG into `charts/<run-id>/` after
    diagnostics pass. Use `.work/<run-id>/review/` only for temporary or ad
    hoc review.
 
@@ -229,8 +251,27 @@ Check that:
   same-scope inputs.
 - Qualifiers such as `more than`, `about`, and ranges remain visible; a bound is
   not presented as an exact value.
+- Every derived display value inherits the precision and uncertainty of the
+  source values that constrain it. A rounded or approximate benchmark must not
+  produce a multi-decimal calculator result. Round to the coarsest materially
+  constraining input precision and preserve approximation/bound qualifiers.
 - The title, labels, annotations, and axis describe what the marks actually
   encode.
+- The exact plotted marks establish the title's comparison or mechanism. If a
+  directional relationship is used, one source-ledger mechanism statement
+  explicitly links the plotted outcome to at least one plotted driver;
+  chronology or adjacent facts are not enough.
+- When the title is defined by crossing or approaching a breakeven,
+  profitability floor, threshold, cap, ceiling, limit, or cutoff, that anchor
+  is visible in primary geometry as a labeled reference, benchmark, or
+  threshold mark. Before/after values alone do not establish a threshold story.
+- Every reference line is necessary, has a meaningful visible label, and does
+  not duplicate another reference. A reference that needs a punctuation-only
+  label to stay out of the way should be removed and moved to supporting
+  context.
+- Relationship signal cards do not mix `pp`/percentage-point notation with `%`
+  rate notation. Preserve the mathematical distinction in detail or note copy,
+  or choose a different representation rather than silently relabeling it.
 - A simpler recipe would not communicate the finding more honestly.
 - Composition charts retain a tangible absolute amount in `displayValue` when
   the source provides one; percentages alone are not enough when real amounts
@@ -240,15 +281,35 @@ Check that:
 - Rates and shares switch to tangible level geometry when their basis is
   recoverable; the denominator or population must be visible on the primary
   scale and a `basis` rail alone does not satisfy the requirement.
+- If a rate or share basis remains unavailable or incomparable, one independent
+  percentage is not enough for a standalone chart. A `100% - share` complement
+  is derived, not independent orientation. Require a same-unit peer, regional
+  observation, prior/current point, benchmark, or target, and keep every
+  headline-relevant normalized comparator in primary geometry.
+- Three or more distinct named administrative regions in comparable evidence
+  must use the regional workflow even if a ranking would be numerically valid.
+  Grouped labels count every named region; do not rely on the title or subtitle
+  containing words such as `regional`, `spread`, or `border` to trigger routing.
 - Risk ranges include a population or denominator shown on the plotted scale
   plus a mechanism or consequence, not only two percentage endpoints.
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence use `trend.line`; those observations cannot be
   reduced to supporting facts around a two-value chart.
+- A 3–4 point sequence of tiny exact counts is not accepted as a trend merely
+  because the points are ordered in time. Require an independent same-unit
+  reviewed universe, portfolio/network denominator, population, capacity,
+  affected sales/volume/value, or richer quantitative series. If chronology is
+  the meaningful dimension, prefer event/calendar structure instead.
 - Three or more materially relevant observations of one quantity and unit must
   all be recorded in `visualEvidenceAudit` and preserved as primary `data[]`
   items. Do not collapse named components, categories, or time points into one
   aggregate, one range, one total, or one headline value.
+- Before accepting a chart sourced from an article or dataset that also produced
+  another candidate, confirm that the chart is not merely a summary,
+  complement, subset, or single-point restatement of the richer same-topic
+  evidence. If it is, merge it. A technically valid thin chart is still a QA
+  failure when the same source already provides the comparison needed to make
+  the point intelligible.
 - Duration comparisons use `timeline.duration` so calendar overlap and elapsed
   time remain visible. Use exact start/end intervals or one verified
   `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
@@ -273,13 +334,16 @@ Check that:
   prior, standard, limit, target, or another reference, use one
   `comparison.benchmark-gap` row rather than two `comparison.change` bars.
 - Do not use dot-counting or pictograms. Two exact count categories must gain a
-  third comparable count, a tangible denominator/population, a benchmark, or a
-  time series before they deserve a standalone chart. Different-unit numeric
+  third comparable count, a tangible denominator/population, an independent
+  benchmark, or a time series before they deserve a standalone chart. Their
+  own sum is derived and does not count as an anchor. Different-unit numeric
   context does not satisfy this gate.
 - Positive additive components of one total use `composition.components` so
   every component starts at zero and the reported total is one reference.
-  `flow.waterfall` is reserved for a genuine running balance moving through
-  exact changes.
+  With only two components, that reconciled total is not independent
+  orientation; require another same-scale benchmark/denominator, recover a
+  third component, or use a more meaningful recipe. `flow.waterfall` is
+  reserved for a genuine running balance moving through exact changes.
 - Three or more categories with one before/benchmark value and one after/actual
   value use `comparison.dumbbell` when the category-level movement is the
   finding. Different category magnitudes do not invalidate within-category
@@ -294,8 +358,11 @@ Check that:
   including material derivations such as quantity × unit price = value. Repeated
   prices, repeated volumes, or one measure at different dates require change,
   scenarios, dumbbell, or trend geometry. Each measure renders as an independent
-  local quantitative signal, and both driver paths join directly into one
-  outcome path without a decorative hub. Generic Factor 1, Factor 2, and Outcome captions are not rendered.
+  local quantitative signal. In directional mode, a source-ledger mechanism
+  statement must explicitly link the outcome to at least one driver. Both
+  driver paths meet and continue briefly toward the outcome in the same
+  connector color, without a decorative hub or node. Generic Factor 1, Factor
+  2, and Outcome captions are not rendered.
   Connector width is fixed and
   never represents magnitude. Identity mode requires an exact same-scope,
   same-period equation; directional mode requires a note when periods or scopes
@@ -310,16 +377,15 @@ Check that:
   whole bar family moves inside. Mixed inside/outside treatment is reserved for
   a genuine physical-fit conflict. Use explicit `inside` or `outside` only as
   an intentional editorial override.
-- An exact two-item `comparison.scenarios` chart must add a numeric reference,
-  tangible basis, or source-supported numeric mechanism, consequence,
-  denominator, or comparison fact. Check whether the pair is already contained
-  in a richer same-topic map, category comparison, or trend. If it cannot be
-  enriched and does not support a separate conclusion, merge or omit it.
-- A non-map chart must contain at least two quantitative marks. A lone metric
-  must gain a real prior value, target, benchmark, denominator, peer, range, or
-  time series from the source. A single-row benchmark-gap qualifies because its
-  actual segment, gap segment, and benchmark marker are separate marks. If no
-  valid structure exists, omit the story.
+- `comparison.scenarios` must contain at least three independent values.
+  Supporting facts, annotations, a numeric reference, or a derived total do not
+  rescue two generic bars. Use a relationship-specific two-value recipe when
+  justified; otherwise enrich, merge, or omit.
+- Generic categorical/bar charts need at least three independent quantitative
+  observations. A lone metric must gain real structure. Relationship-specific
+  two-value recipes remain valid when their geometry itself encodes the
+  comparison, such as a true benchmark gap, sign-crossing change, diverging
+  comparison, or duration.
 - For forecasts, targets, outlooks, guidance, and scenario ranges, search for a
   same-unit actual/current/latest realized observation. If available, show it
   on the visual scale as a numeric reference; do not leave it only in
@@ -419,12 +485,12 @@ Composable semantic features include:
   different unit.
 - Separate ChartSpecs when mixed-unit evidence is the main story rather than
   context.
-- `composition.stacked` for a bounded share when both numerator and remainder
-  can be encoded as tangible parts and the part-versus-remainder split itself is
-  the finding. If the source provides a meaningful policy, target, prior, or
-  alternative share against the same tangible total, derive those amounts and
-  prefer shared-total `comparison.benchmark-gap` rows when they give the viewer
-  a stronger anchor.
+- `composition.stacked` for a bounded share only when the tangible whole is
+  reported or retrievable and the part-versus-remainder split itself is the
+  finding. Do not use `100% - share` as invented orientation when the tangible
+  basis is unavailable. If the source provides a meaningful policy, target,
+  prior, peer, regional, or alternative share, use that independent comparison
+  in primary geometry instead.
 - `data[].displayValue` for the tangible amount in composition charts; the
   renderer shows it together with the calculated share.
 
@@ -479,17 +545,17 @@ map geometry and cannot be active map items. Use a separate standard chart,
 
 Regional summary cards are permanently disabled. The callout cards carry the
 evidence, while the compact header, smaller watermark, and wide regional canvas
-reserve more room for the map. Automatic routing always uses short direct
-leaders. Cards stay on their nearest side and follow `calloutOrder` when it is
-supplied, otherwise ChartSpec data order within that side column. Highlighted
-regions are evidence, not routing obstacles, and automatic routing does not
-introduce detours merely to eliminate crossings. Leader-origin dots are never
-rendered. Use explicit `ports` routing only for a verified special case.
+reserve more room for the map. Automatic routing uses one straight segment from
+each region anchor to its card. Cards stay on their geographically sensible side
+and are vertically reordered from anchor geometry to eliminate crossings and
+minimize total travel. `data[]` order and legacy `calloutOrder` do not control
+automatic card placement. Any rendered leader crossing fails regional delivery.
+Highlighted regions are evidence, not routing obstacles. Leader-origin dots are
+never rendered. Use explicit `ports` routing only for a verified special case.
 
 Use a semantic override only when the story requires it:
 
 - `data[].calloutSide`
-- `data[].calloutOrder`
 
 Run:
 
@@ -508,8 +574,8 @@ The regional command performs validation, rendering, shell review, and responsiv
 | Incorrect data count or number | Correct the source-derived data. Do not invent padding values. |
 | Supplied link does not match the input note | Preserve the input claim, do not combine it with the mismatched page, and seek a better supplemental source or report the mismatch. |
 | External search does not repeat an input claim | Keep the expert-authored claim. Silence is not contradiction and must not become an `uncorroborated` label. |
-| A reputable source directly contradicts a material input claim | Preserve both positions in working notes and escalate the conflict for editorial resolution. Do not silently rewrite the report. |
-| Source has only a simple comparison | Keep the chart simple unless a material evidence gap justifies targeted research. |
+| A reputable source directly contradicts a material input claim | Mark the external evidence `conflictStatus: "material"`, preserve both positions in working notes, and hold/omit the candidate until editorial resolution. Never chart the disagreement itself. |
+| Source has only two generic categorical values | Research a third independent same-scale observation, use a defensible relationship-specific recipe, merge, or omit. Do not publish two generic bars. |
 | Additional context is merely adjacent or interesting | Exclude it. Context must strengthen magnitude, comparison, mechanism, or consequence. |
 | Copy-length warning | Shorten the title, label, display value, or detail. |
 | Regional ID error | Run `regions` and use a stable identifier. |

@@ -63,6 +63,12 @@ through its full responsive diagnostics. It checks:
 - Zero diagnostic errors.
 - Regional workflow metadata in the rendered chart.
 - No final leader collisions or fallback routes in the comparison fixture.
+- Ranking value labels retain enough measured/estimated right gutter that the
+  complete label, including trailing units, survives desktop, tablet, and
+  mobile rendering.
+- Converging-signal relationships retain a post-join connector segment toward
+  the outcome so the factor paths do not terminate abruptly at their meeting
+  point.
 
 ### `tests/performance.test.js`
 
@@ -105,6 +111,9 @@ second rendering implementation.
 - Assert semantic outcomes and diagnostics, not incidental DOM order.
 - Keep routing fixtures deterministic and record why a geometry threshold exists.
 - Add a regression test next to the layer that owns the behavior.
+- When a visual defect involves clipped or truncated text, assert both the
+  responsive diagnostic result and the renderer layout contract that reserves
+  the required gutter or label space. Do not rely on a screenshot-only check.
 - Prefer a focused helper or contract test over another opaque snapshot.
 
 For browser-backed tests, pass the browser path through the existing capture

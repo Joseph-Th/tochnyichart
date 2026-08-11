@@ -30,6 +30,13 @@ chart. Inspect and exhaust supplied sources before selecting the recipe, then
 supplement the expert material when reputable reporting strengthens the same
 editorial claim.
 
+Treat each supplied article, dataset, filing, or paragraph as a source family
+before deciding how many charts it should produce. Read it once, collect the
+related quantitative observations, and only then split candidates. A proposed
+chart that is merely a summary, complement, subset, or single-point restatement
+of a richer same-topic comparison or regional distribution should be merged
+into the richer visual rather than published separately.
+
 Do not expose research-process language such as `uncorroborated`, `not
 independently confirmed`, `unsupported draft`, or `verification failed` in a
 chart or presentation merely because an external search did not repeat an input
@@ -37,7 +44,12 @@ claim.
 
 Do not create a two-value chart merely because the input note mentions two values. First determine whether the source provides a useful comparator, component, cause, consequence, forecast, denominator, or historical reference that strengthens the same finding.
 
-Do not add context merely to avoid a simple chart. A clean two-value comparison is correct when the contrast itself is the complete story.
+Do not add irrelevant context merely to avoid a simple chart. But two generic
+categorical bars are not a complete visual argument. `comparison.scenarios`
+requires at least three independent same-scale observations. A two-value story
+is acceptable only when a relationship-specific recipe makes the relationship
+itself the geometry, such as a true benchmark gap, sign-crossing change,
+diverging comparison, or calendar duration. Otherwise enrich, merge, or omit.
 
 ## Authoring order
 
@@ -62,7 +74,7 @@ confirm source identity and relevance for already-inventoried stories
 read the full primary source
     |
     v
-extract evidence and safe derivations
+perform a source-family sweep and extract all related evidence
     |
     v
 identify orientation anchors and material formula inputs
@@ -102,10 +114,11 @@ a better attribution or supplemental source.
 Only a direct, material contradiction from a reputable source creates a source
 conflict. Silence, omission, different emphasis, lack of indexing, inaccessible
 archives, or failure to locate a second report do not. When a direct conflict
-exists, retain both positions in working notes and report the conflict for
-editorial resolution instead of silently rewriting the expert claim.
+exists, mark the external evidence `conflictStatus: "material"`, retain both
+positions in working notes, and do not select or visualize the candidate until
+editorial resolution. Never turn the disagreement itself into chart geometry.
 
-Use the underlying publication, company report, official dataset, or named research source as `source.name` when available. When no usable attribution is available, omit the `source` field. Never substitute `input.txt`, an internal compilation, a file path, verification status, or workflow commentary into chart or presentation copy.
+Use the underlying publication, company report, official dataset, or named research source as `source.name` when available. When no usable attribution is available, omit the `source` field. Never substitute `input.txt`, `input brief`, `the brief`, source text, an internal compilation, a file path, verification status, or workflow commentary into chart or presentation copy. These phrases are validator errors, not warnings.
 
 ## 2. Exhaust the primary source
 
@@ -138,6 +151,13 @@ Extract all facts that could clarify the central finding without changing it:
 
 The evidence should remain attributable to the source and compatible in period, unit, and scope.
 
+The source-family sweep is especially important for cross-sectional and
+regional reporting. Do not stop after finding the one number quoted in
+`input.txt` if the same source also publishes comparable readings for peers,
+regions, earlier periods, benchmarks, or the relevant denominator. Those
+observations determine both whether the chart is sufficiently anchored and
+whether geography should be the visual structure.
+
 ## 3. Use safe derivations
 
 Calculate values that are directly supported by sourced inputs and materially clarify the same story. Common safe derivations include:
@@ -151,7 +171,7 @@ Calculate values that are directly supported by sourced inputs and materially cl
 - Implied shortfall
 - Combined amount
 
-Retain the source inputs and formula in working notes. Do not imply more precision than the source supports. When the source uses terms such as `about`, `almost`, `more than`, or a range, preserve that uncertainty in the display value and explanatory copy.
+Retain the source inputs and formula in working notes. Do not imply more precision than the source supports. Derived display precision must be inherited from the inputs, not from calculator output. If an input is displayed as `≈133,000`, a derived difference should be displayed at roughly thousand-unit precision and retain the approximation qualifier; a value such as `33,333.33` is false precision even if the internal arithmetic used an unrounded denominator. When the source uses terms such as `about`, `almost`, `more than`, `up to`, `at least`, or a range, preserve that uncertainty in the display value and explanatory copy.
 
 When two quantitative inputs in different units materially explain the headline
 outcome, do not derive the outcome and then hide the inputs in supporting text.
@@ -183,6 +203,23 @@ check before recipe selection. Search the input and source for the same-unit
 actual/current/latest realized observation. If it exists, show it on the visual
 scale as primary geometry or a numeric reference. Do not leave the actual value
 in `supportingFacts` while plotting only forecast bands or scenarios.
+
+Threshold stories require the same discipline. When a breakeven level,
+profitability floor, legal limit, cap, ceiling, cutoff, or other numeric
+threshold explains why a before/current value is important, that threshold is
+part of the primary evidence spine. Plot it as a labeled numeric reference,
+benchmark, or threshold mark. Do not replace the title-defining threshold with
+two before/after bars and relegate the threshold to prose.
+
+Small exact counts need magnitude orientation, not merely geometry. A sequence
+of three or four tiny counts, especially one with only two distinct levels,
+does not become informative because it can be connected with a line. Research
+the relevant reviewed universe, portfolio/network total, capacity, population,
+affected sales/volume/value, or a longer quantitative series. When the dates or
+regulatory stages are more informative than count magnitude, use calendar or
+event structure instead. If no useful anchor or richer series exists, merge or
+omit the story rather than publishing a line whose only message is that a few
+objects became a few more objects.
 
 Do not create a synthetic `0%` before-event point or an index value of `100` merely to manufacture a trend. When actual levels can be found in the supplied source, underlying dataset, market-data history, company filing, or industry dataset, use those levels for the primary geometry. Put percentage change in `emphasis`, an annotation, the subtitle, or `supportingFacts`.
 
@@ -249,6 +286,15 @@ A `basis` rail may still document the arithmetic, but it does not satisfy the
 primary-geometry requirement by itself. Raw 8–10%, 15%, or 60% bars are not an
 acceptable fallback when the underlying economy, population, turnover, volume,
 or count can be obtained.
+
+If the tangible basis remains genuinely unavailable or incomparable after the
+required source checks, a single reported rate or share still does not justify
+a standalone chart. Its `100% - share` remainder is mathematically derived from
+the same observation and is not an independent comparator. Recover a same-unit
+peer, regional observation, prior/current point, benchmark, or target from the
+full source or underlying dataset. If a richer same-topic chart already contains
+that orientation, merge the normalized claim into it. If no independent
+orientation exists, omit the thin chart.
 
 Do not mark levels or a basis `unavailable` or `incomparable` after one failed
 search. First state the exact `tangibleTarget`, such as the share prices at the
@@ -510,15 +556,20 @@ Examples:
   actual price inside that total. Do not use the discount amount as `value`.
 - Do not use dot-counting or pictograms. If the source offers only two exact
   count categories, research a third same-scale count, a tangible
-  population/network denominator, a meaningful benchmark, or a time series.
+  population/network denominator, an independent meaningful benchmark, or a
+  time series. The sum of those same two counts is derived and does not count
+  as an anchor.
   A percentage or market statistic in another unit is secondary evidence, not
   enough structure for a standalone two-count chart. If a stronger anchor
   cannot be found, merge or omit the story.
 - When several positive values simply add to one reported total, use
   `composition.components`. Every component begins at zero and the reported
-  total is a single numeric reference. Do not use `flow.waterfall` for that
-  decomposition; waterfall is reserved for a genuine balance moving through
-  exact changes.
+  total is a single reconciling numeric reference. If there are only two
+  components, that sum is not enough orientation by itself: add an independent
+  same-scale benchmark/denominator, recover a third component, use a more
+  meaningful relationship recipe, or merge/omit the story. Do not use
+  `flow.waterfall` for that decomposition; waterfall is reserved for a genuine
+  balance moving through exact changes.
 - A percentage risk range should include a population basis and a mechanism or
   consequence. Without those, enrich it further or omit it.
 - A story with unlike units may use one primary visual plus the unboxed
@@ -544,11 +595,11 @@ Examples:
   when the mix itself is the finding rather than treating every allocation as a
   scenario comparison.
 - A same-period two-value pair should not receive its own
-  `comparison.scenarios` chart merely because two values exist. Search for a
-  third comparable item, numeric reference or threshold, tangible basis, or a
-  numeric mechanism, consequence, denominator, or comparison fact. Also check
-  whether the pair belongs inside an existing same-topic chart. If it cannot be
-  enriched and has no distinct editorial conclusion, merge or omit it.
+  `comparison.scenarios` chart. Recover a third independent same-scale item,
+  use a relationship-specific recipe when the pair has a real benchmark,
+  change, diverging, or duration structure, or merge it into an existing
+  same-topic chart. Supporting facts and derived totals do not rescue two
+  generic bars. If none of those paths is valid, omit it.
 - Apply an information-economy test before authoring: remove any proposed row
   that is only a complement, remainder, duplicated total, or zero-gap endpoint
   already encoded by a segmented bar or benchmark marker.
@@ -561,6 +612,12 @@ named administrative regions combine with a claim about spread, border
 contrast, clustering, adjacency, geographic distribution, or concentration,
 classify geography as `explanatory` and use `regional-breakdown`. Do not turn
 the same evidence into a ranking merely because the quantities are rankable.
+
+Three or more distinct named administrative regions in comparable evidence are
+a regional distribution even without an explicit spatial phrase. Grouped labels
+count every named region. Such evidence must use `regional-breakdown`; the
+standard workflow is not available merely because the values could be ranked.
+With two named regions, the existing spatial-cue rule still applies.
 
 Use `categorical` only when place names behave like ordinary categories and
 their location does not change the conclusion. The source verifier enforces the
@@ -579,6 +636,9 @@ Before authoring the `ChartSpec`, confirm:
 - External evidence is supplemental and does not originate the story.
 - Any linked source used for supplementation matches the story.
 - The full source has been read.
+- A source-family sweep was completed before splitting the source into separate
+  charts, and no selected candidate is only a summary, complement, subset, or
+  single-point restatement of richer same-topic evidence.
 - All directly relevant evidence has been extracted.
 - `visualEvidenceAudit` inventories every materially relevant same-scale
   observation; when three or more exist, every one appears in ChartSpec
@@ -586,6 +646,9 @@ Before authoring the `ChartSpec`, confirm:
 - Derived values are traceable and period-compatible.
 - Actual-level availability has been checked before choosing a percentage representation.
 - For a rate or share, basis availability has been checked and documented; a reported or retrievable basis has been converted to level geometry.
+- For a rate or share with unavailable or incomparable basis, the chart has at
+  least one independent same-unit orientation point beyond the headline value;
+  a derived complement does not count.
 - Any `unavailable` or `incomparable` normalized representation names its `tangibleTarget` and has at least two completed, source-specific research attempts covering two source types, including a data-bearing source.
 - The source-ledger `representationAudit` matches `measure.valueMode` and `measure.levelAvailability`.
 - `relationship.converging-signals`, when used, contains two genuine drivers
@@ -599,21 +662,28 @@ Before authoring the `ChartSpec`, confirm:
   before/after pair that belongs in level geometry.
 - Index geometry is used only for a named, source-reported index with actual point values; synthetic 100-based baselines and viewer-facing `index` labels are absent.
 - Risk stories include a population or denominator plus a mechanism or consequence.
-- An exact two-item `comparison.scenarios` chart has a numeric reference, basis,
-  mechanism, consequence, denominator, or comparison fact, and is not a subset
-  of a richer same-topic chart.
+- `comparison.scenarios` contains at least three independent values. A numeric
+  reference, supporting fact, annotation, or derived total cannot rescue two
+  generic bars.
 - Dated intervals use `timeline.duration`; price, cost, freight, margin, discount, premium, shortfall, and overage stories use segmented benchmark geometry when their defining evidence is available.
 - Repeated category/time pairs are never flattened into `comparison.scenarios`.
   Use `comparison.benchmark-gap` for one or two category pairs and
   `comparison.dumbbell` for three or more.
-- Benchmark-gap specs plot the underlying tangible actual and total benchmark,
-  use one row when one relationship is complete, and contain no complement or
-  zero-gap closure rows.
+- Benchmark-gap specs plot the underlying tangible actual and a meaningful
+  same-quantity, same-unit benchmark. `gapDisplayValue` states the arithmetic
+  gap or percentage context, not a ratio, per-unit equivalence, or cross-unit
+  conversion. Use one row when one relationship is complete, and include no
+  complement or zero-gap closure rows.
 - Mixed-measure driver/outcome stories use `relationship.converging-signals` rather
   than a shared axis, with identity versus directional mode supported by the
   evidence.
 - External research supplements rather than silently overrides the input.
-- Any direct contradiction has been escalated for editorial resolution.
+- Any direct material contradiction is marked `conflictStatus: "material"`,
+  retained in working evidence, and prevents selection until editorial
+  resolution.
 - Every selected fact supports magnitude, comparison, mechanism, or consequence.
+- Three or more distinct named administrative regions in comparable evidence
+  have been routed to `regional-breakdown`, including regions embedded in one
+  grouped label.
 - The central finding remains singular and clear.
 - The selected recipe reflects the enriched evidence rather than the abbreviated input note.

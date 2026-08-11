@@ -159,17 +159,62 @@ When mixed-unit facts are not secondary but jointly define the headline, use
 prices producing higher spending is incomplete if only purchase volume is
 plotted and spending and prices are placed in supporting facts.
 
+### Relationship charts are evidentiary claims
+
+The converging connector is not a decorative way to place three interesting
+numbers on one page. In directional mode it asserts that the plotted drivers
+help explain the plotted outcome. The source-ledger mechanism evidence must
+therefore explicitly mention the outcome and at least one driver in the same
+supported linkage. A sentence that only lists the drivers, describes events in
+sequence, or reports a later operating threshold does not establish that
+relationship.
+
+Before selecting `relationship.converging-signals`, complete this sentence
+literally from the evidence: “The plotted drivers affect the plotted outcome
+because ___.” If the blank cannot be filled with source-supported mechanism
+evidence, use comparison geometry, split the observations into separate
+charts, or omit the relationship. In particular, a minimum size, policy
+threshold, or later design choice is not an outcome of earlier disruption
+magnitudes unless the source explicitly makes that connection.
+
+The visual treatment reinforces the same reading: the two driver connectors
+meet and continue briefly toward the outcome in one connector color. There is
+no decorative hub or node.
+
 ## The visual-evidence gate
 
 Every production chart must carry its main argument through geometry tied to
 data. A wall of prose, a set of status cards, or one oversized number is not a
 chart.
 
-- A non-map chart requires at least two quantitative marks.
+- A generic categorical/bar chart requires at least three independent
+  quantitative observations. A two-value chart is acceptable only when a
+  relationship-specific recipe makes the relationship itself the geometry,
+  such as a true benchmark gap, sign-crossing change, diverging comparison, or
+  calendar duration.
 - A lone value must be enriched with a source-supported prior value, target,
-  benchmark, denominator, remainder, peer, range, or time series.
+  benchmark, denominator, peer, range, or time series. A derived complement or
+  remainder is not a second independent observation.
+- Derived display values must inherit the precision and uncertainty of their
+  source inputs. Never publish calculator-level decimals from a rounded or
+  approximate benchmark; round the derivation to the coarsest constraining
+  source precision and preserve `about`, `approximately`, `up to`, `at least`,
+  or equivalent qualifiers.
+- If the headline is defined by crossing a breakeven, profitability floor,
+  threshold, cap, ceiling, limit, or cutoff, that numeric anchor must be visible
+  in primary geometry. Before/after values do not replace the threshold that
+  makes the comparison meaningful.
 - A rate or share with a recoverable basis must expose the underlying tangible
   amounts.
+- A rate or share whose tangible basis remains unavailable or incomparable
+  still needs independent same-unit orientation. One percentage plus
+  `100% - share` is one observation plus arithmetic, not a comparison. Recover
+  a peer, regional observation, prior/current point, benchmark, or target;
+  merge into a richer same-topic visual when available, otherwise omit it.
+- Three or more distinct named administrative regions in comparable evidence
+  are a regional distribution and must use `map.regional`, even when the prose
+  does not explicitly say `spread`, `border`, or `regional pattern`. Grouped
+  labels count every named region.
 - A risk range must identify the exposed population or denominator and at least
   one mechanism or consequence, and the total population must be visible on the
   plotted scale.
@@ -179,6 +224,11 @@ chart.
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence must be plotted as a trend rather than reduced to a
   two-value comparison with the rest in supporting facts.
+- A short 3–4 point series of tiny exact counts is not automatically a useful
+  trend. Require an independent same-unit denominator, portfolio/network or
+  reviewed-universe total, capacity, affected volume/value, or a richer series.
+  If chronology carries more information than count magnitude, use event or
+  calendar structure instead; otherwise merge or omit the thin count story.
 - A discount, premium, shortfall, or overage should show both the benchmark
   total and the actual amount, not only the difference.
 - Categorical operating states must be quantified on one common dimension or
@@ -201,6 +251,20 @@ Two-part compositions use one label treatment per segment. When both segments
 are large enough, the label, share, and tangible amount appear inside the bar.
 When a segment is too small, both labels move outside. The same information must
 not appear both inside the bar and immediately below it.
+
+Reference lines follow the same economy rule. Every reference must materially
+orient the main geometry and must carry a meaningful viewer-facing label.
+Punctuation-only labels, invisible-label tricks, and duplicate reference lines
+are invalid. If a secondary rate or current reading is useful context but not
+important enough to label on the scale, keep it in `supportingFacts` instead of
+drawing another line.
+
+Within one visual family, keep notation consistent. A relationship card set
+must not mix `pp`/percentage-point labels with `%` rate labels. When the
+mathematical distinction matters, explain the percentage-point contribution in
+the item detail or note, or choose a representation that does not present the
+two notations as peers. Never relabel percentage points as percent merely for
+cosmetic consistency.
 
 ## Source coverage and title fidelity
 
@@ -227,7 +291,12 @@ ChartSpecs must exactly match the source-ledger entries marked selected.
 ## Consolidation gate
 
 The inventory is a claim ledger, not a one-claim-per-slide instruction. Before
-finalizing selections, compare candidate charts for duplicate visual structure.
+finalizing selections, perform a source-family sweep and compare candidate
+charts for duplicate or nested visual structure. Read each supplied article,
+dataset, or paragraph as a whole before deciding how many charts it should
+produce. A summary, complement, subset, or single-point restatement of a richer
+same-topic comparison or regional distribution should be merged into that
+richer visual.
 Two selected stories must be consolidated when they share all of the following:
 
 - The same exact input passage.
@@ -255,6 +324,13 @@ average, min-max range, or days-of-coverage conversion may be added, but it may
 not replace named shipment components, categories, facilities, peers, or time
 points already available in the evidence.
 
+For a normalized `rate` or `share` with unavailable or incomparable tangible
+basis, this preservation gate begins at two independent same-unit observations,
+not three. If the source contains a peer or regional reading that anchors the
+headline percentage, that comparator belongs in primary geometry. A derived
+complement does not count toward the threshold and cannot replace the real
+comparison.
+
 This gate prevents an information-rich source from becoming a one-row chart.
 Single-row range and benchmark treatments remain valid only when the underlying
 story genuinely consists of one interval or one actual-to-benchmark
@@ -266,14 +342,14 @@ that row.
 | Recipe | Semantic contract |
 | --- | --- |
 | `comparison.change` | Two periods of one quantity for one scope only when one value cannot be read naturally as the positive actual/current level against a prior, standard, limit, target, or other benchmark. Typical uses are sign-crossing levels, zero-to-nonzero movement, and native rate/index changes. |
-| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Three to five items are preferred. Exactly two items require a numeric reference, basis, or source-supported mechanism, consequence, denominator, or comparison fact. Repeated category/time pairs are not scenarios. |
+| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Requires three to five independent items. Two generic bars are not a valid scenarios chart, even with supporting copy or a derived total. Repeated category/time pairs are not scenarios. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. A one-row range needs a genuinely independent reference; a point or reference equal to the low/high endpoint is redundant. Forecast and target ranges should include an available same-unit actual/current value as a numeric reference. |
-| `comparison.benchmark-gap` | One to six actual/current values shown against meaningful benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. One or two category-level earlier/current pairs also belong here, with current as `value` and prior as `benchmark`. Two meaningful policy, target, or payout shares may use separate rows against the same tangible total when that common total gives the viewer a stronger anchor than a single hypothetical split. |
+| `comparison.benchmark-gap` | One to six actual/current values shown against meaningful same-quantity, same-unit benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. `gapDisplayValue` must describe the arithmetic difference or percentage context, never a ratio, per-unit equivalence, or cross-unit conversion. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
 | `relationship.converging-signals` | Exactly two quantitative drivers or formula inputs and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism or identity, including material derivations such as quantity × unit price = value. Each measure is drawn as an independent local quantitative signal; the two input paths meet near the outcome, with no decorative merge node and no separate output connector into the outcome signal. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
-| `composition.components` | Two to six positive additive components of one reported total. Every component starts at zero; one numeric reference shows the reconciled total. Use this instead of a waterfall when the point is component magnitude rather than a running balance. |
+| `composition.components` | Two to six positive additive components of one reported total. Every component starts at zero; one numeric reference reconciles the total. A two-component chart also needs an independent same-scale benchmark/denominator beyond that derived sum. Use this instead of a waterfall when the point is component magnitude rather than a running balance. |
 | `flow.waterfall` | One existing balance or level moves through exact reported changes into an ending value. Do not use it for a set of positive components that merely add to one total. |
 
 A title about one broad topic is not enough. “E-commerce pressure” does not make
@@ -299,14 +375,11 @@ meaningful benchmark, or a time series. A percentage in another unit may be
 useful context, but it does not create enough quantitative structure by itself.
 If targeted research cannot supply a stronger anchor, merge or omit the story.
 
-An exact two-item `comparison.scenarios` pair is not automatically a chart.
-Before selecting it, look for one of the following: a third comparable item, a
-numeric reference or threshold, a tangible basis, or a source-supported numeric
-mechanism, consequence, denominator, or comparison fact. Also check whether the
-pair is a subset of an existing same-topic chart, especially a regional map or
-larger category comparison. If the pair cannot be enriched and does not carry a
-distinct editorial conclusion, mark it `merged` or `omitted` rather than giving
-it a standalone slide.
+Do not author an exact two-item `comparison.scenarios` chart. Recover a third
+independent same-scale item, use a relationship-specific recipe when the pair
+has a real benchmark/change/duration structure, merge it into an existing
+same-topic chart, or omit it. Supporting facts and derived totals do not make
+two generic bars analytically sufficient.
 
 For forecasts, targets, outlooks, guidance, and scenario ranges, search for the
 same-unit actual/current/latest realized observation before accepting the chart.
@@ -330,6 +403,12 @@ the reader can already see. A discount chart must show the discounted price
 inside the undiscounted reference price, not chart the discount amount as if it
 were the price.
 
+The benchmark and value must measure the same quantity in the same unit. A unit
+size such as square metres per hub cannot serve as a benchmark for a whole-area
+total merely to manufacture an equivalence count. If the useful conclusion is a
+ratio or mixed-unit identity, show it as supporting context or use
+`relationship.converging-signals` when the inputs and outcome are all material.
+
 The benchmark renderer uses one fixed label system: the actual/current value,
 gap, and benchmark labels all sit beneath the bar. When their horizontal text
 boxes would collide, the renderer moves only the conflicting label to a lower
@@ -342,6 +421,11 @@ When several positive values simply add to one reported total, use
 single numeric reference. A waterfall is reserved for a genuine running balance
 with changes to an existing level; using it for a simple decomposition makes
 later components float above zero and misstates their magnitude.
+
+With exactly two components, the total is only the arithmetic sum of the two
+bars and does not provide independent orientation. A two-component decomposition
+must therefore add a real same-scale benchmark/denominator or be enriched with a
+third component, converted to a relationship-specific chart, merged, or omitted.
 
 The same geometry is useful when a policy, target, payout, or allocation story
 contains two meaningful shares of one known total. Derive the tangible amount
@@ -522,8 +606,9 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
 4. Does every icon or visual treatment encode a real quantity, denominator, or
    status?
 5. Is the broader story visible without mixing unrelated evidence on one axis?
-6. Does a non-map visual contain at least two data-driven marks rather than a
-   prose list or one headline number?
+6. Does a generic categorical/bar visual contain at least three independent
+   observations, or does a two-value visual use relationship-specific geometry
+   that makes the relationship itself the evidence?
 7. Is the title directly supported by an exact excerpt from `input.txt`?
 8. Does the final chart set cover every ledger item marked selected and exclude
    every unselected or externally originated story?
@@ -536,6 +621,14 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
     or consequence?
 13. Are dated intervals on a calendar and benchmark gaps shown against their
     totals?
+14. If the source contains three or more distinct administrative regions on a
+    comparable measure, is the story routed to the regional workflow rather
+    than flattened into a ranking?
+15. If a normalized rate or share has no tangible basis, does it have an
+    independent same-unit comparator beyond its own derived complement?
+16. Was the full source family checked for richer regional, peer, historical,
+    benchmark, or denominator evidence before accepting a thin standalone
+    chart?
 
 If any answer is no, change the recipe or evidence structure before changing the
 styling.

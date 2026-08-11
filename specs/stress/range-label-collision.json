@@ -85,7 +85,9 @@
     "scale": "linear",
     "quantity": "synthetic percentage",
     "valueMode": "rate",
-    "levelAvailability": "not-applicable"
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "not-applicable",
+    "basisNote": "Synthetic native percentage values are used only to exercise range-label and reference-line layout behavior."
   },
   "narrative": {
     "frame": "neutral",

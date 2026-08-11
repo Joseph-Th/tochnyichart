@@ -734,6 +734,102 @@ function nearlyEqual(left, right) {
   return Math.abs(left - right) <= scale * 1e-9;
 }
 
+const UNCERTAINTY_DISPLAY_PATTERN = /(?:≈|~|\b(?:about|around|roughly|approximately|approx\.?|estimated|estimate|up to|at least|more than|less than)\b)/i;
+const DISPLAY_NUMBER_TOKEN = /[+\-−]?\s*(?:\d{1,3}(?:[ ,\u00a0\u202f]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)/;
+const THRESHOLD_CUE_PATTERN = /\b(?:break[- ]?even|breakeven|profitability\s+(?:threshold|floor)|threshold|floor|ceiling|limit|cap|cutoff|trigger|minimum|maximum)\b/i;
+const COUNT_ANCHOR_CUE_PATTERN = /\b(?:benchmark|baseline|total|population|portfolio|universe|reviewed|eligible|available|network|fleet|market|capacity|standard|limit|target|threshold|cap|ceiling|floor|maximum|minimum)\b/i;
+
+function numericDisplayMeta(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.replace(/[\u00a0\u202f]/g, ' ').replace(/−/g, '-');
+  const match = text.match(DISPLAY_NUMBER_TOKEN);
+  if (!match) return null;
+
+  const rawToken = match[0].replace(/\s+/g, '');
+  const sign = rawToken.startsWith('-') ? -1 : 1;
+  let unsigned = rawToken.replace(/^[+\-]/, '');
+  let normalized = unsigned;
+  let decimals = 0;
+  if (unsigned.includes('.') && unsigned.includes(',')) {
+    normalized = unsigned.replace(/,/g, '');
+    decimals = (normalized.split('.')[1] || '').length;
+  } else if (unsigned.includes(',')) {
+    const groupedInteger = /^\d{1,3}(?:,\d{3})+$/.test(unsigned);
+    if (groupedInteger) {
+      normalized = unsigned.replace(/,/g, '');
+    } else {
+      normalized = unsigned.replace(',', '.');
+      decimals = (normalized.split('.')[1] || '').length;
+    }
+  } else if (unsigned.includes('.')) {
+    decimals = (unsigned.split('.')[1] || '').length;
+  }
+
+  const baseValue = Number(normalized);
+  if (!Number.isFinite(baseValue)) return null;
+  const afterToken = text.slice((match.index || 0) + match[0].length, (match.index || 0) + match[0].length + 24);
+  const scaleMatch = afterToken.match(/^\s*(k|thousand|million|billion)\b/i);
+  const scaleWord = scaleMatch ? scaleMatch[1].toLowerCase() : '';
+  const scale = scaleWord === 'k' || scaleWord === 'thousand'
+    ? 1e3
+    : scaleWord === 'million'
+      ? 1e6
+      : scaleWord === 'billion'
+        ? 1e9
+        : 1;
+  const uncertain = UNCERTAINTY_DISPLAY_PATTERN.test(text);
+  let resolution = scale * (10 ** -decimals);
+  if (decimals === 0 && scale === 1 && uncertain) {
+    const integerDigits = normalized.replace(/^0+/, '') || '0';
+    const trailingZeros = (integerDigits.match(/0+$/) || [''])[0].length;
+    if (trailingZeros > 0) resolution = 10 ** trailingZeros;
+  }
+  return {
+    value: sign * baseValue * scale,
+    resolution,
+    uncertain
+  };
+}
+
+function thresholdValuesFromCopy(copy) {
+  if (typeof copy !== 'string' || !THRESHOLD_CUE_PATTERN.test(copy)) return [];
+  const cueExpression = new RegExp(THRESHOLD_CUE_PATTERN.source, 'gi');
+  const numberExpression = new RegExp(DISPLAY_NUMBER_TOKEN.source, 'g');
+  const cues = [...copy.matchAll(cueExpression)];
+  const numbers = [...copy.matchAll(numberExpression)];
+  const values = [];
+  cues.forEach((cue) => {
+    const cueStart = cue.index || 0;
+    const cueEnd = cueStart + cue[0].length;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    numbers.forEach((number) => {
+      const numberStart = number.index || 0;
+      const numberEnd = numberStart + number[0].length;
+      const distance = numberEnd <= cueStart
+        ? cueStart - numberEnd
+        : numberStart >= cueEnd
+          ? numberStart - cueEnd
+          : 0;
+      if (distance < nearestDistance) {
+        nearest = number;
+        nearestDistance = distance;
+      }
+    });
+    if (!nearest || nearestDistance > 48) return;
+    const start = nearest.index || 0;
+    const meta = numericDisplayMeta(copy.slice(start, start + nearest[0].length + 24));
+    if (meta && !values.some((value) => nearlyEqual(value, meta.value))) values.push(meta.value);
+  });
+  return values;
+}
+
+function inheritedDisplayResolution(meta, rawValue) {
+  if (!meta || !Number.isFinite(rawValue)) return 0;
+  const visiblyRounded = !nearlyEqual(meta.value, rawValue);
+  return (meta.uncertain || visiblyRounded) ? meta.resolution : 0;
+}
+
 function validateBenchmarkGapEconomy(spec, data, errors) {
   const quantity = spec.measure?.quantity || '';
   if (GAP_MEASURE_WORDS.test(quantity)) {
@@ -748,6 +844,40 @@ function validateBenchmarkGapEconomy(spec, data, errors) {
         `data[${index}] has no benchmark gap because value equals benchmark. ` +
         'Use another recipe or omit the row; a zero-length gap does not add quantitative information.'
       );
+    }
+    if (Number.isFinite(item?.value) && Number.isFinite(item?.benchmark) && hasNumericVisibleValue(item?.gapDisplayValue)) {
+      const gapMeta = numericDisplayMeta(item.gapDisplayValue);
+      const valueMeta = numericDisplayMeta(item.displayValue);
+      const benchmarkMeta = numericDisplayMeta(item.benchmarkDisplayValue);
+      const statedGap = gapMeta?.value ?? null;
+      const arithmeticGap = Math.abs(item.benchmark - item.value);
+      const isPercentageContext = /%|percent|percentage/i.test(item.gapDisplayValue || '');
+      if (statedGap !== null && !isPercentageContext && gapMeta) {
+        const operandResolution = Math.max(
+          inheritedDisplayResolution(valueMeta, item.value),
+          inheritedDisplayResolution(benchmarkMeta, item.benchmark)
+        );
+        const arithmeticTolerance = Math.max(1e-9, gapMeta.resolution / 2, operandResolution / 2);
+        if (Math.abs(Math.abs(statedGap) - arithmeticGap) > arithmeticTolerance) {
+          errors.push(
+            `data[${index}].gapDisplayValue must describe the arithmetic gap between value and benchmark in the plotted measure at an honest display precision. ` +
+            `The underlying gap is ${arithmeticGap}, but "${item.gapDisplayValue}" is outside the rounding tolerance implied by the visible inputs. ` +
+            'Ratios, per-unit equivalences, and cross-unit conversions belong in supporting context or a relationship recipe, not in benchmark-gap geometry.'
+          );
+        }
+        if (operandResolution > 0 && gapMeta.resolution + 1e-12 < operandResolution) {
+          errors.push(
+            `data[${index}].gapDisplayValue shows false precision. A derived gap cannot be displayed more precisely than the least precise visible input. ` +
+            `Round the gap to the coarsest input precision instead of exposing calculator digits.`
+          );
+        }
+        if ((valueMeta?.uncertain || benchmarkMeta?.uncertain) && !gapMeta.uncertain) {
+          errors.push(
+            `data[${index}].gapDisplayValue drops uncertainty from an approximate or bounded input. ` +
+            'Derived display values must preserve qualifiers such as approximately, about, up to, or at least.'
+          );
+        }
+      }
     }
   });
 
@@ -779,6 +909,49 @@ function validateBenchmarkGapEconomy(spec, data, errors) {
       }
     }
   }
+}
+
+function hasIndependentCountAnchor(spec, data) {
+  const values = data.map((item) => item?.value).filter((value) => Number.isFinite(value));
+  const componentSum = values.reduce((sum, value) => sum + value, 0);
+  const references = Array.isArray(spec.references) ? spec.references : [];
+  const hasReference = references.some((reference) =>
+    Number.isFinite(reference?.value) &&
+    COUNT_ANCHOR_CUE_PATTERN.test(reference?.label || '') &&
+    !values.some((value) => nearlyEqual(value, reference.value)) &&
+    !nearlyEqual(componentSum, reference.value)
+  );
+  const hasBenchmark = data.some((item) =>
+    Number.isFinite(item?.benchmark) && !nearlyEqual(item.benchmark, item.value)
+  );
+  const hasBasis = isObject(spec.basis) && Array.isArray(spec.basis.items) && spec.basis.items.some((item) =>
+    ['denominator', 'population'].includes(item?.role) && Number.isFinite(item?.value)
+  );
+  return hasReference || hasBenchmark || hasBasis;
+}
+
+function validateSmallExactCountSeriesStrength(spec, data, errors) {
+  if (!['trend.line', 'ranking.horizontal', 'comparison.scenarios', 'comparison.range'].includes(spec.recipe)) return;
+  if (data.length < 3 || data.length > 4 || !isCountLikeMeasure(spec)) return;
+  const values = data.map((item) => item?.value);
+  if (!values.every((value) => Number.isInteger(value) && value >= 0)) return;
+  const tinyMagnitude = Math.max(...values) <= 12;
+  const lowVariation = new Set(values).size <= 2;
+  if (!tinyMagnitude && !lowVariation) return;
+  if (spec.recipe === 'trend.line') {
+    errors.push(
+      'A 3–4 point line chart of small exact counts is too sparse and self-evident to justify trend geometry. ' +
+      'Do not connect a few tiny integers merely because they have dates. Recover a longer series, or use an anchored point/range/composition treatment that shows the counts against a real reviewed universe, portfolio/network total, population, capacity, or affected magnitude. ' +
+      'If chronology is the main information, use event/calendar structure rather than a count line.'
+    );
+    return;
+  }
+  if (hasIndependentCountAnchor(spec, data)) return;
+  errors.push(
+    'A 3–4 point chart of small exact counts is too self-evident to justify standalone trend/ranking geometry without orientation. ' +
+    'Research and plot an independent population, portfolio, network, reviewed universe, capacity, or other same-unit benchmark; alternatively recover a richer quantitative series or use event/timeline structure when dates, not count magnitude, carry the story. ' +
+    'Do not publish a line whose main insight is merely that a few objects became a few more objects.'
+  );
 }
 
 function validateConvergingSignals(spec, data, errors) {
@@ -840,6 +1013,18 @@ function validateConvergingSignals(spec, data, errors) {
   if (spec.relationship.mode === 'directional' && (scopes.size > 1 || periods.size > 1) && !spec.note) {
     errors.push('A directional relationship with mixed scopes or periods requires note explaining why the observations do not reconcile arithmetically.');
   }
+  const percentNotation = data.map((item) => {
+    const visible = String(item?.displayValue || '');
+    if (/\b(?:pp|percentage\s+points?)\b/i.test(visible)) return 'percentage-points';
+    if (/%|\bpercent\b/i.test(visible)) return 'percent';
+    return null;
+  }).filter(Boolean);
+  if (new Set(percentNotation).size > 1) {
+    errors.push(
+      'relationship.converging-signals cannot mix visible percentage-point notation (pp/percentage points) with percent-rate notation (%) across signal cards. ' +
+      'Use one viewer-facing notation family when mathematically valid, or explain the percentage-point contribution in detail/note without silently converting pp to %.'
+    );
+  }
   if (spec.narrative?.emphasis !== 'convergence') {
     errors.push('relationship.converging-signals requires narrative.emphasis convergence.');
   }
@@ -864,13 +1049,15 @@ function validateExactCountPairStrength(spec, data, errors) {
   if (data.length !== 2 || !isCountLikeMeasure(spec)) return;
   const exactCounts = data.every((item) => Number.isInteger(item?.value) && item.value >= 0);
   if (!exactCounts) return;
+  const componentSum = data.reduce((sum, item) => sum + item.value, 0);
   const hasReference = Array.isArray(spec.references) && spec.references.some((reference) =>
-    typeof reference?.value === 'number' && Number.isFinite(reference.value)
+    typeof reference?.value === 'number' && Number.isFinite(reference.value) &&
+    !nearlyEqual(reference.value, componentSum)
   );
   const hasBasis = isObject(spec.basis) && Array.isArray(spec.basis.items) && spec.basis.items.length >= 2;
   if (!hasReference && !hasBasis) {
     errors.push(
-      'Two exact count categories are not enough for a standalone chart. Add a third comparable count, a tangible denominator or population, a benchmark/reference, or a time series. Mechanism or consequence facts in another unit do not rescue a thin count comparison.'
+      'Two exact count categories are not enough for a standalone chart. Add a third comparable count, a tangible denominator or population, an independent benchmark/reference, or a time series. The sum of the two counts is derived from the bars and does not count as an anchor; mechanism or consequence facts in another unit do not rescue the comparison.'
     );
   }
 }
@@ -894,27 +1081,50 @@ function validateBenchmarkPreference(spec, data, errors) {
 
 function validateStandaloneScenarioPair(spec, data, errors) {
   if (spec.recipe !== 'comparison.scenarios' || data.length !== 2) return;
-  const hasReference = Array.isArray(spec.references) && spec.references.length > 0;
-  const hasBasis = isObject(spec.basis) && Array.isArray(spec.basis.items) && spec.basis.items.length >= 2;
-  const hasContextFact = Array.isArray(spec.supportingFacts) && spec.supportingFacts.some((fact) =>
-    FACT_ROLES.has(fact?.role) && fact.role !== 'context' && hasNumericVisibleValue(fact?.value)
+  errors.push(
+    'comparison.scenarios requires at least three independent scenario/category values. Two generic bars are not an acceptable standalone chart even when supporting copy or a derived total is available. Use a relationship-specific recipe such as comparison.benchmark-gap, comparison.change, or timeline.duration when the two-value relationship itself is the evidence; otherwise enrich, merge, or omit the story.'
   );
-  const hasNumericAnnotation = data.some((item) => hasNumericVisibleValue(item?.annotation));
-  if (!hasReference && !hasBasis && !hasContextFact && !hasNumericAnnotation) {
-    errors.push(
-      'A two-item comparison.scenarios chart is too thin to stand alone. Add a source-supported numeric reference, basis, mechanism, consequence, denominator, or comparison fact; otherwise merge it into a richer same-topic chart or omit it.'
-    );
-  }
   validateExactCountPairStrength(spec, data, errors);
 }
 
 function numericValueFromDisplay(value) {
-  if (typeof value !== 'string') return null;
-  const normalized = value.replace(/−/g, '-').replace(',', '.');
-  const match = normalized.match(/[+\-]?\s*\d+(?:\.\d+)?/);
-  if (!match) return null;
-  const parsed = Number(match[0].replace(/\s+/g, ''));
-  return Number.isFinite(parsed) ? parsed : null;
+  return numericDisplayMeta(value)?.value ?? null;
+}
+
+function validateThresholdAnchoring(spec, errors) {
+  const editorial = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
+  const thresholdValues = thresholdValuesFromCopy(editorial);
+  if (!thresholdValues.length) return;
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  const references = Array.isArray(spec.references) ? spec.references : [];
+  thresholdValues.forEach((thresholdValue) => {
+    const referenceVisible = references.some((reference) => nearlyEqual(reference?.value, thresholdValue));
+    const benchmarkVisible = data.some((item) => nearlyEqual(item?.benchmark, thresholdValue));
+    const thresholdDataVisible = data.some((item) => {
+      const label = `${item?.label || ''} ${item?.annotation || ''}`;
+      if (!THRESHOLD_CUE_PATTERN.test(label)) return false;
+      return nearlyEqual(item?.value, thresholdValue) || nearlyEqual(item?.low, thresholdValue) || nearlyEqual(item?.high, thresholdValue);
+    });
+    if (referenceVisible || benchmarkVisible || thresholdDataVisible) return;
+    errors.push(
+      `The title or key finding is defined by a numeric threshold (${thresholdValue}), but that threshold is missing from primary geometry. ` +
+      'Plot it as a labeled numeric reference, use it as the benchmark, or encode it as a threshold mark. ' +
+      'Do not let before/after bars displace the breakeven, floor, ceiling, cap, or limit that actually defines the story.'
+    );
+  });
+
+  if (spec.recipe === 'comparison.benchmark-gap' && data.some((item) => Number.isFinite(item?.benchmark))) {
+    const usesThresholdAsBenchmark = thresholdValues.some((thresholdValue) =>
+      data.some((item) => nearlyEqual(item?.benchmark, thresholdValue))
+    );
+    if (!usesThresholdAsBenchmark) {
+      errors.push(
+        'This is a threshold-breach story, but comparison.benchmark-gap is using prior values as the visual benchmark instead of the threshold that defines the finding. ' +
+        'Use threshold-oriented geometry such as comparison.range with the relevant before/current observations plus the labeled threshold reference, or make the threshold itself the benchmark when that is the true comparison. ' +
+        'Do not let the size of the before/after decline become more visually important than crossing the breakeven, floor, cap, ceiling, or limit.'
+      );
+    }
+  }
 }
 
 function validateForecastOrientationAnchor(spec, errors) {
@@ -998,7 +1208,7 @@ function validateRecipe(spec, errors, warnings) {
       if (!spec.emphasis) warnings.push('comparison.change is clearer with an emphasis object.');
       break;
     case 'comparison.scenarios':
-      if (count < 2 || count > 5) errors.push('comparison.scenarios requires 2 to 5 data items.');
+      if (count < 3 || count > 5) errors.push('comparison.scenarios requires 3 to 5 independent data items.');
       requireNumericValues(spec, errors);
       validateStandaloneScenarioPair(spec, data, errors);
       {
@@ -1131,17 +1341,26 @@ function validateRecipe(spec, errors, warnings) {
       if (spec.measure?.baseline !== 'zero') {
         errors.push('composition.components requires measure.baseline zero so every component is visibly seated at zero.');
       }
-      const totalReferences = Array.isArray(spec.references)
+      const numericReferences = Array.isArray(spec.references)
         ? spec.references.filter((reference) => typeof reference?.value === 'number' && Number.isFinite(reference.value))
         : [];
-      if (totalReferences.length !== 1) {
-        errors.push('composition.components requires exactly one numeric reference representing the reported total.');
-      } else {
-        const componentTotal = data.reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0);
-        const decimals = Number.isInteger(spec.measure?.decimals) ? spec.measure.decimals : 0;
-        const tolerance = Math.max(1e-9, 0.5 * (10 ** -decimals));
-        if (Math.abs(componentTotal - totalReferences[0].value) > tolerance) {
-          errors.push(`composition.components must reconcile to its total reference; component sum is ${componentTotal}, reference is ${totalReferences[0].value}.`);
+      const componentTotal = data.reduce((sum, item) => sum + (typeof item?.value === 'number' ? item.value : 0), 0);
+      const decimals = Number.isInteger(spec.measure?.decimals) ? spec.measure.decimals : 0;
+      const tolerance = Math.max(1e-9, 0.5 * (10 ** -decimals));
+      const reconciledReferences = numericReferences.filter((reference) =>
+        Math.abs(componentTotal - reference.value) <= tolerance
+      );
+      if (reconciledReferences.length !== 1) {
+        errors.push('composition.components requires exactly one numeric reference equal to the reported/reconciled component total.');
+      }
+      if (count === 2) {
+        const independentReferences = numericReferences.filter((reference) =>
+          Math.abs(componentTotal - reference.value) > tolerance
+        );
+        if (!independentReferences.length) {
+          errors.push(
+            'A two-component bar decomposition is too thin when its only reference is the sum of those same two bars. Add an independent same-scale benchmark/denominator, recover a third component, use a relationship-specific recipe, or merge/omit the story.'
+          );
         }
       }
       if (spec.primaryMetric) {
@@ -1501,9 +1720,27 @@ function validateReferences(spec, errors, warnings) {
     }
     if (typeof reference.value !== 'number' || !Number.isFinite(reference.value)) errors.push(`references[${index}].value must be a finite number.`);
     pushLengthIssue(reference.label, `references[${index}].label`, 80, errors, warnings, 55);
+    if (typeof reference.label === 'string' && reference.label.trim() && !/[\p{L}\p{N}]/u.test(reference.label)) {
+      errors.push(
+        `references[${index}].label must contain meaningful viewer-facing text. ` +
+        'Punctuation-only or placeholder labels create effectively unlabeled reference lines; remove the line or label it clearly.'
+      );
+    }
     if (reference.tone !== undefined && !TONES.has(reference.tone)) errors.push(`references[${index}].tone is not supported.`);
     if (reference.lineStyle !== undefined && !['line', 'dashed'].includes(reference.lineStyle)) errors.push(`references[${index}].lineStyle is not supported.`);
   });
+  for (let first = 0; first < spec.references.length; first += 1) {
+    for (let second = first + 1; second < spec.references.length; second += 1) {
+      if (Number.isFinite(spec.references[first]?.value) &&
+          Number.isFinite(spec.references[second]?.value) &&
+          nearlyEqual(spec.references[first].value, spec.references[second].value)) {
+        errors.push(
+          `references[${first}] and references[${second}] draw duplicate lines at the same value. ` +
+          'Keep one clearly labeled reference and move secondary context to supportingFacts.'
+        );
+      }
+    }
+  }
 }
 
 function validateEmphasis(spec, errors) {
@@ -1873,8 +2110,21 @@ function validateMetadata(spec, errors, warnings) {
 }
 
 function validateEditorialEconomy(spec, errors, warnings) {
-  if (/(input[.]txt|weekly source text|source text)/i.test(spec.source?.name || '')) {
-    warnings.push('source.name looks like an internal working reference; use the underlying publication or dataset when available.');
+  const visibleCopy = [
+    spec.title,
+    spec.subtitle,
+    spec.note,
+    spec.source?.name,
+    spec.source?.period,
+    spec.primaryMetric?.value,
+    spec.primaryMetric?.label,
+    ...(spec.data || []).flatMap((item) => [item?.label, item?.displayValue, item?.benchmarkDisplayValue, item?.gapDisplayValue, item?.detail, item?.annotation]),
+    ...(spec.supportingFacts || []).flatMap((fact) => [fact?.value, fact?.label])
+  ].filter(Boolean).join(' ');
+  if (/\b(?:input[.]txt|input brief|the brief|weekly source text|source text|internal compilation)\b/i.test(visibleCopy)) {
+    errors.push(
+      'Presentation copy cannot expose internal provenance such as “the brief”, input.txt, source text, or an internal compilation. State the real-world finding directly and attribute an underlying publication/dataset only when it is an actual source.'
+    );
   }
 
   const data = Array.isArray(spec.data) ? spec.data : [];
@@ -1903,9 +2153,16 @@ function validateEditorialEconomy(spec, errors, warnings) {
   const priceTerm = '(?:price|cost|margin|profitability|freight|tariff)s?';
   const movementTerm = '(?:fell|fall|dropped|drop|declined|decline|rose|rise|increased|increase|decreased|decrease|cut|loss|lost|lower|higher|widened|narrowed)';
   const centralPriceGap = new RegExp(`\\b${priceTerm}\\b[^.]{0,80}\\b${movementTerm}\\b|\\b${movementTerm}\\b[^.]{0,80}\\b${priceTerm}\\b`, 'i').test(priceMovementText);
+  const thresholdPriceStory = THRESHOLD_CUE_PATTERN.test(`${spec.title || ''} ${spec.metadata?.keyFinding || ''}`) &&
+    thresholdValuesFromCopy(`${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`).some((thresholdValue) =>
+      (spec.references || []).some((reference) => nearlyEqual(reference?.value, thresholdValue)) ||
+      data.some((item) => nearlyEqual(item?.benchmark, thresholdValue))
+    );
+  const validPriceMovementRecipe = ['comparison.benchmark-gap', 'comparison.dumbbell', 'trend.line'].includes(spec.recipe) ||
+    (spec.recipe === 'comparison.range' && thresholdPriceStory);
   if (spec.measure?.valueMode === 'level' && data.length >= 2 && data.length <= 6 &&
       (priceLikeQuantity || centralPriceGap) && centralPriceGap &&
-      !['comparison.benchmark-gap', 'comparison.dumbbell', 'trend.line'].includes(spec.recipe)) {
+      !validPriceMovementRecipe) {
     errors.push('Price, cost, freight, or margin movements with recoverable prior levels must use segmented benchmark geometry. Derive the prior level from the current amount and reported change, then use comparison.benchmark-gap or comparison.dumbbell; keep the percentage as secondary context.');
   }
   data.forEach((item, index) => {
@@ -1990,6 +2247,7 @@ function validateSpec(input) {
 
   validateData(spec, errors, warnings);
   validateRecipe(spec, errors, warnings);
+  validateSmallExactCountSeriesStrength(spec, spec.data || [], errors);
   validateSharedScaleSemantics(spec, errors);
   validateMeasure(spec, errors, warnings);
   validateBasis(spec, errors, warnings);
@@ -1998,6 +2256,7 @@ function validateSpec(input) {
   validatePublicAggregateAnchoring(spec, errors);
   validateVisual(spec, errors);
   validateReferences(spec, errors, warnings);
+  validateThresholdAnchoring(spec, errors);
   validateEmphasis(spec, errors);
   validateSupportingFacts(spec, errors, warnings);
   validateSubtitleEconomy(spec, errors);

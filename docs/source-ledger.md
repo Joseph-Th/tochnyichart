@@ -154,11 +154,17 @@ subject that is absent from the input.
 
 The ledger records quantitative claims, not a mandatory slide for each claim.
 A same-period two-value pair should be marked `merged` when it is already
-contained in a richer same-topic map, category comparison, or trend. It should
-be marked `omitted` when targeted enrichment cannot supply a third comparable,
-numeric reference, tangible basis, or source-supported numeric mechanism,
-consequence, denominator, or comparison fact and the pair does not carry a
-distinct editorial conclusion.
+contained in a richer same-topic map, category comparison, or trend. Generic
+two-bar `comparison.scenarios` is not a valid fallback. If targeted enrichment
+cannot supply a third independent same-scale observation and the pair has no
+defensible relationship-specific recipe, mark it `omitted`.
+
+Before splitting one supplied article, dataset, or paragraph into several
+selected candidates, perform a source-family sweep. Inventory related
+quantitative observations first. A candidate that is only a summary,
+complement, subset, or single-point restatement of a richer same-topic
+comparison or regional distribution should be `merged` into the richer
+candidate instead of becoming a separate thin slide.
 
 ## Routing audit
 
@@ -174,26 +180,37 @@ chosen. `routingAudit` is machine-checked and has this form:
 ```
 
 `geographyRole` is one of `none`, `categorical`, or `explanatory`. `workflow`
-is `standard-chart` or `regional-breakdown`. When the story contains multiple
-named administrative regions and the claim depends on spread, border contrast,
-clustering, adjacency, geographic distribution, or concentration, geography is
-`explanatory`; the workflow must be `regional-breakdown`, and `regionSet` must
-be `russia`. A later ranking or bar-chart choice cannot override that decision.
+is `standard-chart` or `regional-breakdown`. Three or more distinct named
+administrative regions in comparable evidence are a regional distribution by
+construction: geography is `explanatory`, the workflow must be
+`regional-breakdown`, and `regionSet` must be `russia`, even when the prose calls
+the result a ranking or comparison and contains no explicit spatial cue.
+Grouped labels count every named region. With two named regions, a claim about
+spread, border contrast, clustering, adjacency, geographic distribution, or
+concentration also requires regional routing. A later ranking or bar-chart
+choice cannot override either decision.
 
 Use `categorical` only when places function as ordinary labels and their spatial
-relationship does not change the conclusion. The source verifier rejects
-calling several named regions `none`, and it rejects a standard ChartSpec when
-the ledger selected explanatory regional routing.
+relationship does not change the conclusion and the comparable evidence does
+not contain three or more distinct administrative regions. The source verifier
+rejects calling several named regions `none`, rejects dense regional evidence
+classified as categorical, and rejects a standard ChartSpec that tries to
+bypass explanatory regional routing.
 
 ## Exact-count quality gate
 
 Two small exact counts are not enough structure for a standalone chart. A
 selected candidate with exactly two count observations must also have a
-tangible population/denominator or a meaningful numeric benchmark. Otherwise
-continue targeted research for a third comparable count or a time series, then
-update `visualEvidenceAudit`. If that evidence does not exist, merge or omit the
-story. A percentage or market statistic in a different unit is secondary
-context and does not satisfy this gate.
+tangible population/denominator or a meaningful independent numeric benchmark.
+Otherwise continue targeted research for a third comparable count or a richer
+time series, then update `visualEvidenceAudit`. The same rule applies to three
+or four count observations when the values are tiny or have little variation:
+a few integers do not become informative merely because they can be connected
+by a line. Recover a reviewed universe, portfolio/network total, population,
+capacity, affected volume/value, or other same-unit anchor. If that evidence
+does not exist, use event/calendar structure when chronology carries the story,
+or merge/omit it. A percentage or market statistic in a different unit is
+secondary context and does not satisfy this gate.
 
 ## Visual evidence audit
 
@@ -213,6 +230,30 @@ visual claim. Do not list merely adjacent facts with incompatible quantities.
 Conversely, do not omit named shipment components, category values, or ordered
 time points merely to justify a one-row chart.
 
+When the meaning of those observations depends on a numeric cutoff or
+orientation value, record it separately in
+`visualEvidenceAudit.orientationAnchors`. This is mandatory for a
+title-defining breakeven, profitability floor, threshold, cap, ceiling, limit,
+or similar cutoff. The anchor must survive into the final ChartSpec as a
+numeric reference, benchmark, or explicit threshold mark.
+
+```json
+"orientationAnchors": [
+  {
+    "label": "Profitability threshold",
+    "role": "threshold",
+    "quantity": "wheat offer price",
+    "unit": "RUB/t",
+    "period": "comparison window",
+    "value": 10000
+  }
+]
+```
+
+Supported roles are `threshold`, `benchmark`, `baseline`, `limit`, `target`,
+and `denominator`. Orientation anchors do not replace comparable observations;
+they explain the scale on which those observations become meaningful.
+
 Standard-chart candidates may inventory at most 12 comparable observations.
 For `regional-breakdown`, the audit may inventory up to the selected region
 set's full administrative-region count. This is intentional: the regional
@@ -226,6 +267,16 @@ that richer dataset with one aggregate, one range, one total, or one headline
 value. This check is about observations, not the raw count of numeric tokens.
 A single benchmark relationship remains valid when the source genuinely offers
 only an actual value and its benchmark.
+
+For a `rate` or `share` whose tangible basis remains `unavailable` or
+`incomparable`, one independent normalized observation is not enough for a
+standalone chart. `100% - reported share` is a derived complement, not a second
+observation. Recover an independent same-unit peer, regional observation,
+prior/current point, benchmark, or target from the full source or underlying
+dataset. Once two or more normalized observations are inventoried, every one
+must remain in primary geometry rather than being parked in `supportingFacts`.
+Merge into a richer same-topic candidate when that evidence already exists;
+otherwise omit the thin claim.
 
 Coverage stories need an additional audit when one input passage contains two
 or more physical-volume figures. Record:
@@ -415,6 +466,13 @@ Allowed origins are:
 Allowed roles are `primary`, `comparison`, `denominator`, `mechanism`,
 `consequence`, and `context`.
 
+External evidence may also declare `conflictStatus: "material"` when a reputable
+source directly contradicts the input-supported claim. A candidate containing
+material-conflict evidence cannot be `selected`; keep the conflict in working
+evidence and hold/omit the story until editorial resolution. Use
+`conflictStatus: "none"` only when an explicit status is useful. External silence
+or omission is not a conflict and needs no flag.
+
 External evidence cannot create a new subject, central claim, or title. It may
 provide actual levels that directly express an input-anchored percentage or
 indexed change, as well as comparison, denominator, mechanism, consequence,
@@ -443,9 +501,11 @@ With `--specs`, validation requires:
   `data[]`. Rich same-scale evidence cannot be collapsed into a single range,
   aggregate, total, or headline value.
 - A `relationship.converging-signals` ChartSpec has at least one source-ledger
-  evidence item with role `mechanism`. The mechanism evidence must support the
-  relationship stated in `relationship.formula`; otherwise use comparison
-  geometry.
+  evidence item with role `mechanism`. For directional relationships, one
+  mechanism statement must explicitly link the plotted outcome to at least one
+  plotted driver. Merely tagging a sentence that lists the drivers, reports
+  chronology, or supplies adjacent facts does not support connector geometry.
+  If the explicit linkage is absent, use comparison geometry instead.
 
 `npm run run:finalize -- <run-id>` performs this validation automatically before
 removing transient run files.

@@ -30,8 +30,11 @@ const DATA_BEARING_SOURCE_TYPES = new Set([
 ]);
 const GEOGRAPHY_ROLES = new Set(['none', 'categorical', 'explanatory']);
 const CHART_WORKFLOWS = new Set(['standard-chart', 'regional-breakdown']);
+const CONFLICT_STATUSES = new Set(['none', 'material']);
+const ORIENTATION_ANCHOR_ROLES = new Set(['threshold', 'benchmark', 'baseline', 'limit', 'target', 'denominator']);
 const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
 const BENCHMARK_EVIDENCE_PATTERN = /\b(?:benchmark|baseline|total|population|capacity|available|target|limit|threshold|cap|ceiling|floor|maximum|minimum|network|fleet|market)\b/i;
+const THRESHOLD_STORY_PATTERN = /\b(?:break[- ]?even|breakeven|profitability\s+(?:threshold|floor)|threshold|floor|ceiling|limit|cap|cutoff|trigger|minimum|maximum)\b/i;
 const SPATIAL_FINDING_PATTERN = /\b(?:across|border|borderland|frontier|spread|cluster|adjacent|neighbor|neighbour|geograph|spatial|regional pattern|corridor|distributed|concentrat|east|west|north|south)\b/i;
 const ADMIN_LABEL_PATTERN = /\b(?:oblast|krai|republic|federal district|region|district|city)\b/i;
 const PENDING_RESEARCH_TEXT = /\b(?:to be checked|to check|pending|not yet checked|not yet reviewed|will check|needs? checking|needs? review|follow up|tbd|todo|unknown source|generic search)\b/i;
@@ -51,6 +54,120 @@ const PHYSICAL_VOLUME_PATTERN = new RegExp(
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function numericValuesNearThresholdCues(text) {
+  if (!isText(text) || !THRESHOLD_STORY_PATTERN.test(text)) return [];
+  const cueExpression = new RegExp(THRESHOLD_STORY_PATTERN.source, 'gi');
+  const numberExpression = /\d{1,3}(?:[ ,\u00a0\u202f]\d{3})*(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
+  const cues = [...String(text).matchAll(cueExpression)];
+  const numbers = [...String(text).matchAll(numberExpression)];
+  const values = [];
+  cues.forEach((cue) => {
+    const cueStart = cue.index || 0;
+    const cueEnd = cueStart + cue[0].length;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    numbers.forEach((number) => {
+      const numberStart = number.index || 0;
+      const numberEnd = numberStart + number[0].length;
+      const distance = numberEnd <= cueStart
+        ? cueStart - numberEnd
+        : numberStart >= cueEnd
+          ? numberStart - cueEnd
+          : 0;
+      if (distance < nearestDistance) {
+        nearest = number;
+        nearestDistance = distance;
+      }
+    });
+    if (!nearest || nearestDistance > 48) return;
+    const token = nearest[0].replace(/[\s\u00a0\u202f]/g, '');
+    const groupedInteger = /^\d{1,3}(?:,\d{3})+$/.test(token);
+    const normalized = groupedInteger ? token.replace(/,/g, '') : token.replace(',', '.');
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed) && !values.some((value) => Math.abs(value - parsed) <= Math.max(1, Math.abs(value), Math.abs(parsed)) * 1e-9)) {
+      values.push(parsed);
+    }
+  });
+  return values;
+}
+
+function validateOrientationAnchorAudit(candidate, prefix, errors) {
+  const audit = candidate?.visualEvidenceAudit;
+  if (!audit || typeof audit !== 'object' || Array.isArray(audit)) return;
+  const thresholdValues = numericValuesNearThresholdCues(candidateNarrative(candidate));
+  const anchors = audit.orientationAnchors;
+  if (thresholdValues.length && (!Array.isArray(anchors) || anchors.length === 0)) {
+    errors.push(
+      `${prefix}.visualEvidenceAudit.orientationAnchors is required because the story is defined by a numeric threshold, floor, ceiling, limit, cap, minimum, maximum, or breakeven value. ` +
+      'Record that anchor before recipe selection so before/after observations cannot displace the number that defines the finding.'
+    );
+    return;
+  }
+  if (anchors === undefined) return;
+  if (!Array.isArray(anchors)) {
+    errors.push(`${prefix}.visualEvidenceAudit.orientationAnchors must be an array when provided.`);
+    return;
+  }
+  anchors.forEach((anchor, index) => {
+    const anchorPrefix = `${prefix}.visualEvidenceAudit.orientationAnchors[${index}]`;
+    if (!anchor || typeof anchor !== 'object' || Array.isArray(anchor)) {
+      errors.push(`${anchorPrefix} must be an object.`);
+      return;
+    }
+    for (const field of ['label', 'quantity', 'unit', 'period']) {
+      if (!isText(anchor[field])) errors.push(`${anchorPrefix}.${field} is required.`);
+    }
+    if (!Number.isFinite(anchor.value)) errors.push(`${anchorPrefix}.value must be a finite number.`);
+    if (!ORIENTATION_ANCHOR_ROLES.has(anchor.role)) {
+      errors.push(`${anchorPrefix}.role must be one of ${Array.from(ORIENTATION_ANCHOR_ROLES).join(', ')}.`);
+    }
+  });
+  thresholdValues.forEach((thresholdValue) => {
+    const matching = anchors.some((anchor) =>
+      Number.isFinite(anchor?.value) &&
+      Math.abs(anchor.value - thresholdValue) <= Math.max(1, Math.abs(anchor.value), Math.abs(thresholdValue)) * 1e-9
+    );
+    if (!matching) {
+      errors.push(
+        `${prefix}.visualEvidenceAudit.orientationAnchors does not inventory the title-defining threshold ${thresholdValue}. ` +
+        'Record the actual numeric anchor rather than leaving it only in prose.'
+      );
+    }
+  });
+}
+
+function relationshipItemTerms(item) {
+  return normalizedSeriesLabel(`${item?.label || ''} ${item?.quantity || ''}`)
+    .split(' ')
+    .filter((term) => term.length >= 4 && ![
+      'reported', 'change', 'share', 'rate', 'value', 'amount', 'period', 'current'
+    ].includes(term));
+}
+
+function relationshipEvidenceMentionsItem(statement, item, peers = []) {
+  if (!isText(statement) || !item || typeof item !== 'object') return false;
+  const normalizedStatement = normalizedSeriesLabel(statement);
+  const normalizedLabel = normalizedSeriesLabel(item.label);
+  if (normalizedLabel && normalizedStatement.includes(normalizedLabel)) return true;
+
+  const statementNumbers = new Set(
+    (String(statement).match(/\d+(?:[.,]\d+)*/g) || [])
+      .map((token) => Number(token.replace(/,/g, '')))
+      .filter(Number.isFinite)
+      .map(String)
+  );
+  const itemNumbers = [item.value, item.low, item.high]
+    .filter((value) => typeof value === 'number' && Number.isFinite(value))
+    .map((value) => String(Number(value)));
+  if (itemNumbers.some((value) => statementNumbers.has(value))) return true;
+
+  const terms = relationshipItemTerms(item);
+  const peerTerms = new Set(peers.flatMap(relationshipItemTerms));
+  const distinctiveTerms = terms.filter((term) => !peerTerms.has(term));
+  if (distinctiveTerms.some((term) => normalizedStatement.includes(term))) return true;
+  return terms.filter((term) => normalizedStatement.includes(term)).length >= 2;
 }
 
 function loadJson(filePath, label) {
@@ -125,30 +242,70 @@ function normalizePlaceText(value) {
     .trim();
 }
 
-function russianRegionNames() {
+function russianRegionEntries() {
   const regionSet = TochnyiMaps.getRegionSet('russia');
   if (!regionSet || !regionSet.regions) return [];
-  return Object.values(regionSet.regions)
-    .filter(isText)
-    .map(normalizePlaceText)
-    .filter((name) => name.length >= 4);
+  return Object.entries(regionSet.regions)
+    .filter(([, name]) => isText(name))
+    .map(([id, name]) => [id, normalizePlaceText(name)])
+    .filter(([, name]) => name.length >= 4);
 }
 
-const RUSSIAN_REGION_NAMES = russianRegionNames();
+const RUSSIAN_REGION_ENTRIES = russianRegionEntries();
+
+const RUSSIAN_REGION_ALIASES = Object.freeze([
+  ['moskva', 'RU-MOS'],
+  ['moscow oblast', 'RU-MOS'],
+  ['moscow region', 'RU-MOS'],
+  ['st petersburg', 'RU-SPE'],
+  ['saint petersburg', 'RU-SPE'],
+  ['petersburg', 'RU-SPE']
+]);
+
+function geographicRegionsInLabel(label) {
+  if (!isText(label)) return [];
+  const normalized = normalizePlaceText(label);
+  const regions = new Set();
+  RUSSIAN_REGION_ENTRIES.forEach(([id, name]) => {
+    if (normalized.includes(name)) regions.add(id);
+  });
+  RUSSIAN_REGION_ALIASES.forEach(([alias, id]) => {
+    if (normalized.includes(alias)) regions.add(id);
+  });
+  const moscowWithoutOblast = normalized
+    .replace(/moscow oblast/g, ' ')
+    .replace(/moscow region/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (/\bmoscow\b/.test(moscowWithoutOblast)) regions.add('RU-MOW');
+  if (regions.size === 0 && ADMIN_LABEL_PATTERN.test(label)) {
+    regions.add(`admin:${normalized}`);
+  }
+  return [...regions];
+}
 
 function looksGeographicLabel(label) {
   if (!isText(label)) return false;
-  const normalized = normalizePlaceText(label);
-  if (ADMIN_LABEL_PATTERN.test(label)) return true;
-  const aliases = ['moscow', 'moskva', 'st petersburg', 'saint petersburg', 'petersburg'];
-  if (aliases.some((name) => normalized.includes(name))) return true;
-  return RUSSIAN_REGION_NAMES.some((name) => normalized.includes(name));
+  return geographicRegionsInLabel(label).length > 0;
 }
 
 function geographicObservationCount(candidate) {
   const observations = candidate?.visualEvidenceAudit?.comparableObservations;
   if (!Array.isArray(observations)) return 0;
-  return observations.filter((observation) => looksGeographicLabel(observation?.label || observation?.specLabel)).length;
+  const regions = new Set();
+  observations.forEach((observation) => {
+    geographicRegionsInLabel(observation?.label || observation?.specLabel)
+      .forEach((region) => regions.add(region));
+  });
+  return regions.size;
+}
+
+function geographicSpecCount(spec) {
+  const regions = new Set();
+  (spec?.data || []).forEach((item) => {
+    geographicRegionsInLabel(item?.label).forEach((region) => regions.add(region));
+  });
+  return regions.size;
 }
 
 function validateRoutingAudit(candidate, prefix, errors) {
@@ -175,7 +332,12 @@ function validateRoutingAudit(candidate, prefix, errors) {
       'Classify them as categorical labels or explanatory geography before choosing a workflow.'
     );
   }
-  if (geographicCount >= 2 && SPATIAL_FINDING_PATTERN.test(narrative) && audit.geographyRole !== 'explanatory') {
+  if (geographicCount >= 3 && audit.geographyRole !== 'explanatory') {
+    errors.push(
+      `${prefix}.routingAudit must classify geography as explanatory because the comparable evidence contains ${geographicCount} named administrative regions. ` +
+      'Three or more administrative regions on one comparable measure constitute a regional distribution even when the prose calls it a ranking or comparison and does not use an explicit spatial cue. Route it through regional-breakdown.'
+    );
+  } else if (geographicCount >= 2 && SPATIAL_FINDING_PATTERN.test(narrative) && audit.geographyRole !== 'explanatory') {
     errors.push(
       `${prefix}.routingAudit must classify geography as explanatory because the story combines multiple named regions with a spatial finding such as spread, border contrast, clustering, distribution, or concentration.`
     );
@@ -197,29 +359,55 @@ function validateRoutingAudit(candidate, prefix, errors) {
 
 function validateExactCountCandidateReadiness(candidate, prefix, errors) {
   const observations = candidate?.visualEvidenceAudit?.comparableObservations;
-  if (!Array.isArray(observations) || observations.length !== 2) return;
+  if (!Array.isArray(observations) || observations.length < 2 || observations.length > 4) return;
   const exactCounts = observations.every((observation) => {
     const unitText = `${observation?.quantity || ''} ${observation?.unit || ''}`;
     return Number.isInteger(observation?.value) && observation.value >= 0 && COUNT_UNIT_PATTERN.test(unitText);
   });
   if (!exactCounts) return;
+  const observedValues = observations.map((observation) => observation.value);
+  const countSum = observations.reduce((sum, observation) => sum + observation.value, 0);
   const evidence = Array.isArray(candidate.evidence) ? candidate.evidence : [];
-  const hasDenominator = evidence.some((item) => item?.role === 'denominator' && /\d/.test(String(item?.statement || '')));
+  function containsIndependentNumber(statement) {
+    const values = String(statement || '').match(/\d+(?:[.,]\d+)*/g) || [];
+    return values.some((value) => {
+      const parsed = Number(value.replace(/,/g, ''));
+      return Number.isFinite(parsed) &&
+        Math.abs(parsed - countSum) > 1e-9 &&
+        !observedValues.some((observed) => Math.abs(parsed - observed) <= 1e-9);
+    });
+  }
+  const hasDenominator = evidence.some((item) =>
+    item?.role === 'denominator' && containsIndependentNumber(item?.statement) && COUNT_UNIT_PATTERN.test(String(item?.statement || ''))
+  );
   const hasBenchmark = evidence.some((item) =>
     ['comparison', 'denominator'].includes(item?.role) &&
-    /\d/.test(String(item?.statement || '')) &&
+    containsIndependentNumber(item?.statement) &&
+    COUNT_UNIT_PATTERN.test(String(item?.statement || '')) &&
     BENCHMARK_EVIDENCE_PATTERN.test(String(item?.statement || ''))
   );
-  if (!hasDenominator && !hasBenchmark) {
+  if (hasDenominator || hasBenchmark) return;
+  if (observations.length === 2) {
     errors.push(
-      `${prefix} has only two exact count observations and no tangible denominator or benchmark. ` +
-      'Research a third comparable count, population/network total, benchmark, or time series before selecting the story; otherwise merge or omit it. Different-unit percentage context is not enough.'
+      `${prefix} has only two exact count observations and no independent tangible denominator or benchmark. ` +
+      'Research a third comparable count, population/network total, independent benchmark, or time series before selecting the story; otherwise merge or omit it. The sum of the two counts is derived from the observations and does not count as an anchor.'
+    );
+    return;
+  }
+  const tinyMagnitude = Math.max(...observedValues) <= 12;
+  const lowVariation = new Set(observedValues).size <= 2;
+  if (tinyMagnitude || lowVariation) {
+    errors.push(
+      `${prefix} has only ${observations.length} small exact-count observations and no independent tangible anchor. ` +
+      'A short sequence of tiny integers is visually self-evident and does not become informative merely because it can be drawn as a line. ' +
+      'Research a portfolio/universe total, population/network denominator, reviewed set, capacity, affected sales/volume/value, or a richer quantitative series; use event/timeline structure when chronology carries more information than the counts.'
     );
   }
 }
 
 function validateRoutingSpecCoverage(candidate, spec, errors) {
   const audit = candidate?.routingAudit || {};
+  const specGeographicCount = geographicSpecCount(spec);
   if (audit.workflow === 'regional-breakdown') {
     if (spec?.recipe !== 'map.regional') {
       errors.push(
@@ -230,9 +418,52 @@ function validateRoutingSpecCoverage(candidate, spec, errors) {
     if (spec?.map?.regionSet !== audit.regionSet) {
       errors.push(`ChartSpec ${candidate.outputSlug} map.regionSet must match routingAudit.regionSet (${audit.regionSet || 'missing'}).`);
     }
-  } else if (audit.workflow === 'standard-chart' && spec?.recipe === 'map.regional') {
-    errors.push(`ChartSpec ${candidate.outputSlug} uses map.regional even though routingAudit selected standard-chart.`);
+  } else if (audit.workflow === 'standard-chart') {
+    if (spec?.recipe === 'map.regional') {
+      errors.push(`ChartSpec ${candidate.outputSlug} uses map.regional even though routingAudit selected standard-chart.`);
+    }
+    if (specGeographicCount >= 3) {
+      errors.push(
+        `ChartSpec ${candidate.outputSlug} encodes ${specGeographicCount} named administrative regions in a standard chart. ` +
+        'Dense administrative-region evidence is a regional distribution and must be inventoried as explanatory geography and rendered with map.regional; a ranking or comparison cannot bypass the regional workflow.'
+      );
+    }
   }
+}
+
+function validateNormalizedCandidateReadiness(candidate, prefix, errors) {
+  const representation = candidate?.representationAudit || {};
+  if (!['rate', 'share'].includes(representation.selectedMode)) return;
+  if (!['unavailable', 'incomparable'].includes(representation.basisAvailability)) return;
+  const observations = candidate?.visualEvidenceAudit?.comparableObservations;
+  if (!Array.isArray(observations) || observations.length !== 1) return;
+  errors.push(
+    `${prefix} has only one independent ${representation.selectedMode} observation while its tangible basis is ${representation.basisAvailability}. ` +
+    'A derived complement such as 100% minus the reported share is not an independent comparator and does not make a standalone chart informative. ' +
+    'Recover a same-unit peer, regional observation, prior/current point, benchmark, target, or other independent orientation from the full source or underlying dataset; merge the claim into a richer same-topic chart when that evidence already exists, otherwise omit it.'
+  );
+}
+
+function validateOrientationAnchorSpecCoverage(candidate, spec, errors) {
+  const anchors = candidate?.visualEvidenceAudit?.orientationAnchors;
+  if (!Array.isArray(anchors) || anchors.length === 0) return;
+  const data = Array.isArray(spec?.data) ? spec.data : [];
+  const references = Array.isArray(spec?.references) ? spec.references : [];
+  anchors.forEach((anchor) => {
+    if (!Number.isFinite(anchor?.value)) return;
+    const visibleAsReference = references.some((reference) => Number.isFinite(reference?.value) && Math.abs(reference.value - anchor.value) <= Math.max(1, Math.abs(reference.value), Math.abs(anchor.value)) * 1e-9);
+    const visibleAsBenchmark = data.some((item) => Number.isFinite(item?.benchmark) && Math.abs(item.benchmark - anchor.value) <= Math.max(1, Math.abs(item.benchmark), Math.abs(anchor.value)) * 1e-9);
+    const visibleAsData = data.some((item) =>
+      (Number.isFinite(item?.value) && Math.abs(item.value - anchor.value) <= Math.max(1, Math.abs(item.value), Math.abs(anchor.value)) * 1e-9) ||
+      (Number.isFinite(item?.low) && Math.abs(item.low - anchor.value) <= Math.max(1, Math.abs(item.low), Math.abs(anchor.value)) * 1e-9) ||
+      (Number.isFinite(item?.high) && Math.abs(item.high - anchor.value) <= Math.max(1, Math.abs(item.high), Math.abs(anchor.value)) * 1e-9)
+    );
+    if (visibleAsReference || visibleAsBenchmark || visibleAsData) return;
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} drops the source-ledger orientation anchor "${anchor.label}" (${anchor.value}). ` +
+      'Thresholds, breakeven levels, limits, baselines, denominators, and other story-defining anchors must remain in primary geometry as a reference, benchmark, or plotted threshold mark.'
+    );
+  });
 }
 
 function isPublicAggregateShareCandidate(candidate) {
@@ -589,7 +820,12 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
 
 function validateVisualEvidenceCoverage(candidate, spec, errors) {
   const observations = candidate?.visualEvidenceAudit?.comparableObservations;
-  if (!Array.isArray(observations) || observations.length < 3) return;
+  const representation = candidate?.representationAudit || {};
+  const normalizedNeedsAllComparators =
+    ['rate', 'share'].includes(representation.selectedMode) &&
+    ['unavailable', 'incomparable'].includes(representation.basisAvailability);
+  const minimumObservations = normalizedNeedsAllComparators ? 2 : 3;
+  if (!Array.isArray(observations) || observations.length < minimumObservations) return;
   const data = Array.isArray(spec?.data) ? spec.data : [];
   const references = Array.isArray(spec?.references) ? spec.references : [];
   const denominatorLabel = normalizedSeriesLabel(candidate?.visualEvidenceAudit?.coverageAudit?.denominatorLabel);
@@ -634,12 +870,33 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
 
 function validateRelationshipEvidence(candidate, spec, errors) {
   if (spec?.recipe !== 'relationship.converging-signals') return;
-  const hasMechanismEvidence = Array.isArray(candidate?.evidence) &&
-    candidate.evidence.some((item) => item?.role === 'mechanism');
-  if (!hasMechanismEvidence) {
+  const mechanismEvidence = Array.isArray(candidate?.evidence)
+    ? candidate.evidence.filter((item) => item?.role === 'mechanism' && isText(item?.statement))
+    : [];
+  if (!mechanismEvidence.length) {
     errors.push(
       `ChartSpec ${candidate.outputSlug} uses relationship.converging-signals without source-ledger mechanism evidence. ` +
       'Record an input, external, or derived evidence item with role mechanism that supports relationship.formula, or use comparison geometry instead.'
+    );
+    return;
+  }
+  if (spec?.relationship?.mode !== 'directional') return;
+  const drivers = (spec.data || []).filter((item) => item?.relationshipRole === 'driver');
+  const outcome = (spec.data || []).find((item) => item?.relationshipRole === 'outcome');
+  if (!outcome || drivers.length !== 2) return;
+  const hasExplicitLink = mechanismEvidence.some((evidence) =>
+    relationshipEvidenceMentionsItem(evidence.statement, outcome, drivers) &&
+    drivers.some((driver) => relationshipEvidenceMentionsItem(
+      evidence.statement,
+      driver,
+      [outcome, ...drivers.filter((candidate) => candidate !== driver)]
+    ))
+  );
+  if (!hasExplicitLink) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} uses a directional relationship whose mechanism evidence does not explicitly link the plotted outcome to at least one plotted driver. ` +
+      'A mechanism tag that only lists drivers, describes chronology, or supplies adjacent facts is not enough to justify causal connector geometry. ' +
+      'Record source-supported linkage that names the outcome and a driver, or use comparison geometry instead.'
     );
   }
 }
@@ -802,6 +1059,9 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
           errors.push(`${evidencePrefix}.origin must be input, external, or derived.`);
         }
         if (!ROLES.has(evidence.role)) errors.push(`${evidencePrefix}.role is invalid.`);
+        if (evidence.conflictStatus !== undefined && !CONFLICT_STATUSES.has(evidence.conflictStatus)) {
+          errors.push(`${evidencePrefix}.conflictStatus must be none or material when provided.`);
+        }
         if (evidence.origin === 'input') {
           if (!exactAnchorExists(snapshot.content, evidence.anchor)) {
             errors.push(`${evidencePrefix}.anchor must be an exact excerpt from input.txt.`);
@@ -813,6 +1073,12 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
             errors.push(`${evidencePrefix} cannot be primary. External research may enrich an input-supported story but may not originate one.`);
           }
           if (!isText(evidence.source)) errors.push(`${evidencePrefix}.source is required for external evidence.`);
+          if (evidence.conflictStatus === 'material' && candidate.decision === 'selected') {
+            errors.push(
+              `${evidencePrefix} records a direct material contradiction with the input-supported story. ` +
+              'A conflicted candidate cannot be selected or visualized until editorial resolution; keep the external report as working evidence and omit/hold the story instead of turning the disagreement into chart geometry.'
+            );
+          }
         }
         if (evidence.origin === 'derived' && !isText(evidence.formula)) {
           errors.push(`${evidencePrefix}.formula is required for derived evidence.`);
@@ -839,7 +1105,9 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       }
       validateRepresentationAudit(candidate, prefix, errors);
       validateVisualEvidenceAudit(candidate, prefix, errors);
+      validateOrientationAnchorAudit(candidate, prefix, errors);
       validateRoutingAudit(candidate, prefix, errors);
+      validateNormalizedCandidateReadiness(candidate, prefix, errors);
       validateExactCountCandidateReadiness(candidate, prefix, errors);
       validatePublicAggregateBasisEvidence(candidate, prefix, errors);
       selected.push(candidate);
@@ -928,6 +1196,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
         }
       }
       validateVisualEvidenceCoverage(candidate, spec, errors);
+      validateOrientationAnchorSpecCoverage(candidate, spec, errors);
       validateRelationshipEvidence(candidate, spec, errors);
       validatePublicAggregateSpecCoverage(candidate, spec, errors);
       validateCoverageSpecCoverage(candidate, spec, errors);

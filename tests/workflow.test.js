@@ -65,6 +65,9 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
     ['status.grid', 'headline.metric', 'comparison.pictogram']
   );
   assert.match(orientation.sharedContract.sourceEnrichment.routingRule, /explanatory.*regional-breakdown/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.routingRule, /three or more named administrative regions/i);
+  assert.match(orientation.sharedContract.visualEvidenceContract.regionalDensityRule, /three or more distinct named administrative regions/i);
+  assert.match(orientation.sharedContract.visualEvidenceContract.normalizedOrientationRule, /derived complement.*not independent/i);
   assert.match(orientation.sharedContract.sourceEnrichment.exactCountRule, /dot-counting|third comparable count/i);
   assert.match(orientation.sharedContract.sourceEnrichment.componentRule, /composition\.components|begins at zero/i);
   assert.equal(orientation.batchWorkflow.input, 'input.txt');
@@ -96,15 +99,22 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.converging-signals'), true);
-  assert.match(standard.visualEvidenceContract.minimumMarks, /at least two quantitative marks/i);
-  assert.match(standard.visualEvidenceContract.standalonePairRule, /two-item comparison\.scenarios/i);
+  assert.match(standard.visualEvidenceContract.minimumMarks, /at least three independent quantitative observations/i);
+  assert.match(standard.visualEvidenceContract.standalonePairRule, /requires at least three independent values/i);
   assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
   assert.match(standard.visualEvidenceContract.compositionRule, /policy|target|alternative/i);
   assert.match(standard.visualEvidenceContract.compositionRule, /shared-total benchmark geometry/i);
   assert.match(standard.sourceEnrichment.benchmarkGapRule, /prefer one comparison\.benchmark-gap row|two positive level values/i);
   assert.match(standard.sourceEnrichment.relationshipRule, /independent local quantitative signal/i);
-  assert.match(standard.sourceEnrichment.relationshipRule, /join directly|no decorative hub/i);
-  assert.match(standard.sourceEnrichment.standalonePairRule, /merge or omit/i);
+  assert.match(standard.sourceEnrichment.relationshipRule, /mechanism evidence.*outcome.*driver/i);
+  assert.match(standard.sourceEnrichment.relationshipRule, /continue with a short same-color connector|no decorative hub/i);
+  assert.match(standard.visualEvidenceContract.claimGeometryRule, /exact marks.*prove|geometry.*fails/i);
+  assert.match(standard.visualEvidenceContract.referenceClarityRule, /meaningful viewer-facing label|remove the line/i);
+  assert.match(standard.visualEvidenceContract.notationConsistencyRule, /do not mix pp.*percent-rate notation/i);
+  assert.match(standard.visualEvidenceContract.supportingFactsRule, /regional or peer observations/i);
+  assert.match(standard.sourceEnrichment.normalizedOrientationRule, /same-unit peer|regional observation/i);
+  assert.ok(standard.authoringRules.some((rule) => /source-family sweep/i));
+  assert.match(standard.sourceEnrichment.standalonePairRule, /merge,? or omit/i);
   assert.match(standard.valueRepresentationContract.hierarchy, /actual levels/i);
   assert.equal(standard.regionalHandoff.use, 'map.regional');
   assert.deepEqual(standard.sharedScaleContract.requiredFields, ['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']);
@@ -114,7 +124,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   const regional = regionalAgentGuide('russia');
   assert.equal(regional.workflow, 'regional-breakdown');
   assert.deepEqual(regional.requiredDataItem, ['label', 'regionId or regionIds']);
-  assert.ok(regional.automaticByDefault.includes('leader routing'));
+  assert.ok(regional.automaticByDefault.includes('straight region-to-card leader routing'));
   assert.ok(regional.neverAuthor.includes('coordinates or pixel positions'));
   assert.deepEqual(regional.regionSet.nonContinentalRegionIds, ['RU-KGD', 'RU-SAK']);
   assert.match(regional.authoringRule, /permanently omit Kaliningrad/i);
@@ -170,7 +180,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.13');
+  assert.equal(manifest.version, '1.16');
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');

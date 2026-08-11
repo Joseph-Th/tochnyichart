@@ -118,10 +118,13 @@ candidate as `routingAudit`:
    rationale must explicitly explain why location is not explanatory.
 4. Do not use missing coordinates, a status-list shape, a ranking shape, or an
    existing draft spec as a reason to choose the standard workflow.
-5. Multiple named administrative regions plus a claim about spread, border
-   contrast, clustering, adjacency, distribution, or concentration require
-   `geographyRole: "explanatory"` and `regional-breakdown`; a later ranking or
-   bar ChartSpec cannot override that route.
+5. Three or more distinct named administrative regions in comparable evidence
+   are a regional distribution and require `geographyRole: "explanatory"` plus
+   `regional-breakdown`, even without an explicit spatial cue. Grouped labels
+   count every named region. With two regions, a claim about spread, border
+   contrast, clustering, adjacency, distribution, or concentration also forces
+   regional routing. A later ranking or bar ChartSpec cannot override either
+   route.
 6. Do not write or render specs until every accepted story has exactly one
    recorded workflow decision.
 
@@ -132,6 +135,11 @@ candidate as `routingAudit`:
 - Treat each entry as routing information as well as evidence; it may be incomplete, but external silence is not a contradiction.
 - Confirm that each supplied URL used for supplementation matches the entity, event, period, and finding before using it.
 - Read and exhaust the full primary source before selecting a recipe.
+- Perform a source-family sweep before splitting one supplied article, dataset,
+  filing, or paragraph into several charts. Collect related regional, peer,
+  historical, benchmark, denominator, and same-unit observations first. Merge
+  a proposed chart when it is only a summary, complement, subset, or
+  single-point restatement of richer same-topic evidence.
 - Extract relevant comparators, components, causes, consequences, forecasts, scale, denominators, and underlying datasets when they strengthen the same central claim.
 - Search beyond the primary source to fill a named material evidence gap or add useful attribution and context.
 - Supplement the input; do not replace, downgrade, or label an expert claim uncorroborated merely because a second source was not found.
@@ -151,6 +159,13 @@ candidate as `routingAudit`:
 - Do not invent missing dates, sources, values, endpoints, calculations, or regional statuses.
 - Audit value representation before selecting a recipe. Record `representationAudit.selectedMode`, `levelAvailability`, and a concise rationale for every selected story.
 - For every rate or share, separately record `basisAvailability` and `basisRationale`. When numerator/denominator or population/affected amounts are reported or retrievable, select `level` and plot those tangible amounts; the normalized rate remains secondary copy. The total population or denominator must appear on the primary scale as a point, reference, benchmark, or complete composition. A ChartSpec `basis` rail alone is not sufficient.
+- If a rate or share basis remains unavailable or incomparable, one reported
+  percentage plus its derived complement is still only one independent
+  observation. Recover a same-unit peer, regional observation, prior/current
+  point, benchmark, or target. Once two or more such normalized observations
+  exist, keep them in primary geometry rather than `supportingFacts`; merge
+  into a richer same-topic chart when appropriate, otherwise omit the thin
+  claim.
 - For shares of named public aggregates such as GDP, the economy, population, employment, exports, imports, production, or capacity, treat the denominator as retrievable. Record `basisTarget`, recover the compatible public total, derive the tangible numerator or range, and use level geometry. A 100% reference line is not a tangible anchor.
 - Do not mark levels or a basis unavailable or incomparable after one failed lookup. Name the exact `tangibleTarget`, then record at least two completed, source-specific `researchAttempts` with `source`, `sourceType`, `locator`, and `outcome`. Pending language and generic locators such as `website`, `search`, `dataset`, or `report` are invalid. The checks must span two source types and include a data-bearing source.
 - Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying tangible amounts for the same scope and periods. Workforce research must include the company filing or official employee disclosure for the relevant reporting perimeter.
@@ -177,6 +192,9 @@ candidate as `routingAudit`:
   every one as a primary `data[]` item. Do not replace named shipment
   components, categories, facilities, peers, or time points with one aggregate,
   one range, one total, or one headline value.
+- For a `rate` or `share` with unavailable or incomparable tangible basis, the
+  preservation threshold is two independent same-unit observations rather than
+  three. A derived complement does not count as an observation.
 - Use `timeline.duration` whenever duration or reserve runway is the comparison. Supply exact start/end dates, or a verified common `timeline.anchorDate` plus exact `duration` and `durationUnit` fields.
 - When shipment, reserve, or shortage amounts are described as days of consumption, demand coverage, or share of need, show the demand denominator. If two or more physical-volume contributors appear in the input, complete `visualEvidenceAudit.coverageAudit`, disposition every volume as a component, denominator, or specifically excluded item, and keep all retained components plus total need in primary geometry in one tangible unit. The denominator may be a numeric reference rather than a redundant row. Days of coverage may remain secondary context only.
 - Never use a logarithmic scale when the point is that the plotted amounts are small relative to a baseline. The chart must preserve the true proportional gap. If a monthly or annual flow denominator is at least about 8× the largest retained component, period-normalize that same denominator to a shorter familiar interval, usually a week or day, keep every component in the original physical unit, and use the derived denominator as a visible linear reference. Record the rate-preserving derivation in `coverageAudit.rationale`, basis, subtitle, or source evidence.
@@ -309,13 +327,15 @@ supporting facts.
 ### Visual-evidence gate
 
 Do not create prose walls, status-card grids, bullet grids, or single-number
-charts. Every non-map production chart needs at least two quantitative marks.
-A lone value must gain a source-supported prior value, target, benchmark,
-denominator, peer, range, or time series. A one-row benchmark-gap is valid
-because its actual segment, gap segment, and benchmark marker are distinct
-marks. Categorical evidence must be quantified on a common dimension or routed
-to `map.regional` when geography explains the finding. Omit the story when
-legitimate visual structure cannot be found.
+charts. A generic categorical/bar chart needs at least three independent
+quantitative observations. A two-value chart is valid only when a
+relationship-specific recipe makes the relationship itself the geometry, such
+as a benchmark gap, sign-crossing change, diverging comparison, or duration. A
+lone independent value must gain a source-supported prior value, target,
+benchmark, denominator, peer, range, or time series; a derived complement does
+not qualify. Three or more distinct named administrative regions must route to
+`map.regional`. Omit or merge the story when legitimate visual structure cannot
+be found.
 
 For forecast, target, outlook, guidance, and scenario stories, search for a
 same-unit actual/current/latest realized observation. When available, it must

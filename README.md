@@ -129,11 +129,14 @@ administrative regions changes the finding. Use `standard-chart` only when
 place names are labels or categories and geography adds no explanatory value.
 For batch work, record this decision for every story in a routing matrix before
 authoring specs and write the same decision to the selected source-ledger
-candidate as `routingAudit`. The ledger is machine-enforced: multiple named
-administrative regions plus a spatial claim such as spread, border contrast,
-clustering, adjacency, distribution, or concentration require
-`geographyRole: "explanatory"` and `workflow: "regional-breakdown"`. Any
-standard-chart decision involving place names needs an explicit rationale.
+candidate as `routingAudit`. The ledger is machine-enforced: three or more
+distinct named administrative regions in comparable evidence are a regional
+distribution and require `geographyRole: "explanatory"` plus
+`workflow: "regional-breakdown"`, even without an explicit spatial cue. Grouped
+labels count every named region. With two regions, a spatial claim such as
+spread, border contrast, clustering, adjacency, distribution, or concentration
+also forces regional routing. Any standard-chart decision involving place names
+needs an explicit rationale.
 
 The per-chart lifecycle inside that batch is:
 
@@ -192,12 +195,27 @@ unit, record every one in `visualEvidenceAudit.comparableObservations` and keep
 every one as a primary ChartSpec `data[]` item. Do not compress named components,
 categories, or time points into one aggregate, one range, or one headline value.
 
-A two-item `comparison.scenarios` chart is not automatically sufficient. It
-must add a numeric reference, basis, or source-supported numeric mechanism,
-consequence, denominator, or comparison fact. Before giving a simple pair its
-own slide, check whether it belongs inside an existing same-topic chart. If it
-cannot be enriched and does not carry a distinct editorial conclusion, merge or
-omit it.
+For a rate or share whose tangible basis remains unavailable or incomparable,
+one reported percentage plus its derived complement is still only one
+independent observation. Recover a same-unit peer, regional observation,
+prior/current point, benchmark, or target. Once two or more normalized
+comparators are available, keep them in primary geometry. Merge a thin claim
+into a richer same-topic chart when the same source family already provides the
+necessary orientation.
+
+Before splitting one supplied article, dataset, filing, or paragraph into
+several selected charts, perform a source-family sweep. Collect its related
+regional, peer, historical, benchmark, denominator, and same-unit observations
+first. Do not create a separate slide from a summary, complement, subset, or
+single-point restatement of a richer same-topic visual.
+
+Do not use a two-item `comparison.scenarios` chart. Generic scenario geometry
+requires at least three independent same-scale values. When two values form a
+real benchmark, sign-crossing change, diverging comparison, or duration, use
+the relationship-specific recipe. Otherwise recover a third observation,
+merge the pair into a richer same-topic chart, or omit it. Supporting facts,
+references, and derived totals do not turn two generic bars into a complete
+visual argument.
 
 Use `comparison.benchmark-gap` with one row when one actual-plus-benchmark
 relationship is the complete story. The actual segment, gap segment, and
@@ -328,9 +346,11 @@ Prefer the underlying official dataset, company filing, or named report before
 another article from the same publisher. Reject context that is merely adjacent,
 interesting, or useful only for making the chart look more complex.
 
-A simple two-value chart remains correct when the contrast itself is the full
-story. The objective is information density within one claim, not maximum data
-volume or visual novelty.
+A two-value chart remains valid when a relationship-specific recipe makes the
+relationship itself the evidence, such as a benchmark gap, sign-crossing
+change, diverging comparison, or duration. Two generic categorical bars are not
+a complete visual argument. The objective is information density within one
+claim, not maximum data volume or visual novelty.
 
 Comparable evidence that proves the title cannot be reduced to supporting
 facts. Three or more ordered observations establishing slowdown, acceleration,

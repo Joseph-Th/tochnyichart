@@ -176,21 +176,38 @@ primary claim.
 
 Before accepting a chart candidate, apply the visual-evidence gate:
 
-- A non-map chart must contain at least two quantitative marks.
+- Perform a source-family sweep before splitting one supplied article, dataset,
+  or paragraph into multiple selected visuals. Collect related regional, peer,
+  historical, denominator, and same-unit comparison observations first. If a
+  proposed chart is only a summary, complement, subset, or single-point
+  restatement of a richer same-topic visual, merge it into the richer candidate.
+- A generic categorical/bar chart must contain at least three independent
+  quantitative observations. Two-value charts are reserved for
+  relationship-specific geometry where the relationship itself is the visual
+  evidence, such as benchmark-gap, sign-crossing change, diverging comparison,
+  or duration.
 - Forecast, target, outlook, guidance, and scenario stories must search for a
   same-unit actual/current/latest realized observation. When one exists, put it
   on the visual scale as primary geometry or a numeric reference; leaving it in
   `supportingFacts` is not sufficient orientation.
+- If the finding is defined by a numeric breakeven, profitability floor,
+  threshold, cap, ceiling, limit, or cutoff, record it in
+  `visualEvidenceAudit.orientationAnchors` before recipe selection and preserve
+  it in primary geometry. Prior/current values do not replace the threshold
+  that gives them meaning.
+- Derived display values must inherit source precision and uncertainty. Round
+  derived gaps, averages, shortfalls, and implied values to the coarsest
+  materially constraining input precision and preserve qualifiers such as
+  `about`, `approximately`, `up to`, or `at least`. Raw calculator decimals
+  from rounded source values are a validation failure.
 - A lone value must gain a source-supported prior value, target, benchmark,
   denominator, peer, range, or time series. A single-row
   `comparison.benchmark-gap` is valid because the actual segment, gap segment,
   and benchmark marker are separate quantitative marks.
-- An exact two-item `comparison.scenarios` chart must add a numeric reference,
-  tangible basis, or source-supported numeric mechanism, consequence,
-  denominator, or comparison fact. Before creating a separate slide, check
-  whether the pair belongs inside an existing same-topic map, category
-  comparison, or trend. If it cannot be enriched and does not support a
-  distinct conclusion, mark it `merged` or `omitted`.
+- `comparison.scenarios` requires at least three independent same-scale values.
+  A numeric reference, tangible basis, supporting fact, annotation, or derived
+  total does not rescue two generic bars. Use a defensible relationship-specific
+  recipe, merge the pair into a richer same-topic visual, or omit it.
 - A percentage-only price, workforce, export, production, spending, or revenue
   claim must trigger a search for the underlying tangible amounts for the same
   scope and periods before normalized geometry is considered. Workforce
@@ -214,6 +231,12 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   basis rail is not sufficient. The total population or denominator must also
   appear on the plotted scale as a point, reference, benchmark, or complete
   composition.
+- If a rate or share basis remains unavailable or incomparable, one reported
+  percentage plus its derived complement is still only one independent
+  observation. Recover a same-unit peer, regional observation, prior/current
+  point, benchmark, or target. Once two or more such normalized observations
+  are available, keep all of them in primary geometry rather than relegating
+  headline-relevant comparators to `supportingFacts`.
 - A share of a named public aggregate, including GDP, the economy, population,
   employment, exports, imports, production, or capacity, must treat that total
   as retrievable. Record `basisTarget`, recover the compatible public total,
@@ -221,9 +244,16 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   not satisfy this requirement.
 - Do not use dot-counting or pictograms. A story with only two exact count
   categories must gain a third comparable count, a tangible denominator or
-  population, a meaningful benchmark, or a time series before it is selected
-  as a standalone chart. Different-unit percentage context does not satisfy
-  this evidence gate.
+  population, an independent meaningful benchmark, or a time series before it
+  is selected as a standalone chart. The sum of those two counts is derived and
+  does not count as an anchor. Different-unit percentage context does not
+  satisfy this evidence gate.
+- The same quality gate extends to short 3–4 point exact-count series when the
+  counts are tiny or barely vary. Do not publish a line merely because the
+  observations have dates. Recover an independent reviewed universe,
+  portfolio/network total, population, capacity, affected sales/volume/value,
+  or a richer series. If chronology is the real information, use event/calendar
+  structure; otherwise merge or omit the story.
 - A risk estimate must include the exposed population or denominator, show that
   total on the plotted scale, and include at least one mechanism or consequence.
 - Three or more ordered observations that establish slowdown, acceleration,
@@ -254,7 +284,10 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   overages should use segmented `comparison.benchmark-gap` geometry when the
   benchmark and actual amount are available. Derive a prior level from the
   current amount and reported change when necessary. Plot the underlying
-  actual quantity, not the gap amount itself. Use one row when one benchmark
+  actual quantity, not the gap amount itself. `value` and `benchmark` must be
+  the same quantity in the same unit, and `gapDisplayValue` must state the
+  arithmetic difference or percentage context rather than a ratio, per-unit
+  equivalence, or cross-unit conversion. Use one row when one benchmark
   relationship fully carries the finding. For two category-level before/after
   price pairs, use two benchmark-gap rows rather than four independent bars.
   Do not add a row that merely restates the total or derived remainder.
@@ -266,9 +299,11 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   indexes.
 - When several positive values are additive components of one reported total,
   use `composition.components`. Every component is seated at zero and the total
-  is a single numeric reference. Do not use `flow.waterfall` for a simple
-  component decomposition; waterfall is for a genuine running balance moving
-  through exact changes.
+  is a single reconciling numeric reference. With exactly two components, that
+  total is not independent orientation: add a same-scale benchmark/denominator,
+  recover a third component, use a relationship-specific recipe, or merge/omit.
+  Do not use `flow.waterfall` for a simple component decomposition; waterfall is
+  for a genuine running balance moving through exact changes.
 - Three or more categories with paired before/after or benchmark/actual values
   should use `comparison.dumbbell` when the category-level movement is the
   finding. Different category magnitudes, grades, or delivery bases do not make
@@ -368,6 +403,13 @@ and spatial distribution, concentration, adjacency, regional contrast, or
 location-specific callouts affect interpretation. Use `standard-chart` only
 when place names are labels or categories and a map adds no explanatory value.
 
+Three or more distinct named administrative regions in comparable evidence are
+treated as a regional distribution even when the prose does not use spatial
+language. Grouped labels count every named region. Such evidence must route to
+`regional-breakdown`; a standard ranking is not an allowed fallback. With two
+named regions, explicit border, adjacency, clustering, concentration,
+distribution, or spread claims also force regional routing.
+
 Before writing specifications, record `routingAudit` on every selected source
 ledger candidate. The routing matrix may still be used as a working view, but
 the ledger is the machine-enforced source of truth. `routingAudit` must classify
@@ -384,11 +426,13 @@ story | geographic evidence | does where change the finding? | workflow | ration
 For a story containing geographic names, a `standard-chart` rationale must
 explicitly explain why geography is not explanatory. Do not let missing
 coordinates, a preselected recipe, or an existing draft spec decide the route.
-When multiple named administrative regions combine with a claim about spread,
-border contrast, clustering, adjacency, distribution, or concentration, the
-source verifier requires `geographyRole: "explanatory"` and
-`workflow: "regional-breakdown"`. It also rejects a later ranking/bar ChartSpec
-that tries to bypass that route.
+Three or more distinct named administrative regions in comparable evidence
+require `geographyRole: "explanatory"` and `workflow: "regional-breakdown"`
+even when the prose contains no spatial cue. Grouped labels count every named
+region. With two regions, a claim about spread, border contrast, clustering,
+adjacency, distribution, or concentration also forces regional routing. The
+source verifier rejects a later ranking/bar ChartSpec that tries to bypass
+either rule.
 For regional candidates, use `regional-guide` and `regions` to obtain stable
 region IDs before authoring the ChartSpec. Keep every materially reported
 continental region in `data[]`; the regional data array is the evidence
@@ -396,9 +440,13 @@ inventory, not a callout inventory. Use `data[].callout: "none"` for regions
 that should remain highlighted without a box. Do not delete reported regions
 merely to make the card layout fit. At most 12 regional items may render
 callout cards. Arrange visible callouts in deliberate reading order: use
-`data[].calloutOrder` when the desired card sequence differs from `data[]` order.
-Automatic leaders stay direct and do not render origin dots. Do not proceed to
-rendering until each accepted story has exactly one recorded workflow decision.
+the semantic data only; do not author card order. Automatic layout assigns the
+geographically sensible side, reorders cards from anchor geometry to minimize
+crossings and total travel, and draws one straight region-to-card leader. Any
+rendered leader crossing fails delivery. `data[].calloutOrder` is legacy input
+and is ignored by automatic geometry. Leaders do not render origin dots. Do not
+proceed to rendering until each accepted story has exactly one recorded workflow
+decision.
 
 Do not write a ChartSpec whose output slug is absent from the source ledger.
 Do not add a chart discovered during research. If a new input-supported story
@@ -444,6 +492,27 @@ Semantic QA must confirm that the visual grammar matches the evidence, that
 reported and derived values are distinguishable, that qualifiers and bounds
 are preserved, and that a reader can state the intended takeaway without
 mentally reconstructing the chart.
+
+QA must also reject context-poor charts that are technically valid but leave the
+reader asking “compared with what?” or “where does this sit in the wider
+distribution?” Recheck the full source family before delivery. If it contains
+same-unit regional, peer, historical, benchmark, or denominator evidence that
+materially orients the headline, that evidence belongs in primary geometry or
+the thin candidate should be merged into the richer visual.
+
+Run a claim-to-geometry check before delivery: state the chart title, then name
+the exact plotted marks that establish it. If the geometry only shows adjacent
+facts while the title asserts causation, consequence, a threshold response, or
+another unsupported relationship, reject or redesign the chart even when all
+numbers are individually correct. For directional converging-signal charts,
+source-ledger mechanism evidence must explicitly link the outcome to at least
+one driver.
+
+Also remove visual noise that cannot defend its place on the chart. Every
+reference line must have a meaningful visible label and materially improve
+orientation; punctuation-only labels, duplicate lines, and unlabeled
+“just-in-case” references fail QA. Within a relationship card set, do not mix
+`pp`/percentage-point notation with `%` rate notation as peer display values.
 
 Visible values must also be self-describing. A numeric `displayValue` or
 `emphasis.displayValue` cannot rely solely on an axis title for its unit. Include

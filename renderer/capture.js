@@ -164,6 +164,8 @@ function diagnoseHtml(htmlPath, options = {}) {
   const trendAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-trend-');
   const scaleAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-zero-');
   const columnAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-column-');
+  const rankingAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-ranking-');
+  const relationshipAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-relationship-');
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
     throw new Error(`Layout diagnostics did not complete (state: ${state}).`);
@@ -178,6 +180,8 @@ function diagnoseHtml(htmlPath, options = {}) {
     trendAttributes,
     scaleAttributes,
     columnAttributes,
+    rankingAttributes,
+    relationshipAttributes,
     rendered: true
   };
 }
@@ -199,7 +203,9 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
       chartAttributes: run.chartAttributes,
       trendAttributes: run.trendAttributes,
       scaleAttributes: run.scaleAttributes,
-      columnAttributes: run.columnAttributes
+      columnAttributes: run.columnAttributes,
+      rankingAttributes: run.rankingAttributes,
+      relationshipAttributes: run.relationshipAttributes
     }))
   };
 }

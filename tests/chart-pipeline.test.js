@@ -38,6 +38,58 @@ test('every recipe has a valid example ChartSpec', () => {
   assert.deepEqual([...covered].sort(), [...recipeIds].sort());
 });
 
+test('reference lines require meaningful labels and reject duplicate values', () => {
+  const spec = loadExample('farm-diesel-range.json');
+  spec.references = [{ value: 10, label: '·', tone: 'neutral', lineStyle: 'dashed' }];
+  let result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /meaningful viewer-facing text|effectively unlabeled reference lines/i.test(message)));
+
+  spec.references = [
+    { value: 10, label: 'Engine sulfur limit', tone: 'neutral', lineStyle: 'dashed' },
+    { value: 10, label: 'Duplicate limit', tone: 'warning', lineStyle: 'line' }
+  ];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /duplicate lines at the same value/i.test(message)));
+});
+
+test('converging-signal cards reject mixed pp and percent notation', () => {
+  const spec = loadExample('converging-signals.json');
+  spec.data[0].displayValue = '−12 pp';
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /cannot mix visible percentage-point notation.*percent-rate notation/i.test(message)));
+});
+
+test('benchmark-gap geometry rejects ratios and cross-unit equivalences masquerading as a gap', () => {
+  const equivalence = {
+    version: '2.0',
+    recipe: 'comparison.benchmark-gap',
+    title: 'Warehouse disruption affected 1.18 million square metres',
+    date: '2026-08-09',
+    data: [{
+      label: 'Affected warehouse area',
+      value: 1180000,
+      benchmark: 200,
+      displayValue: '1,180,000 m² affected',
+      benchmarkDisplayValue: '200 m² minimum hub',
+      gapDisplayValue: '≈5,900 minimum hubs',
+      quantity: 'warehouse area',
+      scope: 'same warehouse network',
+      period: 'August 2026'
+    }],
+    measure: {
+      quantity: 'warehouse area', unit: 'm²', valueMode: 'level',
+      levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'comparison', density: 'editorial', emphasis: 'benchmark-gap' }
+  };
+  const result = validateSpec(equivalence);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /arithmetic gap.*ratios, per-unit equivalences, and cross-unit conversions/i.test(message)));
+});
+
 test('numbered causal sequences are not an available chart recipe', () => {
   assert.equal(recipeIds.includes('story.sequence'), false);
   const result = validateSpec({
@@ -778,12 +830,20 @@ test('thin two-item scenario charts must be enriched, merged, or omitted', () =>
   };
   let result = validateSpec(thinPair);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /too thin to stand alone/i.test(message)));
+  assert.ok(result.errors.some((message) => /requires 3 to 5 independent data items|at least three independent/i.test(message)));
 
   const enrichedPair = structuredClone(thinPair);
   enrichedPair.supportingFacts = [
     { value: '3 districts', label: 'The tighter rule affected three border districts.', role: 'denominator', tone: 'warning' }
   ];
+  result = validateSpec(enrichedPair);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /two generic bars are not an acceptable standalone chart/i.test(message)));
+
+  enrichedPair.data.push({
+    label: 'Interior district', value: 15, displayValue: '15 liters',
+    quantity: 'fuel purchase limit', scope: 'regional fuel sales', period: 'August 2026'
+  });
   result = validateSpec(enrichedPair);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
@@ -814,6 +874,14 @@ test('dot-counting is disabled and thin exact-count pairs require a tangible anc
   assert.ok(result.errors.some((message) => /two exact count categories are not enough/i.test(message)));
 
   thinCounts.references = [{ value: 20, label: 'Models reviewed', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(thinCounts);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /two generic bars are not an acceptable standalone chart/i.test(message)));
+
+  thinCounts.data.push({
+    label: 'Brand C', value: 1, displayValue: '1 model',
+    quantity: 'models banned', scope: 'same regulatory action', period: 'August 2026'
+  });
   result = validateSpec(thinCounts);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
@@ -850,6 +918,118 @@ test('two positive level values prefer one benchmark bar over two independent ch
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
+test('derived benchmark-gap labels inherit visible precision and uncertainty', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'comparison.benchmark-gap',
+    title: 'Shipment covers about three quarters of an average month',
+    date: '2026-08-09',
+    data: [{
+      label: 'Shipment',
+      value: 100000,
+      benchmark: 133333.333333,
+      displayValue: '100,000 tons',
+      benchmarkDisplayValue: '≈133,000 tons average monthly need',
+      gapDisplayValue: '33,333.33 tons below an average month',
+      quantity: 'fuel volume',
+      scope: 'same monthly fuel requirement comparison',
+      period: 'August 2026'
+    }],
+    measure: {
+      quantity: 'fuel volume', unit: 'tons', valueMode: 'level', levelAvailability: 'retrievable', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'comparison', density: 'editorial', emphasis: 'benchmark-gap' }
+  };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /false precision|least precise visible input/i.test(message)));
+  assert.ok(result.errors.some((message) => /drops uncertainty|preserve qualifiers/i.test(message)));
+
+  spec.data[0].gapDisplayValue = '≈33,000 tons below an average month';
+  result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('title-defining thresholds must remain in primary geometry', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'comparison.benchmark-gap',
+    title: 'Wheat offers fell below the 10,000-ruble profitability threshold',
+    date: '2026-08-09',
+    data: [
+      {
+        label: 'Low-end offer', value: 8000, benchmark: 14000,
+        displayValue: '8,000 RUB/t', benchmarkDisplayValue: '14,000 RUB/t before', gapDisplayValue: '−6,000 RUB/t',
+        quantity: 'wheat offer price', scope: 'same wheat offer market', period: 'before-versus-after comparison'
+      },
+      {
+        label: 'High-end offer', value: 9000, benchmark: 15000,
+        displayValue: '9,000 RUB/t', benchmarkDisplayValue: '15,000 RUB/t before', gapDisplayValue: '−6,000 RUB/t',
+        quantity: 'wheat offer price', scope: 'same wheat offer market', period: 'before-versus-after comparison'
+      }
+    ],
+    measure: {
+      quantity: 'wheat offer price', unit: 'RUB/t', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'collapse', density: 'editorial', emphasis: 'benchmark-gap' }
+  };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /threshold.*missing from primary geometry|title or key finding is defined by a numeric threshold/i.test(message)));
+
+  spec.references = [{ value: 10000, label: 'Profitability threshold', tone: 'critical', lineStyle: 'dashed' }];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /threshold-breach story|threshold-oriented geometry/i.test(message)));
+
+  spec.recipe = 'comparison.range';
+  spec.data = [
+    {
+      label: 'Before', value: 14500, displayValue: '14,500 RUB/t',
+      quantity: 'wheat offer price', scope: 'same wheat offer market', period: 'comparison window'
+    },
+    {
+      label: 'After', value: 8500, displayValue: '8,500 RUB/t',
+      quantity: 'wheat offer price', scope: 'same wheat offer market', period: 'comparison window'
+    }
+  ];
+  spec.narrative.emphasis = 'range';
+  result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('short tiny-count trends require a real orientation anchor', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'trend.line',
+    title: 'Regulatory restrictions expanded across truck models',
+    date: '2026-08-09',
+    data: [
+      { label: 'Feb 2025', value: 1, displayValue: '1 model', quantity: 'restricted truck models', scope: 'same regulatory program', period: 'February 2025' },
+      { label: 'Jul 2025', value: 6, displayValue: '6 models', quantity: 'restricted truck models', scope: 'same regulatory program', period: 'July 2025' },
+      { label: 'Aug 2026', value: 6, displayValue: '6 models', quantity: 'restricted truck models', scope: 'same regulatory program', period: 'August 2026' }
+    ],
+    measure: {
+      quantity: 'restricted truck models', unit: 'models', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero'
+    },
+    narrative: { frame: 'warning', density: 'editorial', emphasis: 'direction' }
+  };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /small exact counts|few objects became a few more objects|self-evident/i.test(message)));
+
+  spec.references = [{ value: 20, label: '20 models reviewed', tone: 'neutral', lineStyle: 'dashed' }];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /3–4 point line chart|too sparse and self-evident|do not connect a few tiny integers/i.test(message)));
+
+  spec.recipe = 'comparison.range';
+  spec.data.forEach((item) => { item.period = 'February 2025–August 2026'; });
+  spec.narrative.emphasis = 'range';
+  result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
 test('positive additive components use zero-seated component geometry rather than a floating waterfall', () => {
   const components = loadExample('additive-components.json');
   let result = validateSpec(components);
@@ -857,11 +1037,17 @@ test('positive additive components use zero-seated component geometry rather tha
   assert.equal(result.normalized.measure.baseline, 'zero');
   assert.equal(result.normalized.references[0].value, 935);
 
+  const sumOnly = structuredClone(components);
+  sumOnly.references = [sumOnly.references[0]];
+  result = validateSpec(sumOnly);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /two-component bar decomposition is too thin/i.test(message)));
+
   const badTotal = structuredClone(components);
   badTotal.references[0].value = 900;
   result = validateSpec(badTotal);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /must reconcile to its total reference/i.test(message)));
+  assert.ok(result.errors.some((message) => /exactly one numeric reference equal to the reported\/reconciled component total/i.test(message)));
 
   const floating = {
     version: '2.0', recipe: 'flow.waterfall',
@@ -914,6 +1100,8 @@ test('runtime includes component, basis, calendar-duration, benchmark-gap, dumbb
   assert.match(runtime, /function renderBenchmarkGap\(/);
   assert.match(runtime, /function renderDumbbell\(/);
   assert.match(runtime, /function renderConvergingSignals\(/);
+  assert.match(runtime, /data-relationship-connector': 'continuation'/);
+  assert.match(runtime, /class: 'tochnyi-signal-link',[\s\S]{0,120}data-relationship-connector': 'continuation'/);
   assert.match(runtime, /case 'composition\.components'/);
   assert.match(runtime, /benchmarkGapLabelPlan/);
   assert.match(runtime, /#78aee3/);
@@ -1469,7 +1657,7 @@ test('regional map callout distribution defaults to geographic packing', () => {
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, false, entries), 'geographic');
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'auto' }, true, entries), 'geographic');
   assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'geographic' }, false, entries), 'geographic');
-  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'balanced' }, false, entries), 'balanced');
+  assert.equal(TochnyiMaps.resolveCalloutDistribution({ calloutDistribution: 'balanced' }, false, entries), 'geographic');
 });
 
 test('automatic regional callout sides use stage-space geography and lock distant regions', () => {
@@ -1625,6 +1813,8 @@ test('regional breakdown policy centralizes layout and routing defaults', () => 
   assert.equal(standard.leaderClearance, 14);
   assert.equal(standard.compactColumnThreshold, 5);
   assert.equal(TochnyiMaps.regionalBreakdownPolicy.portRoutingThreshold, Infinity);
+  assert.equal(standard.cardInset, 16);
+  assert.equal(standard.stageInset, 16);
   assert.equal(standard.calloutBottomInset, 22);
 });
 
@@ -1732,7 +1922,7 @@ test('regional breakdown planner owns routing mode, side assignment, and distrib
     summaryOnRight: false
   });
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'direct-editorial');
+  assert.equal(plan.placementMode, 'direct-optimized');
   assert.equal(plan.sides.left.length + plan.sides.right.length, 8);
   assert.ok(plan.sides.left.some((entry) => entry.index === 0));
   assert.ok(plan.sides.right.some((entry) => entry.index === 7));
@@ -1762,7 +1952,7 @@ test('medium regional maps keep direct leaders unless ports are explicit', () =>
     summaryOnRight: false
   });
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'direct-editorial');
+  assert.equal(plan.placementMode, 'direct-optimized');
   const routed = TochnyiMaps.planLeaderRoutes(plan.sides.left.concat(plan.sides.right), {
     routing: 'auto',
     top: 20,
@@ -1770,10 +1960,10 @@ test('medium regional maps keep direct leaders unless ports are explicit', () =>
     gap: 22
   });
   assert.notEqual(routed.routing, 'ports',
-    'medium maps should stay on simple smooth-lane geometry below the dense threshold');
+    'medium maps should stay on straight direct geometry unless ports are explicit');
 });
 
-test('sparse regional maps preserve editorial callout order for direct leaders', () => {
+test('sparse regional maps reorder cards from anchor geometry for direct leaders', () => {
   const entries = [
     { index: 0, item: { calloutSide: 'left' }, point: { x: 430, y: 390 }, height: 92, side: 'left' },
     { index: 1, item: { calloutSide: 'left' }, point: { x: 455, y: 190 }, height: 92, side: 'left' },
@@ -1793,13 +1983,13 @@ test('sparse regional maps preserve editorial callout order for direct leaders',
   };
   const plan = TochnyiMaps.planRegionalBreakdown(entries, geometry);
   assert.equal(plan.usePortRouting, false);
-  assert.equal(plan.placementMode, 'direct-editorial');
-  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [0, 1]);
+  assert.equal(plan.placementMode, 'direct-optimized');
+  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [1, 0]);
   assert.deepEqual(plan.sides.right.map((entry) => entry.index), [2, 3]);
   assert.equal(plan.placement.assignmentEvaluations, 1);
 });
 
-test('regional calloutOrder overrides data order without geographic re-sorting', () => {
+test('regional automatic layout ignores calloutOrder and follows optimized anchor geometry', () => {
   const entries = [
     { index: 0, item: { calloutSide: 'left', calloutOrder: 2 }, point: { x: 430, y: 120 }, height: 82, side: 'left' },
     { index: 1, item: { calloutSide: 'left', calloutOrder: 0 }, point: { x: 450, y: 420 }, height: 82, side: 'left' },
@@ -1816,9 +2006,22 @@ test('regional calloutOrder overrides data order without geographic re-sorting',
     summaryShown: false,
     summaryOnRight: false
   });
-  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [1, 2, 0]);
+  assert.deepEqual(plan.sides.left.map((entry) => entry.index), [0, 2, 1]);
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
   assert.match(runtime, /ordering === 'optimized' \|\| ordering === 'source'/);
+});
+
+test('default regional leaders are literal straight region-to-card segments', () => {
+  const direct = TochnyiMaps.buildOrthogonalLeaderPath({
+    point: { x: 515, y: 310 },
+    routeY: 310
+  }, {
+    cardX: 220,
+    endY: 180
+  });
+  assert.equal(direct.path, 'M 515 310 L 220 180');
+  assert.equal(direct.smooth, false);
+  assert.doesNotMatch(direct.path, /\bC\b|\bH\b|\bV\b/);
 });
 
 test('edge-port leaders use a smooth region curve and readable horizontal card connection', () => {
@@ -2376,7 +2579,7 @@ test('indexed regional markers deconflict nearby anchors with short local links'
   assert.ok(markers.some((marker) => marker.markerMoved));
 });
 
-test('regional map leaders use smooth cubic geometry without square elbows', () => {
+test('regional map direct leaders stay straight regardless of legacy lane metadata', () => {
   const microLane = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'left',
     point: { x: 320, y: 200 },
@@ -2389,9 +2592,8 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     cardX: 220,
     endY: 210
   });
-  assert.equal((microLane.path.match(/\sC\s/g) || []).length, 1,
-    'negligible lane offsets should collapse into one smooth card approach');
-  assert.match(microLane.path, / 220$/);
+  assert.equal(microLane.path, 'M 320 200 L 220 210');
+  assert.doesNotMatch(microLane.path, /\bC\b|\bH\b|\bV\b/);
 
   const leftPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'left',
@@ -2404,16 +2606,12 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     cardX: 220,
     endY: 120
   });
-  assert.match(leftPath.path, /^M 520 310 C /);
-  assert.ok(leftPath.path.endsWith(' ' + leftPath.approachX + ' 120 H 220'));
-  assert.doesNotMatch(leftPath.path, /\s[LVQ]\s/);
-  assert.equal((leftPath.path.match(/\sC\s/g) || []).length, 1,
-    'medium-map lane routes should be one efficient cubic plus a short horizontal card stub');
-  assert.ok(leftPath.approachX > 220 && leftPath.approachX < 520);
+  assert.equal(leftPath.path, 'M 520 310 L 220 120');
+  assert.doesNotMatch(leftPath.path, /\bC\b|\bH\b|\bV\b/);
+  assert.equal(leftPath.approachX, 220);
   assert.equal(leftPath.fanX, 520);
   assert.equal(leftPath.routeY, 338);
-  assert.equal(leftPath.routeSegments.length, 2,
-    'one cubic plus the terminal horizontal stub are the only logical route segments');
+  assert.equal(leftPath.routeSegments.length, 1);
 
   const rightPath = TochnyiMaps.buildOrthogonalLeaderPath({
     side: 'right',
@@ -2426,12 +2624,9 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     cardX: 980,
     endY: 450
   });
-  assert.match(rightPath.path, /^M 610 330 C /);
-  assert.ok(rightPath.path.endsWith(' ' + rightPath.approachX + ' 450 H 980'));
-  assert.doesNotMatch(rightPath.path, /\s[LVQ]\s/);
-  assert.equal((rightPath.path.match(/\sC\s/g) || []).length, 1,
-    'right-side medium-map routes should use the same single-cubic grammar');
-  assert.ok(rightPath.approachX > 610 && rightPath.approachX < 980);
+  assert.equal(rightPath.path, 'M 610 330 L 980 450');
+  assert.doesNotMatch(rightPath.path, /\bC\b|\bH\b|\bV\b/);
+  assert.equal(rightPath.approachX, 980);
   assert.equal(rightPath.fanX, 610);
   assert.equal(rightPath.routeY, 366);
 
@@ -2445,9 +2640,8 @@ test('regional map leaders use smooth cubic geometry without square elbows', () 
     cardX: 220,
     endY: 120
   });
-  assert.match(directPath.path, /^M 520 310 C /);
-  assert.doesNotMatch(directPath.path, /\s[LVQ]\s/);
-  assert.equal((directPath.path.match(/\sC\s/g) || []).length, 1);
+  assert.equal(directPath.path, 'M 520 310 L 220 120');
+  assert.doesNotMatch(directPath.path, /\bC\b|\bH\b|\bV\b/);
 });
 
 test('regional map leader rendering preserves separation after routing', () => {
@@ -2461,8 +2655,9 @@ test('regional map leader rendering preserves separation after routing', () => {
   assert.match(css, /\.tochnyi-map-leader-halo\s*\{[^}]*stroke-width:\s*5\.25/gs);
 });
 
-test('dense map runtime renders curved edge-port leaders instead of stacked corridors', () => {
+test('regional runtime keeps straight direct leaders while retaining explicit port routing', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-map-runtime.js'), 'utf8');
+  const diagnostics = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-diagnostics.js'), 'utf8');
   const maps = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-maps.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(runtime, /planRegionalBreakdown\(entries/);
@@ -2470,7 +2665,11 @@ test('dense map runtime renders curved edge-port leaders instead of stacked corr
   assert.match(maps, /portRoutingThreshold:\s*Infinity/);
   assert.match(maps, /function planRegionalBreakdown\(/);
   assert.match(maps, /simpleCalloutPlacement\(all, placementOptions\)/);
-  assert.match(runtime, /pack\(sides\.left[^\n]+usePortRouting \? 'optimized' : 'source'/);
+  assert.match(runtime, /pack\(sides\.left, topLeft, bottom, gap, 'optimized'\)/);
+  assert.match(runtime, /data-map-leader-rendered-crossings/);
+  assert.match(runtime, /data-map-layout-stable', 'pending'/);
+  assert.match(runtime, /data-map-layout-stable', 'true'/);
+  assert.match(diagnostics, /data-map-layout-stable.*!== 'true'/);
   assert.match(runtime, /data-map-callout-placement',/);
   assert.match(runtime, /data-map-callout-predicted-crossings/);
   assert.match(runtime, /data-map-callout-assignment-evaluations/);
@@ -3202,7 +3401,7 @@ test('regional agent workflow validates, renders, and reports normalized automat
   const guide = regionalAgentGuide('russia');
   assert.equal(guide.recipe, 'map.regional');
   assert.deepEqual(guide.minimalMap, { regionSet: 'russia' });
-  assert.ok(guide.automaticByDefault.includes('leader routing'));
+  assert.ok(guide.automaticByDefault.includes('straight region-to-card leader routing'));
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-'));
   const output = path.join(tempDir, 'regional.html');
@@ -3437,9 +3636,15 @@ test('editorial validation flags redundant composition copy and internal sources
   });
   const result = validateSpec(spec);
   assert.equal(result.valid, false);
-  assert.ok(result.warnings.some((warning) => warning.includes('internal working reference')));
+  assert.ok(result.errors.some((error) => /presentation copy cannot expose internal provenance/i.test(error)));
   assert.ok(result.warnings.some((warning) => warning.includes('ambiguous repeated unit abbreviation')));
   assert.ok(result.errors.some((error) => error.includes('Supporting facts repeat values')));
+
+  const briefTitle = loadExample('ai95-price-spike.json');
+  briefTitle.title = 'The brief says gasoline prices rose';
+  const titleResult = validateSpec(briefTitle);
+  assert.equal(titleResult.valid, false);
+  assert.ok(titleResult.errors.some((error) => /presentation copy cannot expose internal provenance/i.test(error)));
 });
 
 test('default output paths use an arbitrary transient run id', () => {

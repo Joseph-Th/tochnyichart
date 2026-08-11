@@ -34,7 +34,14 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
   if (!review.valid) throw new Error(`${file}: ${review.errors.join('; ')}`);
   const screenshot = captureHtml(htmlPath, pngPath, { browser });
   if (screenshot.diagnostics?.status === 'fail') {
-    throw new Error(`${file}: layout diagnostics found ${screenshot.diagnostics.summary.errors} error(s).`);
+    const details = (screenshot.diagnostics.issues || [])
+      .filter((issue) => issue.severity === 'error')
+      .map((issue) => `${issue.code}: ${issue.message}`)
+      .join(' | ');
+    throw new Error(
+      `${file}: layout diagnostics found ${screenshot.diagnostics.summary.errors} error(s)` +
+      (details ? `: ${details}` : '.')
+    );
   }
   const hash = crypto.createHash('sha256').update(fs.readFileSync(pngPath)).digest('hex');
   captures.push({

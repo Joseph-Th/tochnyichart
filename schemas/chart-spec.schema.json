@@ -373,6 +373,19 @@
     },
     {
       "if": {
+        "properties": { "recipe": { "const": "comparison.scenarios" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 3,
+            "maxItems": 5
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": { "recipe": { "const": "timeline.duration" } }
       },
       "then": {

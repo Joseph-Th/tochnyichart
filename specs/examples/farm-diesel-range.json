@@ -5,7 +5,7 @@
   "subtitle": "Russian ministries asked whether farmers could accept diesel or heating oil with sulfur concentrations far beyond the tolerance of modern agricultural engines.",
   "date": "2026-07-26",
   "source": {
-    "name": "Russian Ministry of Energy proposal described in the weekly source text",
+    "name": "Russian Ministry of Energy proposal",
     "period": "July 2026"
   },
   "data": [
@@ -58,7 +58,7 @@
     },
     {
       "value": "Engine damage risk",
-      "label": "The source text warns that modern agricultural engines would be damaged by such fuel.",
+      "label": "The proposal warns that modern agricultural engines would be damaged by such fuel.",
       "tone": "critical"
     }
   ],
