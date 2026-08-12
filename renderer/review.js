@@ -24,8 +24,6 @@ function reviewHtml(html, options = {}) {
   if (/am5(?:xy|percent)?\.[A-Za-z]+\.new\s*\(/.test(html)) {
     errors.push('Generated chart contains direct AMCharts implementation code.');
   }
-  if (html.length > 12000) warnings.push(`Generated shell is ${html.length} characters; consider shortening editorial copy.`);
-
   try {
     spec = extractSpec(html);
     if (!spec) errors.push('Missing embedded ChartSpec.');
@@ -34,6 +32,12 @@ function reviewHtml(html, options = {}) {
   }
 
   if (spec) {
+    const structuredPointCount = (spec.data || []).reduce((total, item) =>
+      total + (Array.isArray(item?.segments) ? item.segments.length : 1), 0
+    );
+    if (html.length > 12000 && structuredPointCount <= 12) {
+      warnings.push(`Generated shell is ${html.length} characters; consider shortening editorial copy.`);
+    }
     const validation = validateSpec(spec);
     errors.push(...validation.errors.map((message) => `ChartSpec: ${message}`));
     warnings.push(...validation.warnings.map((message) => `ChartSpec: ${message}`));

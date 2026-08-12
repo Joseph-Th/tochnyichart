@@ -1,0 +1,85 @@
+{
+  "version": "2.0",
+  "recipe": "trend.stacked",
+  "title": "Incident Mix Shifted Across the Spring",
+  "date": "2026-08-12",
+  "source": {
+    "name": "Monthly incident registry",
+    "period": "January to April 2026"
+  },
+  "data": [
+    {
+      "label": "Jan 26",
+      "quantity": "recorded incident count",
+      "scope": "reported incidents",
+      "period": "January 2026",
+      "segments": [
+        { "label": "Infrastructure", "value": 18 },
+        { "label": "Transport", "value": 12 },
+        { "label": "Defense", "value": 9 }
+      ]
+    },
+    {
+      "label": "Feb 26",
+      "quantity": "recorded incident count",
+      "scope": "reported incidents",
+      "period": "February 2026",
+      "segments": [
+        { "label": "Infrastructure", "value": 24 },
+        { "label": "Transport", "value": 10 },
+        { "label": "Defense", "value": 14 }
+      ]
+    },
+    {
+      "label": "Mar 26",
+      "quantity": "recorded incident count",
+      "scope": "reported incidents",
+      "period": "March 2026",
+      "segments": [
+        { "label": "Infrastructure", "value": 20 },
+        { "label": "Transport", "value": 17 },
+        { "label": "Defense", "value": 16 }
+      ]
+    },
+    {
+      "label": "Apr 26",
+      "quantity": "recorded incident count",
+      "scope": "reported incidents",
+      "period": "April 2026",
+      "segments": [
+        { "label": "Infrastructure", "value": 28 },
+        { "label": "Transport", "value": 15 },
+        { "label": "Defense", "value": 12 }
+      ]
+    }
+  ],
+  "measure": {
+    "quantity": "recorded incident count",
+    "unit": "records",
+    "axisTitle": "Recorded incidents",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "neutral",
+    "density": "editorial",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "tall",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "monthly-category-stack",
+    "topic": "monthly category composition",
+    "dataPeriod": "January to April 2026",
+    "keyFinding": "Infrastructure remains the largest category while the total and mix vary by month."
+  }
+}

@@ -18,16 +18,16 @@ const TOOL_API_RESOURCES = Object.freeze({
 
 const BATCH_WORKFLOW = Object.freeze({
   owner: 'llm-agent',
-  input: 'input.txt',
-  inputAuthority: 'Expert-authored editorial evidence. Presume claims and datapoints are correct; external silence is not contradiction.',
-  purpose: 'Produce a chart presentation from multiple candidate data stories.',
+  input: 'input/',
+  inputAuthority: 'User-supplied source materials. Treat supplied data and editorial context as authoritative for the assignment unless a reputable source directly contradicts a material point.',
+  purpose: 'Produce one or more Tochnyi chart or infographic artifacts from supplied source materials, with presentation assembly only when requested.',
   steps: Object.freeze([
-    'initialize .work/<run-id>/ from the exact non-empty project-root input.txt and create its hashed source ledger',
-    'read the complete input.txt and inventory every distinct quantitative story with exact excerpts',
+    'initialize .work/<run-id>/ from the exact non-empty project-root input/ source set and create its hashed source ledger',
+    'inventory every supplied input file and identify the quantitative stories, analyses, and structured datasets relevant to the assignment',
     'inventory every materially relevant same-scale observation in visualEvidenceAudit before choosing a recipe',
     'inventory orientation anchors and material formula inputs as well: actual/current values for forecasts and targets, plus mixed-unit factors that materially explain a derived outcome',
     'record selected, omitted, or merged disposition for every candidate and verify the source ledger before research',
-    'preserve each inventoried expert-authored claim and enrich it from reputable sources without originating new stories',
+    'preserve each supplied claim or documented data-derived finding and enrich it from reputable sources without originating unrelated stories',
     'merge duplicates and omit weak, irrelevant, or non-visual stories',
     'apply the visual-evidence gate and omit prose-only or one-point stories that cannot be enriched with legitimate visual structure',
     'audit actual levels and the tangible basis behind every rate or share; name the tangible target and document structured source checks before declaring either unavailable or incomparable',
@@ -36,10 +36,10 @@ const BATCH_WORKFLOW = Object.freeze({
     'author one ChartSpec per accepted chart story, then use the run chart builder to validate, render, diagnose, capture, and manifest the complete selected set',
     'compare authored ChartSpecs for duplicate source, reporting context, recipe, and category or time skeleton; consolidate matches before delivery',
     'capture one final PNG image per accepted chart',
-    'assemble the final PNG images into one PowerPoint presentation by following presentation-plan.json exactly, with one chart per slide and no unrequested title or divider slides',
+    'when a PowerPoint presentation is requested, assemble the final PNG images by following presentation-plan.json exactly, with one chart per slide and no unrequested title or divider slides',
     'verify that selected source-ledger slugs and titles exactly match the final ChartSpecs',
-    'save the ChartSpecs, HTML files, final PNGs, and presentation in the retained local run folders',
-    'finalize the run to remove .work/<run-id>/ and legacy previews while preserving input.txt, specs/runs/<run-id>/, and charts/<run-id>/'
+    'save the ChartSpecs, HTML files, final PNGs, and any requested presentation in the retained local run folders',
+    'finalize the run to remove .work/<run-id>/ and legacy previews while preserving input/, specs/runs/<run-id>/, and charts/<run-id>/'
   ]),
   initializeCommand: 'npm run run:init -- <run-id>',
   deliveryFolder: 'charts/<run-id>/',
@@ -50,9 +50,9 @@ const BATCH_WORKFLOW = Object.freeze({
   finalArtifacts: Object.freeze([
     'authored ChartSpec JSON files',
     'rendered chart HTML files',
-    'final chart PNG images used in the presentation',
-    'presentation-plan.json with one chart entry per slide',
-    'one PowerPoint presentation'
+    'final chart PNG images',
+    'presentation-plan.json as an optional presentation assembly guide',
+    'one PowerPoint presentation when requested'
   ]),
   temporaryWorkspace: '.work/<run-id>/',
   temporaryReviewFolder: '.work/<run-id>/review/',
@@ -62,17 +62,20 @@ const BATCH_WORKFLOW = Object.freeze({
   chartBuildCommand: 'npm run run:charts -- <run-id>',
   finalizeCommand: 'npm run run:finalize -- <run-id>',
   coldResetCommand: 'npm run run:reset',
-  retentionRule: 'specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. input.txt is also retained. Both production paths are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, and legacy previews are transient.',
-  boundary: 'The Tool API produces individual chart artifacts. The run chart builder coordinates verified ChartSpecs through HTML, responsive diagnostics, PNG capture, manifest, and QA reporting. The orchestration layer still owns input parsing, story selection, and presentation assembly.'
+  retentionRule: 'specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. input/ is also retained. Production inputs and outputs are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, and legacy previews are transient.',
+  boundary: 'The Tool API produces individual chart artifacts. The run chart builder coordinates verified ChartSpecs through HTML, responsive diagnostics, PNG capture, manifest, and QA reporting. The orchestration layer still owns source interpretation, story selection, and any requested presentation assembly.'
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
-  coreRule: 'Treat input.txt as expert-authored editorial evidence. Assume its factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point.',
-  inputRule: 'Treat each input entry as both evidence and routing information. It may be incomplete, but external silence is not a contradiction.',
-  inputIdentityRule: 'Use only the exact non-empty project-root input.txt. Never substitute a sibling project file, prior batch, alternate brief, or similarly named source.',
-  inventoryRule: 'Before research, inventory every distinct quantitative input story with exact excerpts and record selected, omitted, or merged disposition. Every selected story requires primary input evidence and an exact titleBasis excerpt.',
+  coreRule: 'Treat the project-root input/ folder as the authoritative source set for the assignment. Preserve supplied claims and datapoints unless a reputable source directly contradicts a material point.',
+  inputRule: 'Treat each supplied file as evidence, context, or routing information. Structured datasets may support findings through documented filters, groupings, or calculations rather than literal prose excerpts.',
+  inputIdentityRule: 'Use only the exact non-empty project-root input/ source set initialized for the run. Never substitute a sibling project, prior batch, or alternate source collection.',
+  inventoryRule: 'Before research, inventory the source files and every selected quantitative story. Use exact excerpts for prose sources and explicit file selectors or documented derivations for structured data.',
   supplementationRule: 'Use reputable external sources only after the input story is inventoried. They may add attribution, comparators, denominators, historical series, mechanisms, consequences, current status, or actual levels that directly express the same input-anchored change. They may not create the subject, central claim, or title. Changing from a percentage or index to its corresponding actual levels is a representation improvement, not a new story. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
-  titleFidelityRule: 'Every substantive title concept must be directly supported by its exact titleBasis excerpt. Analytical terms such as maximum, range, coverage, collapse, exposure, erosion, or sector-specific inflation require that structure in the input evidence.',
+  titleFidelityRule: 'Every substantive title concept must be supported by the recorded titleBasis in the supplied source set. Prose claims use exact excerpts; structured-data findings use a documented source path plus the grouping, filter, or formula that produces the finding.',
+  sourceViewRule: 'Inspect all materially relevant sheets, tabs, notebook sections, and generated-analysis views before choosing a chart source. When one supplied view is explicitly designed to emit separate plots, prefer that view for individual chart extraction instead of reconstructing a less-specific overview elsewhere.',
+  audienceLabelRule: 'Assignment-specific audience labels may differ from raw source categories only when the mapping is explicit. Preserve the raw source value in the ledger observation label and record the final presentation name in specLabel; never hard-code a client or presenter alias into renderer code.',
+  titleClarityRule: 'Visible titles use audience-facing language. Remove internal dataset codes and unexplained project acronyms from the title. If attribution is necessary, use an audience-facing source name in the source line rather than explaining internal working names in a subtitle.',
   contradictionRule: 'Only a direct material contradiction from a reputable source creates a source conflict. Mark the external evidence conflictStatus material, preserve both positions in working notes, and do not select or visualize the story until editorial resolution. A source conflict is never a chart comparison.',
   presentationRule: 'Do not expose research-process labels such as uncorroborated, not independently confirmed, unsupported draft, or verification failed solely because external search results are silent.',
   safeDerivations: Object.freeze([
@@ -99,9 +102,9 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   derivedOutcomeRule: 'When a headline amount or range is materially explained by two quantitative inputs in different units, such as area × price per square metre = value or capacity × utilization = output, treat those inputs as part of the visual argument. Prefer relationship.converging-signals with an explicit formula when the factors and outcome are all material. A point that merely repeats a range endpoint is not an anchor and cannot rescue a thin range chart.',
   routingRule: 'Every selected story must record routingAudit before ChartSpec authoring. Three or more named administrative regions in comparable evidence are themselves a regional distribution and must use geographyRole explanatory plus regional-breakdown, even when the prose calls the result a ranking or comparison and contains no explicit spatial cue. With two regions, spatial findings such as spread, border contrast, clustering, distribution, adjacency, or concentration also force regional-breakdown. Grouped labels count every named region. A standard ranking cannot override either decision.',
   standalonePairRule: 'Do not use comparison.scenarios for two values. Generic two-bar charts require a third independent same-scale observation. When the pair itself has a meaningful relationship, use a relationship-specific recipe such as benchmark-gap, change, or timeline; otherwise enrich with a third observation, merge, or omit.',
-  representationRule: 'Before recipe selection, determine whether actual levels and any rate/share basis are reported or retrievable. Prefer tangible values for primary geometry. Percentage-only prices, workforce, exports, production, spending, and revenue must trigger a search for the underlying amounts. For multi-category price changes, comparability is evaluated within each category pair: different category price levels, grades, or delivery bases do not make a valid earlier/current pair incomparable. Workforce research must include the company filing or employee disclosure for the relevant reporting perimeter. A claim of unavailable or incomparable requires an exact tangibleTarget and at least two completed structured researchAttempts covering two source types, including a data-bearing source.',
+  representationRule: 'Before recipe selection, determine whether tangible levels and any rate/share basis are reported or retrievable. Prefer directly interpretable values for primary geometry. A claim that more concrete values are unavailable or incomparable requires an exact tangibleTarget and completed structured researchAttempts covering more than one relevant source type, including a data-bearing source when appropriate.',
   completedResearchRule: 'Research attempts must name the exact URL, filing, table, ticker/date range, or dataset slice actually checked and record a completed outcome. Pending language such as to be checked, will check, TBD, or generic web search is invalid evidence.',
-  basisRule: 'For rates and shares, identify the numerator and denominator or the total and affected population. Shares of named public aggregates such as GDP, the economy, population, employment, exports, imports, production, or capacity must be treated as having a retrievable denominator: record basisTarget, recover the compatible public total, derive the tangible numerator, and use level geometry. A 100% reference is not an anchor. The numerator and denominator must both appear in primary geometry; a basis rail alone is not sufficient.',
+  basisRule: 'For rates and shares, identify the numerator and denominator or the relevant total whenever that basis is material to interpretation. When the total is supplied or reasonably retrievable, expose the tangible basis in primary geometry rather than relying on a floating percentage alone.',
   benchmarkGapRule: 'For two positive level values, first ask whether one is naturally the current/actual value and the other a prior, standard, limit, target, or other benchmark. If so, prefer one comparison.benchmark-gap row over two independent bars. value and benchmark must represent the same quantity in the same unit, and gapDisplayValue must state their arithmetic difference or percentage context. Never use a per-unit size, ratio, equivalence, or cross-unit conversion as the gap. If the relationship is multiplicative or mixed-unit, use relationship.converging-signals or supporting context instead.',
   exactCountRule: 'Do not use dot-counting or pictogram charts. A selected exact-count story with only two comparable counts must be enriched with a third comparable count, tangible denominator or population, independent benchmark, or time series. The sum of the two counts is derived from the bars and never counts as an anchor. Different-unit percentage context does not make a two-count chart analytically strong.',
   componentRule: 'When several positive reported values are additive components of one total, use composition.components: every component begins at zero and one reference reconciles the reported total. If there are only two components, that sum is redundant and the story also needs an independent same-scale benchmark/denominator; otherwise recover a third component, use a relationship-specific recipe, merge, or omit.',
@@ -113,9 +116,9 @@ const SOURCE_ENRICHMENT_POLICY = Object.freeze({
   normalizedOrientationRule: 'A rate or share with an unavailable or incomparable tangible basis cannot stand alone on one reported percentage plus its derived complement. Recover an independent same-unit peer, regional observation, prior/current point, benchmark, target, or other orientation from the full supplied source or underlying dataset. If a richer same-topic chart already contains that evidence, merge the thin claim into it instead of creating another slide; otherwise omit the claim.',
   coverageRule: 'When a shortage, import, reserve, or shipment story is interpreted as days of consumption, demand coverage, or share of need, place the demand denominator on the visual scale. If the input contains two or more physical-volume components, visualEvidenceAudit.coverageAudit must disposition every reported volume as a plotted component, denominator, or specifically excluded item. Keep all retained components and total need in primary geometry in one tangible unit; the denominator may be a numeric reference rather than a redundant row. Days of coverage may be secondary context, never a replacement for the decomposition.',
   baselineScaleRule: 'When the editorial point is that amounts are small relative to a baseline, preserve proportional magnitude with a linear scale. Do not use logarithmic geometry. If a monthly or annual flow denominator is at least about 8 times the largest retained component, period-normalize the same denominator to a shorter familiar interval, usually a week or day, keep every component in the original physical unit, and show the derived denominator as a visible reference. The transformation must preserve the same underlying rate and be recorded in the evidence audit or basis.',
-  subtitleRule: 'Subtitle is optional. Omit it when it merely repeats the title, category labels, percentages, or displayed amounts. Use it only for a qualification, denominator, mechanism, scope distinction, or interpretation not already visible in the marks.',
+  subtitleRule: 'Subtitle is optional and must earn its space. Omit it when it merely repeats the title, category labels, percentages, displayed amounts, or provenance. Never use consumer-facing subtitle copy such as "from the supplied dataset", "based on the provided data", or other source-process metadata. Use a subtitle only for a reader-facing qualification, denominator, mechanism, scope distinction, or interpretation not already visible in the marks; put true attribution in the source line.',
   consolidationRule: 'The ledger inventories claims, not mandatory slides. After authoring, consolidate selected ChartSpecs that share the same input passage, source and reporting period, recipe, and category or time skeleton. Keep the primary measure as the chart, move a secondary measure into supportingFacts, or mark the secondary candidate merged.',
-  attributionRule: 'Use source attribution when an underlying publication or dataset is available. Omit source when it is unavailable. Presentation copy must never say input.txt, input brief, the brief, source text, internal compilation, or other internal provenance/workflow language.'
+  attributionRule: 'Use source for the underlying publication, dataset, organization, or named source collection. Use analysis only for a real analyst, author, team, or public account responsible for the analysis, with an optional public URL. Keep source and analysis separate; never hard-code a person or account into renderer code. Presentation copy must not expose internal workflow labels or file-handling language.'
 });
 
 const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
@@ -123,6 +126,9 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   minimumMarks: 'A generic categorical/bar chart requires at least three independent quantitative observations. Two-value charts are allowed only when a relationship-specific recipe makes the relationship itself the geometry, such as benchmark-gap, change, diverging, or timeline. A regional map may use geographic marks because location is itself an encoding.',
   onePointRule: 'A lone value is routing information, not a chart. Find a source-supported prior value, target, benchmark, denominator, peer, range, or time series. One actual-plus-benchmark relationship is sufficient for a single-row comparison.benchmark-gap because the actual segment, gap segment, and benchmark marker provide multiple marks. If no valid structure exists, omit the story.',
   richDataRule: 'When visualEvidenceAudit inventories three or more materially relevant observations of one quantity and unit, every observation must remain a primary data item. A one-row aggregate, total, range, or coverage conversion is not an acceptable substitute for the richer dataset.',
+  fullDomainRankingRule: 'For a finite categorical ranking derived from a structured field, include the full non-empty category domain by default. A top-N cutoff is an editorial exception and must be explicitly justified in the source ledger or evidence audit rather than introduced for convenience.',
+  rankingLabelRule: 'Horizontal rankings keep a numeric value label adjacent to every bar by default. Fix spacing, chart height, and label geometry instead of suppressing labels to make diagnostics pass.',
+  rankingColorRule: 'When a ranking is a categorical profile rather than a top-item focus story, use the qualitative categorical color policy. Adjacent bars must be deliberately hue-separated; never consume the core brand palette in shade-family order such as blue, yellow, light blue, dark yellow, dark blue, light yellow.',
   standalonePairRule: 'comparison.scenarios requires at least three independent values. Supporting facts, annotations, or a derived total do not rescue two generic bars. Use relationship-specific geometry for a defensible two-value relationship; otherwise enrich, merge, or omit.',
   exactCountRule: 'Dot-counting is disabled. Two exact count categories are too thin unless the story also supplies a tangible denominator/population or independent benchmark. Their own sum is not an anchor. Prefer three or more same-scale counts, a denominator-anchored comparison, or a time series; otherwise merge or omit the story.',
   baselineScaleRule: 'Logarithmic scale is forbidden when a benchmark or denominator is present specifically to show that the primary amounts are a small fraction of it. Use a linear axis. When a long-period flow benchmark overwhelms the primary marks, shorten only the benchmark period with a rate-preserving conversion rather than compressing the scale.',
@@ -159,12 +165,13 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Three or more categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
   Object.freeze({ when: 'Two source-supported quantitative drivers or formula inputs and one different outcome measure three distinct quantities, with an explicit mechanism formula. This includes material mixed-unit derivations such as quantity × unit price = value; never use it for repeated prices, repeated volumes, or one measure at different dates.', use: 'relationship.converging-signals', example: 'specs/examples/converging-signals.json' }),
   Object.freeze({ when: 'Three or more ordered time points, especially when slowdown, acceleration, reversal, or persistence is the finding. Do not use trend.line for a 3–4 point sequence of tiny exact counts unless a real denominator/portfolio benchmark or richer magnitude anchor makes the series interpretable.', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
+  Object.freeze({ when: 'Three to twenty-four ordered periods contain the same additive categories and the changing category mix plus total volume is the finding. Retain zero-valued categories so stack colors stay stable across periods.', use: 'trend.stacked', example: 'specs/examples/monthly-category-stack.json' }),
   Object.freeze({ when: 'Two or more intervals share one calendar, using exact start/end dates or one verified common anchor plus exact durations', use: 'timeline.duration', example: 'specs/examples/fuel-ban-timeline.json' }),
   Object.freeze({ when: 'Exact parts of one total when the composition itself is the finding and no more informative same-total policy, target, prior, or alternative comparator should anchor the viewer', use: 'composition.stacked', example: 'specs/examples/moscow-warehouse-delay-2026.json' }),
   Object.freeze({ when: 'Multi-part composition where shape matters', use: 'composition.donut', example: 'specs/examples/budget-composition.json' }),
   Object.freeze({ when: 'Positive additive components reconcile to one reported total and component magnitudes should be compared from zero. With only two components, require an additional independent same-scale benchmark/denominator beyond their derived sum.', use: 'composition.components', example: 'specs/examples/additive-components.json' }),
   Object.freeze({ when: 'A source-supported existing balance moves through genuine positive and/or negative same-period changes into an ending value', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
-  Object.freeze({ when: 'Ranked categories with long labels', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
+  Object.freeze({ when: 'Ranked categories with long labels. Categorical profiles use a hue-separated qualitative palette; ranking-focus stories may use restrained focus color instead.', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
 ]);
 
 const SHARED_SCALE_CONTRACT = Object.freeze({
@@ -172,7 +179,7 @@ const SHARED_SCALE_CONTRACT = Object.freeze({
   requiredFields: Object.freeze(['measure.quantity', 'data[].quantity', 'data[].scope', 'data[].period']),
   sameQuantityRule: 'Every data[].quantity must exactly match measure.quantity.',
   sameScopeRule: 'Every item on a shared scale must use the same population, denominator, entity system, or accounting bridge.',
-  periodRule: 'Scenario, diverging, range, dumbbell, and ranking charts use one shared period; a dumbbell period may name the comparison interval. comparison.change and comparison.benchmark-gap may use before-and-after periods, and trend.line may advance through ordered periods, while quantity and scope stay fixed.',
+  periodRule: 'Scenario, diverging, range, dumbbell, and ranking charts use one shared period; a dumbbell period may name the comparison interval. comparison.change and comparison.benchmark-gap may use before-and-after periods, and trend.line or trend.stacked may advance through ordered periods, while quantity and scope stay fixed.',
   rejectionRule: 'If the sentence test cannot be completed literally, do not use a shared axis. Use relationship.converging-signals when exactly two drivers and one outcome form one coherent claim; otherwise select one primary story with secondary context or split the evidence into separate charts.',
   genericLabelsRejected: Object.freeze(['reported change', 'value', 'metric', 'amount', 'result'])
 });
@@ -230,11 +237,13 @@ const COMPOSABLE_FEATURES = Object.freeze([
 const SHARED_AUTHORING_RULES = Object.freeze([
   'Author a ChartSpec JSON file; never author generated HTML, CSS, JavaScript, or chart geometry.',
   'Use the underlying publication or dataset as the source when available; otherwise omit source attribution.',
-  'Treat input.txt as expert-authored editorial evidence and preserve its claims by default. Entries are also routing information and may be incomplete.',
+  'Treat the initialized input/ source set as authoritative for the assignment. Preserve supplied claims and datapoints by default; structured datasets may support findings through documented calculations.',
   'Use external research to supplement or attribute the input, not to vote on whether it is true. External silence is not contradiction.',
   'Never label an input claim uncorroborated, unsupported, or not independently confirmed solely because a second source was not found.',
   'Escalate only direct material contradictions from reputable sources. Mark the external evidence conflictStatus material, preserve both positions, and do not select or visualize the story until editorial resolution.',
   'Read supplied sources before selecting a recipe. Never mention the input filename or internal workflow status in presentation copy.',
+  'Inspect materially relevant sheets, tabs, notebook sections, and generated-analysis views. Prefer a supplied section that intentionally produces separate plots when the requested deliverable is individual charts.',
+  'Keep raw source category names intact in the ledger. Use visualEvidenceAudit.comparableObservations[].specLabel for an explicitly requested audience-facing alias; do not bake client-specific naming into the renderer.',
   'Search beyond the primary source to fill a named material evidence gap or add useful attribution and context, and reject adjacent context that does not strengthen the central claim.',
   'Record routingAudit for every selected story before ChartSpec authoring. Classify geography as none, categorical, or explanatory. Three or more named administrative regions in comparable evidence automatically constitute a regional distribution and require regional-breakdown, even without words such as spread or regional pattern; grouped labels count every named region. Two regions plus a spatial finding such as border contrast, clustering, distribution, adjacency, or concentration also require regional-breakdown.',
   'Do not add irrelevant data or decorative complexity. Do require a real visual comparison: a one-point or prose-only story must be enriched with source-supported structure or omitted.',
@@ -249,12 +258,11 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Do not select a line, ranking, or generic comparison merely because 3–4 exact count observations exist. If the counts are tiny or barely vary, first recover an independent same-unit denominator, portfolio/universe, reviewed set, capacity, affected sales/volume/value, or a richer series. If no such orientation exists, use chronology/event structure when appropriate or omit/merge the story.',
   'A value that exactly repeats a low/high range endpoint, benchmark endpoint, total, remainder, or zero gap is redundant geometry. It does not count as an anchor and must not be added merely to make a thin chart pass.',
   'When a headline outcome or range is materially explained by two quantitative factors in different units, keep those factors in the main visual argument. Use relationship.converging-signals with an explicit formula when the two inputs and outcome are all material, rather than parking the inputs in supportingFacts.',
-  'For price-like category changes, evaluate comparability within each category pair. A current price plus a compatible percentage move makes the prior price derivable. Different category levels, grades, or delivery bases do not make valid within-category pairs incomparable.',
+  'For repeated category/time pairs, evaluate comparability within each pair before choosing geometry. Do not reject valid within-category comparisons merely because categories have different absolute levels.',
   'Do not flatten repeated category/time pairs into comparison.scenarios. Use comparison.benchmark-gap for one or two category pairs and comparison.dumbbell for three or more.',
   'Prefer comparison.benchmark-gap over comparison.change when two positive level values can be read naturally as current/actual versus prior, standard, limit, target, or benchmark. Do not default to two independent bars.',
   'Do not use dot-counting or comparison.pictogram. Two exact count categories require a third comparable count, a tangible denominator/population, an independent benchmark, or a time series before they deserve a standalone chart. Their own sum is not an anchor.',
-  'For percentage-only prices, workforce, exports, production, spending, and revenue, search for the underlying amounts for the same scope and periods before selecting geometry.',
-  'For workforce percentages, check the company filing, employee note, or official workforce disclosure before accepting headcount as unavailable.',
+  'For normalized changes or shares, search for the underlying tangible values for the same scope and periods when those values are material and reasonably retrievable.',
   'Never invent a 0% before-event point or index-100 starting point merely to create a trend. Use actual levels or only the reported relative observations.',
   'Use relative-change geometry only when actual levels are unavailable or incomparable, and explain the limitation in measure.normalizationNote. Use index only for a named published index with reported or retrievable point levels; never show generic index wording in visible values.',
   'Never use status, card, bullet, or facet grids as a substitute for a chart. Quantify a common dimension, use a regional map when geography matters, split the evidence, or omit the story.',
@@ -263,6 +271,7 @@ const SHARED_AUTHORING_RULES = Object.freeze([
   'Never publish a bare numeric label whose unit is only available on an axis. Put the unit in displayValue or state it explicitly in the title or subtitle.',
   'Do not create parallel charts from the same source passage, reporting period, recipe, and category or time skeleton merely because the measures use different units. Consolidate the secondary measure or mark it merged.',
   'Subtitle is optional. Omit it when it repeats values, labels, or the title; retain it only when it adds interpretation, scope, mechanism, denominator, or qualification.',
+  'Use note only for a reader-facing caveat that materially changes interpretation. Parsing details, partial-date recovery, filtering bookkeeping, excluded-row counts, and other production methodology belong in the source ledger or metadata rather than visible chart copy.',
   'For composition charts, preserve both the share and tangible absolute amount, lead with proportional marks, and render each segment label once rather than repeating the same category, share, and amount in two locations.',
   'For risk or exit-outlook charts, anchor the percentage to a population or denominator, show that total on the plotted scale, and include at least one mechanism or consequence.',
   'Use every comparable datapoint that materially defines the headline as primary geometry. Three or more time observations establishing slowdown or acceleration require trend.line rather than two bars plus supporting facts.',
@@ -279,7 +288,7 @@ const SHARED_AUTHORING_RULES = Object.freeze([
 ]);
 
 const SHARED_STAGES = Object.freeze([
-  Object.freeze({ id: 'preserve-input', action: 'Treat input.txt as expert-authored evidence and preserve its factual claims unless a reputable source directly contradicts a material point.' }),
+  Object.freeze({ id: 'preserve-input', action: 'Treat the initialized input/ source set as authoritative assignment evidence and preserve supplied claims unless a reputable source directly contradicts a material point.' }),
   Object.freeze({ id: 'confirm-source', action: 'Confirm that supplied sources used for supplementation match the entity, event, period, and finding.' }),
   Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract relevant supplemental evidence and safe derivations.' }),
   Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond supplied sources to fill a named material evidence gap or add useful attribution and context.' }),
@@ -334,7 +343,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     workflow: STANDARD_WORKFLOW,
     startHere: 'Use this path when geography is not the primary visual structure. If the story needs a map with regional callouts, stop and use regional-guide plus regional instead.',
     steps: [
-      'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
+      'Preserve the supplied claim or documented data-derived finding, then read supplied sources and fill useful evidence gaps.',
       'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
       'Audit actual-level availability and select the least normalized representation that preserves the story.',
       'Classify the enriched evidence with the selection rules below.',
@@ -379,7 +388,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
     startHere: 'Use this path when geography is part of the finding. Keep all materially reported regions highlighted; reserve callout cards for the locations that need explicit evidence labels.',
     steps: [
-      'Preserve the expert input claim, then read supplied sources and fill useful evidence gaps.',
+      'Preserve the supplied claim or documented data-derived finding, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
       'Author every materially reported region. Use data[].callout = "none" for fill-only highlights. Do not author visual card order; the renderer orders cards from anchor geometry to minimize straight-line crossings and travel.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
@@ -428,14 +437,14 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.16',
+    version: '1.18',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
       entrypoint: TOOL_API_ENTRYPOINT,
       manifestCommand: `${TOOL_API_ENTRYPOINT} api`
     },
-    startHere: 'For a batch run, treat input.txt as expert-authored editorial evidence, preserve its claims by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
+    startHere: 'For a batch run, treat the initialized input/ folder as the authoritative source set, preserve supplied claims and datapoints by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
     batchWorkflow: clone(BATCH_WORKFLOW),
     decision: [
       {
@@ -487,7 +496,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     authoringRules: [...SHARED_AUTHORING_RULES],
     boundary: {
-      publicSurface: ['input.txt', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/runs/<run-id>/', 'charts/<run-id>/', '.work/<run-id>/'],
+      publicSurface: ['input/', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/runs/<run-id>/', 'charts/<run-id>/', '.work/<run-id>/'],
       implementation: ['renderer/', 'lib/', 'tests/', 'tools/'],
       rule: 'Chart authors stay on the public surface. Implementation directories are maintainer-only unless the user explicitly requests infrastructure work.'
     }
@@ -498,7 +507,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.16',
+    version: '1.18',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -526,13 +535,13 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
       'initialize and finalize the isolated run workspace',
-      'parse input.txt into distinct data stories',
-      'preserve expert input evidence and analyze supplemental sources',
-      'select, merge, or omit stories for the presentation',
+      'inventory input/ materials and derive supported data stories',
+      'preserve supplied evidence and analyze supplemental sources',
+      'select, merge, or omit stories for the requested deliverable',
       'choose a workflow and recipe',
       'author and revise ChartSpec JSON',
       'run validation, rendering, diagnostics, and review',
-      'capture final PNG images and assemble the PowerPoint presentation',
+      'capture final PNG images and assemble a PowerPoint presentation when requested',
       'report output paths, warnings, and infrastructure defects'
     ],
     excludedWork: [

@@ -1,30 +1,30 @@
 # Batch workflow
 
-This is the primary end-to-end workflow for producing a chart presentation from a batch of data stories.
+This is the primary end-to-end workflow for producing Tochnyi chart and infographic deliverables from a supplied source set.
 
 ## Input
 
-The user provides one editorial source file at the project root:
+The user provides source materials in the project-root folder:
 
 ```text
-input.txt
+input/
 ```
 
-`input.txt` may contain multiple data stories, notes, links, and partially
-summarized evidence. It is an expert-authored editorial source and assignment
-queue. Treat its claims and datapoints as correct by default. It may be
-incomplete, so reputable external reporting may supplement it, but absence of
-independent corroboration is not grounds to weaken or replace it.
+`input/` may contain editorial notes, source documents, structured datasets,
+notebooks, links, and partially summarized evidence. Treat the supplied source
+set as authoritative for the assignment unless a reputable source directly
+contradicts a material point. Structured data can support a story through a
+documented filter, grouping, or calculation rather than a literal prose excerpt.
 
-The exact project-root file is mandatory. A missing, blank, or changed
-`input.txt` stops the run. Never substitute a sibling project file, prior batch,
-alternate brief, or similarly named source.
+The exact project-root source set is mandatory. A missing, empty, or changed
+`input/` stops the run. Never substitute a sibling project, prior batch, or
+alternate source collection.
 
 ## Agent responsibility
 
-The LLM agent is the batch orchestrator. It owns the sequence across source research, chart production, image capture, and presentation assembly.
+The LLM agent is the batch orchestrator. It owns the sequence across source review, chart production, image capture, and any requested presentation assembly.
 
-The deterministic chart engine is one tool used by the agent. It does not parse the entire batch assignment or build the PowerPoint deck by itself.
+The deterministic chart engine is one tool used by the agent. It does not interpret the entire source set or build an optional PowerPoint deck by itself.
 
 ## Required sequence
 
@@ -32,13 +32,13 @@ The deterministic chart engine is one tool used by the agent. It does not parse 
 initialize .work/<run-id>/
     |
     v
-input.txt
+input/
     |
     v
-parse distinct data stories
+inventory source files and derive supported data stories
     |
     v
-inventory every quantitative claim with exact input excerpts
+inventory supported quantitative claims with prose excerpts or structured-data derivations
     |
     v
 inventory every materially relevant same-scale observation in visualEvidenceAudit
@@ -83,7 +83,7 @@ capture one final PNG image per accepted chart
 write the run manifest and visual QA report
     |
     v
-assemble the accepted images into a PowerPoint presentation
+if requested, assemble the accepted images into a PowerPoint presentation
     |
     v
 save the complete run delivery in charts/<run-id>/
@@ -106,22 +106,21 @@ review screenshots, and package staging. Do not create run-specific scripts or
 data files at the repository root. Do not use `previews/` for new work.
 
 Production input, generated ChartSpecs, chart output, previews, and workspaces
-are local artifacts. Git ignores `input.txt`, `specs/runs/`, `charts/`,
+are local artifacts. Git ignores `input/`, `specs/runs/`, `charts/`,
 `previews/`, and `.work/`. Run `npm run check:repo` before committing; it fails
 if any production or transient artifact is tracked, including force-added files.
 
 ## 1. Parse the assignment
 
-Read all of `input.txt` and separate it into distinct data stories.
+Read the complete `input/` source set and separate it into distinct data stories.
 
 `npm run run:init -- <run-id>` creates
-`.work/<run-id>/source-ledger.json` with the input byte count and SHA-256 hash.
-Complete this ledger before external research. Every distinct quantitative
-claim must appear exactly once and receive one disposition: `selected`,
-`omitted`, or `merged`. Follow `docs/source-ledger.md` for the required fields.
-The source verifier also requires every numeric token in `input.txt` to be
-covered by a candidate anchor or by a specifically justified ignored-evidence
-anchor. This makes silent omission of quantitative stories a validation error.
+`.work/<run-id>/source-ledger.json` with the input file inventory, per-file
+hashes, aggregate byte count, and source-set SHA-256 hash. Complete this ledger
+before external research. Every selected quantitative story must receive one
+disposition: `selected`, `omitted`, or `merged`. Follow `docs/source-ledger.md`
+for the required fields. Prose sources use exact excerpt anchors; structured
+sources use file selectors and documented derivations.
 
 For each candidate, identify:
 
@@ -131,11 +130,34 @@ For each candidate, identify:
 - Values already present in the note
 - Whether the story duplicates or overlaps another item
 - Whether the story is sufficiently material and visual to include
-- One or more exact excerpts from `input.txt`
-- The exact excerpt that supports any proposed chart title
+- One or more exact excerpts, structured-data selectors, or source references
+- The exact excerpt or documented derivation that supports any proposed chart title
 - Which evidence is primary input evidence versus external or derived context
 - Whether actual values are reported, retrievable, unavailable, incomparable,
   or not applicable, and the least normalized representation the chart should use
+
+For structured categorical rankings, inventory the full non-empty category
+domain before choosing a cutoff. Default to all materially relevant categories.
+If a top-N subset is genuinely the editorial requirement, document the cutoff
+and why omitted categories are not needed for the claim. Visible titles should
+also replace internal dataset codes or unexplained acronyms with plain-language
+audience-facing wording. Do not use the subtitle to explain internal dataset
+names or to say that values came from the supplied/provided input. A subtitle
+must add reader-facing analytical context; provenance belongs in `source.name`
+only when an audience-facing source name is actually available.
+Use `note` only for a material reader-facing caveat. Parsing behavior,
+partial-date recovery, row-exclusion bookkeeping, and similar production
+methodology belong in the source ledger or metadata rather than the chart footer
+unless omitting them would materially mislead the reader.
+If the assignment specifies an analyst, author, team, or public account, record
+that separately in ChartSpec `analysis.name` with optional `analysis.url`.
+Never substitute the analyst identity for the underlying `source`, and never
+hard-code recurring analyst handles into renderer code.
+When the input contains several sheets, tabs, notebook sections, or analysis
+views, inventory which view is intended for the requested deliverable. A view
+that explicitly generates separate plots should be preferred for individual
+chart extraction. Record any assignment-specific category renaming as a ledger
+`specLabel` alias while preserving the raw source category in `label`.
 - Every named same-scale observation that materially supports the central claim,
   including the exact label that will appear in the ChartSpec when it differs
   from the working evidence label
@@ -148,7 +170,7 @@ For each candidate, identify:
 Do not assume every paragraph requires a chart. Merge duplicate notes when they
 describe the same finding. Exclude items that are duplicative, immaterial, or do
 not support a clear visual story. Do not omit a story merely because an external
-search failed to repeat an expert-authored claim.
+search failed to repeat a supplied claim.
 
 An omission requires a specific editorial reason. A merged candidate must name
 its destination. Set `inventoryComplete` to true only after the complete input
@@ -162,15 +184,16 @@ npm run run:verify-source -- <run-id>
 
 Follow `docs/source-enrichment.md` before selecting a chart recipe.
 
-The agent must preserve the expert input claim, confirm and read supplied
-sources, extract relevant evidence, calculate safe derivations, and fill useful
+The agent must preserve supplied editorial claims and data-derived findings,
+confirm and read supplied sources, extract relevant evidence, calculate safe derivations, and fill useful
 evidence gaps. It must not add unrelated context merely to make the chart more
 complex. External sources may supplement or attribute the input, but may not
 silently override it unless they directly contradict a material point.
 
 External research may not originate a selected story. Every selected item must
-have primary evidence anchored in `input.txt`, and its `titleBasis` must be an
-exact input excerpt that directly supports the title. External evidence may be
+have primary evidence anchored in the current `input/` source set, and its
+`titleBasis` must be an exact prose excerpt or documented structured-data
+derivation that directly supports the title. External evidence may be
 comparison, denominator, mechanism, consequence, or context, but never the
 primary claim.
 
@@ -208,11 +231,9 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   A numeric reference, tangible basis, supporting fact, annotation, or derived
   total does not rescue two generic bars. Use a defensible relationship-specific
   recipe, merge the pair into a richer same-topic visual, or omit it.
-- A percentage-only price, workforce, export, production, spending, or revenue
-  claim must trigger a search for the underlying tangible amounts for the same
-  scope and periods before normalized geometry is considered. Workforce
-  research must include the company filing or official employee disclosure for
-  the relevant reporting perimeter.
+- A normalized change or share should use underlying tangible amounts when they
+  are material to interpretation and reasonably retrievable for the same scope
+  and periods before normalized geometry is accepted.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
 - A low/high range endpoint, floor, ceiling, total, remainder, or zero-gap value
@@ -237,11 +258,10 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   point, benchmark, or target. Once two or more such normalized observations
   are available, keep all of them in primary geometry rather than relegating
   headline-relevant comparators to `supportingFacts`.
-- A share of a named public aggregate, including GDP, the economy, population,
-  employment, exports, imports, production, or capacity, must treat that total
-  as retrievable. Record `basisTarget`, recover the compatible public total,
-  derive the tangible numerator, and use level geometry. A 100% reference does
-  not satisfy this requirement.
+- A share of a named concrete total must record `basisTarget` and recover the
+  compatible total when it is supplied or reasonably retrievable. Derive the
+  tangible numerator when appropriate and prefer level geometry. A 100%
+  reference does not satisfy this requirement.
 - Do not use dot-counting or pictograms. A story with only two exact count
   categories must gain a third comparable count, a tangible denominator or
   population, an independent meaningful benchmark, or a time series before it
@@ -259,6 +279,12 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence must use `trend.line`. Do not plot two values and
   move the rest of the series into `supportingFacts`.
+- Ordered monthly or periodic compositions use `trend.stacked` when every
+  period contains the same additive categories. Preserve zero-valued cells,
+  keep category order stable, and use the period total only as a label rather
+  than duplicating it as another stack segment. The renderer must reserve a
+  dedicated responsive legend band above the plot so wrapped legend items and
+  period-total labels cannot occupy the same vertical space.
 - Duration comparisons should use `timeline.duration`. Supply exact start and
   end dates, or one verified `timeline.anchorDate` plus exact `duration` and
   `durationUnit` values.
@@ -519,7 +545,7 @@ Visible values must also be self-describing. A numeric `displayValue` or
 the unit in the label unless the title or subtitle explicitly defines it.
 
 All standard charts must retain the shared large, centered watermark treatment
-through PNG capture and PowerPoint assembly. Do not vary it by recipe or move it
+through PNG capture and any requested presentation assembly. Do not vary it by recipe or move it
 to a small corner mark to make room for chart content. The regional workflow is
 the sole exception: its watermark is a restrained background behind the map.
 Check this visually at the delivery viewport and in the final slide render.
@@ -546,9 +572,9 @@ node tool-api/chart.js review charts/<run-id>/[slug].html \
 
 The HTML and PNG are generated artifacts. Do not edit them directly.
 
-## 5. Build the presentation
+## 5. Optional presentation assembly
 
-After all accepted charts have final PNG images, assemble them into one PowerPoint presentation.
+After all accepted charts have final PNG images, assemble them into one PowerPoint presentation only when the requested deliverable includes a deck.
 
 The presentation should:
 
@@ -560,7 +586,7 @@ The presentation should:
 - Use the final generated chart image rather than recreating the chart manually in PowerPoint.
 - Keep titles, available source attribution, dates, and explanatory text consistent with the corresponding ChartSpec.
 - Omit the source line when no attribution is supplied.
-- Never mention `input.txt`, internal provenance, verification status, workflow decisions, diagnostics, or production notes on presentation slides.
+- Never mention internal file-handling language, verification status, workflow decisions, diagnostics, or production notes on presentation slides.
 - Exclude failed, unresolved, duplicate, or low-value stories.
 
 PowerPoint assembly belongs to the LLM orchestration layer. It is not an implementation responsibility of the chart renderer.
@@ -575,7 +601,7 @@ charts/<run-id>/
 
 Use a caller-supplied run ID. It may be a date, publication identifier, client slug, issue number, or another stable label; the workflow does not infer one from chart data.
 
-The completed folder should contain:
+The completed chart folder should contain:
 
 ```text
 charts/<run-id>/
@@ -585,16 +611,16 @@ charts/<run-id>/
 ├── [slug-2].png
 ├── manifest.csv
 ├── presentation-plan.json
-├── qa-report.json
-└── tochnyi-charts-<run-id>.pptx
+└── qa-report.json
 ```
 
-The exact number of chart files depends on the number of accepted stories.
+The exact number of chart files depends on the number of accepted stories. When
+a PowerPoint deck is requested, add `tochnyi-charts-<run-id>.pptx` to the same
+folder.
 
 Temporary or ad hoc review output belongs in
-`.work/<run-id>/review/`. Final PNGs used in the deck belong in the local
-`charts/<run-id>/` delivery folder beside the HTML files and PowerPoint
-presentation.
+`.work/<run-id>/review/`. Final PNGs belong in the local `charts/<run-id>/`
+delivery folder beside the HTML files and any requested PowerPoint presentation.
 
 ## 7. Finalize and flush
 
@@ -605,40 +631,40 @@ npm run run:finalize -- <run-id>
 ```
 
 Finalization first reruns source-ledger validation with ChartSpec coverage. When
-`presentation-plan.json` exists, it also opens the generated PowerPoint package,
-counts the actual slide XML files, and requires that count to exactly match the
-plan. This rejects unrequested cover, title, agenda, divider, closing, or other
-extra slides before cleanup. It then deletes `.work/<run-id>/` and removes the
+a generated PowerPoint package exists, it opens that package and requires its
+slide count to exactly match `presentation-plan.json`. This rejects unrequested
+cover, title, agenda, divider, closing, or other extra slides before cleanup. A
+chart-only delivery does not require a `.pptx`. Finalization then deletes `.work/<run-id>/` and removes the
 legacy `previews/` tree. It
-preserves `input.txt` and does not delete `specs/runs/<run-id>/` or
+preserves `input/` and does not delete `specs/runs/<run-id>/` or
 `charts/<run-id>/`.
 
 Use `npm run run:flush -- <run-id>` when only the selected run workspace should
 be removed. Use `npm run run:reset` before a cold-agent test to remove every
-transient workspace, legacy previews, and input while retaining all specification
-and chart folders.
+transient workspace and legacy previews while retaining the source set,
+specifications, and chart folders.
 
 ## Completion condition
 
 The batch run is complete only when:
 
-- `input.txt` has been fully parsed.
-- Each included story preserves the expert input claim and has a clear central finding.
-- The source ledger inventories every quantitative input story with an explicit
+- The complete `input/` source set has been inventoried and reviewed.
+- Each included story preserves the supplied claim or documented data-derived finding and has a clear central finding.
+- The source ledger records every story considered for production with an explicit
   selected, omitted, or merged disposition.
-- Every selected story has exact input anchors, an exact title-basis excerpt,
-  and primary evidence from `input.txt`.
+- Every selected story has source-set anchors, a supported title basis, and
+  primary evidence from `input/`.
 - External evidence supplements rather than originates selected stories.
 - Source-ledger selections and titles exactly match the final ChartSpecs.
 - Each chart has a validated ChartSpec.
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
-- The PowerPoint deck has been assembled from those final images.
-- The PowerPoint slide count exactly matches `presentation-plan.json`; by
-  default this is one slide per accepted chart and zero non-chart slides.
-- The HTML files, final PNGs, and `.pptx` file are present in `charts/<run-id>/`.
+- The HTML files and final PNGs are present in `charts/<run-id>/`.
+- When a PowerPoint was requested, it has been assembled from those final images
+  and its slide count exactly matches `presentation-plan.json`; by default this
+  is one slide per accepted chart and zero non-chart slides.
 - The ChartSpecs are present in `specs/runs/<run-id>/`.
 - The run has been finalized, leaving no run-specific notes, scripts, logs,
   downloads, review files, or package staging outside the retained `specs/` and
-  `charts/` folders. The original `input.txt` remains available.
+  `charts/` folders. The original `input/` source set remains available.
 - Remaining omissions, direct source conflicts, source mismatches, warnings, or infrastructure defects are reported.

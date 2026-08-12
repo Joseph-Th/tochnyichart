@@ -17,19 +17,21 @@ See [`docs/architecture.md`](docs/architecture.md) for the boundary.
 
 ## Primary batch workflow
 
-The normal job begins with one user-supplied file:
+The normal job begins with a user-supplied source folder:
 
 ```text
-input.txt
+input/
 ```
 
-The LLM agent is the batch orchestrator. It reads the exact project-root file,
-inventories every quantitative story with exact excerpts, records a selected,
-omitted, or merged disposition, inventories every materially relevant
-same-scale observation in `visualEvidenceAudit`, verifies that ledger, and only then enriches the
-selected input-supported stories. It renders the accepted charts, captures final
-PNG images, assembles those images into a PowerPoint presentation, and saves the
-complete delivery in the run delivery folder.
+The folder may contain prose briefs, CSV/TSV data, JSON, notebooks, or other
+supporting material. The LLM agent is the batch orchestrator. It inventories the
+exact project-root source set, records a selected, omitted, or merged disposition
+for each proposed story, inventories every materially relevant same-scale
+observation in `visualEvidenceAudit`, verifies that ledger, and only then enriches
+the selected input-supported stories. Prose sources use exact excerpts; structured
+data may use explicit file selectors and documented groupings or calculations.
+The agent renders accepted charts, captures final PNG images, and assembles a
+PowerPoint presentation when the assignment calls for one.
 
 Initialize a disposable run workspace before reading the input:
 
@@ -37,10 +39,10 @@ Initialize a disposable run workspace before reading the input:
 npm run run:init -- <run-id>
 ```
 
-Initialization fails when `input.txt` is missing or blank and creates
-`.work/<run-id>/source-ledger.json` with the input hash. Never substitute a
-sibling project file, prior batch, or alternate brief. Complete the ledger and
-verify it before research:
+Initialization fails when `input/` is missing or contains no source files and
+creates `.work/<run-id>/source-ledger.json` with a deterministic file inventory,
+per-file hashes, and a source-set hash. Never substitute a sibling project or
+prior batch. Complete the ledger and verify it before research:
 
 ```bash
 npm run run:verify-source -- <run-id>
@@ -52,7 +54,7 @@ paths from chart dates.
 
 All research notes, downloads, helper scripts, logs, review captures, and package
 staging must stay under `.work/<run-id>/`. Only `specs/runs/<run-id>/` and
-`charts/<run-id>/` are retained locally. `input.txt`, generated specifications,
+`charts/<run-id>/` are retained locally. `input/`, generated specifications,
 charts, previews, and workspaces are ignored by Git. After the selected
 ChartSpecs are complete, build every chart in ledger order with one command:
 
@@ -67,20 +69,21 @@ and writes `manifest.csv`, `presentation-plan.json`, and `qa-report.json` in
 It publishes through a staged directory, so a failed rebuild leaves the prior
 delivery untouched. A successful chart rebuild removes any prior presentation
 and chart-image archive because those files would contain stale images.
-PowerPoint assembly remains an orchestration step. After delivery, finalize the
-run:
+PowerPoint assembly remains an optional orchestration step when the requested
+deliverable includes a deck. After delivery, finalize the run:
 
 ```bash
 npm run run:finalize -- <run-id>
 ```
 
 Finalization removes the run workspace and legacy `previews/`. It preserves
-`input.txt` and never deletes `specs/` or `charts/`. It refuses to finalize
+`input/` and never deletes `specs/` or `charts/`. It refuses to finalize
 unless the selected source-ledger slugs and titles exactly match the ChartSpecs.
 
 ```text
-input.txt
-    -> complete anchored source ledger
+input/
+    -> hashed source-set inventory
+    -> complete anchored/derived source ledger
     -> complete same-scale observation inventory
     -> verified selected, omitted, or merged decisions
     -> input-supported stories enriched with supplemental context
@@ -88,14 +91,14 @@ input.txt
     -> ChartSpec files
     -> rendered HTML charts
     -> final PNG images
-    -> PowerPoint presentation
+    -> optional PowerPoint presentation
     -> charts/<run-id>/
 ```
 
 The chart Tool API produces individual chart artifacts. The run chart builder
 coordinates verified specifications through rendering, diagnostics, PNG
-capture, and QA reporting. PowerPoint assembly belongs to the LLM orchestration
-layer, but it must follow `presentation-plan.json`: one slide per accepted chart,
+capture, and QA reporting. When requested, PowerPoint assembly belongs to the LLM orchestration
+layer and must follow `presentation-plan.json`: one slide per accepted chart,
 with no cover, title, agenda, divider, or closing slide unless the user explicitly
 requested one.
 
@@ -320,11 +323,11 @@ contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional 
 internals are maintainer-only and documented in `docs/regional-routing.md`.
 
 Final run delivery uses `charts/<run-id>/`. The folder contains the
-rendered HTML files, the final PNG images used in the deck, `manifest.csv`,
-`presentation-plan.json`, `qa-report.json`, and
-`tochnyi-charts-<run-id>.pptx`. Finalization reads the PowerPoint slide count
-from the file and rejects a deck that does not contain exactly the chart slides
-listed in the plan. Temporary review images belong under the
+rendered HTML files, final PNG images, `manifest.csv`, `presentation-plan.json`,
+and `qa-report.json`. When a deck is requested, it also contains
+`tochnyi-charts-<run-id>.pptx`; finalization reads its slide count and rejects a
+deck that does not contain exactly the chart slides listed in the plan.
+Temporary review images belong under the
 matching `.work/<run-id>/review/` directory and are deleted at finalization.
 
 ## Authoring contract
@@ -336,10 +339,11 @@ The model or agent owns:
 - The finding, title, subtitle, recipe, labels, statuses, and concise details.
 - Stable region identifiers for regional maps.
 
-An input note, headline, excerpt, or `input.txt` entry is routing information,
-not the complete chart dataset. The chart author must verify supplied links,
-read the full primary source, and extract all evidence that materially supports
-the same central claim before selecting a recipe.
+An input note, dataset, notebook, image, or other supplied source is evidence
+and routing information, not automatically the complete chart dataset. The
+chart author must inspect the relevant source material, verify supplied links
+when applicable, and extract the evidence that materially supports the same
+central claim before selecting a recipe.
 
 Search beyond the primary source only to fill a named material evidence gap.
 Prefer the underlying official dataset, company filing, or named report before
@@ -358,6 +362,13 @@ reversal, or persistence must be plotted as `trend.line`. Mixed-unit signals
 that jointly define a claim, such as falling purchase volume, rising prices,
 and rising spending, belong in `relationship.converging-signals` or separate
 complete charts.
+
+When ordered periods repeat the same additive category set and the changing
+mix is part of the finding, use `trend.stacked`. Keep the category order fixed
+and retain explicit zero-valued cells so the same legend color keeps the same
+meaning from period to period. The renderer reserves a dedicated responsive
+legend band above the plot; total labels and other plot annotations must remain
+inside the plot region rather than sharing legend space.
 
 “Both values are percentages” is not a valid comparison rule. Shared-axis marks
 must measure the same real-world quantity for the same scope. Composition charts
@@ -419,7 +430,12 @@ percentages, or amounts already printed on the chart. Two-part compositions use
 one label treatment per segment, inside when both segments fit and outside when
 one does not.
 
-Source attribution is optional. Include the underlying publication or dataset when available and omit the source line when it is not. Never place `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
+`note` is also reader-facing. Do not use it for parser behavior, partial-date
+recovery, row-exclusion bookkeeping, input filenames, or other production
+methodology unless that caveat materially changes how the reader should
+interpret the chart. Keep those details in the source ledger or metadata.
+
+Source attribution is optional. Include the underlying publication, dataset, organization, or source collection when available and omit the source line when it is not. Analyst attribution is separate and optional: use `analysis.name` and optional `analysis.url` for the analyst, author, team, or public account responsible for the analysis. Never hard-code analyst identities into the renderer or place internal file-handling language, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
 
 The renderer owns:
 
@@ -556,7 +572,7 @@ lib/                      Shared runtime, visual plan, maps, styles, diagnostics
 tools/                    Internal scripts and compatibility CLI implementation
 tests/                    Unit, workflow, browser, and performance tests
 docs/                     Architecture, author, maintainer, routing, and testing guidance
-charts/                   Local run delivery: HTML, final PNG, and presentation by run ID
+charts/                   Local run delivery: HTML, final PNG, QA artifacts, and optional presentation by run ID
 .work/                    Disposable research, scripts, logs, review, and staging by run id
 ```
 
@@ -581,5 +597,5 @@ structured checks, and the correct workflow route.
 
 Generated delivery output under `charts/` and transient output under `.work/`
 is intentionally ignored. Production ChartSpecs under `specs/runs/` and the
-user-supplied `input.txt` are also ignored. Curated fixtures under
+user-supplied `input/` source set are also ignored. Curated fixtures under
 `specs/examples/`, `specs/samples/`, and `specs/stress/` remain tracked.

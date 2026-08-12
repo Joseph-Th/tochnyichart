@@ -56,8 +56,8 @@ Before choosing a recipe, classify the proposed primary values with
 `reported`, `retrievable`, `unavailable`, `incomparable`, or `not-applicable`.
 
 Use actual levels for primary geometry whenever they are reported or
-retrievable. This applies especially to prices, market values, revenue, output,
-volume, counts, workforce, and other tangible quantities. Show percentage
+retrievable. This applies to counts, volumes, rates with tangible bases, and
+other concrete quantities. Show percentage
 change as emphasis or context rather than replacing the levels.
 
 Do not create a `0%` before-event observation or an index-100 starting point to
@@ -76,10 +76,9 @@ growth rate. For market shares, coverage rates, vacancy rates, utilization
 rates, ratios, and risk estimates, audit the numerator/denominator or
 population/affected count. When those amounts are reported or retrievable,
 switch to level geometry and keep the normalized rate in secondary copy.
-Shares of GDP, the economy, population, employment, exports, imports,
-production, or capacity treat the named public total as retrievable. Recover
-that total, derive the tangible numerator or range, and plot both. A 100%
-reference line is not a meaningful magnitude anchor.
+When a share names a concrete total that is supplied or reasonably retrievable,
+recover that basis, derive the tangible numerator or range when appropriate,
+and plot the amounts. A 100% reference line is not a meaningful magnitude anchor.
 
 The least normalized representation is not automatically the best story
 geometry. When the finding is that a rate is slowing, accelerating, reversing,
@@ -224,6 +223,12 @@ chart.
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence must be plotted as a trend rather than reduced to a
   two-value comparison with the rest in supporting facts.
+- When each ordered period contains the same additive category set and both the
+  total volume and changing mix matter, use `trend.stacked`. Keep category order
+  fixed across periods and retain zero-valued cells so one color always means
+  the same category. Do not silently drop a category in months where its count
+  is zero. The legend occupies its own responsive layout band; plot labels must
+  never be allowed to intrude into that band.
 - A short 3–4 point series of tiny exact counts is not automatically a useful
   trend. Require an independent same-unit denominator, portfolio/network or
   reviewed-universe total, capacity, affected volume/value, or a richer series.
@@ -246,6 +251,24 @@ but the Tool API will not accept new ChartSpecs using them.
 percentages, or amounts already printed on the marks. Retain it only when it
 adds a qualification, denominator, mechanism, scope distinction, or
 interpretation that is not otherwise visible.
+
+Do not use the subtitle for provenance or workflow narration. Phrases such as
+`from the supplied dataset`, `based on the provided data`, `in the input file`,
+or similar meta copy describe how the chart was made rather than what the
+reader needs to know. Put a genuine audience-facing publication or dataset name
+in `source.name` when one exists. If no useful public source name is available,
+omit the provenance line rather than inventing a working label for the reader.
+
+Treat `note` the same way. It is for a material reader-facing caveat, not for
+parser behavior, partial-date recovery, row-exclusion counts, internal source
+IDs, or other production bookkeeping. Preserve that methodology in the source
+ledger or metadata unless omitting it would materially mislead the reader.
+
+Keep source and analysis attribution distinct. `source` names the publication,
+dataset, organization, or source collection underlying the evidence. Optional
+`analysis` names the analyst, author, team, or public account responsible for
+the interpretation and may include a public URL. Do not put an analyst handle
+into `source`, and never hard-code a recurring analyst identity in the renderer.
 
 Two-part compositions use one label treatment per segment. When both segments
 are large enough, the label, share, and tangible amount appear inside the bar.
@@ -277,11 +300,23 @@ from disappearing while externally discovered stories take their place.
 
 Every selected chart must have:
 
-- An exact `titleBasis` excerpt from `input.txt`.
-- At least one primary evidence item anchored to `input.txt`.
+- A `titleBasis` supported by an exact prose excerpt or documented structured-data derivation from `input/`.
+- At least one primary evidence item anchored to the current `input/` source set.
 - A chart title that does not claim a maximum, range, exposure, erosion,
   coverage, collapse, or other analytical structure absent from that excerpt.
 - An output slug recorded in the source ledger before the ChartSpec is written.
+
+For multi-view workbooks and notebooks, inspect the relevant sheets, tabs, or
+analysis sections before selecting a chart source. If a supplied section is
+specifically built to generate separate plots, treat it as the preferred
+extraction layer for individual-chart deliverables rather than defaulting to a
+broader overview dashboard.
+
+Audience-facing naming can differ from the raw data only through an explicit
+alias. Preserve the source category in the ledger observation `label` and put
+the requested presentation wording in `specLabel`. This keeps client- or
+presenter-specific terminology out of the general renderer while still making
+the final chart use the requested language.
 
 External research may improve comparison or interpretation, including by
 supplying actual levels that directly express the same input-anchored change.
@@ -336,6 +371,18 @@ Single-row range and benchmark treatments remain valid only when the underlying
 story genuinely consists of one interval or one actual-to-benchmark
 relationship, not when several comparable observations were compressed into
 that row.
+
+For a finite categorical field in structured data, a `ranking.horizontal`
+profile should preserve the full non-empty category domain by default. Do not
+silently replace 30, 60, or 90 available categories with a convenient top 10.
+Top-N truncation is an editorial exception and must be documented in the source
+ledger or evidence audit. Dense rankings are expected to expand vertically.
+Keep one numeric value label adjacent to every bar; disabling labels is not an
+acceptable collision workaround. When the ranking is a categorical profile,
+use the renderer's qualitative categorical palette. Adjacent bars should move
+across distinct hue families; do not spend the first several categories on
+light/dark variants of the same one or two brand colors. Reserve focus coloring
+for a story that actually emphasizes the leader or another specific item.
 
 ## Comparison recipe contracts
 
@@ -609,7 +656,7 @@ Before accepting a chart, write the intended takeaway in one sentence. Then ask:
 6. Does a generic categorical/bar visual contain at least three independent
    observations, or does a two-value visual use relationship-specific geometry
    that makes the relationship itself the evidence?
-7. Is the title directly supported by an exact excerpt from `input.txt`?
+7. Is the title directly supported by an exact source excerpt or documented derivation from `input/`?
 8. Does the final chart set cover every ledger item marked selected and exclude
    every unselected or externally originated story?
 9. Does every bare numeric label expose its unit in the label, title, or subtitle?

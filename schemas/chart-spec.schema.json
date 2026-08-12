@@ -18,6 +18,7 @@
         "comparison.dumbbell",
         "relationship.converging-signals",
         "trend.line",
+        "trend.stacked",
         "timeline.duration",
         "composition.donut",
         "composition.stacked",
@@ -37,6 +38,15 @@
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 180 },
         "period": { "type": "string", "maxLength": 80 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
         "url": { "type": "string", "format": "uri" }
       }
     },
@@ -100,6 +110,21 @@
           "relationshipRole": {
             "type": "string",
             "enum": ["driver", "outcome"]
+          },
+          "segments": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 15,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["label", "value"],
+              "properties": {
+                "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+                "value": { "type": "number", "minimum": 0 },
+                "displayValue": { "type": "string", "maxLength": 50 }
+              }
+            }
           }
         }
       }
@@ -338,7 +363,7 @@
     {
       "if": {
         "not": {
-          "properties": { "recipe": { "const": "map.regional" } }
+          "properties": { "recipe": { "enum": ["map.regional", "trend.stacked"] } }
         }
       },
       "then": {
@@ -444,6 +469,20 @@
             "minItems": 3,
             "maxItems": 10,
             "items": { "required": ["value", "benchmark", "quantity", "scope", "period"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "trend.stacked" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 3,
+            "maxItems": 24,
+            "items": { "required": ["segments", "quantity", "scope", "period"] }
           }
         }
       }

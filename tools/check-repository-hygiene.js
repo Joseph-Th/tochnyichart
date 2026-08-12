@@ -22,7 +22,7 @@ function transientReason(filePath) {
   const normalized = normalizeRepositoryPath(filePath);
   const lower = normalized.toLowerCase();
 
-  if (lower === 'input.txt') return 'user input must remain local';
+  if (lower === 'input.txt' || lower.startsWith('input/')) return 'user input must remain local';
   if (lower === 'nul') return 'reserved-name scratch file must not be tracked';
   if (lower.startsWith('.work/')) return 'run workspace is transient';
   if (lower.startsWith('charts/')) return 'rendered chart delivery is generated';
@@ -65,6 +65,7 @@ function isIgnored(projectRoot, relativePath) {
 
 function checkIgnoreContract(projectRoot) {
   const mustIgnore = [
+    'input/source.csv',
     'input.txt',
     'nul',
     '.work/arbitrary-run/logs/render.log',

@@ -502,6 +502,12 @@ test('subtitles are optional and cannot restate the visible marks', () => {
   result = validateSpec(repetitive);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /subtitle repeats values and labels/i.test(message)));
+
+  const processMeta = structuredClone(concise);
+  processMeta.subtitle = 'Counts from the supplied strike analysis dataset.';
+  result = validateSpec(processMeta);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /subtitle contains source-process or dataset meta copy/i.test(message)));
 });
 
 test('common-anchor durations use timelines and abstract duration bars are rejected', () => {
@@ -1064,6 +1070,55 @@ test('positive additive components use zero-seated component geometry rather tha
   assert.ok(result.errors.some((message) => /positive component decomposition|composition\.components/i.test(message)));
 });
 
+test('stacked trends preserve one category domain across ordered periods', () => {
+  const stacked = loadExample('monthly-category-stack.json');
+  let result = validateSpec(stacked);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.recipe, 'trend.stacked');
+  assert.equal(result.normalized.data[0].segments.length, 3);
+
+  const missingCategory = structuredClone(stacked);
+  missingCategory.data[2].segments.pop();
+  result = validateSpec(missingCategory);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /same category labels and order/i.test(message)));
+
+  const negativeSegment = structuredClone(stacked);
+  negativeSegment.data[1].segments[0].value = -1;
+  result = validateSpec(negativeSegment);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /segments\[0\]\.value.*greater than or equal to zero/i.test(message)));
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /function renderStackedTrend\(/);
+  assert.match(runtime, /function stackedTrendLegendPlan\(/);
+  assert.match(runtime, /var rowHeight = compact \? 34 : 29/);
+  assert.match(runtime, /root\.container\.set\('layout', root\.verticalLayout\)/);
+  assert.match(runtime, /height: legendPlan\.bandHeight/);
+  assert.match(runtime, /legendBand\.children\.push\(am5\.Legend\.new/);
+  assert.match(runtime, /paddingTop: spec\.options\.showLegend \? 18 : 8/);
+  assert.match(runtime, /case 'trend\.stacked'/);
+  assert.match(runtime, /stacked: true/);
+  assert.match(runtime, /categoricalColor\(index\)/);
+});
+
+test('dense structured charts do not trigger the editorial shell-length warning', () => {
+  const stacked = loadExample('monthly-category-stack.json');
+  const categories = Array.from({ length: 15 }, (_, index) => `Category ${index + 1}`);
+  stacked.data = Array.from({ length: 14 }, (_, monthIndex) => ({
+    label: `M${monthIndex + 1}`,
+    quantity: 'recorded incident count',
+    scope: 'reported incidents',
+    period: `Month ${monthIndex + 1}`,
+    segments: categories.map((label, categoryIndex) => ({ label, value: monthIndex + categoryIndex + 1 }))
+  }));
+  const validation = validateSpec(stacked);
+  assert.equal(validation.valid, true, validation.errors.join('; '));
+  const review = reviewHtml(renderHtml(validation.normalized));
+  assert.equal(review.valid, true, review.errors.join('; '));
+  assert.equal(review.warnings.some((message) => /shortening editorial copy/i.test(message)), false);
+});
+
 test('price movements and benchmark-relative stories require segmented gap geometry', () => {
   const priceBars = {
     version: '2.0',
@@ -1290,6 +1345,27 @@ test('source attribution is optional and omitted sources remain renderable', () 
   assert.match(runtime, /if \(spec\.source && spec\.source\.name\)/);
 });
 
+test('source and analysis attribution are separate semantic fields', () => {
+  const spec = loadExample('regional-ranking.json');
+  spec.source = { name: 'Tochnyi Team' };
+  spec.analysis = { name: '@HartreeFock', url: 'https://x.com/HartreeFock' };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.source.name, 'Tochnyi Team');
+  assert.equal(result.normalized.analysis.name, '@HartreeFock');
+  assert.equal(result.normalized.analysis.url, 'https://x.com/HartreeFock');
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /'Source: ' \+ spec\.source\.name/);
+  assert.match(runtime, /'Analysis: ' \+ spec\.analysis\.name/);
+  assert.match(runtime, /analysis\.href = spec\.analysis\.url/);
+
+  spec.analysis.url = 'mailto:analyst@example.com';
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /analysis\.url must be an HTTP or HTTPS URL/i.test(message)));
+});
+
 test('generated chart shells version local assets to invalidate browser caches', () => {
   const validated = validateSpec(loadExample('russia-regional-map.json'));
   const html = renderHtml(validated.normalized, {
@@ -1329,6 +1405,15 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.ok(plan.chartHeight < 550, 'five-row rankings should not use a fixed tall canvas');
   assert.equal(VisualPlan.rankingHeight(12, 'detailed'), 700);
   assert.equal(VisualPlan.rankingHeight(3, 'minimal'), 340);
+  assert.ok(VisualPlan.rankingHeight(92, 'editorial') > 3400,
+    'dense full-domain rankings should expand vertically instead of compressing into the legacy cap');
+
+  const categoricalSpec = validateSpec({
+    ...spec,
+    narrative: { ...spec.narrative, emphasis: 'magnitude' }
+  }).normalized;
+  const categoricalPlan = VisualPlan.resolveVisualPlan(categoricalSpec, data, 1200);
+  assert.equal(categoricalPlan.colorPolicy, 'categorical');
 });
 
 test('trend labels remain candidates until measured layout and avoid line geometry', () => {
@@ -3083,6 +3168,56 @@ test('ranking renderer keeps requested order at the top and supports adaptive la
   assert.doesNotMatch(runtime, /spec\.options\.sort === 'none'\) data\.sort/);
   assert.match(runtime, /plan\.labelMode === 'inside'/);
   assert.match(runtime, /labelFitsInside\(item, bounds\)/);
+  assert.match(runtime, /plan\.colorPolicy === 'categorical'/);
+  assert.match(runtime, /categoricalColor\(index\)/);
+  assert.match(runtime, /Tochnyi\.categoricalPalette \|\| Tochnyi\.palette/);
+  assert.match(runtime, /oversizedBehavior:\s*'none'/);
+});
+
+test('categorical palette separates adjacent categories instead of grouping brand shades', () => {
+  const palette = Tochnyi.categoricalPalette;
+  assert.ok(Array.isArray(palette));
+  assert.ok(palette.length >= 15, 'the curated qualitative set should cover common 15-category profiles');
+  assert.equal(new Set(palette.slice(0, 15)).size, 15, 'the first 15 categorical colors must be unique');
+
+  const brandColorsInFirstSix = palette.slice(0, 6).filter((color) => Tochnyi.palette.includes(color));
+  assert.ok(brandColorsInFirstSix.length <= 2,
+    'the first categories must not be a run of blue/yellow brand shade variants');
+
+  function rgb(color) {
+    return [(color >> 16) & 255, (color >> 8) & 255, color & 255];
+  }
+  function distance(first, second) {
+    const a = rgb(first);
+    const b = rgb(second);
+    return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  }
+  for (let index = 1; index < 15; index += 1) {
+    assert.ok(distance(palette[index - 1], palette[index]) >= 70,
+      `categorical colors ${index} and ${index + 1} should remain visibly separated`);
+  }
+
+  const library = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-charts.js'), 'utf8');
+  assert.match(library, /options\.colors \|\| this\.categoricalPalette/);
+  assert.match(library, /var palette = colors \|\| this\.categoricalPalette/);
+});
+
+test('horizontal ranking accepts a full structured category domain', () => {
+  const base = validateSpec(loadExample('regional-ranking.json')).normalized;
+  const dense = {
+    ...base,
+    title: 'Full categorical profile',
+    data: Array.from({ length: 92 }, (_, index) => ({
+      ...base.data[index % base.data.length],
+      label: `Category ${index + 1}`,
+      value: 100 - index,
+      displayValue: String(100 - index)
+    })),
+    narrative: { ...base.narrative, emphasis: 'magnitude' }
+  };
+  const result = validateSpec(dense);
+  assert.equal(result.valid, true, result.errors.join('\n'));
+  assert.equal(result.normalized.data.length, 92);
 });
 
 test('shared quantitative marks use restrained translucent styling', () => {

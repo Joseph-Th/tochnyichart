@@ -19,13 +19,12 @@ function usage() {
     '  node tools/workspace.js verify <run-id> [--specs]',
     '  node tools/workspace.js flush <run-id> [--legacy] [--dry-run]',
     '  node tools/workspace.js finalize <run-id> [--legacy] [--dry-run]',
-    '  node tools/workspace.js reset [--input] [--legacy] [--dry-run]',
+    '  node tools/workspace.js reset [--legacy] [--dry-run]',
     '',
     'The command never deletes specs/runs/<run-id>/ or charts/<run-id>/.',
     'Those local production paths are ignored by Git.',
     'Finalize verifies source fidelity, ChartSpec coverage, and any generated PowerPoint against presentation-plan.json before cleanup.',
-    'Flush and finalize always preserve input.txt.',
-    'Use --input only with reset to truncate input.txt.',
+    'All workspace commands preserve the project-root input/ folder.',
     'Use --legacy to remove the old previews/ tree during migration.'
   ].join('\n');
 }
@@ -35,15 +34,11 @@ function parseArguments(argv) {
   const positional = argv.filter((value) => !value.startsWith('--'));
   const command = positional[0];
   const runId = positional[1];
-  const unknownFlags = [...flags].filter((flag) => !['--input', '--legacy', '--dry-run', '--specs'].includes(flag));
+  const unknownFlags = [...flags].filter((flag) => !['--legacy', '--dry-run', '--specs'].includes(flag));
   if (unknownFlags.length) throw new Error(`Unknown flag: ${unknownFlags[0]}`);
-  if (command === 'flush' && flags.has('--input')) {
-    throw new Error('flush always preserves input.txt; --input is only valid with reset.');
-  }
   return {
     command,
     runId,
-    clearInput: command === 'reset' && flags.has('--input'),
     removeLegacy: flags.has('--legacy'),
     dryRun: flags.has('--dry-run'),
     requireSpecs: flags.has('--specs')
@@ -75,13 +70,12 @@ function main() {
     if (fs.existsSync(planPath)) {
       const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
       const pptxPath = path.join(outputRoot, `tochnyi-charts-${options.runId}.pptx`);
-      presentation = validatePresentationFile(pptxPath, plan);
+      if (fs.existsSync(pptxPath)) presentation = validatePresentationFile(pptxPath, plan);
     }
     const cleanup = flushRunWorkspace(projectRoot, options.runId, options);
     result = { fidelity, presentation, cleanup };
   } else if (options.command === 'reset') {
     result = resetTransientWorkspace(projectRoot, {
-      clearInput: options.clearInput,
       removeLegacy: options.removeLegacy,
       dryRun: options.dryRun
     });

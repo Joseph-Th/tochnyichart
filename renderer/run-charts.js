@@ -228,11 +228,12 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       },
       presentation: {
         status: 'not-built',
-        requiredNext: true,
+        requiredNext: false,
+        optionalNext: true,
         plan: 'presentation-plan.json',
         expectedSlideCount: rows.length,
         titleSlidesAllowed: false,
-        note: 'Assemble exactly one slide per presentation-plan entry from the final PNGs. Do not add a cover, title, agenda, divider, or closing slide unless the user explicitly requested one.'
+        note: 'If a presentation is requested, assemble exactly one slide per presentation-plan entry from the final PNGs. Do not add a cover, title, agenda, divider, or closing slide unless the user explicitly requested one.'
       },
       charts: rows.map((row) => ({
         slug: row.slug,

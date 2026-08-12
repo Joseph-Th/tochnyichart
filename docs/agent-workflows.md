@@ -6,14 +6,14 @@ A chart-author agent should treat the deterministic engine as a tool. It supplie
 
 ## Batch workflow
 
-The normal assignment is one user-supplied `input.txt` containing multiple data
-stories. The LLM agent owns the complete batch orchestration:
+The normal assignment is a user-supplied `input/` folder containing source
+materials for one or more data stories. The LLM agent owns the complete batch orchestration:
 
 ```text
 initialize .work/<run-id>/
-    -> input.txt
-    -> fail if the exact project-root input is missing or blank
-    -> inventory every quantitative story with exact excerpts
+    -> input/
+    -> fail if the exact project-root source set is missing or empty
+    -> inventory supplied files and supported quantitative stories
     -> inventory every materially relevant same-scale observation in visualEvidenceAudit
     -> record selected, omitted, or merged disposition for every candidate
     -> verify .work/<run-id>/source-ledger.json
@@ -22,7 +22,7 @@ initialize .work/<run-id>/
     -> decide the appropriate production tool for each story
     -> author the complete selected ChartSpec set
     -> run the chart builder to render, diagnose, capture, and manifest the set
-    -> assemble one PowerPoint presentation from presentation-plan.json, one chart per slide
+    -> if requested, assemble one PowerPoint presentation from presentation-plan.json, one chart per slide
     -> save retained specs and final artifacts
     -> finalize and purge transient run data
 ```
@@ -37,14 +37,27 @@ produce the HTML charts, final PNGs, manifest, QA report, and
 divider, and closing slides. End with
 `npm run run:finalize -- <run-id>`, which preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and legacy previews. It also preserves `input.txt`. Both retained
+material and legacy previews. It also preserves `input/`. Both retained
 production paths are ignored by Git. Finalization fails unless selected ledger
 slugs and titles exactly match the final ChartSpecs.
 
 The Tool API described below handles individual chart production. The run chart
 builder coordinates the selected set through verified rendering and capture.
-Neither component parses the complete batch assignment or assembles the
+Neither component interprets the complete source set or assembles an optional
 PowerPoint deck; those remain agent responsibilities.
+
+Consumer-facing copy must not narrate the workflow. `subtitle` is optional and
+should be absent unless it adds a real qualification, denominator, mechanism,
+scope distinction, or interpretation. Do not write subtitles such as “from the
+supplied dataset” or “based on the provided data.” Put a real public source name
+in `source.name` when one exists; otherwise omit provenance rather than exposing
+an internal working label.
+
+Attribution has two separate semantic fields. Use `source` for the underlying
+publication, dataset, organization, or source collection. Use optional
+`analysis` for the analyst, author, team, or public account responsible for the
+analysis; `analysis.url` may link that public identity. Do not hard-code analyst
+handles in renderer code or repurpose `source` as an analyst byline.
 
 The full batch contract is in [`docs/batch-workflow.md`](batch-workflow.md).
 The required ledger fields are in [`docs/source-ledger.md`](source-ledger.md).
@@ -113,7 +126,7 @@ or explanation needs explicit labeling; the validator allows at most 12 cards.
 A chart-author agent may use:
 
 ```text
-input.txt
+input/
 tool-api/
 docs/batch-workflow.md
 docs/agent-workflows.md
@@ -138,14 +151,14 @@ tools/
 
 Generated HTML and PNG files are disposable outputs and must not be edited.
 
-Presentation copy must stay editorial. Use source attribution when available and omit it when unavailable. Never expose `input.txt`, internal provenance, verification labels, diagnostics, or workflow commentary in a chart or slide.
+Presentation copy must stay editorial. Use source attribution when available and omit it when unavailable. Never expose internal file-handling language, verification labels, diagnostics, or workflow commentary in a chart or slide.
 
 ## 3. Source enrichment before recipe selection
 
-`input.txt` is expert-authored editorial evidence. Assume its factual claims,
-datapoints, comparisons, and interpretation are correct. It is also a routing
-aid rather than the complete dataset for a chart, so reputable reporting may be
-used to supplement it.
+The initialized `input/` folder is the authoritative assignment source set.
+Preserve supplied claims and datapoints by default. Structured datasets may
+support a finding through a documented filter, grouping, or calculation, and
+reputable reporting may supplement the supplied material.
 
 Do not treat external research as a vote on whether the input is true. Failure
 to locate a second report is not a contradiction. Do not label an input claim
@@ -157,14 +170,14 @@ editorial resolution. A conflicted candidate must not be selected or visualized.
 
 Before selecting a recipe:
 
-1. Preserve the expert input claim and confirm that every supplied URL used for supplementation matches the entity, event, period, and finding.
+1. Preserve the supplied editorial claim or dataset finding and confirm that every supplied URL used for supplementation matches the entity, event, period, and finding.
 2. Read the full primary source and perform a source-family sweep before splitting the material into separate visuals. Collect related regional, peer, historical, denominator, and same-unit comparison observations first.
 3. Extract the main result, comparator, components, cause, consequence, forecast, scale, denominator, and underlying dataset when they are relevant to the same claim. Merge a proposed chart when it is only a summary, complement, subset, or single-point restatement of richer same-topic evidence.
 4. Calculate only safe derivations that are directly supported by the sourced values, such as an absolute change, percentage-point change, ratio, share, coverage rate, implied shortfall, or combined amount.
 5. Identify whether a material evidence gap remains.
 6. Search beyond the source to fill that named gap or add useful attribution and context.
-7. Determine whether actual levels are reported or retrievable. For price-like changes, evaluate comparability within each category's before/after pair rather than across category magnitudes. A current price plus a compatible change rate makes the prior level derivable. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available; when they are, select level geometry.
-8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires at least two completed, source-specific checks and outcomes; pending research notes are invalid. Do not mark a multi-category price story incomparable merely because the categories have different absolute price levels.
+7. Determine whether tangible levels are reported or retrievable. For repeated category/time pairs, evaluate comparability within each pair rather than across unrelated category magnitudes. For a rate or share, separately determine whether the tangible numerator/denominator or population/affected amounts are available; when they are, select level geometry.
+8. Record the choice in `representationAudit`. Any unavailable or incomparable level or basis requires completed, source-specific checks and outcomes; pending research notes are invalid.
 9. Select one central finding, its evidence spine, the workflow, and the recipe.
 
 Use this research order:
@@ -200,10 +213,10 @@ The complete policy is in [`docs/source-enrichment.md`](source-enrichment.md).
 
 Every route follows the same semantic stages:
 
-1. Preserve the expert input claim, then confirm and read supplied sources in full.
+1. Preserve the supplied claim or data-derived finding, then confirm and read supplied sources in full.
 2. Extract the relevant evidence, supplemental context, and safe derivations.
 3. Fill only material evidence gaps with conditional research.
-4. Audit the value representation and any rate/share basis. For percentage-only prices, workforce, exports, production, spending, or revenue, search for the underlying amounts for the same scope and periods. Use actual levels and tangible basis amounts as the plotted geometry when reported or retrievable; never manufacture a `0%` or index-100 starting point.
+4. Audit the value representation and any rate/share basis. For normalized changes or shares, search for underlying tangible amounts for the same scope and periods when material and reasonably retrievable. Use actual levels and tangible basis amounts as the plotted geometry when available; never manufacture a `0%` or index-100 starting point.
 5. Choose one central finding, the workflow, and the story recipe.
 6. Write the smallest ChartSpec that expresses the enriched evidence spine, including `measure.valueMode`, `measure.levelAvailability`, and `measure.basisAvailability` for rates or shares.
 7. Validate the JSON.
@@ -295,6 +308,9 @@ Check that:
 - Three or more ordered observations that establish slowdown, acceleration,
   reversal, or persistence use `trend.line`; those observations cannot be
   reduced to supporting facts around a two-value chart.
+- Repeated additive category mixes across ordered periods use `trend.stacked`.
+  Every period must carry the same category labels in the same order, including
+  explicit zero values, so the legend and stack colors remain stable over time.
 - A 3–4 point sequence of tiny exact counts is not accepted as a trend merely
   because the points are ordered in time. Require an independent same-unit
   reviewed universe, portfolio/network denominator, population, capacity,
@@ -396,7 +412,7 @@ Check that:
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
-`composition.components`, `trend.line`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`composition.components`, `trend.line`, `trend.stacked`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while
@@ -464,6 +480,7 @@ The guide returns recipe selection rules and a validated example path for each r
 | Positive and negative values of one quantity, scope, and period | `comparison.diverging` |
 | Min-max interval, limit, or threshold for one quantity, scope, and period | `comparison.range` |
 | Ordered time points | `trend.line` |
+| Ordered periods with the same additive category mix | `trend.stacked` |
 | Exact parts of one total when the mix itself is the finding and there is no more informative same-total policy, target, prior, or alternative comparator | `composition.stacked` |
 | Multi-part composition where shape matters | `composition.donut` |
 | Starting value, additions or losses, ending value | `flow.waterfall` |
@@ -472,6 +489,13 @@ The guide returns recipe selection rules and a validated example path for each r
 | Categorical conditions where place explains the finding | `map.regional` |
 | One unsupported value or prose-only evidence | Omit until source enrichment supplies visual structure |
 | Several essential mixed-unit or mixed-stage measures | Separate ChartSpecs |
+
+For `ranking.horizontal`, distinguish a categorical profile from a focus story.
+A categorical profile uses the renderer's qualitative palette, ordered so
+adjacent bars are visibly different hue families. Do not manually simulate
+multi-color output by cycling through blue/yellow shade variants. A focus story
+may instead use the restrained focus treatment when one or two ranks are the
+actual editorial emphasis.
 
 Composable semantic features include:
 
@@ -573,7 +597,7 @@ The regional command performs validation, rendering, shell review, and responsiv
 | Unknown or invalid field | Remove it or use the documented semantic field. |
 | Incorrect data count or number | Correct the source-derived data. Do not invent padding values. |
 | Supplied link does not match the input note | Preserve the input claim, do not combine it with the mismatched page, and seek a better supplemental source or report the mismatch. |
-| External search does not repeat an input claim | Keep the expert-authored claim. Silence is not contradiction and must not become an `uncorroborated` label. |
+| External search does not repeat an input claim | Keep the supplied claim. Silence is not contradiction and must not become an `uncorroborated` label. |
 | A reputable source directly contradicts a material input claim | Mark the external evidence `conflictStatus: "material"`, preserve both positions in working notes, and hold/omit the candidate until editorial resolution. Never chart the disagreement itself. |
 | Source has only two generic categorical values | Research a third independent same-scale observation, use a defensible relationship-specific recipe, merge, or omit. Do not publish two generic bars. |
 | Additional context is merely adjacent or interesting | Exclude it. Context must strengthen magnitude, comparison, mechanism, or consequence. |
@@ -599,15 +623,15 @@ Do not include generated implementation code in the response.
 For a completed batch run, the agent must also:
 
 - Capture one final PNG for every accepted chart.
-- Assemble the accepted images into one PowerPoint presentation.
-- Save the rendered HTML files, final PNGs, and
-  `tochnyi-charts-<run-id>.pptx` in `charts/<run-id>/`.
+- Assemble the accepted images into one PowerPoint presentation when requested.
+- Save the rendered HTML files and final PNGs in `charts/<run-id>/`; save
+  `tochnyi-charts-<run-id>.pptx` there when a deck is requested.
 - Save authored ChartSpecs in `specs/runs/<run-id>/`.
 - Run `npm run run:finalize -- <run-id>` after delivery.
 - Report omitted, duplicate, non-visual, directly conflicted, or failed stories.
 
-Temporary review belongs in `.work/<run-id>/review/`. Final images used in
-the deck belong in the local `charts/<run-id>/` folder. No run-specific
+Temporary review belongs in `.work/<run-id>/review/`. Final images belong in
+the local `charts/<run-id>/` folder. No run-specific
 notes, scripts, logs, downloads, or staging files should remain elsewhere.
 Production input, generated specifications, chart output, previews, and run
 workspaces must remain untracked; `npm run check:repo` enforces that boundary.

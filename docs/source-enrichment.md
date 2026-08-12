@@ -6,9 +6,10 @@ The objective is not to maximize the number of data points or make every chart v
 
 ## Core rule
 
-Treat `input.txt` as expert-authored editorial evidence. Assume its factual
-claims, values, comparisons, and causal interpretation are correct unless a
-reputable source directly contradicts a material point.
+Treat the initialized project-root `input/` folder as the authoritative source
+set for the assignment. Preserve supplied claims, values, comparisons, and
+editorial interpretation unless a reputable source directly contradicts a
+material point.
 
 External research is enrichment, not an adversarial fact-check of the batch
 report. Use it to add attribution, comparators, denominators, historical series,
@@ -17,7 +18,7 @@ second source is not a contradiction and must not cause an agent to delete,
 downgrade, relabel, or replace an input claim.
 
 External research may not originate a story. The subject, central claim, and
-title must be directly supported by `input.txt`. After that story is inventoried,
+title must be directly supported by `input/`. After that story is inventoried,
 a supplied source, underlying dataset, or directly relevant external source may
 provide actual levels that express the same anchored change more clearly than a
 percentage or index. This changes the representation, not the story. Research
@@ -56,10 +57,10 @@ diverging comparison, or calendar duration. Otherwise enrich, merge, or omit.
 Use this order before recipe selection:
 
 ```text
-exact project-root input.txt
+exact project-root input/
     |
     v
-inventory every distinct quantitative claim with exact input excerpts
+inventory source files and supported quantitative stories
     |
     v
 record selected, omitted, or merged disposition for every candidate
@@ -91,9 +92,9 @@ select the evidence spine and recipe
 
 ## 1. Confirm and attribute sources
 
-Do not search for or use a sibling `input.txt`, previous batch file, alternate
-brief, or similarly named document. If the project-root `input.txt` is missing,
-empty, or changed after initialization, stop the run.
+Do not search for or use a sibling project, previous batch, or alternate source
+collection. If the project-root `input/` source set is missing, empty, or changed
+after initialization, stop the run.
 
 When a URL is provided, confirm that the page matches the input note before
 extracting supplemental data.
@@ -108,7 +109,7 @@ Verify:
 - Whether the link is the underlying source or only a related article
 
 If the source does not match the note, do not silently combine them. Preserve
-the expert input claim, exclude the mismatched source from that claim, and seek
+the supplied claim, exclude the mismatched source from that claim, and seek
 a better attribution or supplemental source.
 
 Only a direct, material contradiction from a reputable source creates a source
@@ -118,7 +119,7 @@ exists, mark the external evidence `conflictStatus: "material"`, retain both
 positions in working notes, and do not select or visualize the candidate until
 editorial resolution. Never turn the disagreement itself into chart geometry.
 
-Use the underlying publication, company report, official dataset, or named research source as `source.name` when available. When no usable attribution is available, omit the `source` field. Never substitute `input.txt`, `input brief`, `the brief`, source text, an internal compilation, a file path, verification status, or workflow commentary into chart or presentation copy. These phrases are validator errors, not warnings.
+Use the underlying publication, dataset, or named research source as `source.name` when available. When no usable attribution is available, omit the `source` field. Never substitute internal file paths, verification status, or workflow commentary into chart or presentation copy.
 
 ## 2. Exhaust the primary source
 
@@ -142,8 +143,7 @@ Extract all facts that could clarify the central finding without changing it:
 - Exact start and end dates behind a policy, outage, restriction, reserve
   runway, or contract duration; when only exact durations are supplied, locate
   the common start date
-- Company filing, employee note, or official workforce disclosure behind a
-  staffing percentage
+- Relevant underlying disclosure or dataset behind a normalized percentage
 - Actual benchmark and discounted, premium, shortfall, or overage value
 - Quantitative formula inputs that materially explain a reported or derived
   outcome, such as area and price per square metre for a transaction value
@@ -152,8 +152,8 @@ Extract all facts that could clarify the central finding without changing it:
 The evidence should remain attributable to the source and compatible in period, unit, and scope.
 
 The source-family sweep is especially important for cross-sectional and
-regional reporting. Do not stop after finding the one number quoted in
-`input.txt` if the same source also publishes comparable readings for peers,
+regional reporting. Do not stop after finding the one number highlighted in
+the supplied material if the same source also publishes comparable readings for peers,
 regions, earlier periods, benchmarks, or the relevant denominator. Those
 observations determine both whether the chart is sufficiently anchored and
 whether geography should be the visual structure.
@@ -251,20 +251,18 @@ reported or retrievable, the least-normalized primary representation is a
   "selectedMode": "level",
   "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
-  "basisTarget": "Nominal GDP and the corresponding sector-value range.",
-  "rationale": "The reported share and economy total allow the sector amount to be derived and plotted in currency.",
-  "basisRationale": "The source and named official dataset provide the turnover numerator and economy denominator."
+  "basisTarget": "The named total and corresponding component amount.",
+  "rationale": "The reported share and compatible total allow a tangible component amount to be derived.",
+  "basisRationale": "The supplied and named datasets provide compatible numerator and denominator values."
 }
 ```
 
-Treat the denominator of a named public aggregate as retrievable. A claim such
-as `8–10% of the economy`, `35% of exports`, or `12% of national production`
-must trigger a lookup of the compatible GDP, export, production, population,
-employment, import, or capacity total. Record that target in `basisTarget`,
-derive the tangible numerator or numerator range, and use level geometry. Do
-not mark the basis unavailable merely because the source uses a broad sector
-label; preserve the perimeter qualification while anchoring the magnitude. A
-100% line or a bar from 0% to 10% is not a denominator in tangible terms.
+Treat an explicitly named, accessible denominator as retrievable. A reported
+share should trigger a lookup of the compatible total when that total is
+material to interpretation. Record that target in `basisTarget`, derive the
+tangible numerator or range when appropriate, and use level geometry. Preserve
+scope qualifications while anchoring the magnitude. A 100% line is not a
+tangible denominator.
 
 Use `basisAvailability: "not-applicable"` only for a native quoted rate whose
 numerator and denominator would not be a meaningful tangible decomposition,
@@ -274,7 +272,7 @@ has a meaningful basis and should be researched.
 
 When the basis is reported or retrievable, derive and plot the tangible values:
 
-- For a ratio or economic share, plot the numerator and denominator, or the
+- For a ratio or share, plot the numerator and denominator, or the
   derived numerator range against the denominator total.
 - For a risk or coverage estimate, plot the affected count or range and the
   total population. The total must be visible on the plotted scale as a point,
@@ -345,19 +343,10 @@ snippet, or statement that a value was “not found” is not a source check.
 }
 ```
 
-For percentage-only claims, search for the natural underlying amount before
-selecting geometry:
-
-- Share-price change: exchange prices for the exact event date and trading window.
-- Workforce reduction: a consistent bank or group headcount and the implied number of positions.
-- Export or production change: tonnes, barrels, units, or value for the same periods.
-- Spending or revenue change: currency amounts for the same scope and periods.
-- Market share or coverage: numerator, denominator, and remainder.
-
-For workforce reductions, one of the structured checks must be the company
-filing or official employee disclosure for the relevant reporting perimeter.
-For consumption or demand coverage, include an official or industry dataset
-capable of supplying the denominator.
+For normalized claims, search for the natural underlying amount when it is
+material and reasonably retrievable. Use a source type capable of supplying the
+actual measure for the same entity, scope, and periods. For shares or coverage,
+recover the compatible numerator and denominator when that basis is meaningful.
 
 When the same input passage reports two or more shipment, reserve, import, or
 supply volumes, do not combine them before the evidence audit and do not reduce
@@ -396,9 +385,9 @@ inflate the apparent importance of the components; the conversion must be a
 strict rate-preserving transformation of the same denominator.
 
 If the normalized claim and a tangible base allow an absolute value to be
-derived, the derived value is the primary geometry. For example, an 8–10%
-economic share plus a reported GDP total becomes a currency range, and a
-10–15% exit estimate plus a seller population becomes an affected-count range.
+derived, the derived value is the primary geometry. For example, a reported
+share plus a compatible total can become a tangible component range, and a risk
+estimate plus a population can become an affected-count range.
 
 When a share remains the primary measure because its tangible basis is
 unavailable, incomparable, or genuinely not applicable, preserve any reported
@@ -473,7 +462,7 @@ been exhausted.
 
 Additional research must not introduce a new company, policy, market event,
 ownership structure, or operating result as a chart subject unless that subject
-and claim already appear in `input.txt`.
+and claim already appear in the supplied source set.
 
 ## 7. Apply the relevance test
 
@@ -629,10 +618,10 @@ Do not default to bars because the input contains numbers. Do not select a more 
 
 Before authoring the `ChartSpec`, confirm:
 
-- The expert input claim has been preserved.
-- The story exists in the complete source ledger with exact input anchors.
-- The title is directly supported by its recorded `titleBasis` excerpt.
-- At least one primary evidence item comes from `input.txt`.
+- The supplied claim or documented data-derived finding has been preserved.
+- The story exists in the complete source ledger with source-set anchors.
+- The title is directly supported by its recorded `titleBasis` excerpt or documented structured-data derivation.
+- At least one primary evidence item comes from the current `input/` source set.
 - External evidence is supplemental and does not originate the story.
 - Any linked source used for supplementation matches the story.
 - The full source has been read.

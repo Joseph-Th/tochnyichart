@@ -6,9 +6,10 @@ Every production run has one transient source ledger:
 .work/<run-id>/source-ledger.json
 ```
 
-`npm run run:init -- <run-id>` creates the file with the exact project-root
-`input.txt` byte count and SHA-256 hash. Complete the ledger before external
-research, set `inventoryComplete` to `true`, and run:
+`npm run run:init -- <run-id>` creates the file from the exact project-root
+`input/` source set. The ledger records every file path, byte count, SHA-256
+hash, aggregate bytes, and a deterministic source-set hash. Complete the ledger
+before external research, set `inventoryComplete` to `true`, and run:
 
 ```bash
 npm run run:verify-source -- <run-id>
@@ -24,114 +25,92 @@ npm run run:verify-source -- <run-id> --specs
 
 ```json
 {
-  "version": "1.5",
-  "runId": "issue-2026-08-05",
+  "version": "2.0",
+  "runId": "issue-2026-08-12",
   "input": {
-    "path": "input.txt",
+    "path": "input/",
+    "kind": "directory",
     "bytes": 12585,
-    "sha256": "64-character hash created by run:init"
+    "sha256": "source-set hash created by run:init",
+    "files": [
+      {
+        "path": "input/data.csv",
+        "bytes": 12000,
+        "sha256": "per-file hash created by run:init"
+      },
+      {
+        "path": "input/context.md",
+        "bytes": 585,
+        "sha256": "per-file hash created by run:init"
+      }
+    ]
   },
   "inventoryComplete": true,
-  "ignoredEvidence": [
-    {
-      "anchor": "Exact metadata or non-story passage copied from input.txt",
-      "reason": "Publication date only; not a quantitative editorial claim."
-    }
-  ],
+  "ignoredEvidence": [],
   "candidates": [
     {
-      "id": "ozon-insurance-price-increase",
-      "claim": "Ozon insurance prices rose sharply.",
+      "id": "category-ranking",
+      "claim": "Category A has the largest number of records in the supplied dataset.",
       "decision": "selected",
-      "outputSlug": "ozon-insurance-price-increase",
-      "title": "Ozon insurance prices rose 230%",
-      "titleBasis": "Exact sentence or passage copied from input.txt",
+      "outputSlug": "category-ranking",
+      "title": "Category A leads recorded activity",
+      "titleBasis": {
+        "type": "derived",
+        "sourcePath": "input/data.csv",
+        "description": "The title follows from counting rows by the Category column and sorting descending.",
+        "method": "Filter blank Category values; group by Category; count rows; sort descending."
+      },
       "representationAudit": {
         "selectedMode": "level",
-        "levelAvailability": "retrievable",
-        "rationale": "The underlying market data provides the actual before and after prices."
+        "levelAvailability": "reported",
+        "rationale": "Record counts are directly calculated from supplied rows."
       },
       "visualEvidenceAudit": {
-        "rationale": "All named same-scale observations that materially support the claim remain available for plotting.",
+        "rationale": "All ranked categories are comparable record counts from the same dataset.",
         "comparableObservations": [
           {
-            "label": "Before",
-            "specLabel": "Before",
-            "quantity": "daily insurance price",
-            "unit": "percent of goods value per day",
-            "period": "before the increase",
-            "value": 0.0035
+            "label": "Category A",
+            "quantity": "record count",
+            "unit": "records",
+            "period": "supplied dataset",
+            "value": 120
           },
           {
-            "label": "After",
-            "specLabel": "After",
-            "quantity": "daily insurance price",
-            "unit": "percent of goods value per day",
-            "period": "after the increase",
-            "value": 0.0115
+            "label": "Category B",
+            "quantity": "record count",
+            "unit": "records",
+            "period": "supplied dataset",
+            "value": 95
+          },
+          {
+            "label": "Category C",
+            "quantity": "record count",
+            "unit": "records",
+            "period": "supplied dataset",
+            "value": 71
           }
         ]
       },
       "routingAudit": {
         "geographyRole": "none",
         "workflow": "standard-chart",
-        "rationale": "The story compares one company measure over time; administrative geography does not explain the finding."
+        "rationale": "The story compares dataset categories; administrative geography does not explain the finding."
       },
       "anchors": [
-        "Exact sentence or passage copied from input.txt"
-      ],
-      "evidence": [
         {
-          "statement": "Insurance prices rose 230%.",
-          "origin": "input",
-          "role": "primary",
-          "anchor": "Exact sentence or passage copied from input.txt"
-        },
-        {
-          "statement": "A prior-period value provides comparison.",
-          "origin": "external",
-          "role": "comparison",
-          "source": "Named publication, filing, or dataset"
-        },
-        {
-          "statement": "The combined amount is 800 billion rubles.",
-          "origin": "derived",
-          "role": "comparison",
-          "formula": "500 + 300 = 800"
+          "sourcePath": "input/data.csv",
+          "selector": "Group non-empty Category values and count rows by category."
         }
-      ]
-    },
-    {
-      "id": "duplicate-note",
-      "claim": "A duplicate presentation of the same event.",
-      "decision": "merged",
-      "mergedInto": "ozon-insurance-price-increase",
-      "anchors": [
-        "Exact duplicate passage copied from input.txt"
       ],
       "evidence": [
         {
-          "statement": "The passage describes the same event.",
+          "statement": "Category A has the highest grouped row count.",
           "origin": "input",
           "role": "primary",
-          "anchor": "Exact duplicate passage copied from input.txt"
-        }
-      ]
-    },
-    {
-      "id": "nonvisual-item",
-      "claim": "The note lacks a defensible visual comparison.",
-      "decision": "omitted",
-      "reason": "No valid comparator, denominator, composition, series, or geographic encoding.",
-      "anchors": [
-        "Exact passage copied from input.txt"
-      ],
-      "evidence": [
-        {
-          "statement": "The input contains only a prose claim.",
-          "origin": "input",
-          "role": "primary",
-          "anchor": "Exact passage copied from input.txt"
+          "anchor": {
+            "sourcePath": "input/data.csv",
+            "selector": "Group non-empty Category values and count rows by category."
+          }
         }
       ]
     }
@@ -141,7 +120,10 @@ npm run run:verify-source -- <run-id> --specs
 
 ## Decisions
 
-Every distinct quantitative input story must appear exactly once.
+Every story entered in the ledger must receive exactly one disposition. For
+prose briefs, inventory distinct quantitative claims with exact excerpts. For
+large structured datasets, inventory the stories selected for the assignment
+and cite the file selector or derivation that produces each one.
 
 - `selected` requires `outputSlug`, `title`, `titleBasis`,
   `representationAudit`, `visualEvidenceAudit`, `routingAudit`, and at least one `input`
@@ -254,12 +236,21 @@ Supported roles are `threshold`, `benchmark`, `baseline`, `limit`, `target`,
 and `denominator`. Orientation anchors do not replace comparable observations;
 they explain the scale on which those observations become meaningful.
 
-Standard-chart candidates may inventory at most 12 comparable observations.
-For `regional-breakdown`, the audit may inventory up to the selected region
-set's full administrative-region count. This is intentional: the regional
-evidence inventory can be larger than the visible callout set. Keep all
-materially reported regions in the audit and later use `data[].callout: "none"`
-for fill-only highlights that do not need a card.
+Standard-chart candidates may inventory at most 100 comparable observations,
+matching the ChartSpec data ceiling. Recipe-specific limits still apply later:
+large finite categorical domains belong in `ranking.horizontal`, while recipes
+with smaller semantic limits must not silently truncate the evidence merely to
+fit their renderer. For `regional-breakdown`, the audit may inventory up to the
+selected region set's full administrative-region count. This is intentional:
+the regional evidence inventory can be larger than the visible callout set.
+Keep all materially reported regions in the audit and later use
+`data[].callout: "none"` for fill-only highlights that do not need a card.
+
+When an audience-facing label intentionally differs from the raw source label,
+keep the raw value in `label` and record the presentation alias in `specLabel`.
+This is the supported path for assignment-specific naming conventions. Do not
+rewrite the underlying dataset or hard-code client-specific aliases into the
+renderer.
 
 When three or more comparable observations are available, every one must remain
 a primary `data[]` item in the ChartSpec. The source verifier rejects replacing
@@ -349,16 +340,15 @@ Rate and share stories also require:
   `incomparable`, or `not-applicable`.
 - `basisRationale`: why the selected basis status is correct.
 
-Shares of named public aggregates such as GDP, the economy, population,
-employment, exports, imports, production, or capacity also require:
+When a rate or share names a concrete total that is supplied or reasonably
+retrievable, also record:
 
-- `basisTarget`: the exact public total and tangible numerator to recover, such
-  as nominal GDP and the derived sector-value range.
+- `basisTarget`: the exact total and tangible numerator to recover.
 
-These public denominators are treated as retrievable. The ledger cannot mark
-them unavailable or incomparable merely because the reported sector perimeter
-is broad. Preserve the qualification, recover a compatible public total, and
-select level geometry. A `100%` reference is not a tangible denominator.
+Do not mark an identified, accessible denominator unavailable merely to retain
+percentage-only geometry. Preserve scope qualifications, recover a compatible
+total, and select level geometry when that representation is meaningful. A
+`100%` reference is not a tangible denominator.
 
 When `basisAvailability` is `reported` or `retrievable`, the selected primary
 representation must be `level`. Derive and plot the tangible numerator and
@@ -381,11 +371,9 @@ must include an official dataset, company filing, market-data source, or
 industry dataset. A failed general web search or search-result snippet is not a
 source check.
 
-Some tangible targets require a specific source type. Workforce or staffing
-percentages must include a `company-filing` attempt covering the employee note,
-headcount table, or defined workforce perimeter. Consumption, demand, or
-coverage denominators must include an `official-dataset` or `industry-dataset`
-attempt capable of supplying the relevant volume or population.
+Some tangible targets require a domain-appropriate source type. The selected
+research attempt must be capable of supplying the actual measure or denominator
+for the stated scope rather than merely repeating the normalized claim.
 
 Every attempt must describe a completed source-specific check. The validator
 rejects pending outcomes such as `to be checked`, `will check`, `TBD`, or
@@ -398,9 +386,9 @@ slice.
   "selectedMode": "level",
   "levelAvailability": "retrievable",
   "basisAvailability": "retrievable",
-  "basisTarget": "Nominal GDP and the corresponding sector-value range.",
-  "rationale": "The reported share and economy total allow a tangible sector amount to be derived.",
-  "basisRationale": "Turnover and the economy total can be recovered from the named datasets."
+  "basisTarget": "The named total and corresponding component amount.",
+  "rationale": "The reported share and compatible total allow a tangible component amount to be derived.",
+  "basisRationale": "Both numerator and denominator can be recovered from the named datasets."
 }
 ```
 
@@ -408,20 +396,20 @@ slice.
 {
   "selectedMode": "relative-change",
   "levelAvailability": "unavailable",
-  "tangibleTarget": "Company-specific insurance premium amounts before and after the reported increase.",
+  "tangibleTarget": "Underlying before-and-after values for the reported change.",
   "rationale": "The source reports the change but not the underlying price levels.",
   "researchAttempts": [
     {
-      "source": "Company filing",
-      "sourceType": "company-filing",
-      "locator": "Annual filing, insurance-cost note",
-      "outcome": "The filing reports the percentage increase but no before-and-after premium amounts."
+      "source": "Primary source",
+      "sourceType": "supplied-source",
+      "locator": "Underlying source table for the reporting period",
+      "outcome": "The source reports the normalized change but no compatible before-and-after levels."
     },
     {
-      "source": "Named insurance-market dataset",
+      "source": "Named domain dataset",
       "sourceType": "industry-dataset",
-      "locator": "Company premium table for the reporting period",
-      "outcome": "The dataset does not publish company-specific premium levels."
+      "locator": "Matching entity and reporting-period slice",
+      "outcome": "The dataset does not publish compatible underlying levels."
     }
   ]
 }
@@ -434,21 +422,23 @@ actual point values. A synthetic `0%` before point, index-100 baseline, or
 viewer-facing label such as `100 index` is not permitted.
 For a rate or share, `reported` or `retrievable` basis amounts must become the
 primary ChartSpec geometry. Examples include cost and income behind a
-cost-to-income ratio, turnover and economy size behind an economic share, or a
-seller population and affected count behind an exit-risk estimate. A `basis`
+ratio, a component and total behind a share, or a population and affected count
+behind a risk estimate. A `basis`
 rail may document the arithmetic, but it cannot substitute for tangible marks.
 
-The validator scans every numeric token in `input.txt`. Each number must fall
-inside a candidate `anchor` or an `ignoredEvidence.anchor`. Use
-`ignoredEvidence` only for exact passages containing metadata, source IDs, URL
-digits, dates that are not part of a data story, or other non-editorial numeric
-material. Every ignored passage requires a specific reason.
+For legacy single-file ledgers, the validator scans every numeric token and
+requires it to fall inside a candidate `anchor` or an `ignoredEvidence.anchor`.
+Directory-based source sets instead use the hashed file inventory plus explicit
+source excerpts, selectors, and documented derivations. Use `ignoredEvidence`
+only for material that is intentionally excluded and record a specific reason.
 
 ## Exact anchors
 
-`anchors`, `titleBasis`, and every input evidence `anchor` must be exact excerpts
-from the current `input.txt`. The validator rejects paraphrases and rejects a
-ledger when the input hash or byte count changes after initialization.
+For prose sources, `anchors`, `titleBasis`, and input evidence anchors may be
+exact excerpts. Structured or binary sources may use a source path plus an
+explicit selector, and structured findings may use a documented derivation.
+The validator rejects a ledger when the initialized source-set hash, file
+inventory, or byte counts change.
 
 `titleBasis` is not presentation copy. It is an internal proof that the chart
 title is supported by the supplied document. Every substantive concept in the
@@ -458,7 +448,7 @@ title must be stated in or unavoidably paraphrase this excerpt.
 
 Allowed origins are:
 
-- `input`: evidence directly stated in `input.txt`; requires an exact `anchor`.
+- `input`: evidence supported by the current `input/` source set; requires an exact prose excerpt or a structured source selector.
 - `external`: supplemental evidence from a named source; requires `source` and
   cannot use role `primary`.
 - `derived`: arithmetic based on recorded evidence; requires `formula`.
@@ -477,7 +467,7 @@ External evidence cannot create a new subject, central claim, or title. It may
 provide actual levels that directly express an input-anchored percentage or
 indexed change, as well as comparison, denominator, mechanism, consequence,
 context, or attribution. The primary editorial claim must remain anchored in
-`input.txt` even when the chart uses a less normalized representation.
+`input/` even when the chart uses a less normalized representation.
 
 ## ChartSpec coverage
 

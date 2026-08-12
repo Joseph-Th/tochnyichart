@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 
 const WORKSPACE_DIRECTORY = '.work';
 const LEGACY_PREVIEW_DIRECTORY = 'previews';
+const INPUT_DIRECTORY = 'input';
 const RUN_SPEC_DIRECTORY = Object.freeze(['specs', 'runs']);
 const DELIVERY_DIRECTORY = 'charts';
 const DEFAULT_SUBDIRECTORIES = Object.freeze([
@@ -59,21 +60,114 @@ function deliveryPath(projectRoot, runId, ...segments) {
   return projectPath(projectRoot, DELIVERY_DIRECTORY, normalized, ...segments);
 }
 
-function readInputSnapshot(projectRoot) {
-  const inputPath = projectPath(projectRoot, 'input.txt');
-  if (!fs.existsSync(inputPath)) {
-    throw new Error('input.txt is missing. Production runs must use the exact project-root input.txt; do not substitute a sibling or alternate file.');
+function sourceText(filePath, data) {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === '.ipynb') {
+    try {
+      const notebook = JSON.parse(data.toString('utf8'));
+      return (notebook.cells || [])
+        .map((cell) => Array.isArray(cell.source) ? cell.source.join('') : '')
+        .filter(Boolean)
+        .join('\n\n');
+    } catch {
+      return '';
+    }
   }
+  if (new Set(['.txt', '.md', '.csv', '.tsv', '.json', '.jsonl', '.yaml', '.yml', '.xml', '.html', '.htm']).has(extension)) {
+    return data.toString('utf8');
+  }
+  return '';
+}
+
+function inputFiles(inputRoot) {
+  const files = [];
+  function walk(directory) {
+    const entries = fs.readdirSync(directory, { withFileTypes: true })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) walk(target);
+      else if (entry.isFile()) files.push(target);
+    }
+  }
+  walk(inputRoot);
+  return files;
+}
+
+function directoryInputSnapshot(projectRoot) {
+  const root = path.resolve(projectRoot);
+  const inputRoot = projectPath(projectRoot, INPUT_DIRECTORY);
+  if (!fs.existsSync(inputRoot) || !fs.statSync(inputRoot).isDirectory()) return null;
+  const paths = inputFiles(inputRoot);
+  if (!paths.length) {
+    throw new Error('input/ is empty. Add the source materials for the run before initialization.');
+  }
+
+  const files = paths.map((filePath) => {
+    const data = fs.readFileSync(filePath);
+    const relativePath = path.relative(root, filePath).replace(/\\/g, '/');
+    return {
+      path: relativePath,
+      bytes: data.length,
+      sha256: crypto.createHash('sha256').update(data).digest('hex'),
+      content: sourceText(filePath, data)
+    };
+  });
+  if (!files.some((file) => file.bytes > 0)) {
+    throw new Error('input/ contains no non-empty source files.');
+  }
+  const digest = crypto.createHash('sha256');
+  files.forEach((file) => digest.update(`${file.path}\0${file.bytes}\0${file.sha256}\n`, 'utf8'));
+  return {
+    kind: 'directory',
+    path: inputRoot,
+    relativePath: 'input/',
+    files,
+    documents: files.filter((file) => file.content).map((file) => ({ path: file.path, content: file.content })),
+    content: files.filter((file) => file.content).map((file) => file.content).join('\n\n'),
+    bytes: files.reduce((sum, file) => sum + file.bytes, 0),
+    sha256: digest.digest('hex')
+  };
+}
+
+function legacyInputSnapshot(projectRoot) {
+  const inputPath = projectPath(projectRoot, 'input.txt');
+  if (!fs.existsSync(inputPath)) return null;
   const content = fs.readFileSync(inputPath, 'utf8');
   if (!content.trim()) {
-    throw new Error('input.txt is empty. Stop the run and obtain the intended source document; do not substitute a sibling or alternate file.');
+    throw new Error('input.txt is empty. Add source material to input/ for production runs.');
   }
+  const bytes = Buffer.byteLength(content, 'utf8');
   return {
+    kind: 'legacy-file',
     path: inputPath,
+    relativePath: 'input.txt',
+    files: [{
+      path: 'input.txt',
+      bytes,
+      sha256: crypto.createHash('sha256').update(content, 'utf8').digest('hex'),
+      content
+    }],
+    documents: [{ path: 'input.txt', content }],
     content,
-    bytes: Buffer.byteLength(content, 'utf8'),
+    bytes,
     sha256: crypto.createHash('sha256').update(content, 'utf8').digest('hex')
   };
+}
+
+function readInputSnapshot(projectRoot) {
+  const directorySnapshot = directoryInputSnapshot(projectRoot);
+  if (directorySnapshot) return directorySnapshot;
+  const legacySnapshot = legacyInputSnapshot(projectRoot);
+  if (legacySnapshot) return legacySnapshot;
+  throw new Error('input/ is missing. Production runs require a non-empty project-root input/ folder.');
+}
+
+function existingInputTarget(projectRoot) {
+  const directory = projectPath(projectRoot, INPUT_DIRECTORY);
+  if (fs.existsSync(directory) && fs.statSync(directory).isDirectory()) return directory;
+  return projectPath(projectRoot, 'input.txt');
 }
 
 function sourceLedgerPath(projectRoot, runId) {
@@ -83,14 +177,23 @@ function sourceLedgerPath(projectRoot, runId) {
 function initializeSourceLedger(projectRoot, runId, snapshot) {
   const target = sourceLedgerPath(projectRoot, runId);
   if (!fs.existsSync(target)) {
+    const input = snapshot.kind === 'directory'
+      ? {
+          path: snapshot.relativePath,
+          kind: 'directory',
+          bytes: snapshot.bytes,
+          sha256: snapshot.sha256,
+          files: snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }))
+        }
+      : {
+          path: 'input.txt',
+          bytes: snapshot.bytes,
+          sha256: snapshot.sha256
+        };
     fs.writeFileSync(target, `${JSON.stringify({
-      version: '1.5',
+      version: snapshot.kind === 'directory' ? '2.0' : '1.5',
       runId: normalizeRunId(runId),
-      input: {
-        path: 'input.txt',
-        bytes: snapshot.bytes,
-        sha256: snapshot.sha256
-      },
+      input,
       inventoryComplete: false,
       ignoredEvidence: [],
       candidates: []
@@ -176,6 +279,7 @@ function clearInput(projectRoot, dryRun) {
 function flushRunWorkspace(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const dryRun = Boolean(options.dryRun);
+  const inputTarget = existingInputTarget(projectRoot);
   const removed = [removeTarget(workspacePath(projectRoot, normalized), dryRun)];
   if (options.removeLegacy) {
     removed.push(removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun));
@@ -186,13 +290,13 @@ function flushRunWorkspace(projectRoot, runId, options = {}) {
     dryRun,
     removed,
     input: {
-      target: projectPath(projectRoot, 'input.txt'),
+      target: inputTarget,
       preserved: true
     },
     preserved: [
       runSpecPath(projectRoot, normalized),
       deliveryPath(projectRoot, normalized),
-      projectPath(projectRoot, 'input.txt')
+      inputTarget
     ]
   };
 }
@@ -219,6 +323,7 @@ function resetTransientWorkspace(projectRoot, options = {}) {
 module.exports = {
   WORKSPACE_DIRECTORY,
   LEGACY_PREVIEW_DIRECTORY,
+  INPUT_DIRECTORY,
   RUN_SPEC_DIRECTORY,
   DELIVERY_DIRECTORY,
   DEFAULT_SUBDIRECTORIES,
@@ -229,6 +334,7 @@ module.exports = {
   runSpecPath,
   deliveryPath,
   readInputSnapshot,
+  existingInputTarget,
   sourceLedgerPath,
   initializeSourceLedger,
   initializeRunWorkspace,

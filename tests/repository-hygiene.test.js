@@ -13,6 +13,7 @@ const root = path.join(__dirname, '..');
 
 test('repository hygiene classifies generated data and permits curated fixtures', () => {
   assert.match(transientReason('input.txt'), /local/);
+  assert.match(transientReason('input/source.csv'), /local/);
   assert.match(transientReason('.work/client-a/logs/render.log'), /transient/);
   assert.match(transientReason('charts/client-a/chart.html'), /generated/);
   assert.match(transientReason('specs/runs/client-a/chart.json'), /local run data/);

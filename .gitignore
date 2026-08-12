@@ -15,6 +15,7 @@ node_modules/
 *.log
 
 # User input and generated run data
+/input/
 /input.txt
 /charts/
 /previews/

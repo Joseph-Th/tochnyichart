@@ -58,6 +58,13 @@
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
     },
     {
+      "id": "trend.stacked",
+      "purpose": "Show how an additive category mix changes across ordered periods while preserving the monthly or period total.",
+      "data": "3 to 24 ordered periods. Each period carries 2 to 15 non-negative segments with the same category labels and order. Zero-valued categories are retained so colors and stack positions remain stable across time.",
+      "bestFor": ["monthly incident mix", "category composition over time", "stacked counts by period"],
+      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
       "id": "timeline.duration",
       "purpose": "Show dated policy, restriction, outage, contract, or operational intervals on a common calendar.",
       "data": "2 to 8 labeled intervals with ISO start and end dates, or exact duration plus durationUnit when all intervals share timeline.anchorDate. Tone controls the interval color; displayValue names the duration.",
@@ -95,8 +102,8 @@
     {
       "id": "ranking.horizontal",
       "purpose": "Rank categories where labels need horizontal space.",
-      "data": "3 to 12 labeled numeric values.",
-      "bestFor": ["regional comparisons", "company rankings", "long category names"],
+      "data": "3 to 100 labeled numeric values. For a finite categorical domain, include every materially relevant non-empty category by default rather than silently truncating to a top-N subset. Dense rankings expand vertically and retain per-bar numeric labels. Categorical-profile mode uses a qualitative palette whose adjacent bars are hue-separated rather than a sequence of light/dark brand-color variants.",
+      "bestFor": ["full categorical profiles", "company rankings", "long category names"],
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 0 }
     },
     {
@@ -108,6 +115,10 @@
     }
   ],
   "composableFeatures": [
+    {
+      "id": "analysis",
+      "purpose": "Add a separate analyst, author, team, or public-account attribution, optionally linked, without conflating it with the underlying source."
+    },
     {
       "id": "references",
       "purpose": "Add target, average, legal limit, prior norm, or other numeric reference lines without changing recipe."

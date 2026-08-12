@@ -179,20 +179,38 @@ function loadJson(filePath, label) {
   }
 }
 
-function exactAnchorExists(input, anchor) {
-  return isText(anchor) && input.includes(anchor.trim());
+function normalizeSourcePath(value) {
+  return String(value || '').replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
-function anchorRanges(input, anchor) {
-  if (!isText(anchor)) return [];
-  const excerpt = anchor.trim();
-  const ranges = [];
-  let start = input.indexOf(excerpt);
-  while (start !== -1) {
-    ranges.push([start, start + excerpt.length]);
-    start = input.indexOf(excerpt, start + Math.max(1, excerpt.length));
+function sourceDocument(snapshot, sourcePath) {
+  const normalized = normalizeSourcePath(sourcePath);
+  return (snapshot.documents || []).find((document) => normalizeSourcePath(document.path) === normalized) || null;
+}
+
+function sourceFileExists(snapshot, sourcePath) {
+  const normalized = normalizeSourcePath(sourcePath);
+  return (snapshot.files || []).some((file) => normalizeSourcePath(file.path) === normalized);
+}
+
+function exactAnchorExists(snapshot, anchor) {
+  if (isText(anchor)) {
+    const excerpt = anchor.trim();
+    return (snapshot.documents || []).some((document) => document.content.includes(excerpt));
   }
-  return ranges;
+  if (!anchor || typeof anchor !== 'object' || Array.isArray(anchor) || !isText(anchor.sourcePath)) return false;
+  if (!sourceFileExists(snapshot, anchor.sourcePath)) return false;
+  if (isText(anchor.selector)) return true;
+  if (!isText(anchor.excerpt)) return false;
+  const document = sourceDocument(snapshot, anchor.sourcePath);
+  return Boolean(document && document.content.includes(anchor.excerpt.trim()));
+}
+
+function validTitleBasis(snapshot, titleBasis) {
+  if (exactAnchorExists(snapshot, titleBasis)) return true;
+  if (!titleBasis || typeof titleBasis !== 'object' || Array.isArray(titleBasis)) return false;
+  if (titleBasis.type !== 'derived' || !isText(titleBasis.sourcePath) || !sourceFileExists(snapshot, titleBasis.sourcePath)) return false;
+  return isText(titleBasis.description) && (isText(titleBasis.method) || isText(titleBasis.formula));
 }
 
 function numericEvidence(input) {
@@ -510,9 +528,18 @@ function sameSeriesSkeleton(first, second) {
   return firstLabels.every((label, index) => label && label === secondLabels[index]);
 }
 
+function sourceAnchorKey(anchor) {
+  if (isText(anchor)) return `text:${anchor.trim()}`;
+  if (!anchor || typeof anchor !== 'object' || Array.isArray(anchor) || !isText(anchor.sourcePath)) return '';
+  const sourcePath = normalizeSourcePath(anchor.sourcePath);
+  if (isText(anchor.selector)) return `selector:${sourcePath}:${anchor.selector.trim()}`;
+  if (isText(anchor.excerpt)) return `excerpt:${sourcePath}:${anchor.excerpt.trim()}`;
+  return '';
+}
+
 function candidatesShareAnchor(first, second) {
-  const firstAnchors = new Set((first.anchors || []).filter(isText).map((anchor) => anchor.trim()));
-  return (second.anchors || []).some((anchor) => isText(anchor) && firstAnchors.has(anchor.trim()));
+  const firstAnchors = new Set((first.anchors || []).map(sourceAnchorKey).filter(Boolean));
+  return (second.anchors || []).some((anchor) => firstAnchors.has(sourceAnchorKey(anchor)));
 }
 
 function specsShareReportingContext(first, second) {
@@ -700,7 +727,7 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
   const regionalSet = regionalWorkflow
     ? TochnyiMaps.getRegionSet(candidate?.routingAudit?.regionSet)
     : null;
-  const observationLimit = regionalSet ? Object.keys(regionalSet.regions).length : 12;
+  const observationLimit = regionalSet ? Object.keys(regionalSet.regions).length : 500;
   if (audit.comparableObservations.length > observationLimit) {
     errors.push(
       `${prefix}.visualEvidenceAudit.comparableObservations may contain at most ${observationLimit} observations` +
@@ -829,7 +856,14 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
   const data = Array.isArray(spec?.data) ? spec.data : [];
   const references = Array.isArray(spec?.references) ? spec.references : [];
   const denominatorLabel = normalizedSeriesLabel(candidate?.visualEvidenceAudit?.coverageAudit?.denominatorLabel);
-  const plottedLabels = new Set(data.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const stackedItems = spec?.recipe === 'trend.stacked'
+    ? data.flatMap((item) => (item?.segments || []).map((segment) => ({
+        label: `${item.label} · ${segment.label}`,
+        value: segment.value
+      })))
+    : [];
+  const plottedItems = spec?.recipe === 'trend.stacked' ? stackedItems : data;
+  const plottedLabels = new Set(plottedItems.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
   const referenceLabels = new Set(references.map((reference) => normalizedSeriesLabel(reference?.label)).filter(Boolean));
   const missing = observations
     .filter((observation) => {
@@ -841,7 +875,7 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     .filter(Boolean);
   const mismatched = observations.filter((observation) => {
     const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
-    const item = data.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
+    const item = plottedItems.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
     if (!item && label === denominatorLabel) {
       const reference = references.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
       if (!reference) return false;
@@ -1000,11 +1034,25 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
-  if (ledger.version !== '1.5') errors.push('Source ledger version must be 1.5.');
+  const directoryMode = snapshot.kind === 'directory';
+  const expectedVersion = directoryMode ? '2.0' : '1.5';
+  if (ledger.version !== expectedVersion) errors.push(`Source ledger version must be ${expectedVersion}.`);
   if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
-  if (!ledger.input || ledger.input.path !== 'input.txt') errors.push('Source ledger must identify the project-root input.txt.');
+  if (!ledger.input || ledger.input.path !== snapshot.relativePath) {
+    errors.push(`Source ledger must identify the project-root ${snapshot.relativePath} source set.`);
+  }
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
-    errors.push('input.txt changed after the source ledger was initialized. Restart the run or rebuild the ledger from the current input.');
+    errors.push('Input materials changed after the source ledger was initialized. Restart the run or rebuild the ledger from the current input/ source set.');
+  }
+  if (directoryMode) {
+    if (ledger.input?.kind !== 'directory' || !Array.isArray(ledger.input?.files)) {
+      errors.push('Directory-based source ledgers must inventory every file under input/.');
+    } else {
+      const expectedFiles = snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }));
+      if (JSON.stringify(ledger.input.files) !== JSON.stringify(expectedFiles)) {
+        errors.push('The input/ file inventory changed after initialization. Restart the run or rebuild the ledger.');
+      }
+    }
   }
   if (ledger.inventoryComplete !== true) {
     errors.push('Source inventory is incomplete. Inventory every distinct quantitative story before selection or research.');
@@ -1016,7 +1064,6 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ids = new Set();
   const selected = [];
   const merged = [];
-  const coverageRanges = [];
   for (const [index, candidate] of (ledger.candidates || []).entries()) {
     const prefix = `candidates[${index}]`;
     if (!candidate || typeof candidate !== 'object') {
@@ -1033,13 +1080,11 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
     if (!isText(candidate.claim)) errors.push(`${prefix}.claim is required.`);
     if (!DECISIONS.has(candidate.decision)) errors.push(`${prefix}.decision must be selected, omitted, or merged.`);
     if (!Array.isArray(candidate.anchors) || candidate.anchors.length === 0) {
-      errors.push(`${prefix}.anchors must contain exact excerpts from input.txt.`);
+      errors.push(`${prefix}.anchors must contain source excerpts or structured source selectors from input/.`);
     } else {
       for (const [anchorIndex, anchor] of candidate.anchors.entries()) {
-        if (!exactAnchorExists(snapshot.content, anchor)) {
-          errors.push(`${prefix}.anchors[${anchorIndex}] is not an exact excerpt from input.txt.`);
-        } else {
-          coverageRanges.push(...anchorRanges(snapshot.content, anchor));
+        if (!exactAnchorExists(snapshot, anchor)) {
+          errors.push(`${prefix}.anchors[${anchorIndex}] does not resolve to the current input/ source set.`);
         }
       }
     }
@@ -1063,8 +1108,8 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
           errors.push(`${evidencePrefix}.conflictStatus must be none or material when provided.`);
         }
         if (evidence.origin === 'input') {
-          if (!exactAnchorExists(snapshot.content, evidence.anchor)) {
-            errors.push(`${evidencePrefix}.anchor must be an exact excerpt from input.txt.`);
+          if (!exactAnchorExists(snapshot, evidence.anchor)) {
+            errors.push(`${evidencePrefix}.anchor must resolve to the current input/ source set.`);
           }
           if (evidence.role === 'primary') hasPrimaryInput = true;
         }
@@ -1085,17 +1130,17 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
         }
       }
       if (candidate.decision === 'selected' && !hasPrimaryInput) {
-        errors.push(`${prefix} is selected but has no primary evidence anchored in input.txt.`);
+        errors.push(`${prefix} is selected but has no primary evidence anchored in input/.`);
       }
     }
 
     if (candidate.decision === 'selected') {
       if (!isText(candidate.outputSlug)) errors.push(`${prefix}.outputSlug is required for a selected story.`);
       if (!isText(candidate.title)) errors.push(`${prefix}.title is required for a selected story.`);
-      if (!exactAnchorExists(snapshot.content, candidate.titleBasis)) {
-        errors.push(`${prefix}.titleBasis must be an exact input excerpt that directly supports the chart title.`);
+      if (!validTitleBasis(snapshot, candidate.titleBasis)) {
+        errors.push(`${prefix}.titleBasis must be an exact source excerpt/selector or a documented derivation from a structured input file.`);
       }
-      if (Array.isArray(candidate.anchors) && !candidate.anchors.some((anchor) => {
+      if (isText(candidate.titleBasis) && Array.isArray(candidate.anchors) && !candidate.anchors.some((anchor) => {
         if (!isText(anchor) || !isText(candidate.titleBasis)) return false;
         const normalizedAnchor = anchor.trim();
         const normalizedBasis = candidate.titleBasis.trim();
@@ -1136,18 +1181,38 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       errors.push(`${prefix} must be an object.`);
       continue;
     }
-    if (!exactAnchorExists(snapshot.content, ignored.anchor)) {
-      errors.push(`${prefix}.anchor must be an exact excerpt from input.txt.`);
-    } else {
-      coverageRanges.push(...anchorRanges(snapshot.content, ignored.anchor));
-    }
+    if (!exactAnchorExists(snapshot, ignored.anchor)) errors.push(`${prefix}.anchor must resolve to the current input/ source set.`);
     if (!isText(ignored.reason)) errors.push(`${prefix}.reason is required.`);
   }
 
-  for (const token of numericEvidence(snapshot.content)) {
-    const covered = coverageRanges.some(([start, end]) => token.start >= start && token.end <= end);
-    if (!covered) {
-      errors.push(`Unassigned numeric evidence ${token.value} near "${contextAround(snapshot.content, token.start, token.end)}". Add the containing story to candidates or justify it in ignoredEvidence.`);
+  if (!directoryMode) {
+    const coverageRanges = [];
+    const input = snapshot.content;
+    for (const candidate of ledger.candidates || []) {
+      for (const anchor of candidate.anchors || []) {
+        if (!isText(anchor)) continue;
+        const excerpt = anchor.trim();
+        let start = input.indexOf(excerpt);
+        while (start !== -1) {
+          coverageRanges.push([start, start + excerpt.length]);
+          start = input.indexOf(excerpt, start + Math.max(1, excerpt.length));
+        }
+      }
+    }
+    for (const ignored of ledger.ignoredEvidence || []) {
+      if (!isText(ignored?.anchor)) continue;
+      const excerpt = ignored.anchor.trim();
+      let start = input.indexOf(excerpt);
+      while (start !== -1) {
+        coverageRanges.push([start, start + excerpt.length]);
+        start = input.indexOf(excerpt, start + Math.max(1, excerpt.length));
+      }
+    }
+    for (const token of numericEvidence(input)) {
+      const covered = coverageRanges.some(([start, end]) => token.start >= start && token.end <= end);
+      if (!covered) {
+        errors.push(`Unassigned numeric evidence ${token.value} near "${contextAround(input, token.start, token.end)}". Add the containing story to candidates or justify it in ignoredEvidence.`);
+      }
     }
   }
 
@@ -1230,7 +1295,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   return {
     valid: true,
     runId: normalized,
-    input: { bytes: snapshot.bytes, sha256: snapshot.sha256 },
+    input: { path: snapshot.relativePath, bytes: snapshot.bytes, sha256: snapshot.sha256, files: snapshot.files.length },
     candidates: ledger.candidates.length,
     selected: selected.length,
     omitted: ledger.candidates.filter((item) => item.decision === 'omitted').length,

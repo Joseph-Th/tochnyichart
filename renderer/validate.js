@@ -41,7 +41,7 @@ const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
-  'trend.line', 'ranking.horizontal', 'composition.components'
+  'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -60,15 +60,17 @@ const DISABLED_RECIPES = new Map([
 ]);
 
 const ROOT_KEYS = new Set([
-  'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'data', 'references', 'measure',
+  'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'analysis', 'data', 'references', 'measure',
   'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
+const ANALYSIS_KEYS = new Set(['name', 'url']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
-  'period', 'scope', 'relationshipRole'
+  'period', 'scope', 'relationshipRole', 'segments'
 ]);
+const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue']);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const MEASURE_KEYS = new Set([
   'quantity', 'unit', 'axisTitle', 'valueMode', 'levelAvailability', 'basisAvailability', 'basisNote', 'normalizationNote',
@@ -318,12 +320,21 @@ function normalizeSource(source) {
   };
 }
 
+function normalizeAnalysis(analysis) {
+  if (!isObject(analysis)) return analysis;
+  return {
+    name: typeof analysis.name === 'string' ? analysis.name.trim() : analysis.name,
+    ...(analysis.url !== undefined ? { url: typeof analysis.url === 'string' ? analysis.url.trim() : analysis.url } : {})
+  };
+}
+
 function normalizeSpec(input) {
   const spec = clone(input);
   spec.version = spec.version || '2.0';
   spec.title = typeof spec.title === 'string' ? spec.title.trim() : spec.title;
   spec.subtitle = typeof spec.subtitle === 'string' ? spec.subtitle.trim() : spec.subtitle;
   spec.source = normalizeSource(spec.source);
+  spec.analysis = normalizeAnalysis(spec.analysis);
   if (isObject(spec.timeline)) {
     spec.timeline = {
       ...spec.timeline,
@@ -393,7 +404,18 @@ function normalizeSpec(input) {
         ...(item.detail !== undefined ? { detail: typeof item.detail === 'string' ? item.detail.trim() : item.detail } : {}),
         ...(item.annotation !== undefined ? { annotation: typeof item.annotation === 'string' ? item.annotation.trim() : item.annotation } : {}),
         ...(item.period !== undefined ? { period: typeof item.period === 'string' ? item.period.trim() : item.period } : {}),
-        ...(item.scope !== undefined ? { scope: typeof item.scope === 'string' ? item.scope.trim() : item.scope } : {})
+        ...(item.scope !== undefined ? { scope: typeof item.scope === 'string' ? item.scope.trim() : item.scope } : {}),
+        ...(item.segments !== undefined ? {
+          segments: Array.isArray(item.segments)
+            ? item.segments.map((segment) => isObject(segment) ? ({
+                ...segment,
+                label: typeof segment.label === 'string' ? segment.label.trim() : segment.label,
+                ...(segment.displayValue !== undefined
+                  ? { displayValue: typeof segment.displayValue === 'string' ? segment.displayValue.trim() : segment.displayValue }
+                  : {})
+              }) : segment)
+            : item.segments
+        } : {})
       }) : item)
     : spec.data;
 
@@ -463,8 +485,18 @@ function validateStructure(input, errors) {
   if (input.source !== undefined && !isObject(input.source)) errors.push('source must be an object with a name when provided.');
   else if (isObject(input.source)) rejectUnknownKeys(input.source, SOURCE_KEYS, 'source', errors);
 
+  if (input.analysis !== undefined && !isObject(input.analysis)) errors.push('analysis must be an object with a name when provided.');
+  else if (isObject(input.analysis)) rejectUnknownKeys(input.analysis, ANALYSIS_KEYS, 'analysis', errors);
+
   if (Array.isArray(input.data)) {
-    input.data.forEach((item, index) => rejectUnknownKeys(item, DATA_KEYS, `data[${index}]`, errors));
+    input.data.forEach((item, index) => {
+      rejectUnknownKeys(item, DATA_KEYS, `data[${index}]`, errors);
+      if (Array.isArray(item?.segments)) {
+        item.segments.forEach((segment, segmentIndex) =>
+          rejectUnknownKeys(segment, STACK_SEGMENT_KEYS, `data[${index}].segments[${segmentIndex}]`, errors)
+        );
+      }
+    });
   }
   if (Array.isArray(input.references)) {
     input.references.forEach((reference, index) => rejectUnknownKeys(reference, REFERENCE_KEYS, `references[${index}]`, errors));
@@ -496,7 +528,9 @@ function validateData(spec, errors, warnings) {
     return;
   }
   if (spec.data.length === 0) errors.push('data must contain at least one item.');
-  if (spec.recipe !== 'map.regional' && spec.data.length > 12) errors.push('data cannot contain more than 12 items for this recipe.');
+  if (!['map.regional', 'ranking.horizontal', 'trend.stacked'].includes(spec.recipe) && spec.data.length > 12) {
+    errors.push('data cannot contain more than 12 items for this recipe.');
+  }
 
   spec.data.forEach((item, index) => {
     const path = `data[${index}]`;
@@ -569,6 +603,30 @@ function validateData(spec, errors, warnings) {
     if (item.status !== undefined && !STATUSES.has(item.status)) errors.push(`${path}.status is not supported.`);
     if (item.role !== undefined && !ROLES.has(item.role)) errors.push(`${path}.role is not supported.`);
     if (item.relationshipRole !== undefined && !RELATIONSHIP_ROLES.has(item.relationshipRole)) errors.push(`${path}.relationshipRole is not supported.`);
+    if (item.segments !== undefined) {
+      if (!Array.isArray(item.segments) || item.segments.length < 2 || item.segments.length > 15) {
+        errors.push(`${path}.segments must contain 2 to 15 stack segments.`);
+      } else {
+        const segmentLabels = new Set();
+        item.segments.forEach((segment, segmentIndex) => {
+          const segmentPath = `${path}.segments[${segmentIndex}]`;
+          if (!isObject(segment)) {
+            errors.push(`${segmentPath} must be an object.`);
+            return;
+          }
+          pushLengthIssue(segment.label, `${segmentPath}.label`, 60, errors, warnings, 36);
+          if (typeof segment.value !== 'number' || !Number.isFinite(segment.value) || segment.value < 0) {
+            errors.push(`${segmentPath}.value must be a finite number greater than or equal to zero.`);
+          }
+          if (segment.displayValue !== undefined && (typeof segment.displayValue !== 'string' || segment.displayValue.length > 50)) {
+            errors.push(`${segmentPath}.displayValue must be a string of 50 characters or fewer.`);
+          }
+          const normalizedLabel = normalizeEditorialValue(segment.label);
+          if (normalizedLabel && segmentLabels.has(normalizedLabel)) errors.push(`${path}.segments cannot repeat category labels.`);
+          if (normalizedLabel) segmentLabels.add(normalizedLabel);
+        });
+      }
+    }
   });
 
   const labels = spec.data.map((item) => item?.label).filter(Boolean);
@@ -715,7 +773,7 @@ function validateSharedScaleSemantics(spec, errors) {
     errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Split unlike scopes into separate charts or keep secondary evidence in the unboxed supportingFacts context rail.`);
   }
 
-  if (!['comparison.change', 'comparison.benchmark-gap', 'trend.line'].includes(spec.recipe)) {
+  if (!['comparison.change', 'comparison.benchmark-gap', 'trend.line', 'trend.stacked'].includes(spec.recipe)) {
     const periods = data
       .map((item) => typeof item?.period === 'string' ? normalizeEditorialValue(item.period) : '')
       .filter(Boolean);
@@ -1287,6 +1345,34 @@ function validateRecipe(spec, errors, warnings) {
       else if (count < 5) warnings.push('trend.line is usually clearer with at least 5 data points.');
       requireNumericValues(spec, errors);
       break;
+    case 'trend.stacked': {
+      if (count < 3 || count > 24) errors.push('trend.stacked requires 3 to 24 ordered periods.');
+      const firstSegments = Array.isArray(data[0]?.segments) ? data[0].segments : [];
+      const categoryLabels = firstSegments.map((segment) => normalizeEditorialValue(segment?.label)).filter(Boolean);
+      if (categoryLabels.length < 2) errors.push('trend.stacked requires at least 2 stack categories.');
+      data.forEach((item, index) => {
+        if (!Array.isArray(item?.segments)) {
+          errors.push(`data[${index}].segments is required for trend.stacked.`);
+          return;
+        }
+        const labels = item.segments.map((segment) => normalizeEditorialValue(segment?.label)).filter(Boolean);
+        if (labels.length !== categoryLabels.length || labels.some((label, categoryIndex) => label !== categoryLabels[categoryIndex])) {
+          errors.push(`data[${index}].segments must use the same category labels and order as data[0].segments for trend.stacked.`);
+        }
+        const total = item.segments.reduce((sum, segment) => sum + (Number.isFinite(segment?.value) ? segment.value : 0), 0);
+        if (total <= 0) errors.push(`data[${index}].segments must sum to a value greater than zero for trend.stacked.`);
+      });
+      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
+        errors.push('trend.stacked requires measure.valueMode level because each monthly stack encodes additive counts or amounts.');
+      }
+      if (spec.measure?.baseline !== 'zero') {
+        errors.push('trend.stacked requires measure.baseline zero so monthly totals remain comparable from a common origin.');
+      }
+      if (spec.measure?.scale !== 'linear') {
+        errors.push('trend.stacked requires a linear scale because logarithmic stacking is not additive geometry.');
+      }
+      break;
+    }
     case 'timeline.duration': {
       if (count < 2 || count > 8) errors.push('timeline.duration requires 2 to 8 data items.');
       const endpoints = [];
@@ -1372,8 +1458,11 @@ function validateRecipe(spec, errors, warnings) {
       validateWaterfall(spec, data, errors);
       break;
     case 'ranking.horizontal':
-      if (count < 3 || count > 12) errors.push('ranking.horizontal requires 3 to 12 data items.');
+      if (count < 3 || count > 100) errors.push('ranking.horizontal requires 3 to 100 data items.');
       requireNumericValues(spec, errors);
+      if (spec.options.showLabels === false) {
+        warnings.push('ranking.horizontal normally keeps per-bar numeric labels visible; do not disable labels merely to work around layout collisions.');
+      }
       break;
     case 'status.grid':
       if (count < 3 || count > 12) errors.push('status.grid requires 3 to 12 data items.');
@@ -1934,6 +2023,12 @@ function validateBaselineScaleIntegrity(spec, errors) {
 
 function validateSubtitleEconomy(spec, errors) {
   if (!spec.subtitle) return;
+  const sourceProcessMeta = /\b(?:supplied|provided|input)\b(?:\s+[\w-]+){0,5}\s+\b(?:data(?:set)?|source(?:\s+set)?|file|materials?)\b|\b(?:this|the)\s+(?:input|source\s+file|source\s+set)\b/i;
+  if (sourceProcessMeta.test(spec.subtitle)) {
+    errors.push(
+      'subtitle contains source-process or dataset meta copy. Omit it unless it adds a reader-facing qualification, denominator, mechanism, or scope distinction; keep provenance in the source attribution instead.'
+    );
+  }
   const numbers = normalizedNumberTokens(spec.subtitle);
   if (!numbers.length) return;
   const visualText = [
@@ -1962,7 +2057,7 @@ function validateTemporalPriority(spec, errors) {
 }
 
 function validateTrendEvidenceUse(spec, errors) {
-  if (spec.recipe === 'trend.line') return;
+  if (['trend.line', 'trend.stacked'].includes(spec.recipe)) return;
   const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
   if (!/\b(?:growth|rate|inflation|output|sales|turnover)\b[^.]{0,80}\b(?:slow|slowed|slowing|decelerat|accelerat|trend|consecutive|again)\b|\b(?:slow|slowed|slowing|decelerat|accelerat)\b[^.]{0,80}\b(?:growth|rate)\b/i.test(text)) return;
   const periodLike = /\b(?:19|20)\d{2}\b|\b(?:q[1-4]|h[12]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i;
@@ -1987,7 +2082,7 @@ function validateCoverageOrientation(spec, errors) {
 }
 
 function validateContrastStructure(spec, errors) {
-  if (['relationship.converging-signals', 'trend.line'].includes(spec.recipe)) return;
+  if (['relationship.converging-signals', 'trend.line', 'trend.stacked'].includes(spec.recipe)) return;
   const text = `${spec.title || ''} ${spec.metadata?.keyFinding || ''}`;
   if (!/\b(?:even as|despite|while)\b/i.test(text)) return;
   const materialFacts = (spec.supportingFacts || []).filter((fact) => numericText(fact?.value) && ['comparison', 'mechanism', 'consequence'].includes(fact?.role));
@@ -2243,6 +2338,11 @@ function validateSpec(input) {
       errors.push('source.period must be a string of 80 characters or fewer.');
     }
     if (spec.source.url && !isHttpUrl(spec.source.url)) errors.push('source.url must be an HTTP or HTTPS URL.');
+  }
+
+  if (isObject(spec.analysis)) {
+    pushLengthIssue(spec.analysis.name, 'analysis.name', 120, errors, warnings, 80);
+    if (spec.analysis.url && !isHttpUrl(spec.analysis.url)) errors.push('analysis.url must be an HTTP or HTTPS URL.');
   }
 
   validateData(spec, errors, warnings);

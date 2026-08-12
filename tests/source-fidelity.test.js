@@ -120,6 +120,137 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('source fidelity supports dense standard rankings and explicit presentation aliases', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-dense-ranking-'));
+  fs.mkdirSync(path.join(root, 'input'));
+  fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Category,Count\nElectricity,120\nAir Defense,110\n');
+  try {
+    const workspace = initializeRunWorkspace(root, 'dense-ranking');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    const observations = Array.from({ length: 15 }, (_, index) => ({
+      label: index === 0 ? 'Electricity' : `Category ${index + 1}`,
+      ...(index === 0 ? { specLabel: 'Operational' } : {}),
+      quantity: 'record count',
+      unit: 'records',
+      period: 'supplied dataset',
+      value: 120 - index
+    }));
+    ledger.candidates = [{
+      id: 'dense-category-ranking',
+      claim: 'The assignment requests the top 15 categories.',
+      decision: 'selected',
+      outputSlug: 'dense-category-ranking',
+      title: 'Top 15 categories by record count',
+      titleBasis: {
+        type: 'derived', sourcePath: 'input/data.csv',
+        description: 'Count rows by category and retain the first 15 after sorting descending.',
+        method: 'Group non-empty Category values, count rows, sort descending, retain top 15.'
+      },
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The category counts are direct structured-data observations.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'The requested top 15 categories share one count measure and one source period.',
+        comparableObservations: observations
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'The categories are not administrative geographies.'
+      },
+      anchors: [{ sourcePath: 'input/data.csv', selector: 'Group Category values, sort counts descending, retain top 15.' }],
+      evidence: [{
+        statement: 'The top 15 grouped category counts are derived from the supplied data.',
+        origin: 'input', role: 'primary',
+        anchor: { sourcePath: 'input/data.csv', selector: 'Group Category values, sort counts descending, retain top 15.' }
+      }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'dense-category-ranking.json'), JSON.stringify({
+      title: 'Top 15 categories by record count',
+      recipe: 'ranking.horizontal',
+      data: observations.map((observation) => ({
+        label: observation.specLabel || observation.label,
+        value: observation.value
+      })),
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.equal(validateSourceLedger(root, 'dense-ranking', { requireSpecs: true }).valid, true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('source fidelity checks every nested cell in a stacked trend', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-stacked-trend-'));
+  fs.mkdirSync(path.join(root, 'input'));
+  fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Month,Category,Count\nJan,A,4\nJan,B,2\nFeb,A,5\nFeb,B,0\nMar,A,3\nMar,B,6\n');
+  try {
+    const workspace = initializeRunWorkspace(root, 'stacked-trend');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    const observations = [
+      ['Jan 26 · A', 'January 2026', 4], ['Jan 26 · B', 'January 2026', 2],
+      ['Feb 26 · A', 'February 2026', 5], ['Feb 26 · B', 'February 2026', 0],
+      ['Mar 26 · A', 'March 2026', 3], ['Mar 26 · B', 'March 2026', 6]
+    ].map(([label, period, value]) => ({ label, quantity: 'record count', unit: 'records', period, value }));
+    ledger.candidates = [{
+      id: 'monthly-stack',
+      claim: 'Monthly category counts are shown as one stacked series.',
+      decision: 'selected',
+      outputSlug: 'monthly-stack',
+      title: 'Monthly category mix',
+      titleBasis: {
+        type: 'derived', sourcePath: 'input/data.csv',
+        description: 'Group records by month and category.',
+        method: 'Group Month and Category and retain zero-valued cells.'
+      },
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The source provides exact counts.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Every month-category cell shares the same count scale.',
+        comparableObservations: observations
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'The story is temporal and categorical.'
+      },
+      anchors: [{ sourcePath: 'input/data.csv', selector: 'Group Month and Category and retain zero-valued cells.' }],
+      evidence: [{
+        statement: 'The monthly category matrix is derived from the supplied rows.',
+        origin: 'input', role: 'primary',
+        anchor: { sourcePath: 'input/data.csv', selector: 'Group Month and Category and retain zero-valued cells.' }
+      }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'monthly-stack.json');
+    const spec = {
+      title: 'Monthly category mix',
+      recipe: 'trend.stacked',
+      data: [
+        { label: 'Jan 26', segments: [{ label: 'A', value: 4 }, { label: 'B', value: 2 }] },
+        { label: 'Feb 26', segments: [{ label: 'A', value: 5 }, { label: 'B', value: 0 }] },
+        { label: 'Mar 26', segments: [{ label: 'A', value: 3 }, { label: 'B', value: 6 }] }
+      ],
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    };
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    assert.equal(validateSourceLedger(root, 'stacked-trend', { requireSpecs: true }).valid, true);
+
+    spec.data[1].segments[1].value = 1;
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    assert.throws(
+      () => validateSourceLedger(root, 'stacked-trend', { requireSpecs: true }),
+      /Changed plotted values or ranges: Feb 26 · B/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('directional relationship mechanism evidence must explicitly link a driver to the plotted outcome', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-relationship-linkage-'));
   const anchor = 'Twenty logistics sites were hit, 1.18 million square metres were damaged, and the company later sought partner warehouses of at least 200 square metres.';
@@ -1223,14 +1354,14 @@ test('source fidelity rejects unsupported anchors, changed input, and untracked 
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
     ledger.candidates[0].titleBasis = 'Arctic LNG 2 ownership';
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
-    assert.throws(() => validateSourceLedger(root, 'issue-3'), /titleBasis must be an exact input excerpt/i);
+    assert.throws(() => validateSourceLedger(root, 'issue-3'), /titleBasis must be an exact source excerpt\/selector or a documented derivation/i);
 
     validLedger(workspace);
     fs.writeFileSync(path.join(workspace.specificationRoot, 'unsupported-story.json'), JSON.stringify({ title: 'Unsupported story' }));
     assert.throws(() => validateSourceLedger(root, 'issue-3', { requireSpecs: true }), /must exactly match ChartSpecs/i);
 
     fs.appendFileSync(path.join(root, 'input.txt'), '\nChanged after inventory.');
-    assert.throws(() => validateSourceLedger(root, 'issue-3'), /input\.txt changed/i);
+    assert.throws(() => validateSourceLedger(root, 'issue-3'), /Input materials changed/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

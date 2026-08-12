@@ -7,6 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 const {
   normalizeRunId,
+  readInputSnapshot,
   initializeRunWorkspace,
   flushRunWorkspace,
   resetTransientWorkspace
@@ -78,10 +79,45 @@ test('production initialization rejects missing or empty input without searching
   const root = temporaryProject();
   try {
     fs.rmSync(path.join(root, 'input.txt'));
-    assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /exact project-root input\.txt/i);
+    assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /input\/ is missing/i);
 
     fs.writeFileSync(path.join(root, 'input.txt'), '   \n');
     assert.throws(() => initializeRunWorkspace(root, 'empty-input'), /input\.txt is empty/i);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('directory input snapshots inventory and hash every supplied source file', () => {
+  const root = temporaryProject();
+  try {
+    fs.rmSync(path.join(root, 'input.txt'));
+    fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Category,Value\nA,10\nB,8\n');
+    fs.writeFileSync(path.join(root, 'input', 'context.ipynb'), JSON.stringify({
+      cells: [
+        { cell_type: 'markdown', source: ['# Context\n', 'Category analysis'] }
+      ]
+    }));
+
+    const snapshot = readInputSnapshot(root);
+    assert.equal(snapshot.kind, 'directory');
+    assert.equal(snapshot.relativePath, 'input/');
+    assert.deepEqual(snapshot.files.map((file) => file.path), [
+      'input/context.ipynb',
+      'input/data.csv'
+    ]);
+    assert.match(snapshot.sha256, /^[a-f0-9]{64}$/);
+    assert.match(snapshot.content, /Category analysis/);
+    assert.match(snapshot.content, /Category,Value/);
+
+    const result = initializeRunWorkspace(root, 'directory-input');
+    const ledger = JSON.parse(fs.readFileSync(result.ledgerPath, 'utf8'));
+    assert.equal(ledger.version, '2.0');
+    assert.equal(ledger.input.path, 'input/');
+    assert.equal(ledger.input.kind, 'directory');
+    assert.equal(ledger.input.files.length, 2);
+    assert.deepEqual(ledger.input.files.map((file) => file.path), snapshot.files.map((file) => file.path));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -225,7 +261,8 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.equal(qa.artifacts.htmlCharts, 2);
     assert.equal(qa.artifacts.pngCharts, 2);
     assert.equal(qa.visualQa.diagnosticErrors, 0);
-    assert.equal(qa.presentation.requiredNext, true);
+    assert.equal(qa.presentation.requiredNext, false);
+    assert.equal(qa.presentation.optionalNext, true);
     assert.equal(qa.presentation.titleSlidesAllowed, false);
     assert.equal(qa.presentation.expectedSlideCount, 2);
     const presentationPlan = JSON.parse(fs.readFileSync(result.presentationPlanPath, 'utf8'));

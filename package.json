@@ -25,7 +25,7 @@
     "run:charts": "node tools/run-charts.js",
     "run:flush": "node tools/workspace.js flush",
     "run:finalize": "node tools/workspace.js finalize --legacy",
-    "run:reset": "node tools/workspace.js reset --input --legacy"
+    "run:reset": "node tools/workspace.js reset --legacy"
   },
   "engines": {
     "node": ">=20"
