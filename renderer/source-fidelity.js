@@ -1035,8 +1035,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
-  const directoryMode = snapshot.kind === 'directory';
-  const expectedVersion = directoryMode ? '2.0' : '1.5';
+  const expectedVersion = '2.0';
   if (ledger.version !== expectedVersion) errors.push(`Source ledger version must be ${expectedVersion}.`);
   if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
   if (!ledger.input || ledger.input.path !== snapshot.relativePath) {
@@ -1045,14 +1044,12 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
     errors.push('Input materials changed after the source ledger was initialized. Restart the run or rebuild the ledger from the current input/ source set.');
   }
-  if (directoryMode) {
-    if (ledger.input?.kind !== 'directory' || !Array.isArray(ledger.input?.files)) {
-      errors.push('Directory-based source ledgers must inventory every file under input/.');
-    } else {
-      const expectedFiles = snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }));
-      if (JSON.stringify(ledger.input.files) !== JSON.stringify(expectedFiles)) {
-        errors.push('The input/ file inventory changed after initialization. Restart the run or rebuild the ledger.');
-      }
+  if (ledger.input?.kind !== 'directory' || !Array.isArray(ledger.input?.files)) {
+    errors.push('Directory-based source ledgers must inventory every file under input/.');
+  } else {
+    const expectedFiles = snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }));
+    if (JSON.stringify(ledger.input.files) !== JSON.stringify(expectedFiles)) {
+      errors.push('The input/ file inventory changed after initialization. Restart the run or rebuild the ledger.');
     }
   }
   if (ledger.inventoryComplete !== true) {
@@ -1194,33 +1191,36 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
     if (!isText(ignored.reason)) errors.push(`${prefix}.reason is required.`);
   }
 
-  if (!directoryMode) {
+  const proseDocuments = (snapshot.documents || []).filter((document) => {
+    const extension = document.path.split('.').pop().toLowerCase();
+    return extension === 'txt' || extension === 'md';
+  });
+  if (proseDocuments.length) {
     const coverageRanges = [];
-    const input = snapshot.content;
-    for (const candidate of ledger.candidates || []) {
-      for (const anchor of candidate.anchors || []) {
-        if (!isText(anchor)) continue;
-        const excerpt = anchor.trim();
-        let start = input.indexOf(excerpt);
+    const collectRanges = (excerpt) => {
+      if (!isText(excerpt)) return;
+      const normalized = excerpt.trim();
+      for (const document of proseDocuments) {
+        const input = document.content;
+        let start = input.indexOf(normalized);
         while (start !== -1) {
-          coverageRanges.push([start, start + excerpt.length]);
-          start = input.indexOf(excerpt, start + Math.max(1, excerpt.length));
+          coverageRanges.push([start, start + normalized.length]);
+          start = input.indexOf(normalized, start + Math.max(1, normalized.length));
         }
       }
+    };
+    for (const candidate of ledger.candidates || []) {
+      for (const anchor of candidate.anchors || []) collectRanges(anchor);
+      collectRanges(candidate.titleBasis);
     }
-    for (const ignored of ledger.ignoredEvidence || []) {
-      if (!isText(ignored?.anchor)) continue;
-      const excerpt = ignored.anchor.trim();
-      let start = input.indexOf(excerpt);
-      while (start !== -1) {
-        coverageRanges.push([start, start + excerpt.length]);
-        start = input.indexOf(excerpt, start + Math.max(1, excerpt.length));
-      }
-    }
-    for (const token of numericEvidence(input)) {
-      const covered = coverageRanges.some(([start, end]) => token.start >= start && token.end <= end);
-      if (!covered) {
-        errors.push(`Unassigned numeric evidence ${token.value} near "${contextAround(input, token.start, token.end)}". Add the containing story to candidates or justify it in ignoredEvidence.`);
+    for (const ignored of ledger.ignoredEvidence || []) collectRanges(ignored?.anchor);
+    for (const document of proseDocuments) {
+      const input = document.content;
+      for (const token of numericEvidence(input)) {
+        const covered = coverageRanges.some(([start, end]) => token.start >= start && token.end <= end);
+        if (!covered) {
+          errors.push(`Unassigned numeric evidence ${token.value} near "${contextAround(input, token.start, token.end)}". Add the containing story to candidates or justify it in ignoredEvidence.`);
+        }
       }
     }
   }

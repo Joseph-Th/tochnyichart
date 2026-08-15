@@ -132,7 +132,7 @@ function directoryInputSnapshot(projectRoot) {
       content: sourceText(filePath, data)
     };
   });
-  if (!files.some((file) => file.bytes > 0)) {
+  if (!files.some((file) => file.content && file.content.trim().length > 0)) {
     throw new Error('input/ contains no non-empty source files.');
   }
   const digest = crypto.createHash('sha256');
@@ -149,43 +149,16 @@ function directoryInputSnapshot(projectRoot) {
   };
 }
 
-function legacyInputSnapshot(projectRoot) {
-  const inputPath = projectPath(projectRoot, 'input.txt');
-  if (!fs.existsSync(inputPath)) return null;
-  const content = fs.readFileSync(inputPath, 'utf8');
-  if (!content.trim()) {
-    throw new Error('input.txt is empty. Add source material to input/ for production runs.');
-  }
-  const bytes = Buffer.byteLength(content, 'utf8');
-  return {
-    kind: 'legacy-file',
-    path: inputPath,
-    relativePath: 'input.txt',
-    files: [{
-      path: 'input.txt',
-      bytes,
-      sha256: crypto.createHash('sha256').update(content, 'utf8').digest('hex'),
-      content
-    }],
-    documents: [{ path: 'input.txt', content }],
-    content,
-    bytes,
-    sha256: crypto.createHash('sha256').update(content, 'utf8').digest('hex')
-  };
-}
-
 function readInputSnapshot(projectRoot) {
-  const directorySnapshot = directoryInputSnapshot(projectRoot);
-  if (directorySnapshot) return directorySnapshot;
-  const legacySnapshot = legacyInputSnapshot(projectRoot);
-  if (legacySnapshot) return legacySnapshot;
-  throw new Error('input/ is missing. Production runs require a non-empty project-root input/ folder.');
+  const snapshot = directoryInputSnapshot(projectRoot);
+  if (!snapshot) {
+    throw new Error('input/ is missing. Production runs require a non-empty project-root input/ folder.');
+  }
+  return snapshot;
 }
 
 function existingInputTarget(projectRoot) {
-  const directory = projectPath(projectRoot, INPUT_DIRECTORY);
-  if (fs.existsSync(directory) && fs.statSync(directory).isDirectory()) return directory;
-  return projectPath(projectRoot, 'input.txt');
+  return projectPath(projectRoot, INPUT_DIRECTORY);
 }
 
 function sourceLedgerPath(projectRoot, runId) {
@@ -195,21 +168,15 @@ function sourceLedgerPath(projectRoot, runId) {
 function initializeSourceLedger(projectRoot, runId, snapshot) {
   const target = sourceLedgerPath(projectRoot, runId);
   if (!fs.existsSync(target)) {
-    const input = snapshot.kind === 'directory'
-      ? {
-          path: snapshot.relativePath,
-          kind: 'directory',
-          bytes: snapshot.bytes,
-          sha256: snapshot.sha256,
-          files: snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }))
-        }
-      : {
-          path: 'input.txt',
-          bytes: snapshot.bytes,
-          sha256: snapshot.sha256
-        };
+    const input = {
+      path: snapshot.relativePath,
+      kind: 'directory',
+      bytes: snapshot.bytes,
+      sha256: snapshot.sha256,
+      files: snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }))
+    };
     fs.writeFileSync(target, `${JSON.stringify({
-      version: snapshot.kind === 'directory' ? '2.0' : '1.5',
+      version: '2.0',
       runId: normalizeRunId(runId),
       input,
       inventoryComplete: false,
@@ -281,19 +248,6 @@ function removeTarget(target, dryRun) {
   return { target, existed: exists, removed: exists && !dryRun };
 }
 
-function clearInput(projectRoot, dryRun) {
-  const inputPath = projectPath(projectRoot, 'input.txt');
-  const exists = fs.existsSync(inputPath);
-  const hadContent = exists && fs.statSync(inputPath).size > 0;
-  if (!dryRun) fs.writeFileSync(inputPath, '', 'utf8');
-  return {
-    target: inputPath,
-    existed: exists,
-    hadContent,
-    cleared: !dryRun
-  };
-}
-
 function flushRunWorkspace(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const dryRun = Boolean(options.dryRun);
@@ -325,12 +279,14 @@ function resetTransientWorkspace(projectRoot, options = {}) {
   if (options.removeLegacy !== false) {
     removed.push(removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun));
   }
-  const input = options.clearInput ? clearInput(projectRoot, dryRun) : null;
   return {
     mode: 'reset',
     dryRun,
     removed,
-    input,
+    input: {
+      target: existingInputTarget(projectRoot),
+      preserved: true
+    },
     preserved: [
       projectPath(projectRoot, 'specs'),
       projectPath(projectRoot, DELIVERY_DIRECTORY)

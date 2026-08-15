@@ -7,6 +7,8 @@ typography, layout, maps, diagnostics, and export behavior.
 
 Generated HTML is an output artifact. Do not edit it directly.
 
+[`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists.
+
 The repository has two explicit roles:
 
 - **Chart author:** uses `tool-api/`, the schema, catalog, and examples.
@@ -551,7 +553,7 @@ npm run run:verify-source -- <id> # validate the complete anchored story invento
 npm run run:charts -- <id> # render, diagnose, capture, and manifest the complete selected chart set
 npm run run:flush -- <id> # remove one transient workspace, preserving input
 npm run run:finalize -- <id> # verify source/spec coverage, then clean transient work
-npm run run:reset         # cold reset all transient work and input
+npm run run:reset         # cold reset all transient work, preserving input
 ```
 
 The browser test skips with a clear reason when Edge or Chrome is unavailable.

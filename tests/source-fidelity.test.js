@@ -10,7 +10,8 @@ const { validateSourceLedger } = require('../renderer/source-fidelity');
 
 function project() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-source-fidelity-'));
-  fs.writeFileSync(path.join(root, 'input.txt'), [
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'input', 'brief.txt'), [
     'Ozon insurance prices rose 230%, while shares initially fell 8.5%.',
     'Online seller liquidations rose 19.6%, registrations fell 25%, and the seller population fell 4.9%.'
   ].join('\n'));
@@ -273,7 +274,7 @@ test('source fidelity checks every nested cell in a stacked trend', () => {
 test('directional relationship mechanism evidence must explicitly link a driver to the plotted outcome', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-relationship-linkage-'));
   const anchor = 'Twenty logistics sites were hit, 1.18 million square metres were damaged, and the company later sought partner warehouses of at least 200 square metres.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-relationship-linkage');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -358,7 +359,7 @@ test('source fidelity blocks selected stories with a material external contradic
 test('source fidelity requires forecast stories to promote input-reported actual rates into references', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-forecast-anchor-'));
   const anchor = 'The 2026 inflation forecast was raised from 4.5–5.5% to 6–7%; actual inflation so far is 4.84%.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'forecast-anchor');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -414,7 +415,7 @@ test('source fidelity requires forecast stories to promote input-reported actual
 test('source fidelity forces spatial multi-region findings through regional-breakdown', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-routing-audit-'));
   const anchor = 'Restrictions spread across border Russia: Belgorod logged 12 hours, Kursk 20 hours, and Bryansk 30 hours.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-routing-audit');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -526,7 +527,7 @@ test('source fidelity forces spatial multi-region findings through regional-brea
 test('source fidelity treats dense administrative-region evidence as a regional distribution without relying on cue words', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-density-'));
   const anchor = 'Mobile sessions without restrictions were 12% in Bryansk, Kursk and Belgorod, 49% in Moscow and Moscow Oblast, and 58.9% in Leningrad Oblast.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'regional-density');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -583,7 +584,7 @@ test('source fidelity treats dense administrative-region evidence as a regional 
 test('source fidelity rejects a lone normalized rate or share plus its derived complement as a standalone chart', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-thin-share-'));
   const anchor = 'Whitelisted access accounted for 90% of mobile connections.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'thin-share');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -686,7 +687,7 @@ test('source fidelity rejects a lone normalized rate or share plus its derived c
 test('source fidelity rejects two-count stories without a denominator, benchmark, third count, or time series', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-exact-count-quality-'));
   const anchor = 'Regulator banned 2 Alpha truck models and 4 Beta truck models.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-exact-count-quality');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -772,7 +773,7 @@ test('source fidelity rejects collapsing a richer same-scale dataset into one pl
 test('source fidelity requires story-defining thresholds to be inventoried and plotted', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-threshold-anchor-'));
   const anchor = 'Wheat offers fell from 14,000 rubles per ton to 8,000 rubles per ton, below the profitability threshold of 10,000 rubles per ton.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-threshold-anchor');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -842,7 +843,7 @@ test('source fidelity requires story-defining thresholds to be inventoried and p
 test('source fidelity rejects short tiny-count series without an independent anchor', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-small-count-series-'));
   const anchor = 'Restrictions covered 1 truck model in February 2025, 6 in July 2025, and 6 in August 2026.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-small-count-series');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -926,7 +927,7 @@ test('source fidelity requires structured tangible-value research before normali
 test('source fidelity rejects percentage-only price geometry when the input already reports tangible prices', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-source-fidelity-price-levels-'));
   const anchor = 'Export wheat prices fell 9.6% to 15 100 rubles per ton; barley prices fell 12.2% to 13 000 rubles per ton.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-price-levels');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -1065,7 +1066,7 @@ test('consumption coverage requires an official or industry denominator check', 
 test('public aggregate shares require a tangible denominator and level geometry', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-public-share-'));
   const anchor = 'E-commerce represents an estimated 8–10% of the Russian economy.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-public-share');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -1153,7 +1154,7 @@ test('public aggregate shares require a tangible denominator and level geometry'
 test('coverage audits retain each supply component and the demand denominator', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-coverage-audit-'));
   const anchor = 'Replacement fuel included 60–100 thousand tons from India, 30 thousand tons from Morocco, and 10 thousand tons from Kazakhstan, against 900 thousand tons of monthly demand.';
-  fs.writeFileSync(path.join(root, 'input.txt'), anchor);
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true }); fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
   try {
     const workspace = initializeRunWorkspace(root, 'issue-coverage-audit');
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
@@ -1379,7 +1380,7 @@ test('source fidelity rejects unsupported anchors, changed input, and untracked 
     fs.writeFileSync(path.join(workspace.specificationRoot, 'unsupported-story.json'), JSON.stringify({ title: 'Unsupported story' }));
     assert.throws(() => validateSourceLedger(root, 'issue-3', { requireSpecs: true }), /must exactly match ChartSpecs/i);
 
-    fs.appendFileSync(path.join(root, 'input.txt'), '\nChanged after inventory.');
+    fs.appendFileSync(path.join(root, 'input', 'brief.txt'), '\nChanged after inventory.');
     assert.throws(() => validateSourceLedger(root, 'issue-3'), /Input materials changed/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

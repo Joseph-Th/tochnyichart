@@ -27,7 +27,8 @@ function temporaryProject() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-run-workspace-'));
   fs.mkdirSync(path.join(root, 'specs', 'examples'), { recursive: true });
   fs.writeFileSync(path.join(root, 'specs', 'examples', 'fixture.json'), '{}\n');
-  fs.writeFileSync(path.join(root, 'input.txt'), 'temporary batch source\n');
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'input', 'brief.txt'), 'temporary batch source\n');
   return root;
 }
 
@@ -62,8 +63,10 @@ test('run workspace initialization centralizes transient data and creates ignore
     assert.equal(fs.existsSync(result.specificationRoot), true);
     assert.equal(fs.existsSync(result.deliveryRoot), true);
     const ledger = JSON.parse(fs.readFileSync(result.ledgerPath, 'utf8'));
-    assert.equal(ledger.input.path, 'input.txt');
+    assert.equal(ledger.input.path, 'input/');
+    assert.equal(ledger.input.kind, 'directory');
     assert.equal(ledger.input.bytes, Buffer.byteLength('temporary batch source\n'));
+    assert.equal(ledger.input.files.length, 1);
     assert.match(ledger.input.sha256, /^[a-f0-9]{64}$/);
     assert.equal(ledger.inventoryComplete, false);
 
@@ -81,11 +84,12 @@ test('run workspace initialization centralizes transient data and creates ignore
 test('production initialization rejects missing or empty input without searching elsewhere', () => {
   const root = temporaryProject();
   try {
-    fs.rmSync(path.join(root, 'input.txt'));
-    assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /input\/ is missing/i);
+    fs.rmSync(path.join(root, 'input'), { recursive: true, force: true });
+    assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /input\/ is missing|input\/ is empty/i);
 
-    fs.writeFileSync(path.join(root, 'input.txt'), '   \n');
-    assert.throws(() => initializeRunWorkspace(root, 'empty-input'), /input\.txt is empty/i);
+    fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'input', 'brief.txt'), '   \n');
+    assert.throws(() => initializeRunWorkspace(root, 'empty-input'), /input\/ contains no non-empty source files/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -94,7 +98,7 @@ test('production initialization rejects missing or empty input without searching
 test('directory input snapshots inventory and hash every supplied source file', () => {
   const root = temporaryProject();
   try {
-    fs.rmSync(path.join(root, 'input.txt'));
+    fs.rmSync(path.join(root, 'input'), { recursive: true, force: true });
     fs.mkdirSync(path.join(root, 'input'), { recursive: true });
     fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Category,Value\nA,10\nB,8\n');
     fs.writeFileSync(path.join(root, 'input', 'context.ipynb'), JSON.stringify({
@@ -153,13 +157,12 @@ test('finalization removes run data while preserving input, local specs, and cha
     fs.writeFileSync(path.join(root, 'previews', 'legacy-production', 'build.log'), 'old output\n');
 
     const result = flushRunWorkspace(root, RUN_ID, {
-      clearInput: true,
       removeLegacy: true
     });
 
     assert.equal(fs.existsSync(workspace.root), false);
     assert.equal(fs.existsSync(path.join(root, 'previews')), false);
-    assert.equal(fs.readFileSync(path.join(root, 'input.txt'), 'utf8'), 'temporary batch source\n');
+    assert.equal(fs.readFileSync(path.join(root, 'input', 'brief.txt'), 'utf8'), 'temporary batch source\n');
     assert.equal(fs.existsSync(path.join(workspace.specificationRoot, 'story.json')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'story.html')), true);
     assert.equal(result.input.preserved, true);
@@ -169,7 +172,7 @@ test('finalization removes run data while preserving input, local specs, and cha
   }
 });
 
-test('cold reset removes all transient work but never curated fixtures or local outputs', () => {
+test('cold reset removes all transient work but never curated fixtures, local outputs, or input', () => {
   const root = temporaryProject();
   try {
     const first = initializeRunWorkspace(root, 'internal-review');
@@ -179,11 +182,12 @@ test('cold reset removes all transient work but never curated fixtures or local 
     fs.mkdirSync(path.join(root, 'previews'), { recursive: true });
     fs.writeFileSync(path.join(root, 'previews', 'temporary.html'), 'temporary\n');
 
-    resetTransientWorkspace(root, { clearInput: true, removeLegacy: true });
+    const result = resetTransientWorkspace(root, { removeLegacy: true });
 
     assert.equal(fs.existsSync(path.join(root, '.work')), false);
     assert.equal(fs.existsSync(path.join(root, 'previews')), false);
-    assert.equal(fs.readFileSync(path.join(root, 'input.txt'), 'utf8'), '');
+    assert.equal(fs.readFileSync(path.join(root, 'input', 'brief.txt'), 'utf8'), 'temporary batch source\n');
+    assert.equal(result.input.preserved, true);
     assert.equal(fs.existsSync(path.join(root, 'specs', 'examples', 'fixture.json')), true);
     assert.equal(fs.existsSync(path.join(first.specificationRoot, 'story.json')), true);
     assert.equal(fs.existsSync(path.join(second.deliveryRoot, 'story.html')), true);
@@ -241,9 +245,15 @@ test('run chart builder renders selected stories in ledger order and writes QA a
   try {
     const workspace = initializeRunWorkspace(root, runId);
     const ledger = {
-      version: '1.5',
+      version: '2.0',
       runId,
-      input: { path: 'input.txt', bytes: 0, sha256: 'stub' },
+      input: {
+        path: 'input/',
+        kind: 'directory',
+        bytes: 0,
+        sha256: 'stub',
+        files: []
+      },
       inventoryComplete: true,
       ignoredEvidence: [],
       candidates: [

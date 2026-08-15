@@ -430,9 +430,7 @@ ratio, a component and total behind a share, or a population and affected count
 behind a risk estimate. A `basis`
 rail may document the arithmetic, but it cannot substitute for tangible marks.
 
-For legacy single-file ledgers, the validator scans every numeric token and
-requires it to fall inside a candidate `anchor` or an `ignoredEvidence.anchor`.
-Directory-based source sets instead use the hashed file inventory plus explicit
+The validator uses the hashed file inventory plus explicit
 source excerpts, selectors, and documented derivations. Use `ignoredEvidence`
 only for material that is intentionally excluded and record a specific reason.
 
