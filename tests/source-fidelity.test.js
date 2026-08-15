@@ -120,6 +120,25 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('source fidelity rejects path-like output slugs without reading outside the run spec root', () => {
+  const root = project();
+  try {
+    const workspace = initializeRunWorkspace(root, 'unsafe-slug');
+    validLedger(workspace);
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.candidates[0].outputSlug = '../escape';
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(path.join(root, 'specs', 'runs', 'escape.json'), '{malformed');
+
+    assert.throws(
+      () => validateSourceLedger(root, 'unsafe-slug', { requireSpecs: true }),
+      /outputSlug is invalid: Artifact slug/
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity supports dense standard rankings and explicit presentation aliases', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-dense-ranking-'));
   fs.mkdirSync(path.join(root, 'input'));

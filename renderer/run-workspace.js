@@ -27,6 +27,14 @@ function normalizeRunId(value) {
   return runId;
 }
 
+function normalizeArtifactSlug(value) {
+  const slug = String(value || '').trim();
+  if (slug.length > 128 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error('Artifact slug must be 1-128 characters using lowercase letters, numbers, and single hyphens.');
+  }
+  return slug;
+}
+
 function projectPath(projectRoot, ...segments) {
   const root = path.resolve(projectRoot || path.join(__dirname, '..'));
   const target = path.resolve(root, ...segments);
@@ -52,12 +60,22 @@ function workspacePath(projectRoot, runId, ...segments) {
 
 function runSpecPath(projectRoot, runId, ...segments) {
   const normalized = normalizeRunId(runId);
-  return projectPath(projectRoot, ...RUN_SPEC_DIRECTORY, normalized, ...segments);
+  const runRoot = projectPath(projectRoot, ...RUN_SPEC_DIRECTORY, normalized);
+  const target = path.resolve(runRoot, ...segments);
+  if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
+    throw new Error(`Refusing path outside run specification root: ${target}`);
+  }
+  return target;
 }
 
 function deliveryPath(projectRoot, runId, ...segments) {
   const normalized = normalizeRunId(runId);
-  return projectPath(projectRoot, DELIVERY_DIRECTORY, normalized, ...segments);
+  const runRoot = projectPath(projectRoot, DELIVERY_DIRECTORY, normalized);
+  const target = path.resolve(runRoot, ...segments);
+  if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
+    throw new Error(`Refusing path outside run delivery root: ${target}`);
+  }
+  return target;
 }
 
 function sourceText(filePath, data) {
@@ -328,6 +346,7 @@ module.exports = {
   DELIVERY_DIRECTORY,
   DEFAULT_SUBDIRECTORIES,
   normalizeRunId,
+  normalizeArtifactSlug,
   projectPath,
   workspaceRoot,
   workspacePath,

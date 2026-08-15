@@ -128,6 +128,10 @@ and cite the file selector or derivation that produces each one.
 - `selected` requires `outputSlug`, `title`, `titleBasis`,
   `representationAudit`, `visualEvidenceAudit`, `routingAudit`, and at least one `input`
   evidence item with role `primary`.
+- `outputSlug` is an artifact identifier, not a path. It must be 1-128 characters
+  of lowercase letters and numbers separated by single hyphens. Slashes, dots,
+  whitespace, and path traversal are rejected before specification or delivery
+  files are read or written.
 - `omitted` requires a specific `reason`.
 - `merged` requires `mergedInto` naming another candidate ID.
 

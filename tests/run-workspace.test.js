@@ -7,10 +7,13 @@ const os = require('node:os');
 const path = require('node:path');
 const {
   normalizeRunId,
+  normalizeArtifactSlug,
   readInputSnapshot,
   initializeRunWorkspace,
   flushRunWorkspace,
-  resetTransientWorkspace
+  resetTransientWorkspace,
+  runSpecPath,
+  deliveryPath
 } = require('../renderer/run-workspace');
 const { buildRunCharts } = require('../renderer/run-charts');
 const {
@@ -194,6 +197,42 @@ test('run ids are opaque labels and cannot escape the workspace root', () => {
   assert.throws(() => normalizeRunId('client/alpha'), /Run id/);
   assert.equal(normalizeRunId(RUN_ID), RUN_ID);
   assert.equal(normalizeRunId('2026-08-05'), '2026-08-05');
+});
+
+test('artifact slugs and run-specific paths reject traversal', () => {
+  const root = temporaryProject();
+  try {
+    assert.equal(normalizeArtifactSlug('first-story-2026'), 'first-story-2026');
+    assert.throws(() => normalizeArtifactSlug('../escape'), /Artifact slug/);
+    assert.throws(() => normalizeArtifactSlug('Story One'), /Artifact slug/);
+    assert.throws(() => normalizeArtifactSlug('a'.repeat(129)), /Artifact slug/);
+    assert.throws(() => runSpecPath(root, RUN_ID, '..', 'escape.json'), /outside run specification root/);
+    assert.throws(() => deliveryPath(root, RUN_ID, '..', 'escape.html'), /outside run delivery root/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('run chart builder rejects an unsafe ledger slug before staging artifacts', () => {
+  const root = temporaryProject();
+  const runId = 'unsafe-slug';
+  try {
+    const workspace = initializeRunWorkspace(root, runId);
+    fs.writeFileSync(workspace.ledgerPath, JSON.stringify({
+      candidates: [{ id: 'escape', decision: 'selected', outputSlug: '../escape', title: 'Escape' }]
+    }));
+
+    assert.throws(
+      () => buildRunCharts(root, runId, {
+        dependencies: { verify: () => ({ valid: true, selected: 1, specificationsChecked: 1 }) }
+      }),
+      /invalid outputSlug.*Artifact slug/
+    );
+    assert.equal(fs.existsSync(path.join(root, 'charts', 'escape.html')), false);
+    assert.equal(fs.readdirSync(path.join(root, 'charts')).some((name) => name.includes('.building-')), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('run chart builder renders selected stories in ledger order and writes QA artifacts', () => {

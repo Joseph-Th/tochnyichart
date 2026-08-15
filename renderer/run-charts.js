@@ -9,6 +9,7 @@ const { diagnoseHtmlResponsive, captureHtml } = require('./capture');
 const { buildPresentationPlan, validatePresentationPlan } = require('./presentation-plan');
 const {
   normalizeRunId,
+  normalizeArtifactSlug,
   sourceLedgerPath,
   runSpecPath,
   deliveryPath
@@ -51,9 +52,15 @@ function selectedChartsFromLedger(ledger) {
       if (!candidate.outputSlug || !candidate.title) {
         throw new Error(`Selected source-ledger candidate ${candidate.id || index} is missing outputSlug or title.`);
       }
+      let slug;
+      try {
+        slug = normalizeArtifactSlug(candidate.outputSlug);
+      } catch (error) {
+        throw new Error(`Selected source-ledger candidate ${candidate.id || index} has an invalid outputSlug: ${error.message}`);
+      }
       return {
         id: candidate.id,
-        slug: candidate.outputSlug,
+        slug,
         title: candidate.title
       };
     });

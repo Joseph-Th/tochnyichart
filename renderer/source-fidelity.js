@@ -5,6 +5,7 @@ const path = require('node:path');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 const {
   normalizeRunId,
+  normalizeArtifactSlug,
   readInputSnapshot,
   sourceLedgerPath,
   runSpecPath
@@ -1135,7 +1136,15 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
     }
 
     if (candidate.decision === 'selected') {
-      if (!isText(candidate.outputSlug)) errors.push(`${prefix}.outputSlug is required for a selected story.`);
+      if (!isText(candidate.outputSlug)) {
+        errors.push(`${prefix}.outputSlug is required for a selected story.`);
+      } else {
+        try {
+          normalizeArtifactSlug(candidate.outputSlug);
+        } catch (error) {
+          errors.push(`${prefix}.outputSlug is invalid: ${error.message}`);
+        }
+      }
       if (!isText(candidate.title)) errors.push(`${prefix}.title is required for a selected story.`);
       if (!validTitleBasis(snapshot, candidate.titleBasis)) {
         errors.push(`${prefix}.titleBasis must be an exact source excerpt/selector or a documented derivation from a structured input file.`);
@@ -1223,7 +1232,14 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
       ? fs.readdirSync(specRoot).filter((name) => name.endsWith('.json')).sort()
       : [];
     const selectedFiles = selected
-      .filter((candidate) => isText(candidate.outputSlug))
+      .filter((candidate) => {
+        try {
+          normalizeArtifactSlug(candidate.outputSlug);
+          return true;
+        } catch {
+          return false;
+        }
+      })
       .map((candidate) => `${candidate.outputSlug}.json`)
       .sort();
     if (JSON.stringify(specFiles) !== JSON.stringify(selectedFiles)) {
@@ -1231,10 +1247,15 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
     }
     const selectedSpecs = [];
     for (const candidate of selected) {
-      if (!isText(candidate.outputSlug)) continue;
-      const specPath = path.join(specRoot, `${candidate.outputSlug}.json`);
+      let outputSlug;
+      try {
+        outputSlug = normalizeArtifactSlug(candidate.outputSlug);
+      } catch {
+        continue;
+      }
+      const specPath = runSpecPath(projectRoot, normalized, `${outputSlug}.json`);
       if (!fs.existsSync(specPath)) continue;
-      const spec = loadJson(specPath, `ChartSpec ${candidate.outputSlug}`);
+      const spec = loadJson(specPath, `ChartSpec ${outputSlug}`);
       specificationsChecked += 1;
       if (spec.title !== candidate.title) {
         errors.push(`ChartSpec ${candidate.outputSlug} title must exactly match its source-ledger title.`);
