@@ -11,3 +11,13 @@ Current executable work that may be picked up asynchronously. Keep entries short
 - Depends: none
 - Basis: `38d8440e3f7a3010be2540d3f167baf780837bc6`
 - Reviewed: `2026-08-18T06:03:42Z`
+
+## T-0002 - Harden run roots against filesystem indirection
+
+- Area: workspace-filesystem-boundary
+- Next: Harden writable/destructive run-workspace and delivery roots against symlink/junction/reparse-point escape. The current projectPath/workspacePath/runSpecPath/deliveryPath checks reject textual traversal with path.resolve, but existing .work, specs/runs, charts, or other owned path components can redirect mkdir/write/copy/publication outside the selected project's real filesystem root. Establish the real project-root authority once, reject or safely handle indirection on owned writable/destructive path components before mutation, and preserve explicitly selected source/input semantics. Cleanup must remove only owned links/artifacts and must never recurse into an external target reached through indirection. Add focused cross-platform tests where feasible (including Windows junction semantics or an owned filesystem-metadata seam) proving textual traversal and filesystem-indirection escape both fail closed before staging/publication/cleanup. Coordinate with T-0001 because publication tests share tests/run-workspace.test.js.
+- Paths: `renderer/run-workspace.js`, `renderer/run-charts.js`, `tests/run-workspace.test.js`, `AGENTS.md`
+- Verify: `node --test tests/run-workspace.test.js && npm test`
+- Depends: T-0001
+- Basis: `d37790b8cab060c6b23953e5f7fd1ca39fd92d33`
+- Reviewed: `2026-08-18T07:05:02Z`
