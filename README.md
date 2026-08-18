@@ -9,9 +9,13 @@ Generated HTML is an output artifact. Do not edit it directly.
 
 [`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists.
 
-The repository has two explicit roles:
+The repository has three explicit operating roles:
 
-- **Chart author:** uses `tool-api/`, the schema, catalog, and examples.
+- **Batch orchestrator:** owns the complete source-set run, source-ledger decisions,
+  enrichment, chart/slide routing, delivery assembly, and finalization. It uses the
+  Tool API for individual charts and does not implement renderer behavior.
+- **Chart author:** uses `tool-api/`, the schema, catalog, and examples for one
+  verified data story.
 - **Infrastructure maintainer:** works on rendering, validation, diagnostics,
   tests, and Tool API implementation only when that work is explicitly requested.
 
