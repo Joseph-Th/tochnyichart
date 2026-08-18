@@ -7,7 +7,7 @@ typography, layout, maps, diagnostics, and export behavior.
 
 Generated HTML is an output artifact. Do not edit it directly.
 
-[`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists.
+[`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists. Repository contributors and coding agents start with [`AGENTS.md`](AGENTS.md); chart-author agents that only need the public authoring surface start with [`tool-api/README.md`](tool-api/README.md).
 
 The repository has three explicit operating roles:
 

@@ -18,7 +18,8 @@ local loop possible while preserving a full delivery gate.
 | `npm run test:browser` | Browser-backed standard and regional responsive comparison. |
 | `npm run test:performance` | Warm dense regional planner performance check. |
 | `npm run test:comparison` | Workflow contract tests plus browser comparison. |
-| `npm run test:all` | Unit, browser, and performance layers. |
+| `npm run check:docs` | Current authority pages, local documentation links/routes, npm scripts, and Tool API command references. |
+| `npm run test:all` | Repository/documentation preflights plus unit, browser, and performance layers. |
 | `npm run diagnostics` | Standalone diagnostics self-test. |
 | `npm run layout` | Synthetic narrow-label and reference-line regression. |
 
