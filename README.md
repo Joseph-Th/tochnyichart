@@ -132,20 +132,11 @@ Verify and read the full primary source before choosing the workflow and recipe.
 Then choose one workflow before writing the spec. A `map.regional` spec is
 rejected by the standard render command and redirected to the regional workflow.
 
-Route by meaning, not by chart type. A regional status list, ranking, or
-comparison still belongs to `regional-breakdown` when the distribution across
-administrative regions changes the finding. Use `standard-chart` only when
-place names are labels or categories and geography adds no explanatory value.
-For batch work, record this decision for every story in a routing matrix before
-authoring specs and write the same decision to the selected source-ledger
-candidate as `routingAudit`. The ledger is machine-enforced: three or more
-distinct named administrative regions in comparable evidence are a regional
-distribution and require `geographyRole: "explanatory"` plus
-`workflow: "regional-breakdown"`, even without an explicit spatial cue. Grouped
-labels count every named region. With two regions, a spatial claim such as
-spread, border contrast, clustering, adjacency, distribution, or concentration
-also forces regional routing. Any standard-chart decision involving place names
-needs an explicit rationale.
+Route by meaning, not by chart type. The complete geography-first decision
+contract and `routingAudit` requirements are owned by
+[`docs/agent-workflows.md`](docs/agent-workflows.md) and
+[`docs/source-ledger.md`](docs/source-ledger.md); the Tool API enforces the
+selected route.
 
 The per-chart lifecycle inside that batch is:
 
@@ -174,81 +165,17 @@ validation -> selected renderer -> shell review
                          browser diagnostics -> semantic QA -> final PNG
 ```
 
-Validation and responsive diagnostics do not prove that a chart is editorially
-correct. Inspect the rendered output and reject it if the visual grammar does
-not match the evidence, qualifiers are lost, values are falsely precise, or a
-reader must mentally reconstruct the takeaway.
+Validation and responsive diagnostics prove machine-checkable rendering
+contracts, not editorial correctness. Inspect the final output, and use the
+dedicated authoring authorities below for evidence and visual-story rules.
 
-Before using any shared-axis comparison, complete this sentence literally:
-`Every mark encodes [measure.quantity] for [data.scope] in [data.period].` The
-validator requires those fields and rejects unlike quantities, scopes, and
-periods. When two drivers and one outcome jointly carry the argument but use
-different quantities, use `relationship.converging-signals` rather than forcing
-them onto one axis. All three items must measure distinct real-world quantities,
-and `relationship.formula` must state the source-supported mechanism. Repeated
-prices, repeated volumes, or one measure at different dates belong in change,
-scenario, dumbbell, or trend geometry. The renderer gives each measure an
-independent local quantitative signal, then converges the two driver paths at
-one operator near the outcome. There is no additional connector from the merge
-point into the outcome signal, because that extra line reads as a third
-quantitative path. Labels name the measures directly; generic “Factor 1,”
-“Factor 2,” and “Outcome” captions are not rendered. Connector width is fixed
-and never implies comparable magnitude. Reserve
-`relationship.mode: "identity"` for exactly reconciling scope and periods; use
-`directional` with an explicit note when the evidence only supports the direction
-of the relationship. Keep merely secondary mixed-unit context in the unboxed
-`supportingFacts` rail.
-
-When three or more materially relevant observations share one quantity and
-unit, record every one in `visualEvidenceAudit.comparableObservations` and keep
-every one as a primary ChartSpec `data[]` item. Do not compress named components,
-categories, or time points into one aggregate, one range, or one headline value.
-
-For a rate or share whose tangible basis remains unavailable or incomparable,
-one reported percentage plus its derived complement is still only one
-independent observation. Recover a same-unit peer, regional observation,
-prior/current point, benchmark, or target. Once two or more normalized
-comparators are available, keep them in primary geometry. Merge a thin claim
-into a richer same-topic chart when the same source family already provides the
-necessary orientation.
-
-Before splitting one supplied article, dataset, filing, or paragraph into
-several selected charts, perform a source-family sweep. Collect its related
-regional, peer, historical, benchmark, denominator, and same-unit observations
-first. Do not create a separate slide from a summary, complement, subset, or
-single-point restatement of a richer same-topic visual.
-
-Do not use a two-item `comparison.scenarios` chart. Generic scenario geometry
-requires at least three independent same-scale values. When two values form a
-real benchmark, sign-crossing change, diverging comparison, or duration, use
-the relationship-specific recipe. Otherwise recover a third observation,
-merge the pair into a richer same-topic chart, or omit it. Supporting facts,
-references, and derived totals do not turn two generic bars into a complete
-visual argument.
-
-Use `comparison.benchmark-gap` with one row when one actual-plus-benchmark
-relationship is the complete story. The actual segment, gap segment, and
-benchmark marker already supply distinct marks. Do not add another row that is
-only the benchmark endpoint or the derived remainder. For discounts, plot the
-underlying discounted price as `value`, the undiscounted reference price as
-`benchmark`, and the discount as `gapDisplayValue`; never plot the discount
-amount itself as the actual level.
-
-Use `comparison.dumbbell` when several categories each have two comparable
-values, such as before and after or benchmark and actual. It preserves the
-direction and magnitude of every category-level movement without duplicating a
-pair of bars for each category.
-
-Use `flow.waterfall` only for a source-supported start-to-end bridge whose
-same-scope values reconcile arithmetically. Do not infer an exact opening value
-from `more than`, `about`, or incomplete charges. When the bridge is uncertain,
-prefer a simpler comparison or headline with supporting facts.
-
-The Tool API makes this a hard contract: every waterfall item must declare
-`valueStatus: "reported"`, the same `period`, and the same `scope`. Missing,
-derived, bounded, approximate, or non-reconciling steps are rejected. Operating
-profit is not automatically a pre-charge net result, and a prior-period expense
-cannot be inserted into a current-period bridge.
+The shared-scale, mixed-unit relationship, comparable-observation,
+normalization, thin-story, benchmark, duration, trend, composition, and
+waterfall rules are owned by
+[`docs/story-selection.md`](docs/story-selection.md). Source-family sweeps,
+safe derivations, representation research, and evidence-gap policy are owned by
+[`docs/source-enrichment.md`](docs/source-enrichment.md). The source ledger owns
+the machine-checked evidence inventory and dispositions.
 
 ## Requirements
 
@@ -345,103 +272,21 @@ The model or agent owns:
 - The finding, title, subtitle, recipe, labels, statuses, and concise details.
 - Stable region identifiers for regional maps.
 
-An input note, dataset, notebook, image, or other supplied source is evidence
-and routing information, not automatically the complete chart dataset. The
-chart author must inspect the relevant source material, verify supplied links
-when applicable, and extract the evidence that materially supports the same
-central claim before selecting a recipe.
+The chart-author workflow, source enrichment policy, and story-selection rules
+are intentionally separate current authorities:
 
-Search beyond the primary source only to fill a named material evidence gap.
-Prefer the underlying official dataset, company filing, or named report before
-another article from the same publisher. Reject context that is merely adjacent,
-interesting, or useful only for making the chart look more complex.
+- [`docs/agent-workflows.md`](docs/agent-workflows.md) owns the public authoring
+  sequence and role boundary.
+- [`docs/source-enrichment.md`](docs/source-enrichment.md) owns source-family
+  review, research order, safe derivations, and representation research.
+- [`docs/story-selection.md`](docs/story-selection.md) owns evidence sufficiency,
+  shared-scale semantics, recipe-selection constraints, and copy economy.
+- [`docs/source-ledger.md`](docs/source-ledger.md) owns batch evidence inventory,
+  dispositions, routing, and machine-checked provenance fields.
 
-A two-value chart remains valid when a relationship-specific recipe makes the
-relationship itself the evidence, such as a benchmark gap, sign-crossing
-change, diverging comparison, or duration. Two generic categorical bars are not
-a complete visual argument. The objective is information density within one
-claim, not maximum data volume or visual novelty.
-
-Comparable evidence that proves the title cannot be reduced to supporting
-facts. Three or more ordered observations establishing slowdown, acceleration,
-reversal, or persistence must be plotted as `trend.line`. Mixed-unit signals
-that jointly define a claim, such as falling purchase volume, rising prices,
-and rising spending, belong in `relationship.converging-signals` or separate
-complete charts.
-
-When ordered periods repeat the same additive category set and the changing
-mix is part of the finding, use `trend.stacked`. Keep the category order fixed
-and retain explicit zero-valued cells so the same legend color keeps the same
-meaning from period to period. The renderer reserves a dedicated responsive
-legend band above the plot; total labels and other plot annotations must remain
-inside the plot region rather than sharing legend space.
-
-“Both values are percentages” is not a valid comparison rule. Shared-axis marks
-must measure the same real-world quantity for the same scope. Composition charts
-should retain tangible absolute values in `displayValue`, and single headline
-metrics may use progress or pictogram treatments only when a real denominator
-or counted population exists.
-
-Percentage evidence must also be anchored when its basis is recoverable. Rate
-and share stories audit `basisAvailability`; reported or retrievable
-numerator/denominator or population/affected amounts become the primary level
-geometry. The percentage remains secondary copy, and a `basis` rail alone is
-not sufficient. The total population or denominator must also be visible as a
-point, reference, benchmark, or complete composition. Shares of named public
-aggregates such as GDP, the economy, population, employment, exports, imports,
-production, or capacity treat that denominator as retrievable: record
-`basisTarget`, recover the compatible total, derive the tangible numerator, and
-use level geometry. A 100% reference is not a tangible anchor. Before a batch ledger may
-classify actual levels or a basis as
-unavailable or incomparable, it must name the exact tangible value sought and
-record at least two completed, source-specific checks spanning two source
-types, including a data-bearing source. Pending or generic lookup notes are
-rejected.
-
-Percentage-only prices, workforce, exports, production, spending, and revenue
-must trigger a search for the underlying amounts for the same scope and periods.
-Workforce research must include the company filing or official employee
-disclosure for the relevant reporting perimeter. Consumption and coverage
-stories must use an official or industry denominator when available.
-Synthetic 100-based indexes and fabricated 0% starting observations are
-rejected. `valueMode: "index"` is reserved for named, source-reported indices
-with actual point values, and generic visible labels such as `100 index` or
-`index points` are not permitted.
-
-Do not use dot-counting or pictograms. Two exact count categories require a
-third comparable count, a tangible denominator/population, a meaningful
-benchmark, or a time series before they deserve a standalone chart. A numeric
-fact in a different unit does not satisfy this evidence gate. Use
-`timeline.duration` whenever duration is the comparison. It accepts exact
-start-to-end intervals or one verified `timeline.anchorDate` plus exact
-`duration` and `durationUnit` values. Use segmented
-`comparison.benchmark-gap` geometry for prices, costs, freight, margins,
-discounts, premiums, shortfalls, or overages where the prior or total benchmark
-can be recovered. More generally, when two positive level values are naturally
-current/actual versus prior, standard, limit, target, or another reference,
-prefer one benchmark-gap row over two independent change bars. Positive
-additive components of one total use `composition.components` so every
-component starts at zero; `flow.waterfall` is reserved for a genuine running
-balance. Risk ranges must identify the exposed population or
-denominator, show that total on the plotted scale, and include at least one
-mechanism or consequence. Shipment or reserve volumes described as days of
-consumption must show the demand denominator. When two or more physical-volume
-contributors appear in one story, `visualEvidenceAudit.coverageAudit` must
-disposition every volume and the chart must plot all retained components plus
-the denominator in one tangible unit. Coverage time may remain secondary copy,
-but cannot replace the decomposition.
-
-`subtitle` is optional. Omit it when it repeats the title, category labels,
-percentages, or amounts already printed on the chart. Two-part compositions use
-one label treatment per segment, inside when both segments fit and outside when
-one does not.
-
-`note` is also reader-facing. Do not use it for parser behavior, partial-date
-recovery, row-exclusion bookkeeping, input filenames, or other production
-methodology unless that caveat materially changes how the reader should
-interpret the chart. Keep those details in the source ledger or metadata.
-
-Source attribution is optional. Include the underlying publication, dataset, organization, or source collection when available and omit the source line when it is not. Analyst attribution is separate and optional: use `analysis.name` and optional `analysis.url` for the analyst, author, team, or public account responsible for the analysis. Never hard-code analyst identities into the renderer or place internal file-handling language, verification labels, diagnostics, or workflow commentary in chart or presentation copy.
+Those documents, the schema, catalog, and Tool API validation are the current
+authoring contract. Do not maintain a second copy of their detailed semantic
+rules in this repository overview.
 
 The renderer owns:
 
