@@ -252,7 +252,7 @@ cannot be inserted into a current-period bridge.
 
 ## Requirements
 
-- Node.js 20 or newer.
+- Node.js satisfying the `engines.node` requirement in `package.json`.
 - A modern browser to view charts.
 - Microsoft Edge or Google Chrome for browser diagnostics and screenshots.
 - Internet access when loading a chart, because AMCharts and Mukta are loaded from CDNs.
