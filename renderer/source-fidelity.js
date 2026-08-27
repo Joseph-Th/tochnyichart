@@ -33,7 +33,7 @@ const GEOGRAPHY_ROLES = new Set(['none', 'categorical', 'explanatory']);
 const CHART_WORKFLOWS = new Set(['standard-chart', 'regional-breakdown']);
 const CONFLICT_STATUSES = new Set(['none', 'material']);
 const ORIENTATION_ANCHOR_ROLES = new Set(['threshold', 'benchmark', 'baseline', 'limit', 'target', 'denominator']);
-const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
+const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|sellers?|vendors?|merchants?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
 const BENCHMARK_EVIDENCE_PATTERN = /\b(?:benchmark|baseline|total|population|capacity|available|target|limit|threshold|cap|ceiling|floor|maximum|minimum|network|fleet|market)\b/i;
 const THRESHOLD_STORY_PATTERN = /\b(?:break[- ]?even|breakeven|profitability\s+(?:threshold|floor)|threshold|floor|ceiling|limit|cap|cutoff|trigger|minimum|maximum)\b/i;
 const SPATIAL_FINDING_PATTERN = /\b(?:across|border|borderland|frontier|spread|cluster|adjacent|neighbor|neighbour|geograph|spatial|regional pattern|corridor|distributed|concentrat|east|west|north|south)\b/i;
@@ -396,8 +396,20 @@ function validateExactCountCandidateReadiness(candidate, prefix, errors) {
         !observedValues.some((observed) => Math.abs(parsed - observed) <= 1e-9);
     });
   }
+  function containsIndependentlyReportedDenominator(statement) {
+    const text = String(statement || '');
+    const values = text.match(/\d+(?:[.,]\d+)*/g) || [];
+    const namesReportedTotal = /\b(?:reported|published|stated|listed|network total|population total|total population|total seller|seller population|total universe)\b/i.test(text);
+    if (!namesReportedTotal) return false;
+    return values.some((value) => {
+      const parsed = Number(value.replace(/,/g, ''));
+      return Number.isFinite(parsed) && Math.abs(parsed - countSum) <= 1e-9;
+    });
+  }
   const hasDenominator = evidence.some((item) =>
-    item?.role === 'denominator' && containsIndependentNumber(item?.statement) && COUNT_UNIT_PATTERN.test(String(item?.statement || ''))
+    item?.role === 'denominator' &&
+    (containsIndependentNumber(item?.statement) || containsIndependentlyReportedDenominator(item?.statement)) &&
+    COUNT_UNIT_PATTERN.test(String(item?.statement || ''))
   );
   const hasBenchmark = evidence.some((item) =>
     ['comparison', 'denominator'].includes(item?.role) &&
@@ -857,13 +869,13 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
   const data = Array.isArray(spec?.data) ? spec.data : [];
   const references = Array.isArray(spec?.references) ? spec.references : [];
   const denominatorLabel = normalizedSeriesLabel(candidate?.visualEvidenceAudit?.coverageAudit?.denominatorLabel);
-  const stackedItems = spec?.recipe === 'trend.stacked'
+  const stackedItems = ['trend.stacked', 'composition.compared'].includes(spec?.recipe)
     ? data.flatMap((item) => (item?.segments || []).map((segment) => ({
         label: `${item.label} · ${segment.label}`,
         value: segment.value
       })))
     : [];
-  const plottedItems = spec?.recipe === 'trend.stacked' ? stackedItems : data;
+  const plottedItems = ['trend.stacked', 'composition.compared'].includes(spec?.recipe) ? stackedItems : data;
   const plottedLabels = new Set(plottedItems.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
   const referenceLabels = new Set(references.map((reference) => normalizedSeriesLabel(reference?.label)).filter(Boolean));
   const missing = observations
@@ -949,9 +961,15 @@ function validatePublicAggregateBasisEvidence(candidate, prefix, errors) {
 }
 
 function isCompleteTangibleComposition(spec) {
-  if (!['composition.stacked', 'composition.donut'].includes(spec?.recipe)) return false;
+  if (!['composition.stacked', 'composition.donut', 'composition.compared'].includes(spec?.recipe)) return false;
   if (spec?.measure?.valueMode !== 'level') return false;
   if (/%|percent|percentage/i.test(String(spec?.measure?.unit || ''))) return false;
+  if (spec?.recipe === 'composition.compared') {
+    return (spec?.data || []).length >= 2 && (spec?.data || []).every((group) =>
+      Array.isArray(group?.segments) && group.segments.length >= 2 &&
+      group.segments.every((segment) => typeof segment?.value === 'number' && Number.isFinite(segment.value) && segment.value >= 0)
+    );
+  }
   const values = (spec?.data || []).map((item) => item?.value);
   return values.length >= 2 && values.every((value) => typeof value === 'number' && Number.isFinite(value) && value >= 0);
 }

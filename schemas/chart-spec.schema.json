@@ -16,12 +16,14 @@
         "comparison.range",
         "comparison.benchmark-gap",
         "comparison.dumbbell",
+        "comparison.area-squares",
         "relationship.converging-signals",
         "trend.line",
         "trend.stacked",
         "timeline.duration",
         "composition.donut",
         "composition.stacked",
+        "composition.compared",
         "composition.components",
         "flow.waterfall",
         "ranking.horizontal",
@@ -88,6 +90,16 @@
           "benchmark": { "type": "number" },
           "benchmarkDisplayValue": { "type": "string", "maxLength": 50 },
           "gapDisplayValue": { "type": "string", "maxLength": 50 },
+          "gapTone": {
+            "type": "string",
+            "enum": ["primary", "secondary", "warning", "critical", "neutral", "positive"],
+            "description": "Optional semantic tone for the benchmark-gap remainder/difference segment when its meaning differs from the main value segment."
+          },
+          "benchmarkRelation": {
+            "type": "string",
+            "enum": ["gap", "consumed-share"],
+            "description": "Semantic interpretation of comparison.benchmark-gap. gap means the distance to/from the benchmark is the highlighted quantity. consumed-share means the actual/adverse amount is the highlighted share of an enclosing benchmark and the unused remainder is neutral."
+          },
           "start": { "type": "string", "format": "date" },
           "end": { "type": "string", "format": "date" },
           "duration": { "type": "integer", "minimum": 1 },
@@ -122,7 +134,11 @@
               "properties": {
                 "label": { "type": "string", "minLength": 1, "maxLength": 60 },
                 "value": { "type": "number", "minimum": 0 },
-                "displayValue": { "type": "string", "maxLength": 50 }
+                "displayValue": { "type": "string", "maxLength": 50 },
+                "tone": {
+                  "type": "string",
+                  "enum": ["primary", "secondary", "warning", "critical", "neutral", "positive"]
+                }
               }
             }
           }

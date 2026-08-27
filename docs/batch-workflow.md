@@ -153,6 +153,9 @@ If the assignment specifies an analyst, author, team, or public account, record
 that separately in ChartSpec `analysis.name` with optional `analysis.url`.
 Never substitute the analyst identity for the underlying `source`, and never
 hard-code recurring analyst handles into renderer code.
+For a linked article or page, put the reader-facing article/page title in
+`source.name`. Do not prefix it with a publisher sigil and do not include a
+literal `Source:` prefix; the renderer adds `Source:` automatically.
 When the input contains several sheets, tabs, notebook sections, or analysis
 views, inventory which view is intended for the requested deliverable. A view
 that explicitly generates separate plots should be preferred for individual
@@ -199,16 +202,55 @@ primary claim.
 
 Before accepting a chart candidate, apply the visual-evidence gate:
 
+- Write down the orientation anchor first: *what comparison, denominator,
+  prior, threshold, peer, or total makes the headline meaningful?* Research
+  that anchor before styling the chart. A fact required to understand the title
+  belongs in primary geometry, not merely in `supportingFacts`.
+- Apply a chart-worthiness test after research. Do not force a prose claim into
+  a slide when the only available representation is a few qualitative cards, a
+  synthetic 0/1 score, or generic bars whose geometry does not prove the
+  headline. Merge it into a richer same-topic candidate or omit it.
+
 - Perform a source-family sweep before splitting one supplied article, dataset,
   or paragraph into multiple selected visuals. Collect related regional, peer,
   historical, denominator, and same-unit comparison observations first. If a
   proposed chart is only a summary, complement, subset, or single-point
   restatement of a richer same-topic visual, merge it into the richer candidate.
+- When a snapshot is the accumulated result of a dated event, outage, attack
+  sequence, rollout, or disruption, include event onset and later dated states
+  in that sweep. Three or more same-unit states belong in primary temporal
+  geometry rather than leaving the viewer with the latest snapshot alone. Event
+  onset itself is not an observed zero-valued time point. If only two measured
+  post-event states exist, compare those two dated states directly and use a
+  real denominator, total, or capacity figure to orient scale.
 - A generic categorical/bar chart must contain at least three independent
   quantitative observations. Two-value charts are reserved for
   relationship-specific geometry where the relationship itself is the visual
   evidence, such as benchmark-gap, sign-crossing change, diverging comparison,
   or duration.
+- For three to eight positive physical-size values on one basis, consider
+  `comparison.area-squares` before a ranking. Square area must remain
+  proportional to the value; do not use area for arbitrary scores or unrelated
+  percentages.
+- Treat affected-versus-unaffected populations as composition, not a benchmark
+  gap. The affected/exposed subset should carry the warning or critical tone;
+  the unaffected/outside subset should remain neutral or positive. This is a
+  semantic rule, not a styling preference.
+- When the same additive components are available for two or more periods,
+  countries, peers, or scenarios, use `composition.compared`. Keep each
+  component as a segment and let the bar length encode the group total. Do not
+  add the sum of those segments as another independent row merely to label the
+  total. Label placement is family-coherent: if one segment is too narrow for
+  an internal label, move every segment label outside, use semantic text color
+  to identify components directly, and suppress the redundant legend.
+- Horizontal rankings keep numeric values at the bar endpoint and category
+  names on the category axis. Preserve explicit semantic tones when they carry
+  meaning. Do not hide values or append them to the category label as a layout
+  workaround.
+- Before selecting a binary donut, search the source family for peer, country,
+  period, or component observations. One reported part plus its arithmetic
+  remainder is often a weak chart; if richer same-topic composition exists,
+  make that comparison primary instead of parking it in supporting facts.
 - Forecast, target, outlook, guidance, and scenario stories must search for a
   same-unit actual/current/latest realized observation. When one exists, put it
   on the visual scale as primary geometry or a numeric reference; leaving it in
@@ -234,6 +276,10 @@ Before accepting a chart candidate, apply the visual-evidence gate:
 - A normalized change or share should use underlying tangible amounts when they
   are material to interpretation and reasonably retrievable for the same scope
   and periods before normalized geometry is accepted.
+- A percentage-change chart cannot call those percentages `valueMode: level`.
+  If before/after tangible levels already appear anywhere in the source or
+  supporting evidence, promote those levels to primary geometry and leave the
+  percentage change as context.
 - A categorical status list must be quantified on one common dimension or
   routed to `map.regional` when geography explains the finding.
 - A low/high range endpoint, floor, ceiling, total, remainder, or zero-gap value

@@ -1,0 +1,66 @@
+{
+  "version": "2.0",
+  "recipe": "composition.compared",
+  "title": "Commission and logistics raised the seller service load",
+  "date": "2026-08-18",
+  "source": {
+    "name": "Marketplace seller-cost example",
+    "period": "2023–2025"
+  },
+  "data": [
+    {
+      "label": "2023",
+      "displayValue": "19.5% service load",
+      "quantity": "share of item price",
+      "scope": "same marketplace seller economics",
+      "period": "2023",
+      "segments": [
+        { "label": "Commission", "value": 16.6, "displayValue": "16.6%", "tone": "critical" },
+        { "label": "Logistics", "value": 2.9, "displayValue": "2.9%", "tone": "warning" },
+        { "label": "Seller remainder", "value": 80.5, "displayValue": "80.5%", "tone": "neutral" }
+      ]
+    },
+    {
+      "label": "End-2025",
+      "displayValue": "31.5% service load",
+      "quantity": "share of item price",
+      "scope": "same marketplace seller economics",
+      "period": "end-2025",
+      "segments": [
+        { "label": "Commission", "value": 26.3, "displayValue": "26.3%", "tone": "critical" },
+        { "label": "Logistics", "value": 5.2, "displayValue": "5.2%", "tone": "warning" },
+        { "label": "Seller remainder", "value": 68.5, "displayValue": "68.5%", "tone": "neutral" }
+      ]
+    }
+  ],
+  "measure": {
+    "quantity": "share of item price",
+    "unit": "%",
+    "axisTitle": "Share of item price",
+    "valueMode": "level",
+    "levelAvailability": "reported",
+    "decimals": 1,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "warning",
+    "density": "editorial",
+    "emphasis": "composition"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false,
+    "labelMode": "auto"
+  },
+  "metadata": {
+    "slug": "compared-composition-example",
+    "topic": "seller service costs",
+    "country": "Russia",
+    "dataPeriod": "2023–2025",
+    "keyFinding": "Commission and logistics together increased the seller service load."
+  }
+}

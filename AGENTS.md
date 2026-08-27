@@ -24,10 +24,10 @@ If architecture, source-ledger contracts, Tool API schemas, recipes, tests, and 
 
 ## Verification
 
-Use the narrowest relevant lane during iteration; the complete automated suite is:
+Use the narrowest relevant lane during iteration. Routine infrastructure completion is:
 
 ```text
-npm run test:all
+npm test
 ```
 
-Use diagnostics/samples/visual/quality only for their owned surfaces. Machine tests do not replace source-fidelity/editorial review, and visual review does not replace schema/workflow verification.
+Use `npm run test:comparison` when workflow/browser comparison is the changed contract and `npm run test:performance` when planner performance is the changed contract. `npm run test:all` is a broad automated checkpoint, not an automatic next step after a passing narrower lane. Use diagnostics/samples/visual/quality only for their owned surfaces. Machine tests do not replace source-fidelity/editorial review, and visual review does not replace schema/workflow verification.

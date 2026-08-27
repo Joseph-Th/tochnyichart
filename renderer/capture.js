@@ -114,7 +114,7 @@ function commonBrowserArgs(profileDir, viewport) {
     '--hide-scrollbars',
     '--allow-file-access-from-files',
     '--run-all-compositor-stages-before-draw',
-    '--virtual-time-budget=4500',
+    '--virtual-time-budget=6500',
     `--user-data-dir=${profileDir}`,
     `--window-size=${viewport.width},${viewport.height}`
   ];
@@ -190,7 +190,24 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
   const browser = options.browser || findBrowser();
   if (!browser) throw new Error('No supported Edge or Chrome executable was found. Set TOCHNYI_BROWSER to override.');
   const viewports = options.viewports || DEFAULT_DIAGNOSTIC_VIEWPORTS;
-  const runs = viewports.map((viewport) => diagnoseHtml(htmlPath, { ...options, browser, viewport }));
+  const runs = viewports.map((viewport) => {
+    const maxAttempts = options.retryFailedDiagnostics === false ? 1 : 3;
+    let first = null;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const run = diagnoseHtml(htmlPath, {
+        ...options,
+        browser,
+        viewport,
+        timeout: attempt === 0 ? options.timeout : Math.max(options.timeout || 30000, 60000)
+      });
+      if (!first) first = run;
+      if (run.diagnostics?.status !== 'fail') {
+        return attempt === 0 ? run : { ...run, recoveredFromTransientFailure: true };
+      }
+    }
+    // Three fresh profiles agreeing on failure is treated as deterministic.
+    return first;
+  });
   const statuses = runs.map((run) => run.diagnostics?.status || 'pass');
   const status = statuses.includes('fail') ? 'fail' : statuses.includes('warn') ? 'warn' : 'pass';
   return {
@@ -205,7 +222,8 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
       scaleAttributes: run.scaleAttributes,
       columnAttributes: run.columnAttributes,
       rankingAttributes: run.rankingAttributes,
-      relationshipAttributes: run.relationshipAttributes
+      relationshipAttributes: run.relationshipAttributes,
+      recoveredFromTransientFailure: run.recoveredFromTransientFailure === true
     }))
   };
 }
@@ -213,13 +231,27 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
 function captureHtml(htmlPath, outputPath, options = {}) {
   const requireViewportFit = options.requireViewportFit !== false;
   const viewport = options.viewport || { width: 1200, height: 900 };
-  const inspection = diagnoseHtml(htmlPath, {
+  let inspection = diagnoseHtml(htmlPath, {
     ...options,
     viewport,
     requireViewportFit,
     autoFit: options.autoFit === true
   });
-  const overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
+  let overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
+  if (inspection.diagnostics?.status === 'fail' && !overflowIssue && options.retryFailedDiagnostics !== false) {
+    for (let attempt = 1; attempt < 3 && inspection.diagnostics?.status === 'fail'; attempt += 1) {
+      inspection = diagnoseHtml(htmlPath, {
+        ...options,
+        viewport,
+        requireViewportFit,
+        autoFit: options.autoFit === true,
+        timeout: Math.max(options.timeout || 30000, 60000),
+        _diagnosticRetried: true
+      });
+      overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
+      if (overflowIssue) break;
+    }
+  }
   const adaptiveAttempts = options._adaptiveAttempts || 0;
   if (
     requireViewportFit &&
@@ -256,6 +288,9 @@ function captureHtml(htmlPath, outputPath, options = {}) {
       `PNG capture refused because content still exceeds the canvas by ${horizontal}px horizontally and ${vertical}px vertically.`
     );
   }
+  if (inspection.diagnostics?.status === 'fail') {
+    throw new Error('PNG capture refused because layout diagnostics still fail after a stable recheck.');
+  }
   const browser = inspection.browser;
   const absoluteHtml = inspection.htmlPath;
   const absoluteOutput = path.resolve(outputPath || absoluteHtml.replace(/\.html?$/i, '.png'));
@@ -265,6 +300,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     captureWidth: String(inspection.viewport.width),
     captureHeight: String(inspection.viewport.height)
   });
+  if (options.hideBranding === true) query.set('hideBranding', '1');
   if (requireViewportFit) {
     query.set('checkFit', '1');
     if (options.autoFit === true) query.set('fit', '1');

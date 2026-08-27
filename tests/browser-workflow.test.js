@@ -374,6 +374,107 @@ test('reference labels clear nearby axis ticks and their own reference lines', {
   }
 });
 
+test('direct-label donuts reserve leader-label gutters at every responsive width', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-direct-donut-labels-'));
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(examplesDir, 'budget-composition.json'), 'utf8'));
+    spec.data[0].label = 'Online channel — led by marketplaces';
+    spec.data[1].label = 'Physical bookstores';
+    spec.data[2].label = 'Other retail channels';
+    spec.data = spec.data.slice(0, 3);
+    spec.data[2].value = 40;
+    spec.data[2].displayValue = '40%';
+    spec.options.showLegend = false;
+    spec.options.showLabels = true;
+    const specPath = path.join(tempDir, 'direct-donut.json');
+    const outputPath = path.join(tempDir, 'direct-donut.html');
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    const validation = validateSpec(spec);
+    assert.equal(validation.valid, true, validation.errors.join('; '));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => assert.equal(run.diagnostics?.summary?.errors, 0));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('zero-bound trend points reserve a plot gutter above x-axis labels', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-zero-bound-trend-'));
+  try {
+    const spec = {
+      version: '2.0', recipe: 'trend.line',
+      title: 'Event-driven outage rose from zero to 444 thousand square metres',
+      date: '2026-08-18', source: { name: 'Illustrative event chronology', period: 'June–July 2026' },
+      data: [
+        { label: '30 Jun', value: 0, displayValue: '0 m²', quantity: 'offline area', scope: 'same network', period: '30 Jun 2026' },
+        { label: '18 Jul', value: 392, displayValue: '392k m²', quantity: 'offline area', scope: 'same network', period: '18 Jul 2026' },
+        { label: '22 Jul', value: 444, displayValue: '444k m²', quantity: 'offline area', scope: 'same network', period: '22 Jul 2026' }
+      ],
+      measure: { quantity: 'offline area', unit: 'thousand m²', axisTitle: 'Offline area', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear' },
+      narrative: { frame: 'warning', density: 'editorial', emphasis: 'direction' },
+      options: { height: 'standard', showLegend: false, showLabels: true, animate: false, labelMode: 'outside' }
+    };
+    const specPath = path.join(tempDir, 'zero-bound-trend.json');
+    const outputPath = path.join(tempDir, 'zero-bound-trend.html');
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    const validation = validateSpec(spec);
+    assert.equal(validation.valid, true, validation.errors.join('; '));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => assert.equal(run.diagnostics?.summary?.errors, 0));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('near-zero negative diverging labels clear long category names', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-diverging-near-zero-label-'));
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(examplesDir, 'profit-change-contributions.json'), 'utf8'));
+    spec.data = [
+      { ...spec.data[0], label: 'Independent online shops', value: 18, displayValue: '+18%' },
+      { ...spec.data[1], label: 'Wildberries + Ozon sellers', value: -2, displayValue: '−2%' }
+    ];
+    spec.data.forEach((item) => { item.quantity = 'change in seller count'; item.scope = 'same online-selling business comparison'; });
+    spec.measure = {
+      quantity: 'change in seller count', unit: '%', axisTitle: 'Change in business count',
+      valueMode: 'relative-change', levelAvailability: 'unavailable',
+      normalizationNote: 'The fixture exercises a source-reported percent change rather than absolute seller counts.',
+      decimals: 0, baseline: 'zero', scale: 'linear'
+    };
+    const specPath = path.join(tempDir, 'near-zero-diverging.json');
+    const outputPath = path.join(tempDir, 'near-zero-diverging.html');
+    fs.writeFileSync(specPath, JSON.stringify(spec));
+    const validation = validateSpec(spec);
+    assert.equal(validation.valid, true, validation.errors.join('; '));
+    renderSpecFile(specPath, outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => assert.equal(run.diagnostics?.summary?.errors, 0));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('compared compositions remain collision-free across responsive widths', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-compared-composition-'));
+  try {
+    const outputPath = path.join(tempDir, 'compared-composition.html');
+    renderSpecFile(path.join(examplesDir, 'compared-composition.json'), outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.diagnostics?.summary?.warnings, 0);
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('regional overlay callouts keep a bottom gutter above notes', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-regional-note-gutter-'));
   try {

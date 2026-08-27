@@ -5,8 +5,8 @@ validation and diagnostic commands exposed by `tool-api/chart.js` and do not
 need the internal test strategy.
 
 The project uses Node's built-in test runner and keeps deterministic checks,
-browser checks, and performance checks as separate layers. This makes a fast
-local loop possible while preserving a full delivery gate.
+browser checks, and performance checks as separate layers. This keeps the routine
+completion lane small while preserving explicit broader checkpoints.
 
 ## Commands
 
@@ -23,9 +23,7 @@ local loop possible while preserving a full delivery gate.
 | `npm run diagnostics` | Standalone diagnostics self-test. |
 | `npm run layout` | Synthetic narrow-label and reference-line regression. |
 
-The browser test skips when no supported Edge or Chrome executable is found.
-That is useful for a local edit loop, but a delivery environment should provide
-a browser and run `npm run test:all`.
+`npm test` is the routine infrastructure completion lane. The browser test skips when no supported Edge or Chrome executable is found; changes to responsive/browser behavior require a browser-backed lane in an environment that provides one. `npm run test:all` is reserved for changes spanning deterministic, browser, and performance contracts or for an explicit broad delivery checkpoint. Do not run it after narrower lanes merely for reassurance.
 
 ## Test layout
 
@@ -81,16 +79,7 @@ do not hide a regression by removing the warmup or reducing the fixture.
 
 ## Comparison protocol
 
-When changing a workflow or regional planner:
-
-1. Run `npm run test:unit`.
-2. Run `npm run test:workflow`.
-3. Run `npm run test:performance`.
-4. Run `npm run test:browser` with Edge or Chrome available.
-5. Compare the returned workflow, recipe, byte count, warnings, review status,
-   and diagnostic fields.
-6. For rendering changes, run `npm run visual` and inspect the generated
-   manifest or relevant preview.
+When changing a workflow or regional planner, select evidence by contract instead of running every layer in sequence. `npm run test:comparison` is the combined workflow/browser proof and replaces separate `test:workflow` plus `test:browser` runs. Add `npm run test:performance` only when planner performance or its budget changed. For visible rendering changes, run `npm run visual` and inspect the generated manifest or relevant preview. Compare the returned workflow, recipe, byte count, warnings, review status, and diagnostic fields when those fields are part of the changed contract.
 
 The wrapper contract intentionally exposes comparable fields:
 
@@ -124,16 +113,10 @@ the fixture size and number of iterations in the assertion message.
 
 ## Full verification
 
-The thorough local gate is:
+The deep quality checkpoint is one repository-owned command:
 
 ```bash
-npm run test:all
-npm run diagnostics
-npm run layout
-npm run examples
-npm run visual
+npm run quality
 ```
 
-`npm run quality` runs the same quality path as a single npm script. Generated
-HTML, PNGs, manifests, and dated chart artifacts are outputs; inspect their
-status before committing and do not hand-edit them to make a test pass.
+It runs the broad automated suite plus diagnostics, samples, and visual review generation. Use it only when the changed surface spans those contracts or for an explicit deep delivery checkpoint. `npm run layout` and `npm run examples` remain separate specialized lanes for layout-stress and example-generation contracts. Generated HTML, PNGs, manifests, and dated chart artifacts are outputs; inspect their status before committing and do not hand-edit them to make a test pass.

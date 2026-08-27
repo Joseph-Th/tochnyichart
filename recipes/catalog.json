@@ -31,8 +31,8 @@
     },
     {
       "id": "comparison.benchmark-gap",
-      "purpose": "Show one non-negative actual or current level against a meaningful benchmark so the gap, premium, shortfall, overage, or before-versus-after difference is visible in one compact bar.",
-      "data": "1 to 6 labeled items with an underlying actual/current value and a benchmark/reference value measuring the same quantity in the same unit, plus matching scope and period. gapDisplayValue must describe the arithmetic difference or percentage context, never a ratio, per-unit equivalence, or cross-unit conversion. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior. For one or two category-level before/after pairs, encode the later/current level as value and the earlier/prior level as benchmark.",
+      "purpose": "Show one non-negative actual or current level against a meaningful benchmark. Use the default gap relation when the distance to the benchmark is the story; use benchmarkRelation=consumed-share when the actual/adverse amount itself is being emphasized as a share of the larger benchmark.",
+      "data": "1 to 6 labeled items with an underlying actual/current value and a benchmark/reference value measuring the same quantity in the same unit, plus matching scope and period. gapDisplayValue must describe the arithmetic difference or remaining benchmark amount, never a ratio, per-unit equivalence, or cross-unit conversion. For consumed-share, value must not exceed benchmark; the actual segment receives the semantic tone and the unused remainder stays neutral. For ordinary gaps, gapTone may independently encode the meaning or severity of the gap segment instead of inheriting the main item tone. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior.",
       "bestFor": ["two positive before-after levels", "standards and limits", "discounted prices", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
       "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
@@ -48,6 +48,13 @@
       "purpose": "Compare two values for several categories while preserving the direction and size of every category-level change.",
       "data": "3 to 10 labeled items with value and benchmark in one unit, plus matching quantity, scope, and period. benchmark is the earlier or reference value; value is the later or actual value. Different categories may have different absolute levels; what must remain comparable is each category's own earlier-versus-later pair in the same unit and basis.",
       "bestFor": ["before-and-after category comparisons", "peer movement", "target versus actual across several categories"],
+      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+    },
+    {
+      "id": "comparison.area-squares",
+      "purpose": "Compare 3 to 8 positive magnitudes by proportional square area when physical footprint, capacity, land, floor area, or another inherently spatial size is the intuitive comparison.",
+      "data": "3 to 8 positive labeled numeric values with one shared quantity, scope, period, and linear zero-based measure. Square side length is proportional to the square root of value so visible area is proportional to magnitude.",
+      "bestFor": ["facility floor area", "land area", "storage footprint", "capacity blocks", "other physically spatial size comparisons; not shares or arbitrary scores"],
       "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
     },
     {
@@ -84,6 +91,13 @@
       "data": "2 to 6 positive labeled numeric values. Do not use a single hypothetical split when the source provides a meaningful policy, target, prior, or alternative share against the same tangible total; in that case prefer shared-total benchmark geometry.",
       "bestFor": ["served versus unmet", "delayed versus on-time", "debt composition", "two-part shares"],
       "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }
+    },
+    {
+      "id": "composition.compared",
+      "purpose": "Compare the same additive components across two or more periods, entities, or scenarios while keeping every group on one common zero-based scale.",
+      "data": "2 to 8 labeled groups. Each group contains 2 to 6 non-negative segments with the same labels and order. Segment values are additive levels in one shared unit. Group totals are encoded by full bar length; do not add a derived total as a separate series row. Label placement is family-coherent: if any segment cannot fit an internal label, all segment labels move outside and directly identify the segments with semantic text color, replacing the legend.",
+      "bestFor": ["cost components across periods", "country supply dependence", "channel composition across peers", "same-component mixes where both component size and group total matter"],
+      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
     },
     {
       "id": "composition.components",

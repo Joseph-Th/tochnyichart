@@ -38,6 +38,174 @@ test('every recipe has a valid example ChartSpec', () => {
   assert.deepEqual([...covered].sort(), [...recipeIds].sort());
 });
 
+test('affected population splits use composition rather than benchmark-gap colors', () => {
+  const spec = loadExample('ai95-price-spike.json');
+  spec.title = 'Most sellers had inventory in affected warehouses';
+  spec.data = [{
+    label: 'Affected sellers', value: 225600, benchmark: 289200,
+    displayValue: '225,600 affected sellers', benchmarkDisplayValue: '289,200 sellers total',
+    gapDisplayValue: '63,600 sellers outside affected warehouses',
+    quantity: 'seller count', scope: 'seller population', period: 'July 2026', tone: 'critical'
+  }];
+  spec.measure = { quantity: 'seller count', unit: 'sellers', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear' };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /affected-versus-unaffected population split.*composition\.stacked/i.test(message)));
+});
+
+test('rankings preserve semantic tones and keep numeric labels at bar endpoints', () => {
+  const spec = loadExample('regional-ranking.json');
+  delete spec.options.labelMode;
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.options.labelMode, 'outside');
+  const plan = VisualPlan.resolveVisualPlan(result.normalized, result.normalized.data, 1200);
+  assert.equal(plan.colorPolicy, 'semantic');
+
+  spec.options.showLabels = false;
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /requires per-bar numeric labels/i.test(message)));
+});
+
+test('derived dumbbell totals are replaced by compared composition', () => {
+  const spec = loadExample('marketplace-commission-dumbbell.json');
+  spec.data = [
+    { ...spec.data[0], label: 'Commission', benchmark: 16.6, value: 26.3, benchmarkDisplayValue: '16.6%', displayValue: '26.3%' },
+    { ...spec.data[1], label: 'Logistics', benchmark: 2.9, value: 5.2, benchmarkDisplayValue: '2.9%', displayValue: '5.2%' },
+    { ...spec.data[2], label: 'Total service load', benchmark: 19.5, value: 31.5, benchmarkDisplayValue: '19.5%', displayValue: '31.5%' }
+  ];
+  spec.data.forEach((item) => {
+    item.quantity = 'share of item price'; item.scope = 'same seller economics'; item.period = '2023 to 2025';
+  });
+  spec.measure = { quantity: 'share of item price', unit: '%', valueMode: 'level', levelAvailability: 'reported', decimals: 1, baseline: 'zero', scale: 'linear' };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /derived total.*composition\.compared/i.test(message)));
+});
+
+test('compared composition keeps additive components as segments', () => {
+  const spec = loadExample('compared-composition.json');
+  const result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.match(renderHtml(result.normalized), /composition\.compared/);
+  assert.ok(result.warnings.some((message) => /entire segment-label family outside.*legend/i.test(message)));
+});
+
+test('donut direct labels use simple straight leaders and semantic label color', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /alignLabels:\s*spec\.options\.showLabels !== false/);
+  assert.match(runtime, /series\.labels\.template\.adapters\.add\('fill'/);
+  assert.match(runtime, /series\.ticks\.template\.adapters\.add\('stroke'/);
+  assert.doesNotMatch(runtime, /radialKick|kickX|kickY|minimumGap/);
+  assert.match(runtime, /' L ' \+ endX \+ ' ' \+ position\.y\.toFixed\(1\)/);
+});
+
+test('benchmark consumed-share semantics color the actual amount rather than the unused remainder', () => {
+  const spec = loadExample('ai95-price-spike.json');
+  spec.data = [{
+    label: 'Attack cost equivalent', value: 95.5, benchmark: 175,
+    displayValue: '95.5bn RUB attack cost', benchmarkDisplayValue: '175bn RUB annual profit',
+    gapDisplayValue: '79.5bn RUB remainder', benchmarkRelation: 'consumed-share', tone: 'critical',
+    quantity: 'RUB amount', scope: 'RWB 2025 profit comparison', period: '2025'
+  }];
+  spec.measure = { quantity: 'RUB amount', unit: 'billion RUB', valueMode: 'level', levelAvailability: 'reported', decimals: 1, baseline: 'zero', scale: 'linear' };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  spec.data[0].value = 190;
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /consumed-share requires value to be less than or equal to benchmark/i.test(message)));
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /benchmarkRelation === 'consumed-share'/);
+  assert.match(runtime, /actualColor = consumedShare[\s\S]{0,180}gapColor = consumedShare/);
+  assert.doesNotMatch(runtime, /ACTUAL VS BENCHMARK/);
+});
+
+test('benchmark gaps can color the gap independently from the main value', () => {
+  const spec = loadExample('ai95-price-spike.json');
+  spec.data[0].gapTone = 'critical';
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.data[0].gapTone, 'critical');
+
+  spec.recipe = 'comparison.range';
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /gapTone is only supported by comparison\.benchmark-gap/i.test(message)));
+});
+
+test('short event trends cannot use a derived zero as a synthetic time anchor', () => {
+  const spec = {
+    version: '2.0', recipe: 'trend.line', title: 'Event outage progression', date: '2026-08-18',
+    data: [
+      { label: 'Before event', value: 0, valueStatus: 'derived', displayValue: '0 units' },
+      { label: 'First state', value: 392, valueStatus: 'derived', displayValue: '392 units' },
+      { label: 'Second state', value: 444, valueStatus: 'reported', displayValue: '444 units' }
+    ],
+    measure: { quantity: 'offline capacity', unit: 'units', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear' },
+    narrative: { frame: 'warning', density: 'editorial', emphasis: 'direction' },
+    options: { height: 'standard', showLegend: false, showLabels: true, animate: false, labelMode: 'outside' }
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /derived zero.*synthetic pre-event time anchor/i.test(message)));
+});
+
+test('compared-composition outside labels center on segments and move only for collisions', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /data-segment-center/);
+  assert.match(runtime, /comparedCompositionLabelCenters/);
+  assert.match(runtime, /data-label-shifted/);
+  assert.doesNotMatch(runtime, /--outside-lane/);
+  assert.match(css, /\.tochnyi-compared-direct-label\s*\{[^}]*position:\s*absolute[^}]*transform:\s*translateX\(-50%\)/s);
+  assert.doesNotMatch(css, /--outside-lane/);
+
+    const untouched = VisualPlan.comparedCompositionLabelCenters([
+      { center: 40, width: 24 },
+      { center: 150, width: 30 }
+    ], 200, 8);
+    assert.equal(untouched[0].center, 40);
+    assert.equal(untouched[1].center, 150);
+    assert.equal(untouched[0].shifted, false);
+    assert.equal(untouched[1].shifted, false);
+
+    const collided = VisualPlan.comparedCompositionLabelCenters([
+      { center: 60, width: 80 },
+      { center: 100, width: 80 },
+      { center: 250, width: 20 }
+    ], 300, 8);
+    assert.ok(collided[0].center < 60);
+    assert.ok(collided[1].center > 100);
+    assert.ok(collided[1].center - collided[0].center >= 88 - 1e-6);
+    assert.equal(collided[2].center, 250);
+    assert.equal(collided[2].shifted, false);
+});
+
+test('percentage changes cannot masquerade as levels or hide available raw levels in supporting facts', () => {
+  const spec = loadExample('profit-change-contributions.json');
+  spec.title = 'Marketplace seller count fell 2%';
+  spec.data = [
+    { ...spec.data[0], label: 'Independent shops', value: 18, displayValue: '+18%', quantity: 'seller count change', scope: 'online sellers', period: '2025' },
+    { ...spec.data[1], label: 'Marketplace sellers', value: -2, displayValue: '−2%', quantity: 'seller count change', scope: 'online sellers', period: '2025' }
+  ];
+  spec.measure = { quantity: 'seller count change', unit: '%', axisTitle: 'Seller count change', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero', scale: 'linear' };
+  let result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /percentage changes cannot be declared.*valueMode level/i.test(message)));
+
+  spec.measure.valueMode = 'relative-change';
+  spec.measure.levelAvailability = 'unavailable';
+  spec.measure.normalizationNote = 'Absolute independent-shop count is not reported.';
+  spec.supportingFacts = [{ value: '1.28m → 1.26m sellers', label: 'Marketplace active sellers before and after.', role: 'comparison' }];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /supporting fact already contains tangible before\/after levels/i.test(message)));
+});
+
 test('reference lines require meaningful labels and reject duplicate values', () => {
   const spec = loadExample('farm-diesel-range.json');
   spec.references = [{ value: 10, label: '·', tone: 'neutral', lineStyle: 'dashed' }];
@@ -59,7 +227,60 @@ test('converging-signal cards reject mixed pp and percent notation', () => {
   spec.data[0].displayValue = '−12 pp';
   const result = validateSpec(spec);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /cannot mix visible percentage-point notation.*percent-rate notation/i.test(message)));
+  assert.ok(result.errors.some((message) => /percentage-point notation.*percent-rate notation/i.test(message)));
+});
+
+test('source normalization removes publisher sigils before article titles', () => {
+  const spec = loadExample('facility-area-squares.json');
+  spec.source = {
+    name: 'Ъ: «Warehouse article title»',
+    period: 'July 2026',
+    url: 'https://www.kommersant.ru/doc/1234567'
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.source.name, '«Warehouse article title»');
+});
+
+test('linked articles reject publisher-only source labels', () => {
+  const spec = loadExample('facility-area-squares.json');
+  spec.source = {
+    name: 'Kommersant',
+    period: 'July 2026',
+    url: 'https://www.kommersant.ru/doc/1234567'
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /article\/page title.*publisher name or sigil/i.test(message)));
+});
+
+test('visible percentage labels do not mix percent and percentage-point notation', () => {
+  const spec = loadExample('marketplace-commission-dumbbell.json');
+  spec.data[0].gapDisplayValue = '+6 pp';
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /mixes percentage-point notation with percent-rate notation/i.test(message)));
+});
+
+test('converging-signal relationships reject placeholder proxy scores', () => {
+  const spec = loadExample('converging-signals.json');
+  spec.data[2] = {
+    ...spec.data[2],
+    value: 1,
+    displayValue: 'shift pressure',
+    quantity: 'workflow pressure signal',
+    detail: 'A qualitative model-shift pressure proxy.'
+  };
+  const result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /placeholder\/proxy score|real source-supported quantitative magnitude/i.test(message)));
+});
+
+test('physical facility areas can use proportional square geometry', () => {
+  const spec = loadExample('facility-area-squares.json');
+  const result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.match(renderHtml(result.normalized), /comparison\.area-squares/);
 });
 
 test('benchmark-gap geometry rejects ratios and cross-unit equivalences masquerading as a gap', () => {
@@ -1399,8 +1620,8 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   const plan = VisualPlan.resolveVisualPlan(spec, data, 1200);
 
   assert.equal(plan.titleAlign, 'left');
-  assert.equal(plan.colorPolicy, 'focus');
-  assert.equal(plan.accentSecond, true);
+  assert.equal(plan.colorPolicy, 'semantic');
+  assert.equal(plan.accentSecond, false);
   assert.equal(plan.chartHeight, 454);
   assert.ok(plan.chartHeight < 550, 'five-row rankings should not use a fixed tall canvas');
   assert.equal(VisualPlan.rankingHeight(12, 'detailed'), 700);
@@ -1408,11 +1629,22 @@ test('visual planning adapts ranking geometry and editorial hierarchy', () => {
   assert.ok(VisualPlan.rankingHeight(92, 'editorial') > 3400,
     'dense full-domain rankings should expand vertically instead of compressing into the legacy cap');
 
+  const untonedData = spec.data.map((item) => {
+    const copy = { ...item };
+    delete copy.tone;
+    return copy;
+  });
+  const focusSpec = validateSpec({ ...spec, data: untonedData }).normalized;
+  const focusPlan = VisualPlan.resolveVisualPlan(focusSpec, focusSpec.data, 1200);
+  assert.equal(focusPlan.colorPolicy, 'focus');
+  assert.equal(focusPlan.accentSecond, true);
+
   const categoricalSpec = validateSpec({
     ...spec,
+    data: untonedData,
     narrative: { ...spec.narrative, emphasis: 'magnitude' }
   }).normalized;
-  const categoricalPlan = VisualPlan.resolveVisualPlan(categoricalSpec, data, 1200);
+  const categoricalPlan = VisualPlan.resolveVisualPlan(categoricalSpec, categoricalSpec.data, 1200);
   assert.equal(categoricalPlan.colorPolicy, 'categorical');
 });
 
@@ -1973,6 +2205,33 @@ test('relative percentage declines render as retained outcome levels', () => {
   );
   assert.equal(plan.items[0].outcomeDisplay, '65–75% of prior level');
   assert.equal(plan.items[0].impactDisplay, '25–35% lower');
+});
+
+test('native percentage ranges stay on their reported rate scale', () => {
+  const spec = {
+    version: '2.0',
+    recipe: 'comparison.range',
+    title: 'Audience growth slowed to 1–3%',
+    date: '2026-08-18',
+    source: { name: 'Audience growth article', period: '2026' },
+    data: [{
+      label: 'Current growth', low: 1, high: 3, displayValue: '1–3%',
+      quantity: 'audience growth rate', scope: 'same marketplace audience', period: '2026'
+    }],
+    references: [{ value: 6, label: '6% prior growth' }],
+    measure: {
+      quantity: 'audience growth rate', unit: '%', axisTitle: 'Audience growth',
+      valueMode: 'rate', levelAvailability: 'not-applicable',
+      basisAvailability: 'not-applicable', basisNote: 'Native year-over-year growth rate.',
+      decimals: 0, baseline: 'zero', scale: 'linear'
+    },
+    narrative: { frame: 'comparison', density: 'minimal', emphasis: 'range' },
+    options: { height: 'standard', showLabels: true, animate: false }
+  };
+  const validation = validateSpec(spec);
+  assert.equal(validation.valid, true, validation.errors.join('; '));
+  const plan = VisualPlan.percentageChangeRangePlan(validation.normalized, validation.normalized.data);
+  assert.equal(plan.mode, 'raw-range');
 });
 
 test('leader crowding detects long near-parallel routes without treating separated routes as crowded', () => {
@@ -3279,6 +3538,8 @@ test('PNG capture expands the canvas and refuses any remaining clipped output', 
   assert.match(capture, /requiredWidth \+ 24/);
   assert.match(capture, /requiredHeight \+ 24/);
   assert.match(capture, /PNG capture refused because content still exceeds the canvas/);
+  assert.match(capture, /PNG capture refused because layout diagnostics still fail after a stable recheck/);
+  assert.match(capture, /retryFailedDiagnostics/);
   assert.match(capture, /dimensions\.width !== inspection\.viewport\.width/);
   assert.match(diagnostics, /requiredWidth/);
   assert.match(diagnostics, /requiredHeight/);

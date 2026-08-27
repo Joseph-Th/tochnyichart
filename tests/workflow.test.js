@@ -99,6 +99,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'status.grid'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.area-squares'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.converging-signals'), true);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least three independent quantitative observations/i);
   assert.match(standard.visualEvidenceContract.standalonePairRule, /requires at least three independent values/i);
@@ -111,8 +112,10 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(standard.sourceEnrichment.relationshipRule, /mechanism evidence.*outcome.*driver/i);
   assert.match(standard.sourceEnrichment.relationshipRule, /continue with a short same-color connector|no decorative hub/i);
   assert.match(standard.visualEvidenceContract.claimGeometryRule, /exact marks.*prove|geometry.*fails/i);
+  assert.match(standard.visualEvidenceContract.orientationQuestionRule, /Compared with what|primary geometry/i);
+  assert.match(standard.visualEvidenceContract.chartWorthinessRule, /quantitative relationship|proxy scores/i);
   assert.match(standard.visualEvidenceContract.referenceClarityRule, /meaningful viewer-facing label|remove the line/i);
-  assert.match(standard.visualEvidenceContract.notationConsistencyRule, /do not mix pp.*percent-rate notation/i);
+  assert.match(standard.visualEvidenceContract.notationConsistencyRule, /do not mix pp.*percent-rate.*labels/i);
   assert.match(standard.visualEvidenceContract.supportingFactsRule, /regional or peer observations/i);
   assert.match(standard.sourceEnrichment.normalizedOrientationRule, /same-unit peer|regional observation/i);
   assert.ok(standard.authoringRules.some((rule) => /source-family sweep/i));
@@ -162,6 +165,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric', 'comparison.pictogram']);
   assert.match(manifest.sourceEnrichment.attributionRule, /presentation copy/i);
   assert.match(manifest.sourceEnrichment.attributionRule, /source.*analysis.*separate/i);
+  assert.match(manifest.sourceEnrichment.attributionRule, /article\/page title|publisher sigil/i);
   assert.ok(manifest.excludedWork.some((entry) => entry.includes('renderer/')));
   assert.match(manifest.escalation, /report an infrastructure issue/i);
   assert.deepEqual(manifest.waterfallContract.requiredItemFields, ['role', 'value', 'valueStatus', 'period', 'scope']);

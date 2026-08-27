@@ -1,0 +1,39 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.area-squares",
+  "title": "Two logistics hubs are more than twice the size of the other attacked sites",
+  "date": "2026-08-18",
+  "source": {
+    "name": "Illustrative facility-area comparison",
+    "period": "July 2026"
+  },
+  "data": [
+    { "label": "Koledino", "value": 250, "displayValue": "250k m²", "tone": "critical", "quantity": "facility floor area", "scope": "attacked logistics facilities", "period": "July 2026" },
+    { "label": "Elektrostal", "value": 250, "displayValue": "250k m²", "tone": "critical", "quantity": "facility floor area", "scope": "attacked logistics facilities", "period": "July 2026" },
+    { "label": "Kotovsk", "value": 108, "displayValue": "108k m²", "tone": "warning", "quantity": "facility floor area", "scope": "attacked logistics facilities", "period": "July 2026" },
+    { "label": "Krasnodar", "value": 100, "displayValue": "100k m²", "tone": "warning", "quantity": "facility floor area", "scope": "attacked logistics facilities", "period": "July 2026" },
+    { "label": "Nevinnomyssk", "value": 94, "displayValue": "94k m²", "tone": "secondary", "quantity": "facility floor area", "scope": "attacked logistics facilities", "period": "July 2026" }
+  ],
+  "measure": {
+    "quantity": "facility floor area",
+    "unit": "thousand m²",
+    "axisTitle": "Facility floor area",
+    "valueMode": "level",
+    "levelAvailability": "reported",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear"
+  },
+  "supportingFacts": [
+    { "value": "802k m²", "label": "Combined floor area across the five facilities.", "tone": "critical", "role": "context" }
+  ],
+  "narrative": { "frame": "comparison", "density": "editorial", "emphasis": "magnitude" },
+  "options": { "height": "tall", "sort": "none", "showLegend": false, "showLabels": true, "animate": false, "labelMode": "auto" },
+  "metadata": {
+    "slug": "facility-area-squares",
+    "topic": "facility floor area comparison",
+    "country": "Russia",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Two 250,000 m² hubs are more than twice the size of each of the three smaller facilities."
+  }
+}

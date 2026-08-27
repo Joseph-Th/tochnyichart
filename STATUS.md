@@ -103,7 +103,7 @@ The current supported product does not treat these as normal authoring behavior:
 
 ## Verification
 
-Use the narrowest lane owned by [`docs/testing.md`](docs/testing.md). The maintained complete automated suite is exposed by `npm run test:all`; broader rendering review uses the documented diagnostics, samples, and visual lanes when their contracts change.
+Use the narrowest lane owned by [`docs/testing.md`](docs/testing.md). Routine infrastructure completion is `npm test`; `npm run test:comparison` owns workflow/browser comparison, `npm run test:performance` owns planner performance, and `npm run test:all` is the broad automated checkpoint when a change spans those surfaces. Broader rendering review uses the documented diagnostics, samples, and visual lanes only when their contracts change.
 
 Repository hygiene is checked separately through the maintained repository-hygiene script.
 

@@ -29,6 +29,12 @@ The validator rejects generic quantity names such as `reported change`, `value`,
 `metric`, `amount`, or `result`. Those labels describe a chart operation, not a
 measured quantity.
 
+For physical-size comparisons, `comparison.area-squares` is available when
+three to eight positive magnitudes share one quantity, scope, and period. The
+renderer scales each square's **area** to the value (side length uses the square
+root), so authors must not use it for ordinal scores, percentages of unrelated
+totals, or values that do not share one physical basis.
+
 ## Visible units
 
 A numeric label must be interpretable without searching the axis title or source
@@ -65,6 +71,12 @@ make a normalized trend look complete. A relative-change chart is an exception
 that requires unavailable or incomparable levels plus a concise
 `measure.normalizationNote`. Plot only the relative observations actually
 reported by the source.
+
+Event onset is useful chronology but is not automatically a measured zero-valued
+observation. If only two post-event tangible states are available, compare those
+dated states directly and orient them with a real denominator, total, or
+capacity figure. Use a line only when the source supplies enough observed states
+to form an actual progression.
 
 Use `valueMode: "index"` only for a named index whose point values are reported
 or retrievable. Do not use generic display copy such as `100 index`, `91.5
@@ -186,11 +198,50 @@ Every production chart must carry its main argument through geometry tied to
 data. A wall of prose, a set of status cards, or one oversized number is not a
 chart.
 
+Before choosing geometry, answer the orientation question in plain language:
+**compared with what does this number become meaningful?** If the headline
+depends on scale words such as *large*, *small*, *material*, *dominant*,
+*majority*, *nearly all*, or *severe*, that comparison belongs in primary
+geometry as a peer, prior value, denominator, benchmark, threshold, or complete
+composition. Do not leave the title-defining frame of reference in a footnote
+or supporting-fact rail.
+
+Also apply a chart-worthiness test. A standalone chart must reveal a
+quantitative relationship a reader benefits from seeing: scale, composition,
+change, distribution, benchmark gap, trend, or a source-supported mechanism.
+Three numeric cards, a binary proxy score, or a qualitative “pressure”
+indicator are not measured evidence. If research cannot recover a real visual
+relationship, merge the point into a richer neighboring story or omit it.
+
 - A generic categorical/bar chart requires at least three independent
   quantitative observations. A two-value chart is acceptable only when a
   relationship-specific recipe makes the relationship itself the geometry,
   such as a true benchmark gap, sign-crossing change, diverging comparison, or
   calendar duration.
+- Match geometry to the meaning of the quantity. For inherently spatial
+  magnitudes such as facility floor area, land area, storage footprint, or
+  capacity blocks, proportional area may communicate scale more directly than
+  another bar ranking. For parts of a whole, use composition. For a platform
+  take versus seller remainder or another same-total split, use benchmark or
+  composition geometry instead of unrelated bars.
+- An affected count inside a known population is a part-of-whole relationship,
+  not a benchmark failure. Use composition so the affected segment can be red
+  or warning-colored while the unaffected remainder remains neutral or
+  positive. A benchmark-gap chart is invalid when its colored gap would imply
+  that the safe remainder is the adverse quantity.
+- If two or more groups share the same additive components, preserve that
+  arithmetic with `composition.compared`. This is the preferred form for
+  examples such as commission + logistics across years or Russian + other oil
+  supply across countries. The segment sum is encoded by the bar itself and
+  must not reappear as a separate independent datapoint.
+- Horizontal rankings show the number at the right-hand bar endpoint. Keep the
+  category label free of duplicated numeric copy, and honor explicit semantic
+  tones before falling back to focus or categorical palette policy.
+- Direct donut labels with leader lines are preferred to a detached legend when
+  the slice count and label length allow them to fit. Do not show both layers
+  by default. More importantly, do not use a donut merely because a binary
+  share can be calculated; a same-topic peer or period composition is stronger
+  evidence and belongs in primary geometry when available.
 - A lone value must be enriched with a source-supported prior value, target,
   benchmark, denominator, peer, range, or time series. A derived complement or
   remainder is not a second independent observation.
@@ -270,6 +321,10 @@ dataset, organization, or source collection underlying the evidence. Optional
 the interpretation and may include a public URL. Do not put an analyst handle
 into `source`, and never hard-code a recurring analyst identity in the renderer.
 
+When `source.url` points to a specific article or page, use its reader-facing
+article/page title in `source.name`. Do not prefix it with a publisher sigil and
+do not repeat `Source:` inside the value; the renderer supplies that label.
+
 Two-part compositions use one label treatment per segment. When both segments
 are large enough, the label, share, and tangible amount appear inside the bar.
 When a segment is too small, both labels move outside. The same information must
@@ -282,12 +337,17 @@ are invalid. If a secondary rate or current reading is useful context but not
 important enough to label on the scale, keep it in `supportingFacts` instead of
 drawing another line.
 
-Within one visual family, keep notation consistent. A relationship card set
-must not mix `pp`/percentage-point labels with `%` rate labels. When the
+Within one visual family, keep notation consistent. A chart must not mix
+`pp`/percentage-point numeric labels with `%` rate labels. When the
 mathematical distinction matters, explain the percentage-point contribution in
 the item detail or note, or choose a representation that does not present the
 two notations as peers. Never relabel percentage points as percent merely for
 cosmetic consistency.
+
+The same visible-label rule applies outside relationship charts. If endpoints
+are labeled in `%`, do not add peer `pp` labels on the same visual merely to
+spell out the gap; the geometry already shows the gap. Put the mathematical
+percentage-point interpretation in prose when it is important.
 
 ## Source coverage and title fidelity
 
@@ -450,6 +510,16 @@ the reader can already see. A discount chart must show the discounted price
 inside the undiscounted reference price, not chart the discount amount as if it
 were the price.
 
+Decide which side of that relationship is the semantic subject. For a true
+shortfall, premium, discount, or overage, the gap may carry the semantic tone.
+When the story instead says an adverse amount consumes or equals some share of
+a larger benchmark, set `data[].benchmarkRelation: "consumed-share"`. The
+actual amount then carries the warning/critical tone while the unused remainder
+stays neutral; otherwise the color implies a shortfall that is not the intended
+story. For ordinary gaps, use `data[].gapTone` when the colored difference or
+remainder has its own severity meaning; do not force it to inherit the main
+item tone.
+
 The benchmark and value must measure the same quantity in the same unit. A unit
 size such as square metres per hub cannot serve as a benchmark for a whole-area
 total merely to manufacture an equivalence count. If the useful conclusion is a
@@ -457,7 +527,8 @@ ratio or mixed-unit identity, show it as supporting context or use
 `relationship.converging-signals` when the inputs and outcome are all material.
 
 The benchmark renderer uses one fixed label system: the actual/current value,
-gap, and benchmark labels all sit beneath the bar. When their horizontal text
+gap, and reference labels are attached directly to the bar without a generic
+"actual vs benchmark" caption. When their horizontal text
 boxes would collide, the renderer moves only the conflicting label to a lower
 text lane. Do not solve collisions by putting one label inside the bar or
 another above it. The actual segment uses the primary blue; a primary-toned gap
@@ -600,6 +671,11 @@ renderer shows both the calculated share and the tangible value.
 This should render as both `62.5%` and `500bn RUB`, not as an abstract percentage
 alone.
 
+Direct-label donuts use one straight leader from the slice to its label. Leader
+collision solvers, multi-segment elbows, and radial detours are intentionally
+avoided; if the composition is too dense for simple leaders, use a legend or a
+different composition recipe rather than routing around the problem.
+
 For `composition.stacked`, the proportional bar is always the first and dominant
 visual. Two-part compositions receive direct labels for both segments. The
 validator rejects `primaryMetric` and supporting facts that merely restate a
@@ -613,6 +689,13 @@ of the story and materially helps the viewer orient the magnitude, derive the
 comparable amounts and prefer shared-total `comparison.benchmark-gap` rows.
 Keep `composition.stacked` when the mix or part-versus-remainder relationship is
 itself the central finding.
+
+For `composition.compared`, outside labels form one aligned rail per bar. Each
+label is centered on the segment it identifies. Only when two measured label
+boxes collide may the renderer move them horizontally, by the minimum amount
+needed to restore separation. Do not replace segment-centered placement with
+equal-width columns, and do not drop successive labels into lower vertical
+lanes simply because one component is narrow.
 
 ## Regional maps
 

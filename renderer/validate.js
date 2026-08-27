@@ -41,7 +41,7 @@ const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
-  'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
+  'comparison.area-squares', 'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -67,10 +67,10 @@ const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const ANALYSIS_KEYS = new Set(['name', 'url']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
-  'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
+  'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'benchmarkRelation', 'gapTone', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope', 'relationshipRole', 'segments'
 ]);
-const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue']);
+const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue', 'tone']);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const MEASURE_KEYS = new Set([
   'quantity', 'unit', 'axisTitle', 'valueMode', 'levelAvailability', 'basisAvailability', 'basisNote', 'normalizationNote',
@@ -313,8 +313,15 @@ function validateVisibleUnits(spec, errors) {
 
 function normalizeSource(source) {
   if (!isObject(source)) return source;
+  function cleanSourceName(value) {
+    if (typeof value !== 'string') return value;
+    return value.trim()
+      .replace(/^(?:source\s*:\s*)+/i, '')
+      .replace(/^(?:Ъ|Коммерсантъ?|Kommersant)\s*[:—-]\s*(?=[«“"'])/i, '')
+      .trim();
+  }
   return {
-    name: typeof source.name === 'string' ? source.name.trim() : source.name,
+    name: cleanSourceName(source.name),
     ...(source.period !== undefined ? { period: typeof source.period === 'string' ? source.period.trim() : source.period } : {}),
     ...(source.url !== undefined ? { url: typeof source.url === 'string' ? source.url.trim() : source.url } : {})
   };
@@ -355,7 +362,7 @@ function normalizeSpec(input) {
   spec.options.showLegend = spec.options.showLegend === undefined ? true : spec.options.showLegend;
   spec.options.showLabels = spec.options.showLabels === undefined ? true : spec.options.showLabels;
   spec.options.animate = spec.options.animate === undefined ? true : spec.options.animate;
-  spec.options.labelMode = spec.options.labelMode || 'auto';
+  spec.options.labelMode = spec.options.labelMode || (spec.recipe === 'ranking.horizontal' ? 'outside' : 'auto');
 
   spec.narrative = isObject(spec.narrative) ? spec.narrative : {};
   spec.narrative.frame = spec.narrative.frame || 'neutral';
@@ -600,6 +607,13 @@ function validateData(spec, errors, warnings) {
     if (item.calloutSide !== undefined && !CALLOUT_SIDES.has(item.calloutSide)) errors.push(`${path}.calloutSide is not supported.`);
     if (item.calloutOrder !== undefined && (!Number.isInteger(item.calloutOrder) || item.calloutOrder < 0 || item.calloutOrder > 99)) errors.push(`${path}.calloutOrder must be an integer from 0 to 99.`);
     if (item.tone !== undefined && !TONES.has(item.tone)) errors.push(`${path}.tone is not supported.`);
+    if (item.gapTone !== undefined && !TONES.has(item.gapTone)) errors.push(`${path}.gapTone is not supported.`);
+    if (item.gapTone !== undefined && spec.recipe !== 'comparison.benchmark-gap') {
+      errors.push(`${path}.gapTone is only supported by comparison.benchmark-gap.`);
+    }
+    if (item.benchmarkRelation !== undefined && spec.recipe !== 'comparison.benchmark-gap') {
+      errors.push(`${path}.benchmarkRelation is only supported by comparison.benchmark-gap.`);
+    }
     if (item.status !== undefined && !STATUSES.has(item.status)) errors.push(`${path}.status is not supported.`);
     if (item.role !== undefined && !ROLES.has(item.role)) errors.push(`${path}.role is not supported.`);
     if (item.relationshipRole !== undefined && !RELATIONSHIP_ROLES.has(item.relationshipRole)) errors.push(`${path}.relationshipRole is not supported.`);
@@ -621,6 +635,7 @@ function validateData(spec, errors, warnings) {
           if (segment.displayValue !== undefined && (typeof segment.displayValue !== 'string' || segment.displayValue.length > 50)) {
             errors.push(`${segmentPath}.displayValue must be a string of 50 characters or fewer.`);
           }
+          if (segment.tone !== undefined && !TONES.has(segment.tone)) errors.push(`${segmentPath}.tone is not supported.`);
           const normalizedLabel = normalizeEditorialValue(segment.label);
           if (normalizedLabel && segmentLabels.has(normalizedLabel)) errors.push(`${path}.segments cannot repeat category labels.`);
           if (normalizedLabel) segmentLabels.add(normalizedLabel);
@@ -785,6 +800,8 @@ function validateSharedScaleSemantics(spec, errors) {
 
 const GAP_MEASURE_WORDS = /\b(?:discount|premium|shortfall|overage|gap)\b/i;
 const REMAINDER_LABEL_WORDS = /\b(?:remaining|remainder|left|unused|unfilled|vacant after|gap after)\b/i;
+const AFFECTED_SUBSET_WORDS = /\b(?:affected|exposed|impacted|damaged|hit|disrupted|lost)\b/i;
+const UNAFFECTED_REMAINDER_WORDS = /\b(?:unaffected|unexposed|outside affected|not affected|not hit|spared|outside the affected)\b/i;
 
 function nearlyEqual(left, right) {
   if (!Number.isFinite(left) || !Number.isFinite(right)) return false;
@@ -897,6 +914,14 @@ function validateBenchmarkGapEconomy(spec, data, errors) {
     );
   }
   data.forEach((item, index) => {
+    const populationText = `${item?.label || ''} ${item?.displayValue || ''} ${item?.benchmarkDisplayValue || ''} ${item?.gapDisplayValue || ''}`;
+    if (Number.isFinite(item?.value) && Number.isFinite(item?.benchmark) && item.value > 0 && item.benchmark > item.value &&
+        AFFECTED_SUBSET_WORDS.test(populationText) && UNAFFECTED_REMAINDER_WORDS.test(populationText)) {
+      errors.push(
+        `data[${index}] is an affected-versus-unaffected population split, not a benchmark gap. ` +
+        'Use composition.stacked so the affected subset carries the warning/critical tone and the unaffected remainder stays neutral or positive. A benchmark-gap color cannot truthfully serve both meanings.'
+      );
+    }
     if (Number.isFinite(item?.value) && Number.isFinite(item?.benchmark) && nearlyEqual(item.value, item.benchmark)) {
       errors.push(
         `data[${index}] has no benchmark gap because value equals benchmark. ` +
@@ -1039,6 +1064,14 @@ function validateConvergingSignals(spec, data, errors) {
     const hasRange = typeof item?.low === 'number' && Number.isFinite(item.low) && typeof item?.high === 'number' && Number.isFinite(item.high);
     if (!hasValue && !hasRange) errors.push(`data[${index}] requires value or both low and high for relationship.converging-signals.`);
     if (hasRange && item.low > item.high) errors.push(`data[${index}].low must not exceed high.`);
+    const proxyText = `${item?.quantity || ''} ${item?.displayValue || ''} ${item?.detail || ''}`;
+    if (/\b(?:proxy|indicator|signal|pressure|shift signal|model shift)\b/i.test(proxyText) &&
+        typeof item?.value === 'number' && Math.abs(item.value) <= 1) {
+      errors.push(
+        `data[${index}] looks like a placeholder/proxy score rather than an independently measured quantity. ` +
+        'relationship.converging-signals is not a layout for qualitative cards; every driver and outcome must have a real source-supported quantitative magnitude.'
+      );
+    }
   });
 
   if (!isObject(spec.relationship)) {
@@ -1092,7 +1125,7 @@ function hasNumericVisibleValue(value) {
   return typeof value === 'string' && /\d/.test(value);
 }
 
-const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
+const COUNT_UNIT_PATTERN = /\b(?:count|counts|people|persons?|sellers?|vendors?|merchants?|models?|stations?|facilities?|locations?|stores?|shops?|sites?|vehicles?|trucks?|aircraft|companies|businesses|cases|events?|incidents?|workers?|employees?|jobs?|schools?|hospitals?|buildings?|projects?)\b/i;
 const BENCHMARK_CUE_PATTERN = /\b(?:benchmark|baseline|standard|limit|target|threshold|cap|ceiling|floor|maximum|minimum|norm|allowance|permitted|legal)\b/i;
 const COMPONENT_DECOMPOSITION_PATTERN = /\b(?:component|components|contribution|contributions|accounted for|breakdown|excluding|included|special tax|taxes|fees|surcharge|subtotal|total cost|total revenue|total spending|cost build[- ]?up)\b/i;
 const FORECAST_CUE_PATTERN = /\b(?:forecast|target|outlook|projection|guidance|expected range|scenario range)\b/i;
@@ -1265,6 +1298,19 @@ function validateRecipe(spec, errors, warnings) {
       validateBenchmarkPreference(spec, data, errors);
       if (!spec.emphasis) warnings.push('comparison.change is clearer with an emphasis object.');
       break;
+    case 'comparison.area-squares':
+      if (count < 3 || count > 8) errors.push('comparison.area-squares requires 3 to 8 data items.');
+      requireNumericValues(spec, errors);
+      if (data.some((item) => typeof item?.value === 'number' && item.value <= 0)) {
+        errors.push('comparison.area-squares values must all be greater than zero because square area encodes magnitude.');
+      }
+      if (spec.measure?.baseline !== 'zero') {
+        errors.push('comparison.area-squares requires measure.baseline zero because square area is proportional to the value.');
+      }
+      if (spec.measure?.scale !== 'linear') {
+        errors.push('comparison.area-squares requires a linear scale; area must remain proportional to the reported value.');
+      }
+      break;
     case 'comparison.scenarios':
       if (count < 3 || count > 5) errors.push('comparison.scenarios requires 3 to 5 independent data items.');
       requireNumericValues(spec, errors);
@@ -1313,6 +1359,9 @@ function validateRecipe(spec, errors, warnings) {
         }
         if (typeof item?.value === 'number' && item.value < 0) errors.push(`data[${index}].value cannot be negative for comparison.benchmark-gap.`);
         if (typeof item?.benchmark === 'number' && item.benchmark <= 0) errors.push(`data[${index}].benchmark must be greater than zero for comparison.benchmark-gap.`);
+        if (item?.benchmarkRelation === 'consumed-share' && Number.isFinite(item?.value) && Number.isFinite(item?.benchmark) && item.value > item.benchmark) {
+          errors.push(`data[${index}].benchmarkRelation consumed-share requires value to be less than or equal to benchmark because the actual amount is being shown as a share of the enclosing benchmark.`);
+        }
         if (!item?.benchmarkDisplayValue) warnings.push(`data[${index}].benchmarkDisplayValue is recommended so the benchmark amount is visible.`);
         if (!item?.gapDisplayValue) warnings.push(`data[${index}].gapDisplayValue is recommended so the discount, premium, or shortfall is visible.`);
       });
@@ -1336,6 +1385,19 @@ function validateRecipe(spec, errors, warnings) {
       if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
         errors.push('comparison.dumbbell requires measure.valueMode level because both endpoints are tangible values.');
       }
+      data.forEach((item, index) => {
+        if (!/\b(?:total|combined|overall|all[- ]?in|service load|total cost)\b/i.test(item?.label || '')) return;
+        const others = data.filter((_, otherIndex) => otherIndex !== index);
+        if (others.length < 2 || !others.every((other) => Number.isFinite(other?.value) && Number.isFinite(other?.benchmark))) return;
+        const valueSum = others.reduce((sum, other) => sum + other.value, 0);
+        const benchmarkSum = others.reduce((sum, other) => sum + other.benchmark, 0);
+        if (nearlyEqual(item.value, valueSum) && nearlyEqual(item.benchmark, benchmarkSum)) {
+          errors.push(
+            `data[${index}] is a derived total of the other dumbbell rows, not an independent series. ` +
+            'Use composition.compared so the component segments visibly add to the group total instead of plotting the sum as another datapoint.'
+          );
+        }
+      });
       break;
     case 'relationship.converging-signals':
       validateConvergingSignals(spec, data, errors);
@@ -1344,6 +1406,10 @@ function validateRecipe(spec, errors, warnings) {
       if (count < 3) errors.push('trend.line requires at least 3 data items.');
       else if (count < 5) warnings.push('trend.line is usually clearer with at least 5 data points.');
       requireNumericValues(spec, errors);
+      if (count === 3 && data[0]?.value === 0 && data[0]?.valueStatus === 'derived' &&
+          data.slice(1).every((item) => Number.isFinite(item?.value) && item.value > 0)) {
+        errors.push('trend.line cannot use a derived zero as a synthetic pre-event time anchor when only two subsequent positive states are available. Compare the dated observed states directly and use a real denominator, total, or benchmark for scale orientation.');
+      }
       break;
     case 'trend.stacked': {
       if (count < 3 || count > 24) errors.push('trend.stacked requires 3 to 24 ordered periods.');
@@ -1370,6 +1436,43 @@ function validateRecipe(spec, errors, warnings) {
       }
       if (spec.measure?.scale !== 'linear') {
         errors.push('trend.stacked requires a linear scale because logarithmic stacking is not additive geometry.');
+      }
+      break;
+    }
+    case 'composition.compared': {
+      if (count < 2 || count > 8) errors.push('composition.compared requires 2 to 8 groups.');
+      const firstSegments = Array.isArray(data[0]?.segments) ? data[0].segments : [];
+      const categoryLabels = firstSegments.map((segment) => normalizeEditorialValue(segment?.label)).filter(Boolean);
+      if (categoryLabels.length < 2 || categoryLabels.length > 6) {
+        errors.push('composition.compared requires 2 to 6 additive segment categories per group.');
+      }
+      data.forEach((item, index) => {
+        if (!Array.isArray(item?.segments)) {
+          errors.push(`data[${index}].segments is required for composition.compared.`);
+          return;
+        }
+        const labels = item.segments.map((segment) => normalizeEditorialValue(segment?.label)).filter(Boolean);
+        if (labels.length !== categoryLabels.length || labels.some((label, categoryIndex) => label !== categoryLabels[categoryIndex])) {
+          errors.push(`data[${index}].segments must use the same category labels and order as data[0].segments for composition.compared.`);
+        }
+        const total = item.segments.reduce((sum, segment) => sum + (Number.isFinite(segment?.value) ? segment.value : 0), 0);
+        if (total <= 0) errors.push(`data[${index}].segments must sum to a value greater than zero for composition.compared.`);
+      });
+      if (spec.measure?.valueMode && spec.measure.valueMode !== 'level') {
+        errors.push('composition.compared requires measure.valueMode level because every segment is an additive amount.');
+      }
+      if (spec.measure?.baseline !== 'zero') {
+        errors.push('composition.compared requires measure.baseline zero so group totals and components share one origin.');
+      }
+      if (spec.measure?.scale !== 'linear') {
+        errors.push('composition.compared requires a linear scale because segment length is additive.');
+      }
+      const hasNarrowSegment = data.some((item) => {
+        const total = (item?.segments || []).reduce((sum, segment) => sum + (Number.isFinite(segment?.value) ? segment.value : 0), 0);
+        return total > 0 && (item?.segments || []).some((segment) => segment.value / total * 100 < 11);
+      });
+      if (spec.options.showLabels !== false && (spec.options.labelMode === 'outside' || (spec.options.labelMode === 'auto' && hasNarrowSegment)) && spec.options.showLegend) {
+        warnings.push('composition.compared moves the entire segment-label family outside when any segment is too narrow. The direct colored labels replace the legend; set showLegend false to avoid redundant category identification.');
       }
       break;
     }
@@ -1402,6 +1505,12 @@ function validateRecipe(spec, errors, warnings) {
       }
       const sum = data.reduce((total, item) => total + (typeof item?.value === 'number' ? item.value : 0), 0);
       if (spec.measure?.unit === '%' && Math.abs(sum - 100) > 0.5) warnings.push(`Donut percentages total ${sum}, not 100.`);
+      if (spec.options.showLabels && spec.options.showLegend) {
+        warnings.push('composition.donut with direct labels normally does not need a duplicate legend. Prefer leader-line labels on the slices and disable the legend unless it adds distinct information.');
+      }
+      if (!spec.options.showLabels && !spec.options.showLegend) {
+        errors.push('composition.donut requires direct slice labels or a legend; do not leave segment identity discoverable only by color or tooltip.');
+      }
       break;
     }
     case 'composition.stacked': {
@@ -1461,7 +1570,7 @@ function validateRecipe(spec, errors, warnings) {
       if (count < 3 || count > 100) errors.push('ranking.horizontal requires 3 to 100 data items.');
       requireNumericValues(spec, errors);
       if (spec.options.showLabels === false) {
-        warnings.push('ranking.horizontal normally keeps per-bar numeric labels visible; do not disable labels merely to work around layout collisions.');
+        errors.push('ranking.horizontal requires per-bar numeric labels. Keep category names on the axis and place values at the bar endpoint; do not hide values or bake them into category labels as a layout workaround.');
       }
       break;
     case 'status.grid':
@@ -1624,6 +1733,16 @@ function validateValueRepresentation(spec, errors, warnings) {
   }
   if (!measure.valueMode) return;
 
+  const normalizedChangeCopy = `${measure.quantity || ''} ${measure.axisTitle || ''} ${spec.title || ''}`;
+  const signedPercentMarks = isPercentUnit(measure) && (spec.data || []).some((item) =>
+    Number(item?.value) < 0 || /^[+\-−]/.test(String(item?.displayValue || '').trim())
+  );
+  if (measure.valueMode === 'level' && signedPercentMarks && /\b(?:change|growth|decline|increase|decrease|fell|rose|grew|dropped)\b/i.test(normalizedChangeCopy)) {
+    errors.push(
+      'Percentage changes cannot be declared as measure.valueMode level. Use the tangible before/after levels when they are reported or retrievable; otherwise declare relative-change with the required availability evidence.'
+    );
+  }
+
   if (!measure.levelAvailability) {
     errors.push(
       'measure.levelAvailability is required when measure.valueMode is declared. Record whether actual levels are reported, retrievable, unavailable, incomparable, or not applicable.'
@@ -1650,6 +1769,15 @@ function validateValueRepresentation(spec, errors, warnings) {
     if (syntheticBaselineIndex !== -1) {
       errors.push(
         `data[${syntheticBaselineIndex}] is a synthetic 0% baseline. Plot only reported relative observations, retrieve the tangible levels, or omit the story.`
+      );
+    }
+    const tangibleBeforeAfterFact = (spec.supportingFacts || []).find((fact) => {
+      const text = `${fact?.value || ''} ${fact?.label || ''}`;
+      return /(?:→|->|\bfrom\b.+\bto\b)/i.test(text) && containsTangibleMagnitude(text);
+    });
+    if (tangibleBeforeAfterFact) {
+      errors.push(
+        'A supporting fact already contains tangible before/after levels for this relative-change story. Promote those levels into primary geometry and keep the percentage change as secondary context.'
       );
     }
   }
@@ -2219,6 +2347,29 @@ function validateEditorialEconomy(spec, errors, warnings) {
   if (/\b(?:input[.]txt|input brief|the brief|weekly source text|source text|internal compilation)\b/i.test(visibleCopy)) {
     errors.push(
       'Presentation copy cannot expose internal provenance such as “the brief”, input.txt, source text, or an internal compilation. State the real-world finding directly and attribute an underlying publication/dataset only when it is an actual source.'
+    );
+  }
+  if (/\b(?:attack set|comparison set|orientation signal|model shift pressure|risk signal)\b/i.test(`${spec.title || ''} ${spec.subtitle || ''}`)) {
+    warnings.push('Title/subtitle uses analytical shorthand rather than reader-facing language. Name the concrete object, event, or quantity directly.');
+  }
+  if (spec.source?.url && /^(?:kommersant|коммерсантъ?|ъ)$/i.test(String(spec.source?.name || '').trim())) {
+    errors.push('A linked article source must use the reader-facing article/page title in source.name, not only the publisher name or sigil. The renderer already adds “Source:”.');
+  }
+
+  const notationFields = [
+    ...(spec.data || []).flatMap((item) => [item?.displayValue, item?.benchmarkDisplayValue, item?.gapDisplayValue]),
+    spec.emphasis?.displayValue,
+    ...(spec.supportingFacts || []).map((fact) => fact?.value)
+  ].filter(Boolean);
+  const notationKinds = new Set(notationFields.map((value) => {
+    const text = String(value);
+    if (/\b(?:pp|percentage\s+points?)\b/i.test(text)) return 'percentage-points';
+    if (/%|\bpercent\b/i.test(text)) return 'percent';
+    return null;
+  }).filter(Boolean));
+  if (notationKinds.size > 1) {
+    errors.push(
+      'One chart mixes percentage-point notation with percent-rate notation in visible numeric labels. Keep visible numeric labels in one notation family; when the mathematical distinction matters, explain it in prose or choose geometry that does not present pp and % as peer labels.'
     );
   }
 

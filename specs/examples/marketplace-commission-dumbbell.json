@@ -18,7 +18,6 @@
       "benchmarkDisplayValue": "12%",
       "value": 18,
       "displayValue": "18%",
-      "gapDisplayValue": "+6 pp",
       "tone": "critical"
     },
     {
@@ -30,7 +29,6 @@
       "benchmarkDisplayValue": "14%",
       "value": 17,
       "displayValue": "17%",
-      "gapDisplayValue": "+3 pp",
       "tone": "warning"
     },
     {
@@ -42,7 +40,6 @@
       "benchmarkDisplayValue": "16%",
       "value": 21,
       "displayValue": "21%",
-      "gapDisplayValue": "+5 pp",
       "tone": "critical"
     },
     {
@@ -54,7 +51,6 @@
       "benchmarkDisplayValue": "19%",
       "value": 18,
       "displayValue": "18%",
-      "gapDisplayValue": "−1 pp",
       "tone": "positive"
     },
     {
@@ -66,7 +62,6 @@
       "benchmarkDisplayValue": "11%",
       "value": 13,
       "displayValue": "13%",
-      "gapDisplayValue": "+2 pp",
       "tone": "warning"
     },
     {
