@@ -16,13 +16,20 @@ verified evidence
   -> semantic ChartSpec
   -> Tool API validation
   -> deterministic renderer
-  -> browser diagnostics
-  -> final HTML/PNG delivery artifacts
+  -> static capture diagnostics
+  -> final PNG artifact
 ```
 
 Chart authors provide evidence, calculations, editorial meaning, workflow selection, and semantic `ChartSpec` values. The engine owns HTML structure, CSS, typography, chart-library configuration, coordinates, responsive layout, map geometry, callout placement, diagnostics, and capture behavior.
 
 Generated HTML is not an editable source of truth.
+
+Browser rendering is not yet fully offline. Core amCharts scripts are pinned to
+a repository-reviewed release so upstream library upgrades cannot silently
+change output, but the Mukta webfont and Russia geodata still resolve from
+provider-managed remote assets. Offline or air-gapped rendering therefore
+requires a separate dependency-packaging change rather than ad hoc copies of
+third-party assets.
 
 ## Supported batch input
 
@@ -49,6 +56,8 @@ Current workflow families are:
 
 The semantic contract is owned by `schemas/chart-spec.schema.json`, `recipes/catalog.json`, and Tool API validation. Unknown or forbidden fields are rejected rather than treated as hidden renderer controls.
 
+For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. The `auto` image profile is recipe-aware; fixed `landscape`, `square`, and `portrait` profiles express publishing shape without exposing arbitrary pixel geometry to chart authors.
+
 ## Supported batch lifecycle
 
 The maintained run lifecycle is:
@@ -63,7 +72,7 @@ run:init
   -> run:finalize
 ```
 
-The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures final PNGs, and writes run-level manifest/plan/QA artifacts.
+The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures final PNGs using the same recipe-aware static image profile policy, and writes run-level manifest/plan/QA artifacts.
 
 Publication uses a staged directory. A failed rebuild must leave the previous valid delivery untouched. A successful chart rebuild invalidates downstream artifacts that would embed stale chart images.
 
@@ -100,6 +109,7 @@ The current supported product does not treat these as normal authoring behavior:
 - treating external-search silence as proof that supplied editorial evidence is false;
 - treating an optional PowerPoint deck as mandatory when the requested deliverable does not include one;
 - treating ignored run artifacts as repository architecture or durable source-of-truth documents.
+- describing the current browser renderer as fully offline-reproducible while remote font and regional-geodata dependencies remain.
 
 ## Verification
 

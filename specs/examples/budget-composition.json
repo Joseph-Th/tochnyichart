@@ -45,23 +45,6 @@
     "value": "60%",
     "label": "Housing and food"
   },
-  "supportingFacts": [
-    {
-      "value": "35%",
-      "label": "Housing is the largest category.",
-      "tone": "primary"
-    },
-    {
-      "value": "25%",
-      "label": "Food is the second-largest category.",
-      "tone": "secondary"
-    },
-    {
-      "value": "40%",
-      "label": "Transport and other spending combined.",
-      "tone": "neutral"
-    }
-  ],
   "narrative": {
     "frame": "comparison",
     "density": "editorial",
@@ -69,7 +52,7 @@
   },
   "options": {
     "height": "standard",
-    "showLegend": true,
+    "showLegend": false,
     "showLabels": true,
     "animate": true
   },

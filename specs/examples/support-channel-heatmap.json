@@ -1,0 +1,50 @@
+{
+  "version": "2.0",
+  "recipe": "matrix.heat",
+  "title": "Payment Issues Dominate Across Support Channels",
+  "subtitle": "Reported ticket counts show the heaviest concentration in mobile payment cases.",
+  "date": "2026-08-20",
+  "source": {
+    "name": "Illustrative support operations fixture",
+    "period": "July 2026"
+  },
+  "data": [
+    { "label": "Payment", "column": "Mobile", "value": 148, "displayValue": "148 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Payment", "column": "Web", "value": 112, "displayValue": "112 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Payment", "column": "Partner", "value": 73, "displayValue": "73 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Delivery", "column": "Mobile", "value": 84, "displayValue": "84 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Delivery", "column": "Web", "value": 61, "displayValue": "61 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Delivery", "column": "Partner", "value": 97, "displayValue": "97 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Returns", "column": "Mobile", "value": 52, "displayValue": "52 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Returns", "column": "Web", "value": 47, "displayValue": "47 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" },
+    { "label": "Returns", "column": "Partner", "value": 38, "displayValue": "38 tickets", "quantity": "support ticket count", "scope": "customer support cases", "period": "July 2026" }
+  ],
+  "measure": {
+    "quantity": "support ticket count",
+    "unit": "tickets",
+    "axisTitle": "Support tickets",
+    "valueMode": "level",
+    "levelAvailability": "reported",
+    "decimals": 0,
+    "baseline": "auto",
+    "scale": "linear"
+  },
+  "narrative": {
+    "frame": "comparison",
+    "density": "editorial",
+    "emphasis": "matrix"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": true,
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "support-channel-heatmap",
+    "topic": "support ticket concentration",
+    "dataPeriod": "July 2026",
+    "keyFinding": "Payment issues were the largest ticket category across all three support channels, with the highest concentration on mobile."
+  }
+}

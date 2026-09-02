@@ -106,6 +106,15 @@
     align-content: start;
 }
 
+/* Outside labels need predictable top-origin lanes at natural height. Fixed
+   publishing canvases explicitly enlarge the chart stage, so center the whole
+   comparison block within that additional field instead of leaving a large
+   unused middle between the rows and the source rail. */
+.tochnyi-chart-container[data-canvas-fit-mode="fill"]
+    .tochnyi-compared-composition-stage[data-compared-label-family="outside"] {
+    align-content: center;
+}
+
 .tochnyi-compared-key {
     display: flex;
     flex-wrap: wrap;
@@ -1457,6 +1466,108 @@ a.tochnyi-analysis:hover {
 .tochnyi-stacked-segment span { margin-top: 5px; font-size: 14px; font-weight: 600; line-height: 1.1; }
 .tochnyi-stacked-segment small { margin-top: 5px; font-size: 13px; font-weight: 500; line-height: 1.1; }
 
+.tochnyi-heat-stage {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+    padding: 24px 32px 22px;
+}
+
+.tochnyi-heat-grid {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.25fr) repeat(var(--tochnyi-heat-columns), minmax(72px, 1fr));
+    gap: 5px;
+    align-content: center;
+    min-width: 0;
+}
+
+.tochnyi-heat-corner,
+.tochnyi-heat-column-label,
+.tochnyi-heat-row-label {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    color: #4e5962;
+    font-weight: 700;
+    line-height: 1.08;
+}
+
+.tochnyi-heat-corner {
+    justify-content: flex-end;
+    padding: 0 8px 8px 2px;
+    font-size: 12px;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.tochnyi-heat-column-label {
+    justify-content: center;
+    padding: 0 6px 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.tochnyi-heat-row-label {
+    justify-content: flex-end;
+    padding: 8px 10px 8px 2px;
+    font-size: 15px;
+    text-align: right;
+}
+
+.tochnyi-heat-cell {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 64px;
+    padding: 8px 5px;
+    border: 1px solid rgba(0, 61, 122, 0.16);
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.20);
+    text-align: center;
+}
+
+.tochnyi-heat-value {
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+}
+
+.tochnyi-heat-legend {
+    display: grid;
+    grid-template-columns: auto minmax(120px, 260px) auto;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+}
+
+.tochnyi-heat-legend-ramp {
+    height: 11px;
+    border: 1px solid rgba(0, 61, 122, 0.22);
+    border-radius: 999px;
+}
+
+.tochnyi-heat-legend-value {
+    color: #46525c;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.tochnyi-heat-legend-label {
+    grid-column: 1 / -1;
+    color: #68737c;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
 .tochnyi-stacked-binary-labels {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1865,6 +1976,10 @@ a.tochnyi-analysis:hover {
 
 .tochnyi-map-region:hover { fill-opacity: 0.96; }
 
+@media (prefers-reduced-motion: reduce) {
+    .tochnyi-map-region { transition: none; }
+}
+
 .tochnyi-map-stage.has-callouts .tochnyi-map-canvas {
     right: 214px;
     left: 214px;
@@ -2177,10 +2292,37 @@ a.tochnyi-analysis:hover {
     .tochnyi-stacked-segment strong { font-size: 20px; }
     .tochnyi-stacked-segment span { font-size: 12px; }
     .tochnyi-stacked-segment small { font-size: 11px; }
+    .tochnyi-heat-stage { gap: 14px; padding: 18px 12px 16px; }
+    .tochnyi-heat-grid {
+        grid-template-columns: minmax(82px, 1.08fr) repeat(var(--tochnyi-heat-columns), minmax(0, 1fr));
+        gap: 4px;
+    }
+    .tochnyi-heat-corner { padding: 0 4px 6px 0; font-size: 10px; overflow-wrap: anywhere; }
+    .tochnyi-heat-column-label { padding: 0 3px 6px; font-size: 11px; overflow-wrap: anywhere; }
+    .tochnyi-heat-row-label { padding: 6px 6px 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+    .tochnyi-heat-cell { min-height: 58px; padding: 6px 3px; }
+    .tochnyi-heat-value { font-size: 13px; overflow-wrap: anywhere; }
+    .tochnyi-heat-legend {
+        grid-template-columns: auto minmax(90px, 1fr) auto;
+        width: min(100%, 360px);
+        margin-inline: auto;
+    }
 }
 
 @media (max-width: 520px) {
     .tochnyi-map-stage.is-narrow .tochnyi-map-callouts { grid-template-columns: 1fr; }
+    .tochnyi-heat-stage { padding-inline: 8px; }
+    .tochnyi-heat-grid {
+        grid-template-columns: minmax(68px, 0.95fr) repeat(var(--tochnyi-heat-columns), minmax(0, 1fr));
+        gap: 3px;
+    }
+    .tochnyi-heat-corner { font-size: 9px; }
+    .tochnyi-heat-column-label,
+    .tochnyi-heat-row-label { font-size: 10px; }
+    .tochnyi-heat-cell { min-height: 54px; border-radius: 5px; }
+    .tochnyi-heat-value { font-size: 12px; }
+    .tochnyi-heat-legend-value { font-size: 10px; }
+    .tochnyi-heat-legend-label { font-size: 9px; }
 }
 
 .tochnyi-svg-label-unresolved {

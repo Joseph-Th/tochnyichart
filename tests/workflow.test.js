@@ -23,6 +23,21 @@ const {
   toolApiManifest
 } = require('../renderer/agent-workflow');
 const { renderSpecFile } = require('../renderer/render');
+const {
+  createStaticImage,
+  publishImage,
+  validateImageOutputPath,
+  defaultImageOutputPath
+} = require('../renderer/image-workflow');
+const { resolveImageProfile } = require('../renderer/image-profiles');
+const { RUSSIA_GEODATA_URL } = require('../renderer/runtime-dependencies');
+const TochnyiMaps = require('../lib/tochnyi-maps');
+const {
+  STANDARD_STATIC_VIEWPORT,
+  REGIONAL_STATIC_VIEWPORT,
+  STANDARD_DIAGNOSTIC_VIEWPORTS,
+  REGIONAL_DIAGNOSTIC_VIEWPORTS
+} = require('../renderer/workflow-contract');
 
 const root = path.join(__dirname, '..');
 const examplesDir = path.join(root, 'specs', 'examples');
@@ -69,6 +84,21 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.sharedContract.sourceEnrichment.routingRule, /three or more named administrative regions/i);
   assert.match(orientation.sharedContract.visualEvidenceContract.regionalDensityRule, /three or more distinct named administrative regions/i);
   assert.match(orientation.sharedContract.visualEvidenceContract.normalizedOrientationRule, /derived complement.*not independent/i);
+  assert.match(orientation.sharedContract.staticImageContract.primaryArtifactRule, /final PNG.*primary chart artifact/i);
+  assert.match(orientation.sharedContract.staticImageContract.visibleEvidenceRule, /Never rely on hover, tooltip, click, animation/i);
+  assert.match(orientation.sharedContract.staticImageContract.treatmentRule, /renderer may add deterministic ruler guides, period ticks/i);
+  assert.equal(orientation.sharedContract.runtimeDependencies.offlineReady, false);
+  assert.equal(
+    orientation.sharedContract.runtimeDependencies.dependencies.find((entry) => entry.id === 'amcharts5-core').version,
+    '5.20.3'
+  );
+  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'quick-scan').density, 'minimal');
+  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'standard-read').density, 'editorial');
+  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'close-read').density, 'detailed');
+  assert.match(orientation.sharedContract.readingIntent.guard, /Never choose minimal.*fit/i);
+  assert.ok(orientation.sharedContract.recipeAmbiguityRules.some((entry) =>
+    entry.candidates.includes('matrix.heat') && entry.candidates.includes('ranking.horizontal')
+  ));
   assert.match(orientation.sharedContract.sourceEnrichment.exactCountRule, /dot-counting|third comparable count/i);
   assert.match(orientation.sharedContract.sourceEnrichment.componentRule, /composition\.components|begins at zero/i);
   assert.equal(orientation.batchWorkflow.input, 'input/');
@@ -90,6 +120,8 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.regional.guideCommand, /regional-guide russia/);
   assert.equal(orientation.standard.workflow, 'standard-chart');
   assert.match(orientation.standard.renderCommand, /render <spec\.json>/);
+  assert.match(orientation.standard.imageCommand, /image <spec\.json>/);
+  assert.match(orientation.regional.imageCommand, /image <spec\.json>/);
 
   const standard = standardAgentGuide();
   assert.equal(standard.workflow, 'standard-chart');
@@ -101,6 +133,10 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.area-squares'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.converging-signals'), true);
+  assert.ok(standard.ambiguityRules.some((entry) =>
+    entry.candidates.includes('composition.components') && entry.candidates.includes('flow.waterfall')
+  ));
+  assert.match(standard.readingIntent.rule, /after the evidence and recipe are settled/i);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least three independent quantitative observations/i);
   assert.match(standard.visualEvidenceContract.standalonePairRule, /requires at least three independent values/i);
   assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
@@ -117,6 +153,11 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(standard.visualEvidenceContract.referenceClarityRule, /meaningful viewer-facing label|remove the line/i);
   assert.match(standard.visualEvidenceContract.notationConsistencyRule, /do not mix pp.*percent-rate.*labels/i);
   assert.match(standard.visualEvidenceContract.supportingFactsRule, /regional or peer observations/i);
+  assert.match(standard.staticImageContract.directLabelRule, /direct labels and visible orientation/i);
+  assert.match(standard.staticImageContract.interactionRule, /Interactivity never rescues.*PNG/i);
+  assert.match(standard.staticImageContract.profileRule, /publishing intent.*landscape.*square.*portrait/i);
+  assert.equal(standard.runtimeDependencies.offlineReady, false);
+  assert.match(standard.commands.image, /--profile auto\|landscape\|square\|portrait/);
   assert.match(standard.sourceEnrichment.normalizedOrientationRule, /same-unit peer|regional observation/i);
   assert.ok(standard.authoringRules.some((rule) => /source-family sweep/i));
   assert.match(standard.sourceEnrichment.standalonePairRule, /merge,? or omit/i);
@@ -133,6 +174,38 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.ok(regional.neverAuthor.includes('coordinates or pixel positions'));
   assert.deepEqual(regional.regionSet.nonContinentalRegionIds, ['RU-KGD', 'RU-SAK']);
   assert.match(regional.authoringRule, /permanently omit Kaliningrad/i);
+  assert.match(regional.commands.image, /image <spec\.json>/);
+});
+
+test('fixed image profile failure preserves the prior PNG and gives model-safe guidance', () => {
+  const tempDir = tempDirectory('tochnyi-static-profile-failure-');
+  const outputPath = path.join(tempDir, 'chart.png');
+  try {
+    fs.writeFileSync(outputPath, 'previous-valid-image', 'utf8');
+    assert.throws(() => createStaticImage(example('ai95-price-spike.json'), outputPath, {
+      projectRoot: root,
+      profile: 'square',
+      dependencies: {
+        renderStandard(specPath, htmlPath) {
+          fs.writeFileSync(htmlPath, '<!DOCTYPE html><div>fixture</div>', 'utf8');
+          return { workflow: 'standard-chart', recipe: 'comparison.benchmark-gap', warnings: [] };
+        },
+        capture() {
+          throw new Error('PNG capture refused because content still exceeds the canvas by 0px horizontally and 80px vertically.');
+        }
+      }
+    }), /profile "square" \(1080×1080\).*Use the auto profile.*do not add pixel geometry/is);
+    assert.equal(fs.readFileSync(outputPath, 'utf8'), 'previous-valid-image');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('default image output path rejects an unsafe metadata slug before writing', () => {
+  assert.throws(() => defaultImageOutputPath(root, {
+    title: 'Safe title',
+    metadata: { slug: '../escape' }
+  }, { runId: 'image-path-safety' }), /Artifact slug/);
 });
 
 test('tool API manifest exposes a narrow chart-author surface', () => {
@@ -172,6 +245,9 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.waterfallContract.reconciliation, /reconcile/i);
   assert.match(manifest.sharedScaleContract.rejectionRule, /split the evidence into separate charts/i);
   assert.match(manifest.valueRepresentationContract.exceptionRule, /normalizationNote/i);
+  assert.equal(manifest.commands.image.includes('image <spec.json>'), true);
+  assert.deepEqual(manifest.imageProfiles.map((profile) => profile.id), ['auto', 'landscape', 'square', 'portrait']);
+  assert.deepEqual(manifest.imageProfiles[0].regionalViewport, { width: 1450, height: 679 });
 
   const guide = standardAgentGuide('russia');
   guide.selectionRules.forEach((entry) => {
@@ -186,7 +262,12 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.18');
+  assert.equal(manifest.version, '1.21');
+  assert.equal(manifest.readingIntent.modes.length, 3);
+  assert.ok(manifest.recipeAmbiguityRules.length >= 6);
+  assert.equal(manifest.runtimeDependencies.offlineReady, false);
+  assert.equal(TochnyiMaps.getRegionSet('russia').geodataScript, RUSSIA_GEODATA_URL);
+  assert.match(manifest.staticImageContract.visibleEvidenceRule, /tooltip|panning/i);
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
@@ -199,6 +280,159 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.match(manifest.batchWorkflow.retentionRule, /input\/ is also retained/i);
   assert.match(manifest.batchWorkflow.retentionRule, /ignored by Git/i);
   assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);
+  assert.equal(manifest.imageProfiles.find((profile) => profile.id === 'square').width, 1080);
+});
+
+test('static image profiles are semantic publishing choices with engine-owned dimensions', () => {
+  assert.deepEqual(resolveImageProfile('auto', 'ranking.horizontal').viewport, STANDARD_STATIC_VIEWPORT);
+  assert.deepEqual(resolveImageProfile('auto', 'map.regional').viewport, REGIONAL_STATIC_VIEWPORT);
+  assert.deepEqual(resolveImageProfile('square', 'trend.line').viewport, { width: 1080, height: 1080 });
+  assert.equal(resolveImageProfile('portrait', 'trend.line').adaptive, false);
+  assert.equal(STANDARD_DIAGNOSTIC_VIEWPORTS[0], STANDARD_STATIC_VIEWPORT);
+  assert.equal(REGIONAL_DIAGNOSTIC_VIEWPORTS[0], REGIONAL_STATIC_VIEWPORT);
+  assert.throws(() => resolveImageProfile('poster', 'trend.line'), /Unknown image profile/);
+});
+
+test('static image workflow routes a standard spec, captures a strict profile, and retains no HTML artifact', () => {
+  const tempDir = tempDirectory('tochnyi-static-image-');
+  const outputPath = path.join(tempDir, 'chart.png');
+  let capturedOptions = null;
+  try {
+    const result = createStaticImage(example('ai95-price-spike.json'), outputPath, {
+      projectRoot: root,
+      profile: 'square',
+      dependencies: {
+        renderStandard(specPath, htmlPath) {
+          fs.writeFileSync(htmlPath, '<!DOCTYPE html><div>fixture</div>', 'utf8');
+          return { workflow: 'standard-chart', recipe: 'comparison.benchmark-gap', warnings: [] };
+        },
+        renderRegional() {
+          throw new Error('standard image must not route through regional rendering');
+        },
+        capture(htmlPath, pngPath, options) {
+          capturedOptions = options;
+          fs.writeFileSync(pngPath, 'png-fixture', 'utf8');
+          return {
+            bytes: 11,
+            dimensions: { width: 1080, height: 1080 },
+            diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0, labelsChecked: 8, marksChecked: 4 } },
+            chartAttributes: {},
+            canvasAttributes: {
+              'data-canvas-fit-mode': 'fill',
+              'data-canvas-fit-delta': '120'
+            }
+          };
+        },
+        publish: publishImage
+      }
+    });
+    assert.equal(result.workflow, 'standard-chart');
+    assert.equal(result.profile.id, 'square');
+    assert.equal(result.profile.adaptive, false);
+    assert.equal(result.profile.fitMode, 'fill');
+    assert.equal(result.profile.stageDelta, 120);
+    assert.equal(result.profile.expanded, false);
+    assert.equal(result.htmlRetained, false);
+    assert.equal(result.diagnostics.status, 'pass');
+    assert.deepEqual(capturedOptions.viewport, { width: 1080, height: 1080 });
+    assert.equal(capturedOptions.autoFit, true);
+    assert.equal(capturedOptions.fillViewport, true);
+    assert.equal(capturedOptions.adaptiveCanvas, false);
+    assert.equal(fs.readFileSync(outputPath, 'utf8'), 'png-fixture');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('static image workflow auto-routes regional specs and validates final leader geometry', () => {
+  const tempDir = tempDirectory('tochnyi-static-regional-image-');
+  const outputPath = path.join(tempDir, 'map.png');
+  try {
+    const result = createStaticImage(example('russia-regional-map.json'), outputPath, {
+      projectRoot: root,
+      profile: 'auto',
+      dependencies: {
+        renderStandard() {
+          throw new Error('regional image must not route through standard rendering');
+        },
+        renderRegional(specPath, htmlPath) {
+          fs.writeFileSync(htmlPath, '<!DOCTYPE html><div>map fixture</div>', 'utf8');
+          return { workflow: 'regional-breakdown', recipe: 'map.regional', warnings: [] };
+        },
+        capture(htmlPath, pngPath, options) {
+          fs.writeFileSync(pngPath, 'map-png-fixture', 'utf8');
+          return {
+            bytes: 15,
+            dimensions: { ...options.viewport },
+            diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0 } },
+            chartAttributes: {
+              'data-map-workflow': 'regional-breakdown',
+              'data-map-leader-rendered-crossings': '0',
+              'data-map-port-direction-reversal-routes': '0',
+              'data-map-port-control-reversal-routes': '0',
+              'data-map-port-terminal-box-turn-routes': '0'
+            }
+          };
+        },
+        publish: publishImage
+      }
+    });
+    assert.equal(result.workflow, 'regional-breakdown');
+    assert.equal(result.profile.id, 'auto');
+    assert.deepEqual(result.profile.requestedViewport, { width: 1450, height: 679 });
+    assert.equal(result.regionalDiagnostics.renderedCrossings, 0);
+    assert.equal(fs.existsSync(outputPath), true);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('static image publication requires PNG output and replaces only after a valid staged artifact exists', () => {
+  const tempDir = tempDirectory('tochnyi-static-publish-');
+  const staged = path.join(tempDir, 'staged.png');
+  const target = path.join(tempDir, 'final.png');
+  try {
+    fs.writeFileSync(staged, 'new-image', 'utf8');
+    fs.writeFileSync(target, 'previous-image', 'utf8');
+    publishImage(staged, target);
+    assert.equal(fs.readFileSync(target, 'utf8'), 'new-image');
+    assert.throws(() => validateImageOutputPath(path.join(tempDir, 'chart.jpg')), /must use a \.png filename/);
+    assert.equal(fs.readdirSync(tempDir).some((name) => /\.building-|\.previous-/.test(name)), false);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('catalog gives an LLM recipe definitions plus compact static-image decision support', () => {
+  const cliPath = path.join(root, 'tool-api', 'chart.js');
+  const result = spawnSync(process.execPath, [cliPath, 'catalog'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const catalog = JSON.parse(result.stdout);
+  assert.ok(Array.isArray(catalog.recipes) && catalog.recipes.length > 0);
+  assert.deepEqual(catalog.imageProfiles.map((profile) => profile.id), ['auto', 'landscape', 'square', 'portrait']);
+  assert.equal(catalog.runtimeDependencies.offlineReady, false);
+  assert.equal(catalog.decision.primaryKey, 'quantitative relationship and data shape');
+  assert.ok(Array.isArray(catalog.decision.selectionRules));
+  assert.ok(catalog.decision.selectionRules.some((entry) => entry.use === 'ranking.horizontal'));
+  assert.ok(Array.isArray(catalog.decision.ambiguityRules));
+  assert.ok(catalog.decision.ambiguityRules.some((entry) =>
+    entry.candidates.includes('trend.line') && entry.candidates.includes('timeline.duration')
+  ));
+  assert.equal(catalog.decision.readingIntent.modes.find((entry) => entry.intent === 'standard-read').density, 'editorial');
+  const standardRecipeIds = catalog.recipes
+    .map((recipe) => recipe.id)
+    .filter((id) => id !== 'map.regional')
+    .sort();
+  const guidedRecipeIds = [...new Set(catalog.decision.selectionRules.map((entry) => entry.use))].sort();
+  assert.deepEqual(guidedRecipeIds, standardRecipeIds, 'every production standard recipe must be reachable from the machine-readable selection guide');
+  const knownRecipeIds = new Set(catalog.recipes.map((recipe) => recipe.id));
+  catalog.decision.ambiguityRules.forEach((entry) => {
+    assert.ok(entry.candidates.length >= 2);
+    entry.candidates.forEach((candidate) => assert.equal(knownRecipeIds.has(candidate), true, `unknown ambiguity candidate ${candidate}`));
+  });
+  assert.match(catalog.decision.staticImagePriorities.visibleEvidence, /static image|tooltip|panning/i);
+  assert.match(catalog.decision.staticImagePriorities.directLabels, /direct labels/i);
+  assert.match(catalog.decision.staticImagePriorities.density, /simplest visual treatment/i);
 });
 
 test('workflow validation reports the correct route for each recipe family', () => {

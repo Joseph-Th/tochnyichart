@@ -11,12 +11,9 @@ const {
   collectWorkflowWarnings,
   workflowError
 } = require('./workflow');
+const { REGIONAL_DIAGNOSTIC_VIEWPORTS } = require('./workflow-contract');
 
-const REGIONAL_WORKFLOW_VIEWPORTS = Object.freeze([
-  Object.freeze({ width: 1450, height: 679 }),
-  Object.freeze({ width: 768, height: 900 }),
-  Object.freeze({ width: 480, height: 900 })
-]);
+const REGIONAL_WORKFLOW_VIEWPORTS = REGIONAL_DIAGNOSTIC_VIEWPORTS;
 
 function validateRegionalSpec(specPath) {
   return validateSpecFile(specPath, {
@@ -82,6 +79,25 @@ function summarizeDiagnosticRun(run) {
   };
 }
 
+function unnaturalRegionalRuns(runs) {
+  return (runs || []).filter((run) =>
+    (run.renderedCrossings || 0) > 0 ||
+    (run.directionReversalRoutes || 0) > 0 ||
+    (run.controlReversalRoutes || 0) > 0 ||
+    (run.terminalBoxTurnRoutes || 0) > 0
+  );
+}
+
+function assertNaturalRegionalRuns(runs) {
+  const unnaturalRoutes = unnaturalRegionalRuns(runs);
+  if (!unnaturalRoutes.length) return;
+  throw workflowError('Generated regional chart contains unnatural leader geometry.', {
+    valid: false,
+    errors: unnaturalRoutes,
+    warnings: []
+  });
+}
+
 function renderRegionalBreakdown(specPath, outputPath, options = {}) {
   const checked = validateRegionalSpec(specPath);
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..'));
@@ -112,19 +128,7 @@ function renderRegionalBreakdown(specPath, outputPath, options = {}) {
       warnings: []
     });
   }
-  const unnaturalRoutes = runs.filter((run) =>
-    (run.renderedCrossings || 0) > 0 ||
-    (run.directionReversalRoutes || 0) > 0 ||
-    (run.controlReversalRoutes || 0) > 0 ||
-    (run.terminalBoxTurnRoutes || 0) > 0
-  );
-  if (unnaturalRoutes.length) {
-    throw workflowError('Generated regional chart contains unnatural leader geometry.', {
-      valid: false,
-      errors: unnaturalRoutes,
-      warnings: []
-    });
-  }
+  assertNaturalRegionalRuns(runs);
 
   return {
     workflow: REGIONAL_WORKFLOW,
@@ -147,5 +151,7 @@ module.exports = {
   validateRegionalSpec,
   renderRegionalBreakdown,
   regionalAgentGuide: regionalWorkflowGuide,
-  summarizeDiagnosticRun
+  summarizeDiagnosticRun,
+  unnaturalRegionalRuns,
+  assertNaturalRegionalRuns
 };

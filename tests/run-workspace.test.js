@@ -273,6 +273,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     fs.writeFileSync(path.join(workspace.deliveryRoot, 'editorial-notes.txt'), 'preserve me');
 
     const calls = [];
+    const captures = [];
     function render(kind, specPath, htmlPath) {
       calls.push(`${kind}:${path.basename(specPath, '.json')}`);
       fs.writeFileSync(htmlPath, '<html data-rendered="true"></html>\n');
@@ -292,14 +293,35 @@ test('run chart builder renders selected stories in ledger order and writes QA a
         renderStandard: (specPath, htmlPath) => render('standard', specPath, htmlPath),
         renderRegional: (specPath, htmlPath) => render('regional', specPath, htmlPath),
         diagnose: () => ({ status: 'pass', runs: [{ diagnostics: { summary: { errors: 0, warnings: 0 } } }] }),
-        capture: (htmlPath, pngPath) => {
+        capture: (htmlPath, pngPath, options) => {
+          captures.push({ slug: path.basename(pngPath, '.png'), options });
           fs.writeFileSync(pngPath, 'png');
-          return { bytes: 3, dimensions: { width: 1200, height: 900 } };
+          const regional = path.basename(pngPath) === 'regional-story.png';
+          return {
+            bytes: 3,
+            dimensions: { ...options.viewport },
+            diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0 } },
+            chartAttributes: regional ? {
+              'data-map-workflow': 'regional-breakdown',
+              'data-map-leader-rendered-crossings': '0',
+              'data-map-port-direction-reversal-routes': '0',
+              'data-map-port-control-reversal-routes': '0',
+              'data-map-port-terminal-box-turn-routes': '0'
+            } : {}
+          };
         }
       }
     });
 
     assert.deepEqual(calls, ['standard:first-story', 'regional:regional-story']);
+    assert.deepEqual(captures.map((capture) => ({
+      slug: capture.slug,
+      viewport: capture.options.viewport,
+      adaptiveCanvas: capture.options.adaptiveCanvas
+    })), [
+      { slug: 'first-story', viewport: { width: 1200, height: 900 }, adaptiveCanvas: true },
+      { slug: 'regional-story', viewport: { width: 1450, height: 679 }, adaptiveCanvas: true }
+    ]);
     assert.equal(result.chartCount, 2);
     assert.equal(result.passed, true);
     const manifest = fs.readFileSync(result.manifestPath, 'utf8');
@@ -320,6 +342,15 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.deepEqual(presentationPlan.slides.map((slide) => slide.kind), ['chart', 'chart']);
     assert.deepEqual(presentationPlan.slides.map((slide) => slide.slug), ['first-story', 'regional-story']);
     assert.deepEqual(qa.charts.map((chart) => chart.slug), ['first-story', 'regional-story']);
+    assert.deepEqual(qa.charts.map((chart) => chart.image.requestedViewport), [
+      { width: 1200, height: 900 },
+      { width: 1450, height: 679 }
+    ]);
+    assert.ok(qa.charts.every((chart) => chart.image.profile === 'auto'));
+    assert.ok(qa.charts.every((chart) => chart.image.expanded === false));
+    assert.equal(qa.charts[0].image.regionalDiagnostics, null);
+    assert.equal(qa.charts[1].image.regionalDiagnostics.workflow, 'regional-breakdown');
+    assert.equal(qa.charts[1].image.regionalDiagnostics.renderedCrossings, 0);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'first-story.png')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'regional-story.png')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${runId}.pptx`)), false);

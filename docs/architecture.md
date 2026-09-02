@@ -49,7 +49,7 @@ tool-api/chart.js + ChartSpec contract
 deterministic chart engine
     |
     v
-HTML, diagnostics, and final PNG for the batch run
+final PNG, with disposable HTML and diagnostics when needed
 ```
 
 The Tool API exposes:
@@ -58,14 +58,17 @@ The Tool API exposes:
 - Workflow orientation and recipe guidance.
 - The `ChartSpec` schema and recipe catalog.
 - Validated examples.
-- Validation, rendering, diagnostics, and review commands.
+- A first-class static `image` command that validates, routes, renders, diagnoses the target capture, and publishes a PNG without retaining its temporary HTML shell.
+- Rendering, diagnostics, and review commands for HTML-level inspection.
 - Structured JSON results and failure signals.
 
 The Tool API does not inventory the complete batch `input/` source set or assemble the
 PowerPoint deck. It also does not expose implementation decisions. Chart authors
 do not choose chart-library configuration, HTML structure, CSS, typography,
 color policy, coordinates, responsive geometry, map projection, callout
-placement, or leader routing.
+placement, leader routing, or arbitrary image pixel dimensions. Authors may select a bounded publishing profile such as `auto`, `landscape`, `square`, or `portrait`; the renderer owns the actual canvas contract and fit behavior.
+
+For fixed publishing profiles, the output dimensions remain exact while the renderer may shrink or expand its internal chart stage to use the available canvas without clipping. This adaptation is reported as result metadata (`fitMode` and `stageDelta`) and is never an author-facing geometry parameter.
 
 The public entrypoint is:
 
@@ -93,6 +96,14 @@ It owns:
 - Regional projection, callout placement, and leader routing.
 - Browser diagnostics, screenshots, and performance checks.
 - Automated tests and fixture generation.
+
+The browser shell currently has an explicit external-runtime boundary. Core
+amCharts JavaScript is loaded from a version-pinned CDN release. The Mukta
+webfont and Russia geodata remain provider-managed remote dependencies, so the
+current capture stack is not an air-gapped/offline bundle. That dependency
+contract is machine-readable through the Tool API. Moving those assets local is
+a maintainer dependency/licensing change, not a ChartSpec option and not a
+reason for chart authors to edit generated HTML.
 
 Infrastructure work is performed only when the task explicitly concerns the engine, validation rules, rendering behavior, diagnostics, performance, tests, or extension of the Tool API.
 

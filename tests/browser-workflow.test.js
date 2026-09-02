@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const { validateSpec } = require('../renderer/validate');
 const { renderSpecFile } = require('../renderer/render');
 const {
@@ -16,6 +17,8 @@ const {
   renderRegionalBreakdown
 } = require('../renderer/regional-workflow');
 const TochnyiMaps = require('../lib/tochnyi-maps');
+const { createStaticImage } = require('../renderer/image-workflow');
+const { pngDimensions } = require('../renderer/capture');
 
 const root = path.join(__dirname, '..');
 const examplesDir = path.join(root, 'specs', 'examples');
@@ -53,6 +56,104 @@ test('standard and regional workflows pass browser comparison checks', { skip: b
     assert.ok(collisions.length > 0 && collisions.every((value) => value === 0));
     assert.ok(fallbacks.length > 0 && fallbacks.every((value) => value === 0));
     assert.ok(regional.diagnostics.runs.every((run) => run.workflow === 'regional-breakdown'));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('clustered scenarios use direct-labeled points instead of truncated columns', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-scenario-points-'));
+  try {
+    const outputPath = path.join(tempDir, 'scenario-points.html');
+    renderSpecFile(path.join(examplesDir, 'central-bank-scenarios.json'), outputPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.scenarioAttributes?.['data-scenario-mark-mode'], 'points');
+      assert.match(run.scenarioAttributes?.['data-scenario-mark-reason'] || '', /nonzero/);
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('public image CLI emits structured JSON and publishes the requested PNG', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-static-cli-'));
+  try {
+    const outputPath = path.join(tempDir, 'cli-landscape.png');
+    const cliPath = path.join(root, 'tool-api', 'chart.js');
+    const result = spawnSync(process.execPath, [
+      cliPath,
+      'image',
+      path.join(examplesDir, 'ai95-price-spike.json'),
+      outputPath,
+      '--profile',
+      'landscape'
+    ], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 30000,
+      env: { ...process.env, TOCHNYI_BROWSER: browser }
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.workflow, 'standard-chart');
+    assert.equal(payload.profile.id, 'landscape');
+    assert.deepEqual(payload.profile.actualDimensions, { width: 1200, height: 900 });
+    assert.ok(['fill', 'natural'].includes(payload.profile.fitMode));
+    if (payload.profile.fitMode === 'fill') assert.ok(payload.profile.stageDelta > 0);
+    assert.equal(payload.htmlRetained, false);
+    assert.equal(payload.diagnostics.errors, 0);
+    assert.equal(path.resolve(payload.outputPath), path.resolve(outputPath));
+    assert.deepEqual(pngDimensions(outputPath), { width: 1200, height: 900 });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('static image workflow produces an exact square PNG without retaining an HTML shell', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-static-square-'));
+  try {
+    const outputPath = path.join(tempDir, 'square.png');
+    const result = createStaticImage(path.join(examplesDir, 'ai95-price-spike.json'), outputPath, {
+      projectRoot: root,
+      browser,
+      profile: 'square'
+    });
+    assert.equal(result.workflow, 'standard-chart');
+    assert.equal(result.profile.id, 'square');
+    assert.deepEqual(result.profile.actualDimensions, { width: 1080, height: 1080 });
+    assert.equal(result.profile.fitMode, 'fill');
+    assert.ok(result.profile.stageDelta > 0);
+    assert.deepEqual(pngDimensions(outputPath), { width: 1080, height: 1080 });
+    assert.equal(result.profile.expanded, false);
+    assert.equal(result.htmlRetained, false);
+    assert.equal(result.diagnostics.errors, 0);
+    assert.equal(fs.readdirSync(tempDir).filter((name) => name.endsWith('.html')).length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('static image workflow uses the wide maintained canvas for regional maps', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-static-regional-'));
+  try {
+    const outputPath = path.join(tempDir, 'regional.png');
+    const result = createStaticImage(path.join(examplesDir, 'russia-regional-map.json'), outputPath, {
+      projectRoot: root,
+      browser,
+      profile: 'auto'
+    });
+    assert.equal(result.workflow, 'regional-breakdown');
+    assert.deepEqual(result.profile.requestedViewport, { width: 1450, height: 679 });
+    assert.ok(result.profile.actualDimensions.height >= result.profile.requestedViewport.height);
+    assert.equal(result.profile.fitMode, 'natural');
+    assert.equal(result.profile.stageDelta, 0);
+    assert.equal(result.diagnostics.errors, 0);
+    assert.equal(result.regionalDiagnostics.renderedCrossings || 0, 0);
+    assert.equal(result.regionalDiagnostics.directionReversalRoutes || 0, 0);
+    assert.deepEqual(pngDimensions(outputPath), result.profile.actualDimensions);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -223,7 +324,7 @@ test('axes that cross zero render a prominent interior zero reference', { skip: 
   }
 });
 
-test('components, duration timelines, benchmark gaps, dumbbells, and converging-signal relationships pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('components, duration timelines, benchmark gaps, dumbbells, heat matrices, waterfalls, and converging-signal relationships pass responsive diagnostics with quantitative marks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-new-recipes-'));
   try {
     const cases = [
@@ -234,6 +335,8 @@ test('components, duration timelines, benchmark gaps, dumbbells, and converging-
       { file: 'single-benchmark-gap.json', marks: 3 },
       { file: 'urals-benchmark-gap.json', marks: 3 },
       { file: 'marketplace-commission-dumbbell.json', marks: 12 },
+      { file: 'support-channel-heatmap.json', marks: 9 },
+      { file: 'ozon-collateral-waterfall.json', minimumMarks: 3 },
       { file: 'converging-signals.json', minimumMarks: 8 }
     ];
     cases.forEach(({ file, marks, minimumMarks }) => {
@@ -254,6 +357,16 @@ test('components, duration timelines, benchmark gaps, dumbbells, and converging-
         }
         if (file === 'converging-signals.json') {
           assert.equal(run.relationshipAttributes?.['data-relationship-continuation'], 'true');
+        }
+        if (file === 'ozon-collateral-waterfall.json') {
+          assert.equal(run.waterfallAttributes?.['data-waterfall-connectors'], '2');
+        }
+        if (file === 'support-channel-heatmap.json') {
+          assert.equal(run.heatAttributes?.['data-heat-rows'], '3');
+          assert.equal(run.heatAttributes?.['data-heat-columns'], '3');
+          assert.equal(run.heatAttributes?.['data-heat-cells'], '9');
+          assert.equal(run.heatAttributes?.['data-heat-direct-labels'], 'true');
+          assert.equal(run.heatAttributes?.['data-heat-scale'], 'sequential');
         }
       });
     });
@@ -343,7 +456,10 @@ test('reference labels clear nearby axis ticks and their own reference lines', {
       ],
       references: [
         { value: 935, label: 'Reported total · 935 units', lineStyle: 'dashed', tone: 'neutral' },
-        { value: 684, label: 'Prior total · 684 units', lineStyle: 'dashed', tone: 'neutral' }
+        // 800 is intentionally an ordinary y-axis tick for this 0–1150 scale.
+        // The reference label must still clear both that tick and the rotated
+        // axis title when rendered in the middle of the plot.
+        { value: 800, label: 'Prior total · 800 units', lineStyle: 'dashed', tone: 'neutral' }
       ],
       measure: {
         quantity: 'reported component', unit: 'units', axisTitle: 'Component value',

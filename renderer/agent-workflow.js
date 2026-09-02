@@ -2,6 +2,8 @@
 
 const TochnyiMaps = require('../lib/tochnyi-maps');
 const { STANDARD_WORKFLOW, REGIONAL_WORKFLOW } = require('./workflow-contract');
+const { listImageProfiles } = require('./image-profiles');
+const { RUNTIME_DEPENDENCY_CONTRACT } = require('./runtime-dependencies');
 const DEFAULT_REGION_SET_ID = 'russia';
 const TOOL_API_ENTRYPOINT = 'node tool-api/chart.js';
 const AUTHOR_SPEC_PATH = 'specs/runs/<run-id>/[slug].json';
@@ -161,6 +163,76 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
   rejectedRecipes: Object.freeze(['status.grid', 'headline.metric', 'comparison.pictogram'])
 });
 
+const STATIC_IMAGE_CONTRACT = Object.freeze({
+  primaryArtifactRule: 'Treat the final PNG as the primary chart artifact. The HTML shell is a deterministic rendering surface and review aid, not the publication format the reader should need in order to understand the chart.',
+  visibleEvidenceRule: 'Everything required to understand the claim must be visible in the static image. Never rely on hover, tooltip, click, animation state, hidden legend interaction, or panning for category identity, units, values, thresholds, dates, or the title-defining comparison.',
+  directLabelRule: 'Prefer direct labels and visible orientation over interaction. Dense charts may label representative or editorially important points while axes and geometry preserve the complete series, but no essential observation may exist only inside a tooltip.',
+  treatmentRule: 'Authors choose semantic evidence and recipe, not decorative treatments. The renderer may add deterministic ruler guides, period ticks, label rails, textures, or other static-reading aids when they make the same data relationship easier to read without changing its meaning.',
+  densityRule: 'Use the simplest visual treatment that makes the relationship legible at image size. Additional marks are justified only when they encode real units, periods, hierarchy, or orientation; decorative density is not evidence.',
+  interactionRule: 'Any interactive behavior in the HTML preview is optional and must degrade to the same complete static message. Interactivity never rescues an otherwise ambiguous PNG.',
+  profileRule: 'Output profiles express publishing intent, not renderer geometry. Use auto for the maintained recipe-aware canvas, or request landscape, square, or portrait when the destination requires that fixed image shape. The engine owns the pixel dimensions and refuses a fixed profile when content cannot fit.'
+});
+
+const READING_INTENT_CONTRACT = Object.freeze({
+  rule: 'Choose narrative.density from the reader task only after the evidence and recipe are settled. Density changes renderer-owned presentation hierarchy; it must never remove title-defining evidence, change the quantitative relationship, or justify a different recipe.',
+  modes: Object.freeze([
+    Object.freeze({
+      intent: 'quick-scan',
+      approximateRead: 'under about 10 seconds',
+      density: 'minimal',
+      useWhen: 'One comparison or pattern is already self-contained in the primary geometry and can survive reduced grid, axis, and secondary furniture.'
+    }),
+    Object.freeze({
+      intent: 'standard-read',
+      approximateRead: 'about 10 to 30 seconds',
+      density: 'editorial',
+      useWhen: 'Default for publication charts that need direct values plus enough axis, reference, or context structure to explain the claim without interaction.'
+    }),
+    Object.freeze({
+      intent: 'close-read',
+      approximateRead: 'more than about 30 seconds',
+      density: 'detailed',
+      useWhen: 'The reader must inspect a dense ranking, matrix, map, multi-period composition, or another information-rich visual where retaining structural context is more important than a single-glance read.'
+    })
+  ]),
+  guard: 'Never choose minimal merely to make crowded content fit. If essential evidence disappears at the intended density or output profile, simplify the story, choose a more appropriate recipe/profile, or keep editorial/detailed density.'
+});
+
+const RECIPE_AMBIGUITY_RULES = Object.freeze([
+  Object.freeze({
+    candidates: Object.freeze(['comparison.benchmark-gap', 'comparison.change']),
+    choose: 'Use benchmark-gap when one non-negative actual/current level is naturally read against a prior, standard, limit, target, or other benchmark. Use change for sign-crossing, zero-to-nonzero, native-rate, or index movement where enclosing benchmark semantics do not apply.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['comparison.benchmark-gap', 'comparison.dumbbell']),
+    choose: 'Use benchmark-gap for one or two category-level earlier/current pairs. Use dumbbell when three or more categories each have a meaningful paired benchmark/before and actual/after value.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['comparison.scenarios', 'comparison.dumbbell']),
+    choose: 'Use scenarios for same-period alternatives of one quantity. Use dumbbell for repeated category-level before/after or benchmark/actual pairs; never flatten those pairs into independent scenario bars.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['matrix.heat', 'ranking.horizontal']),
+    choose: 'Use matrix.heat when one measure forms a complete row-by-column cross-tab and the two-dimensional pattern is the finding. Use ranking.horizontal when there is one categorical dimension with one comparable value per category.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['trend.line', 'timeline.duration']),
+    choose: 'Use trend.line for observed numeric states advancing through time. Use timeline.duration when start/end position or interval length on a common calendar is the comparison.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['composition.components', 'flow.waterfall']),
+    choose: 'Use composition.components when positive components should all be compared from zero against one total. Use waterfall only when an existing balance genuinely moves through ordered signed changes into a reported ending balance.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['composition.stacked', 'composition.compared']),
+    choose: 'Use composition.stacked for one total whose internal mix is the finding. Use composition.compared when two or more groups contain the same additive components and both segment size and group total need comparison.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['ranking.horizontal', 'map.regional']),
+    choose: 'Use ranking only when place names function as ordinary categories. Use map.regional when administrative geography is explanatory; three or more comparable named administrative regions are treated as a regional distribution by the routing contract.'
+  })
+]);
+
 const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Two positive level values where one is naturally current/actual and the other is prior, standard, limit, target, or benchmark', use: 'comparison.benchmark-gap', example: 'specs/examples/ai95-price-spike.json' }),
   Object.freeze({ when: 'Two values showing change in the same named quantity where benchmark-gap semantics do not apply, such as sign-crossing levels, zero-to-nonzero movement, or a native rate/index', use: 'comparison.change', example: 'specs/examples/net-position-crossing-zero.json' }),
@@ -170,6 +242,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'One or more actual values sit inside benchmark totals, including one or two category-level earlier/current price pairs or two meaningful policy/target shares against the same tangible total; one segmented row is preferred when one relationship fully carries the story', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
   Object.freeze({ when: 'Three or more categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
   Object.freeze({ when: 'Three to eight positive physical-size magnitudes where proportional area is itself intuitive, such as facility floor area, land area, storage footprint, or capacity blocks', use: 'comparison.area-squares', example: 'specs/examples/facility-area-squares.json' }),
+  Object.freeze({ when: 'One numeric measure forms a complete two-dimensional categorical cross-tab with 2 to 6 row categories and 2 to 6 column categories, and the pattern or concentration across both dimensions is the finding', use: 'matrix.heat', example: 'specs/examples/support-channel-heatmap.json' }),
   Object.freeze({ when: 'Two source-supported quantitative drivers or formula inputs and one different outcome measure three distinct quantities, with an explicit mechanism formula. This includes material mixed-unit derivations such as quantity × unit price = value; never use it for repeated prices, repeated volumes, or one measure at different dates.', use: 'relationship.converging-signals', example: 'specs/examples/converging-signals.json' }),
   Object.freeze({ when: 'Three or more ordered time points, especially when slowdown, acceleration, reversal, or persistence is the finding. Do not use trend.line for a 3–4 point sequence of tiny exact counts unless a real denominator/portfolio benchmark or richer magnitude anchor makes the series interpretable.', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
   Object.freeze({ when: 'Three to twenty-four ordered periods contain the same additive categories and the changing category mix plus total volume is the finding. Retain zero-valued categories so stack colors stay stable across periods.', use: 'trend.stacked', example: 'specs/examples/monthly-category-stack.json' }),
@@ -361,8 +434,10 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       'Apply the visual-evidence contract. Reject prose walls and one-point stories before selecting a recipe.',
       'Audit actual-level availability and select the least normalized representation that preserves the story.',
       'Classify the enriched evidence with the selection rules below.',
+      'When neighboring recipes remain plausible, use ambiguityRules to state why the rejected alternative does not match the evidence contract.',
+      'After the recipe is fixed, choose narrative.density from readingIntent. Density may simplify presentation furniture but never evidence.',
       'Write a semantic ChartSpec using the selected recipe.',
-      'Validate, render, and diagnose the chart; capture the final PNG into charts/<run-id>/.'
+      'Validate the ChartSpec, then use the image command for the primary static artifact. Use render and diagnose only when HTML-level inspection is needed.'
     ],
     authoringSurface: {
       role: 'chart-author',
@@ -372,13 +447,18 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     commands: {
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
       render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
       review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
+    ambiguityRules: clone(RECIPE_AMBIGUITY_RULES),
+    readingIntent: clone(READING_INTENT_CONTRACT),
     authoringRules: [...SHARED_AUTHORING_RULES],
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
+    staticImageContract: clone(STATIC_IMAGE_CONTRACT),
+    runtimeDependencies: clone(RUNTIME_DEPENDENCY_CONTRACT),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
@@ -418,6 +498,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     commands: {
       regions: `${TOOL_API_ENTRYPOINT} regions ${regionSet.id}`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
       render: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
       renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>] --no-diagnose`,
       screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
@@ -428,6 +509,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     recommendedDataItem: ['status', 'displayValue', 'detail', 'callout'],
     evidenceRule: 'Every materially reported region should remain represented in data[]. At most 12 items may have callout cards; use callout: "none" on lower-priority regions so their fill remains visible without a box. Visible callouts should include at least one of status, displayValue, detail, or value.',
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
+    staticImageContract: clone(STATIC_IMAGE_CONTRACT),
     minimalMap: { regionSet: regionSet.id },
     overrideOnlyWhenNeeded: [...REGIONAL_OVERRIDES],
     automaticByDefault: [...REGIONAL_AUTOMATIC],
@@ -451,7 +533,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.18',
+    version: '1.21',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -465,13 +547,15 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         if: 'Administrative regions are part of the finding and spatial location changes the interpretation; some highlighted regions may be fill-only without callout cards.',
         workflow: REGIONAL_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
+        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
       },
       {
         if: 'The story has enough independent quantitative structure for the selected recipe and is a comparison, ranking, composition, trend, or flow without a map. Generic categorical bars require at least three observations; relationship-specific two-value recipes may use two.',
         workflow: STANDARD_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} guide`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
+        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
       }
     ],
     sharedContract: {
@@ -480,6 +564,10 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       resources: clone(TOOL_API_RESOURCES),
       sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
       visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
+      staticImageContract: clone(STATIC_IMAGE_CONTRACT),
+      runtimeDependencies: clone(RUNTIME_DEPENDENCY_CONTRACT),
+      readingIntent: clone(READING_INTENT_CONTRACT),
+      recipeAmbiguityRules: clone(RECIPE_AMBIGUITY_RULES),
       sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
       valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
       waterfallContract: clone(WATERFALL_CONTRACT),
@@ -490,7 +578,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       rendererOwns: [
         'HTML, CSS, typography, color policy, layout, responsiveness, map projection, callout placement, and leader routing'
       ],
-      finishWhen: 'Validation passes, the selected render workflow passes its shell review, and diagnostics show no error-level issues.'
+      finishWhen: 'Validation passes, the selected render workflow passes its shell review, diagnostics show no error-level issues, and the final static image carries the complete message without interaction.'
     },
     regional: {
       workflow: REGIONAL_WORKFLOW,
@@ -500,13 +588,15 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         regionCount: Object.keys(regionSet.regions).length
       },
       guideCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`
+      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
+      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
     },
     standard: {
       workflow: STANDARD_WORKFLOW,
       guideCommand: `${TOOL_API_ENTRYPOINT} guide`,
       renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
-      diagnoseCommand: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`
+      diagnoseCommand: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
+      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
     },
     authoringRules: [...SHARED_AUTHORING_RULES],
     boundary: {
@@ -521,7 +611,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.18',
+    version: '1.21',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -534,6 +624,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
       catalog: `${TOOL_API_ENTRYPOINT} catalog`,
       regions: `${TOOL_API_ENTRYPOINT} regions [region-set]`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
       render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
       regional: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <chart.html>`,
@@ -543,6 +634,11 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     batchWorkflow: clone(BATCH_WORKFLOW),
     sourceEnrichment: clone(SOURCE_ENRICHMENT_POLICY),
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
+    staticImageContract: clone(STATIC_IMAGE_CONTRACT),
+    runtimeDependencies: clone(RUNTIME_DEPENDENCY_CONTRACT),
+    readingIntent: clone(READING_INTENT_CONTRACT),
+    recipeAmbiguityRules: clone(RECIPE_AMBIGUITY_RULES),
+    imageProfiles: listImageProfiles(),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
     valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
     waterfallContract: clone(WATERFALL_CONTRACT),
@@ -578,6 +674,9 @@ module.exports = {
   BATCH_WORKFLOW,
   SOURCE_ENRICHMENT_POLICY,
   VISUAL_EVIDENCE_CONTRACT,
+  STATIC_IMAGE_CONTRACT,
+  READING_INTENT_CONTRACT,
+  RECIPE_AMBIGUITY_RULES,
   SHARED_SCALE_CONTRACT,
   VALUE_REPRESENTATION_CONTRACT,
   WATERFALL_CONTRACT,

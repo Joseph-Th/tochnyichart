@@ -8,6 +8,8 @@ const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, findBrowser } = require('../renderer/capture');
 const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { resolveImageProfile } = require('../renderer/image-profiles');
+const { summarizeDiagnosticRun, assertNaturalRegionalRuns } = require('../renderer/regional-workflow');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'examples');
@@ -32,7 +34,14 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
   const rendered = renderSpecFile(specPath, htmlPath, { projectRoot: root });
   const review = reviewFile(htmlPath);
   if (!review.valid) throw new Error(`${file}: ${review.errors.join('; ')}`);
-  const screenshot = captureHtml(htmlPath, pngPath, { browser });
+  const profile = resolveImageProfile('auto', rendered.recipe);
+  const screenshot = captureHtml(htmlPath, pngPath, {
+    browser,
+    viewport: profile.viewport,
+    autoFit: true,
+    adaptiveCanvas: profile.adaptive,
+    adaptiveHeight: profile.adaptive
+  });
   if (screenshot.diagnostics?.status === 'fail') {
     const details = (screenshot.diagnostics.issues || [])
       .filter((issue) => issue.severity === 'error')
@@ -43,16 +52,28 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
       (details ? `: ${details}` : '.')
     );
   }
+  let regionalDiagnostics = null;
+  if (rendered.recipe === 'map.regional') {
+    regionalDiagnostics = summarizeDiagnosticRun({
+      viewport: screenshot.dimensions,
+      diagnostics: screenshot.diagnostics,
+      chartAttributes: screenshot.chartAttributes || {}
+    });
+    assertNaturalRegionalRuns([regionalDiagnostics]);
+  }
   const hash = crypto.createHash('sha256').update(fs.readFileSync(pngPath)).digest('hex');
   captures.push({
     recipe: rendered.recipe,
     spec: path.relative(root, specPath).replace(/\\/g, '/'),
     html: path.relative(root, htmlPath).replace(/\\/g, '/'),
     preview: path.relative(root, pngPath).replace(/\\/g, '/'),
+    imageProfile: profile.id,
+    requestedViewport: profile.viewport,
     dimensions: screenshot.dimensions,
     bytes: screenshot.bytes,
     sha256: hash,
     diagnostics: screenshot.diagnostics,
+    regionalDiagnostics,
     warnings: [...new Set([...rendered.warnings, ...review.warnings.map((warning) => warning.replace(/^ChartSpec: /, ''))])]
   });
 }
@@ -60,7 +81,7 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
 const manifest = {
   generatedAt: new Date().toISOString(),
   browser,
-  viewport: { width: 1200, height: 900 },
+  imageProfile: 'auto',
   captures
 };
 fs.writeFileSync(path.join(reviewDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');

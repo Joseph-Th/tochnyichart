@@ -7,6 +7,8 @@ const { validateSpec } = require('../renderer/validate');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtml, diagnoseHtmlResponsive } = require('../renderer/capture');
 const { renderRegionalBreakdown, regionalAgentGuide } = require('../renderer/regional-workflow');
+const { createStaticImage } = require('../renderer/image-workflow');
+const { listImageProfiles } = require('../renderer/image-profiles');
 const {
   DEFAULT_REGION_SET_ID,
   agentWorkflowOrientation,
@@ -27,6 +29,7 @@ Usage:
   node tool-api/chart.js guide [region-set]
   node tool-api/chart.js regional-guide [region-set]
   node tool-api/chart.js validate <spec.json>
+  node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]
   node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
   node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
   node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
@@ -84,7 +87,24 @@ function main() {
   }
 
   if (command === 'catalog') {
-    printResult({ recipes: listRecipes() });
+    const guide = standardAgentGuide(args[1] || DEFAULT_REGION_SET_ID);
+    printResult({
+      recipes: listRecipes(),
+      imageProfiles: listImageProfiles(),
+      runtimeDependencies: guide.runtimeDependencies,
+      decision: {
+        primaryKey: 'quantitative relationship and data shape',
+        defaultRule: guide.defaultRule,
+        selectionRules: guide.selectionRules,
+        ambiguityRules: guide.ambiguityRules,
+        readingIntent: guide.readingIntent,
+        staticImagePriorities: {
+          visibleEvidence: guide.staticImageContract.visibleEvidenceRule,
+          directLabels: guide.staticImageContract.directLabelRule,
+          density: guide.staticImageContract.densityRule
+        }
+      }
+    });
     return;
   }
 
@@ -121,6 +141,16 @@ function main() {
     const result = validateSpec(readSpecFile(args[1]).spec);
     printResult(result);
     if (!result.valid) process.exit(1);
+    return;
+  }
+
+  if (command === 'image') {
+    const positionals = commandPositionals(args, ['--run-id', '--profile']);
+    if (!positionals[0]) usage(1);
+    printResult(createStaticImage(positionals[0], positionals[1], {
+      runId: optionValue(args, '--run-id') || undefined,
+      profile: optionValue(args, '--profile') || 'auto'
+    }));
     return;
   }
 

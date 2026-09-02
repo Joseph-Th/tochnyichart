@@ -1,7 +1,7 @@
 # Testing and verification
 
 This is infrastructure-maintainer documentation. Normal chart authors use the
-validation and diagnostic commands exposed by `tool-api/chart.js` and do not
+validation and static-image commands exposed by `tool-api/chart.js` and do not
 need the internal test strategy.
 
 The project uses Node's built-in test runner and keeps deterministic checks,
@@ -44,6 +44,9 @@ The broad deterministic regression suite covers:
 The workflow suite is the agent-facing contract. It verifies that:
 
 - `orient`, `guide`, and `regional-guide` describe separate paths.
+- `image` is the primary static artifact path and automatically routes standard versus regional specs.
+- Static output profiles remain a bounded publishing-intent contract rather than arbitrary author-controlled pixel geometry.
+- Failed fixed-profile capture cannot replace a prior valid PNG.
 - Standard validation accepts every non-map recipe and redirects `map.regional`.
 - Regional validation accepts only `map.regional`.
 - The generic CLI cannot bypass the regional route.
@@ -59,6 +62,9 @@ regional viewport set for comparable coverage, and runs the regional wrapper
 through its full responsive diagnostics. It checks:
 
 - Successful browser rendering at desktop, tablet, and mobile sizes.
+- The public `image` CLI publishes structured JSON plus the requested PNG.
+- Fixed square output is exactly 1080×1080 and retains no temporary HTML artifact.
+- Regional `auto` output uses the same wide desktop viewport that anchors regional responsive diagnostics.
 - Zero diagnostic errors.
 - Regional workflow metadata in the rendered chart.
 - No final leader collisions or fallback routes in the comparison fixture.
@@ -87,6 +93,15 @@ The wrapper contract intentionally exposes comparable fields:
 workflow, specPath, htmlPath, assetVersion, recipe, bytes,
 warnings, review, diagnostics (regional only)
 ```
+
+The static image workflow has a separate artifact contract because its HTML is intentionally disposable:
+
+```text
+workflow, recipe, specPath, outputPath, bytes, profile,
+diagnostics, regionalDiagnostics, warnings, htmlRetained=false
+```
+
+`profile.requestedViewport` comes from `renderer/workflow-contract.js`; `profile.actualDimensions` records the approved capture canvas. Only `auto` may expand for fit. A fixed profile must either preserve its exact dimensions or fail before publication.
 
 The regional wrapper is also compared with the lower-level renderer in the
 workflow tests. Their HTML must be byte-for-byte identical when diagnostics are

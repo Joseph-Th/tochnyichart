@@ -18,7 +18,7 @@ node tool-api/chart.js orient
 Chart-author agents may use:
 
 ```text
-input.txt
+input/
 tool-api/chart.js
 docs/batch-workflow.md
 docs/agent-workflows.md
@@ -35,10 +35,10 @@ charts/<run-id>/
 The normal authoring lifecycle is:
 
 ```text
-exact project-root input.txt
+exact non-empty project-root input/ source set
     |
     v
-inventory every quantitative story with exact excerpts
+inventory every source and quantitative story with excerpts or structured selectors
     |
     v
 record selected, omitted, or merged disposition and verify the source ledger
@@ -59,26 +59,31 @@ select the central finding, workflow, and recipe
 semantic ChartSpec JSON
     |
     v
-validate -> render -> diagnose or regional diagnostics -> final PNG for the batch run
+validate -> image -> final PNG
 ```
+
+The PNG is the primary individual-chart artifact. `image` performs the renderer routing and target-size browser checks itself. Use `render`, `regional`, `diagnose`, and `review` when HTML-level inspection or responsive debugging is specifically needed.
+
+Fixed publishing profiles keep their exact output dimensions while allowing the renderer to adapt its internal chart-stage height. The structured `image` result reports `profile.fitMode` (`natural`, `shrink`, or `fill`) and `profile.stageDelta`; these are diagnostic outcomes, not ChartSpec controls.
 
 ## Batch orchestration
 
-The normal user assignment is `input.txt`, which may contain multiple data
-stories. The LLM agent, not the chart engine, owns the complete batch:
+The normal user assignment is the project-root `input/` source set, which may
+contain multiple files and multiple data stories. The LLM agent, not the chart
+engine, owns the complete batch:
 
 ```text
 initialize .work/<run-id>/
-    -> input.txt
-    -> reject missing or blank project-root input
-    -> inventory every quantitative story with exact excerpts
+    -> input/
+    -> reject a missing or empty project-root source set
+    -> inventory every supplied source file and quantitative story
     -> record selected, omitted, or merged disposition
     -> verify the source ledger before research
     -> preserve input-supported claims and enrich without originating stories
     -> record routingAudit and choose the appropriate tool and chart workflow for each accepted story
     -> render and diagnose chart HTML
     -> capture final PNG images
-    -> assemble one PowerPoint presentation
+    -> assemble a PowerPoint presentation only when requested
     -> save ChartSpecs and final delivery artifacts
     -> finalize and purge transient run data
 ```
@@ -88,8 +93,8 @@ downloads, helper scripts, logs, review captures, and package staging only under
 the created `.work/<run-id>/` tree. After delivery, run
 `npm run run:finalize -- <run-id>`; it preserves
 `specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and legacy previews. It also preserves `input.txt`. Both retained
-production paths are ignored by Git. The run cannot finalize until
+material and legacy previews. It also preserves `input/`. Production inputs and
+outputs are ignored by Git. The run cannot finalize until
 `.work/<run-id>/source-ledger.json` passes validation and exactly covers the
 final ChartSpecs.
 
@@ -109,10 +114,12 @@ ledger fields and evidence-origin rules.
 
 ## Source policy
 
-Treat `input.txt` as expert-authored editorial evidence. Assume its factual
-claims, values, comparisons, and interpretation are correct unless a reputable
-source directly contradicts a material point. Entries are also routing
-information and may not contain the complete chart dataset.
+Treat the initialized project-root `input/` files as the authoritative
+assignment source set. Assume supplied factual claims, values, comparisons, and
+interpretation are correct unless a reputable source directly contradicts a
+material point. Structured files may support findings through documented
+selectors, filters, groupings, or calculations rather than literal prose
+excerpts.
 
 Confirm that a supplied URL used for supplementation matches the story and read
 the full source before recipe selection. Extract directly relevant comparators,
@@ -126,7 +133,8 @@ broader research. Additional context must fill a defined role in magnitude,
 comparison, mechanism, or consequence.
 
 External research may not originate a story. The subject, central claim, and
-title must be supported by exact `input.txt` excerpts in the source ledger.
+title must be supported by the recorded `input/` evidence in the source ledger:
+exact excerpts for prose or explicit selectors/derivations for structured data.
 After inventory, a supplied source or directly relevant dataset may provide
 actual levels that express the same anchored percentage or indexed change more
 clearly. External facts may also supplement comparison, denominator, mechanism,
@@ -187,7 +195,7 @@ tools/
 
 Do not edit generated HTML or PNG artifacts.
 
-Use source attribution when an underlying publication or dataset is available. Omit the source when it is not. Presentation output must not mention `input.txt`, internal provenance, verification status, diagnostics, or workflow commentary.
+Use source attribution when an underlying publication or dataset is available. Omit the source when it is not. Presentation output must not mention internal input paths, provenance mechanics, verification status, diagnostics, or workflow commentary.
 
 Correct the ChartSpec when the problem concerns data, source fidelity, copy, recipe choice, statuses, region IDs, or semantic structure. If a valid specification still produces a rendering, layout, planner, or diagnostic failure, report an infrastructure issue. Only enter implementation directories when the user explicitly requests infrastructure maintenance.
 
@@ -201,16 +209,44 @@ node tool-api/chart.js regional-guide [region-set]
 node tool-api/chart.js catalog
 node tool-api/chart.js regions [region-set]
 node tool-api/chart.js validate <spec.json>
+node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]
 node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
 node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
 node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
 node tool-api/chart.js review <chart.html> [--screenshot] [--output .work/<run-id>/review/<chart>.png]
 ```
 
+`catalog` returns the recipe definitions together with the standard selection
+rules, close-alternative ambiguity checks, reading-intent guidance, runtime
+dependency contract, and static-image priorities needed to choose among them,
+so an agent can make the common recipe decision from one machine-readable
+response.
+
+Choose the semantic recipe before choosing visual density. `readingIntent`
+maps a quick scan to `narrative.density: "minimal"`, a normal publication read
+to `"editorial"`, and a close read to `"detailed"`. Density changes
+renderer-owned presentation hierarchy only. It cannot remove essential
+evidence, rescue the wrong recipe, or be reduced merely to force crowded
+content into a fixed image profile.
+
+When two neighboring recipes remain plausible, use `ambiguityRules` to reject
+the closest alternative explicitly. Typical boundaries include benchmark-gap
+versus change, scenarios versus dumbbell, matrix versus ranking, trend versus
+duration timeline, positive components versus waterfall, and categorical
+geography versus a regional map. This is a semantic check, not a requirement to
+render several competing charts.
+
+Use `image` for the normal individual-chart deliverable. With no explicit output path it writes a transient PNG under `.work/<run-id>/rendered/`. The default `auto` profile starts standard charts at 1200×900 and regional maps at their maintained 1450×679 wide canvas; it may expand only to avoid clipping. `landscape` is fixed at 1200×900, `square` at 1080×1080, and `portrait` at 1080×1350. Fixed profiles fail rather than silently changing shape when the chart does not fit. These profiles are publishing intents, not author-accessible layout coordinates.
+
 The older `node tools/chart.js` entrypoint remains available for compatibility, but it is not the documented chart-author surface.
 
-Final PNGs used in the run presentation belong beside the rendered HTML and PPTX in
-`charts/<run-id>/`. Temporary or ad hoc review belongs in
+The current browser capture stack is not fully offline. The Tool API reports
+`runtimeDependencies.offlineReady: false`. Core amCharts scripts are pinned to
+a reviewed release; the Mukta webfont and Russia geodata remain remote
+provider-managed dependencies. Offline packaging is maintainer work, not a
+ChartSpec option.
+
+Batch final PNGs and retained HTML belong in `charts/<run-id>/`; any requested presentation belongs there as well. An individual `image` call does not retain HTML unless the author separately requests a render. Temporary or ad hoc review belongs in
 `.work/<run-id>/review/` and is removed during finalization.
 Production input, generated specifications, chart output, previews, and run
 workspaces are ignored by Git and checked by `npm run check:repo`.

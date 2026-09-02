@@ -1,131 +1,312 @@
 {
-  "version": "2.12.0",
+  "version": "2.13.0",
   "recipes": [
     {
       "id": "comparison.change",
       "purpose": "Show a true two-period change when the values cannot be expressed more clearly as one non-negative actual value against a prior or reference benchmark.",
       "data": "Exactly 2 labeled numeric values with measure.quantity, matching scope, and explicit periods. For two positive level values, prefer comparison.benchmark-gap with the later/current value as value and the earlier/reference value as benchmark.",
-      "bestFor": ["sign-crossing changes", "zero-to-nonzero changes", "native rates or indexes where benchmark-gap level semantics do not apply"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+      "bestFor": [
+        "sign-crossing changes",
+        "zero-to-nonzero changes",
+        "native rates or indexes where benchmark-gap level semantics do not apply"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 3
+      }
     },
     {
       "id": "comparison.scenarios",
       "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period. Do not flatten repeated category/time pairs into separate scenario bars.",
       "data": "3 to 5 independent labeled numeric values with measure.quantity and matching scope and period. Two generic bars are invalid even with supporting copy or a derived total. A defensible two-value relationship must use a relationship-specific recipe such as comparison.benchmark-gap, comparison.change, comparison.diverging, or timeline.duration; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
-      "bestFor": ["three-or-more scenarios", "policy alternatives", "multi-option forecasts", "target sets"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+      "bestFor": [
+        "three-or-more scenarios",
+        "policy alternatives",
+        "multi-option forecasts",
+        "target sets"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 3
+      }
     },
     {
       "id": "comparison.diverging",
       "purpose": "Compare positive and negative changes in one named quantity for one shared scope and period.",
       "data": "2 to 10 labeled numeric changes with measure.quantity and matching scope and period; values may be positive or negative.",
-      "bestFor": ["financial metric changes", "gainers and losers", "mixed direction outcomes"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "financial metric changes",
+        "gainers and losers",
+        "mixed direction outcomes"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "comparison.range",
       "purpose": "Show exact values, min-max intervals, and thresholds for one named quantity on one scale.",
       "data": "1 to 8 items with value or low/high fields, measure.quantity, and matching scope and period. A single interval requires a visible benchmark or reference that supplies the total or threshold scale and is invalid when visualEvidenceAudit contains three or more named comparable observations. When the finding is a threshold breach, the threshold itself must remain visible as a reference, benchmark, or threshold mark; before/after values do not substitute for it.",
-      "bestFor": ["uncertainty ranges", "population-anchored risk ranges", "policy limits", "price ranges", "threshold breaches"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "uncertainty ranges",
+        "population-anchored risk ranges",
+        "policy limits",
+        "price ranges",
+        "threshold breaches"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "comparison.benchmark-gap",
       "purpose": "Show one non-negative actual or current level against a meaningful benchmark. Use the default gap relation when the distance to the benchmark is the story; use benchmarkRelation=consumed-share when the actual/adverse amount itself is being emphasized as a share of the larger benchmark.",
       "data": "1 to 6 labeled items with an underlying actual/current value and a benchmark/reference value measuring the same quantity in the same unit, plus matching scope and period. gapDisplayValue must describe the arithmetic difference or remaining benchmark amount, never a ratio, per-unit equivalence, or cross-unit conversion. For consumed-share, value must not exceed benchmark; the actual segment receives the semantic tone and the unused remainder stays neutral. For ordinary gaps, gapTone may independently encode the meaning or severity of the gap segment instead of inheriting the main item tone. Use one item whenever two positive levels can be read naturally as actual/current versus benchmark/prior.",
-      "bestFor": ["two positive before-after levels", "standards and limits", "discounted prices", "premium to benchmark", "shortfall to target", "same-total policy or payout alternatives", "independent benchmark gaps"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "two positive before-after levels",
+        "standards and limits",
+        "discounted prices",
+        "premium to benchmark",
+        "shortfall to target",
+        "same-total policy or payout alternatives",
+        "independent benchmark gaps"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
+    },
+    {
+      "id": "matrix.heat",
+      "purpose": "Show the concentration or pattern of one numeric measure across two categorical dimensions without flattening the cross-tab into a long ranking.",
+      "data": "A complete 2×2 to 6×6 rectangular cross-tab. data[].label is the row category, data[].column is the column category, and every cell carries one finite value with the same measure.quantity, scope, and period. Every row-column combination must appear exactly once. Cell values are directly labeled and color uses one renderer-owned sequential quantitative ramp; per-cell semantic tones, sparse matrices, hidden labels, logarithmic color, and arbitrary sorting are rejected.",
+      "bestFor": [
+        "category-by-channel intensity",
+        "product-by-segment concentration",
+        "operational cross-tabs",
+        "complete two-dimensional categorical distributions"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "relationship.converging-signals",
       "purpose": "Visualize two source-supported causal drivers converging on a different outcome without forcing them onto a shared axis.",
       "data": "Exactly 3 items: two relationshipRole driver items and one outcome item, all with distinct real-world quantities. relationship.formula must state the source-supported mechanism. Directional mode additionally requires mechanism evidence that explicitly links the plotted outcome to at least one plotted driver; chronology or adjacent facts do not justify causal connectors. Every item needs a value or range, direction, displayValue, quantity, scope, and period. Repeated prices, repeated volumes, and the same measure at different dates must use change, scenarios, dumbbell, or trend geometry. Each item is drawn on its own local quantitative signal; the two driver connectors meet and continue briefly toward the outcome in the same connector color, and connector width encodes no magnitude.",
-      "bestFor": ["two factors shaping one outcome", "volume and price driving revenue", "activity and intensity driving emissions", "mixed-measure causal relationships"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "two factors shaping one outcome",
+        "volume and price driving revenue",
+        "activity and intensity driving emissions",
+        "mixed-measure causal relationships"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "comparison.dumbbell",
       "purpose": "Compare two values for several categories while preserving the direction and size of every category-level change.",
       "data": "3 to 10 labeled items with value and benchmark in one unit, plus matching quantity, scope, and period. benchmark is the earlier or reference value; value is the later or actual value. Different categories may have different absolute levels; what must remain comparable is each category's own earlier-versus-later pair in the same unit and basis.",
-      "bestFor": ["before-and-after category comparisons", "peer movement", "target versus actual across several categories"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "before-and-after category comparisons",
+        "peer movement",
+        "target versus actual across several categories"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "comparison.area-squares",
       "purpose": "Compare 3 to 8 positive magnitudes by proportional square area when physical footprint, capacity, land, floor area, or another inherently spatial size is the intuitive comparison.",
       "data": "3 to 8 positive labeled numeric values with one shared quantity, scope, period, and linear zero-based measure. Square side length is proportional to the square root of value so visible area is proportional to magnitude.",
-      "bestFor": ["facility floor area", "land area", "storage footprint", "capacity blocks", "other physically spatial size comparisons; not shares or arbitrary scores"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "facility floor area",
+        "land area",
+        "storage footprint",
+        "capacity blocks",
+        "other physically spatial size comparisons; not shares or arbitrary scores"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "trend.line",
       "purpose": "Show a sequence over time.",
-      "data": "At least 3 ordered labeled numeric values; 5 or more preferred. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",
-      "bestFor": ["time series", "rates", "prices", "production"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+      "data": "3 to 366 ordered labeled numeric values; 5 or more preferred. Dense daily series are supported when the date sequence itself is analytically useful. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",
+      "bestFor": [
+        "time series",
+        "rates",
+        "prices",
+        "production"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 3
+      },
+      "events": "Optional. Up to two dated context events drawn as vertical marker lines, each anchored with afterLabel to the plotted period it follows. Use for an external event that changes interpretation of the series, never for a value that belongs in data."
     },
     {
       "id": "trend.stacked",
       "purpose": "Show how an additive category mix changes across ordered periods while preserving the monthly or period total.",
       "data": "3 to 24 ordered periods. Each period carries 2 to 15 non-negative segments with the same category labels and order. Zero-valued categories are retained so colors and stack positions remain stable across time.",
-      "bestFor": ["monthly incident mix", "category composition over time", "stacked counts by period"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "monthly incident mix",
+        "category composition over time",
+        "stacked counts by period"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "full",
+        "supportingFacts": 2
+      },
+      "events": "Optional. Up to two dated context events drawn as vertical marker lines, each anchored with afterLabel to the plotted period it follows. Use for an external event that changes interpretation of the series, never for a value that belongs in data."
     },
     {
       "id": "timeline.duration",
       "purpose": "Show dated policy, restriction, outage, contract, or operational intervals on a common calendar.",
       "data": "2 to 8 labeled intervals with ISO start and end dates, or exact duration plus durationUnit when all intervals share timeline.anchorDate. Tone controls the interval color; displayValue names the duration.",
-      "bestFor": ["policy durations", "export bans", "outage windows", "reserve runway", "project phases", "contract periods"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "policy durations",
+        "export bans",
+        "outage windows",
+        "reserve runway",
+        "project phases",
+        "contract periods"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "composition.donut",
       "purpose": "Show parts of a whole when the shape of the composition matters.",
       "data": "2 to 6 positive labeled numeric values.",
-      "bestFor": ["market share", "category mix", "balanced multi-part composition"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 3 }
+      "bestFor": [
+        "market share",
+        "category mix",
+        "balanced multi-part composition"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 3
+      }
     },
     {
       "id": "composition.stacked",
       "purpose": "Show exact parts of one total in a compact horizontal composition when the mix itself is the finding.",
       "data": "2 to 6 positive labeled numeric values. Do not use a single hypothetical split when the source provides a meaningful policy, target, prior, or alternative share against the same tangible total; in that case prefer shared-total benchmark geometry.",
-      "bestFor": ["served versus unmet", "delayed versus on-time", "debt composition", "two-part shares"],
-      "defaults": { "height": "short", "watermark": "full", "supportingFacts": 3 }
+      "bestFor": [
+        "served versus unmet",
+        "delayed versus on-time",
+        "debt composition",
+        "two-part shares"
+      ],
+      "defaults": {
+        "height": "short",
+        "watermark": "full",
+        "supportingFacts": 3
+      }
     },
     {
       "id": "composition.compared",
       "purpose": "Compare the same additive components across two or more periods, entities, or scenarios while keeping every group on one common zero-based scale.",
       "data": "2 to 8 labeled groups. Each group contains 2 to 6 non-negative segments with the same labels and order. Segment values are additive levels in one shared unit. Group totals are encoded by full bar length; do not add a derived total as a separate series row. Label placement is family-coherent: if any segment cannot fit an internal label, all segment labels move outside and directly identify the segments with semantic text color, replacing the legend.",
-      "bestFor": ["cost components across periods", "country supply dependence", "channel composition across peers", "same-component mixes where both component size and group total matter"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "cost components across periods",
+        "country supply dependence",
+        "channel composition across peers",
+        "same-component mixes where both component size and group total matter"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "composition.components",
       "purpose": "Compare exact positive additive components of one reported total with every component seated at zero and the total shown as a numeric reference.",
       "data": "2 to 6 positive labeled component values with one shared quantity, scope, and period. Exactly one numeric reference must equal the reported total within display precision. With exactly two components, add an independent same-scale benchmark or denominator beyond that derived sum; otherwise recover a third component, use another recipe, merge, or omit. Do not include the total as a redundant data row.",
-      "bestFor": ["tax components", "cost components", "revenue components", "budget components where component magnitude matters"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "tax components",
+        "cost components",
+        "revenue components",
+        "budget components where component magnitude matters"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "flow.waterfall",
       "purpose": "Explain how an existing balance or level moves through exact positive and negative changes into a reported ending amount.",
       "data": "2 to 8 ordered items with role start, change, subtotal, or end; every item also needs reported valueStatus, period, and scope, and the values must reconcile. Do not use waterfall when the intermediate values are simply positive components of one total; use composition.components so every component starts at zero.",
-      "bestFor": ["collateral erosion", "funding gaps", "profit bridges", "balance movements with genuine increases and decreases"],
-      "defaults": { "height": "standard", "watermark": "full", "supportingFacts": 2 }
+      "bestFor": [
+        "collateral erosion",
+        "funding gaps",
+        "profit bridges",
+        "balance movements with genuine increases and decreases"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
     },
     {
       "id": "ranking.horizontal",
       "purpose": "Rank categories where labels need horizontal space.",
       "data": "3 to 100 labeled numeric values. For a finite categorical domain, include every materially relevant non-empty category by default rather than silently truncating to a top-N subset. Dense rankings expand vertically and retain per-bar numeric labels. Categorical-profile mode uses a qualitative palette whose adjacent bars are hue-separated rather than a sequence of light/dark brand-color variants.",
-      "bestFor": ["full categorical profiles", "company rankings", "long category names"],
-      "defaults": { "height": "tall", "watermark": "full", "supportingFacts": 0 }
+      "bestFor": [
+        "full categorical profiles",
+        "company rankings",
+        "long category names"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "full",
+        "supportingFacts": 0
+      }
     },
     {
       "id": "map.regional",
       "purpose": "Show a geographic breakdown across named continental administrative regions. All reported regions can remain highlighted while callout cards are reserved for the most informative locations.",
       "data": "One item per reported regional observation, up to the region-set size. Each item needs regionId or regionIds plus status, tone, value, or concise evidence. At most 12 items may render callout cards; set data[].callout to none for fill-only highlights that should remain on the map without a box.",
-      "bestFor": ["Russian regional breakdowns", "regional shortages", "geographic exposure", "distributed operations"],
-      "defaults": { "height": "tall", "watermark": "corner", "supportingFacts": 4 }
+      "bestFor": [
+        "Russian regional breakdowns",
+        "regional shortages",
+        "geographic exposure",
+        "distributed operations"
+      ],
+      "defaults": {
+        "height": "tall",
+        "watermark": "corner",
+        "supportingFacts": 4
+      }
     }
   ],
   "composableFeatures": [

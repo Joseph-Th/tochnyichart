@@ -28,7 +28,7 @@ const FACT_ROLES = new Set(['comparison', 'denominator', 'mechanism', 'consequen
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
-const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence']);
+const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence', 'matrix']);
 const ITEM_CALLOUTS = new Set(['auto', 'none']);
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
@@ -41,7 +41,7 @@ const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
-  'comparison.area-squares', 'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
+  'comparison.area-squares', 'matrix.heat', 'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -61,17 +61,20 @@ const DISABLED_RECIPES = new Map([
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'analysis', 'data', 'references', 'measure',
-  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline'
+  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline',
+  'events'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const ANALYSIS_KEYS = new Set(['name', 'url']);
 const DATA_KEYS = new Set([
-  'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
+  'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'column', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'benchmarkRelation', 'gapTone', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope', 'relationshipRole', 'segments'
 ]);
 const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue', 'tone']);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
+const EVENT_KEYS = new Set(['label', 'afterLabel', 'tone', 'lineStyle']);
+const EVENT_RECIPES = new Set(['trend.line', 'trend.stacked']);
 const MEASURE_KEYS = new Set([
   'quantity', 'unit', 'axisTitle', 'valueMode', 'levelAvailability', 'basisAvailability', 'basisNote', 'normalizationNote',
   'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'baseline', 'scale'
@@ -353,7 +356,7 @@ function normalizeSpec(input) {
 
   spec.measure = isObject(spec.measure) ? spec.measure : {};
   spec.measure.decimals = spec.measure.decimals === undefined ? 0 : spec.measure.decimals;
-  spec.measure.baseline = spec.measure.baseline || 'zero';
+  spec.measure.baseline = spec.measure.baseline || (spec.recipe === 'matrix.heat' ? 'auto' : 'zero');
   spec.measure.scale = spec.measure.scale || 'linear';
 
   spec.options = isObject(spec.options) ? spec.options : {};
@@ -385,6 +388,7 @@ function normalizeSpec(input) {
     ? spec.data.map((item) => isObject(item) ? ({
         ...item,
         label: typeof item.label === 'string' ? item.label.trim() : item.label,
+        ...(item.column !== undefined ? { column: typeof item.column === 'string' ? item.column.trim() : item.column } : {}),
         ...(item.quantity !== undefined ? { quantity: typeof item.quantity === 'string' ? item.quantity.trim() : item.quantity } : {}),
         ...(item.group !== undefined ? { group: typeof item.group === 'string' ? item.group.trim() : item.group } : {}),
         ...(item.id !== undefined ? { id: typeof item.id === 'string' ? item.id.trim() : item.id } : {}),
@@ -441,6 +445,14 @@ function normalizeSpec(input) {
         ...reference,
         label: typeof reference.label === 'string' ? reference.label.trim() : reference.label
       }) : reference)
+    : [];
+
+  spec.events = Array.isArray(spec.events)
+    ? spec.events.map((event) => isObject(event) ? ({
+        ...event,
+        label: typeof event.label === 'string' ? event.label.trim() : event.label,
+        afterLabel: typeof event.afterLabel === 'string' ? event.afterLabel.trim() : event.afterLabel
+      }) : event)
     : [];
 
   spec.supportingFacts = Array.isArray(spec.supportingFacts)
@@ -508,6 +520,9 @@ function validateStructure(input, errors) {
   if (Array.isArray(input.references)) {
     input.references.forEach((reference, index) => rejectUnknownKeys(reference, REFERENCE_KEYS, `references[${index}]`, errors));
   }
+  if (Array.isArray(input.events)) {
+    input.events.forEach((event, index) => rejectUnknownKeys(event, EVENT_KEYS, `events[${index}]`, errors));
+  }
   if (isObject(input.measure)) rejectUnknownKeys(input.measure, MEASURE_KEYS, 'measure', errors);
   if (isObject(input.basis)) {
     rejectUnknownKeys(input.basis, BASIS_KEYS, 'basis', errors);
@@ -535,7 +550,7 @@ function validateData(spec, errors, warnings) {
     return;
   }
   if (spec.data.length === 0) errors.push('data must contain at least one item.');
-  if (!['map.regional', 'ranking.horizontal', 'trend.stacked'].includes(spec.recipe) && spec.data.length > 12) {
+  if (!['map.regional', 'ranking.horizontal', 'trend.line', 'trend.stacked', 'matrix.heat'].includes(spec.recipe) && spec.data.length > 12) {
     errors.push('data cannot contain more than 12 items for this recipe.');
   }
 
@@ -546,6 +561,9 @@ function validateData(spec, errors, warnings) {
       return;
     }
     pushLengthIssue(item.label, `${path}.label`, 80, errors, warnings, 45);
+    if (item.column !== undefined && (typeof item.column !== 'string' || item.column.trim() === '' || item.column.length > 60)) {
+      errors.push(`${path}.column must be a non-empty string of 60 characters or fewer.`);
+    }
     for (const key of ['value', 'low', 'high', 'benchmark']) {
       if (item[key] !== undefined && (typeof item[key] !== 'number' || !Number.isFinite(item[key]))) {
         errors.push(`${path}.${key} must be a finite number.`);
@@ -644,7 +662,12 @@ function validateData(spec, errors, warnings) {
     }
   });
 
-  const labels = spec.data.map((item) => item?.label).filter(Boolean);
+  const labels = spec.data.map((item) => {
+    if (spec.recipe === 'matrix.heat' && item?.label && item?.column) {
+      return `${item.label}\u0000${item.column}`;
+    }
+    return item?.label;
+  }).filter(Boolean);
   if (new Set(labels).size !== labels.length) warnings.push('Data labels are duplicated; labels should identify distinct points.');
 }
 
@@ -1311,9 +1334,74 @@ function validateRecipe(spec, errors, warnings) {
         errors.push('comparison.area-squares requires a linear scale; area must remain proportional to the reported value.');
       }
       break;
+    case 'matrix.heat': {
+      if (count < 4 || count > 36) errors.push('matrix.heat requires 4 to 36 complete matrix cells.');
+      requireNumericValues(spec, errors);
+      const rows = [];
+      const columns = [];
+      const rowKeys = new Set();
+      const columnKeys = new Set();
+      const cells = new Set();
+      data.forEach((item, index) => {
+        const row = normalizeEditorialValue(item?.label);
+        const column = normalizeEditorialValue(item?.column);
+        if (!column) errors.push(`data[${index}].column is required for matrix.heat.`);
+        if (row && !rowKeys.has(row)) {
+          rowKeys.add(row);
+          rows.push(row);
+        }
+        if (column && !columnKeys.has(column)) {
+          columnKeys.add(column);
+          columns.push(column);
+        }
+        if (row && column) {
+          const key = `${row}\u0000${column}`;
+          if (cells.has(key)) errors.push(`matrix.heat repeats the cell for row "${item.label}" and column "${item.column}".`);
+          cells.add(key);
+        }
+        if (item?.tone !== undefined) {
+          errors.push(`data[${index}].tone is not supported by matrix.heat; cell color is reserved for the quantitative scale.`);
+        }
+      });
+      if (rows.length < 2 || rows.length > 6) errors.push('matrix.heat requires 2 to 6 distinct row labels.');
+      if (columns.length < 2 || columns.length > 6) errors.push('matrix.heat requires 2 to 6 distinct column labels.');
+      if (rows.length >= 2 && columns.length >= 2 && cells.size !== rows.length * columns.length) {
+        errors.push(`matrix.heat must be a complete rectangular cross-tab. Expected ${rows.length * columns.length} unique row-column cells but found ${cells.size}.`);
+      }
+      const distinctValues = new Set(data.map((item) => item?.value).filter(Number.isFinite));
+      if (distinctValues.size < 2) errors.push('matrix.heat requires at least two distinct numeric values; a one-color matrix adds no quantitative structure.');
+      if (spec.options.showLabels === false) {
+        errors.push('matrix.heat requires direct numeric labels in every cell. Color alone cannot carry exact values in the static image.');
+      }
+      if (spec.options.showLegend === false) {
+        errors.push('matrix.heat requires a visible quantitative color legend.');
+      }
+      if (spec.options.sort !== 'none') {
+        errors.push('matrix.heat preserves the authored row and column order; options.sort must be none.');
+      }
+      if (spec.measure?.scale !== 'linear') {
+        errors.push('matrix.heat currently requires a linear color scale.');
+      }
+      if (spec.measure?.baseline !== 'auto') {
+        errors.push('matrix.heat requires measure.baseline auto because color encodes the observed value domain rather than length from zero.');
+      }
+      if ((spec.references || []).length) {
+        errors.push('matrix.heat does not support reference lines. Put a material threshold in a different quantitative recipe or state secondary context outside the matrix.');
+      }
+      if (Number.isFinite(spec.measure?.minimum) && data.some((item) => Number.isFinite(item?.value) && item.value < spec.measure.minimum)) {
+        errors.push('matrix.heat contains a value below measure.minimum. The color domain cannot clip observed cells.');
+      }
+      if (Number.isFinite(spec.measure?.maximum) && data.some((item) => Number.isFinite(item?.value) && item.value > spec.measure.maximum)) {
+        errors.push('matrix.heat contains a value above measure.maximum. The color domain cannot clip observed cells.');
+      }
+      break;
+    }
     case 'comparison.scenarios':
       if (count < 3 || count > 5) errors.push('comparison.scenarios requires 3 to 5 independent data items.');
       requireNumericValues(spec, errors);
+      if (spec.options.showLabels === false) {
+        errors.push('comparison.scenarios requires direct numeric labels. The static image must not hide exact alternative values behind tooltips or axis estimation.');
+      }
       validateStandaloneScenarioPair(spec, data, errors);
       {
         const pairedGroups = pairedTemporalGroupCount(data);
@@ -1403,7 +1491,7 @@ function validateRecipe(spec, errors, warnings) {
       validateConvergingSignals(spec, data, errors);
       break;
     case 'trend.line':
-      if (count < 3) errors.push('trend.line requires at least 3 data items.');
+      if (count < 3 || count > 366) errors.push('trend.line requires 3 to 366 data items.');
       else if (count < 5) warnings.push('trend.line is usually clearer with at least 5 data points.');
       requireNumericValues(spec, errors);
       if (count === 3 && data[0]?.value === 0 && data[0]?.valueStatus === 'derived' &&
@@ -1685,7 +1773,13 @@ function validateMeasure(spec, errors, warnings) {
       errors.push(`measure.${key} must be a string of ${max} characters or fewer.`);
     }
   }
-  if (!measure.unit && !measure.prefix && !measure.suffix && !['status.grid', 'story.facets', 'map.regional', 'relationship.converging-signals'].includes(spec.recipe)) {
+  if (!measure.unit && !measure.prefix && !measure.suffix && ![
+    'status.grid',
+    'story.facets',
+    'map.regional',
+    'relationship.converging-signals',
+    'timeline.duration'
+  ].includes(spec.recipe)) {
     warnings.push('No measure unit, prefix, or suffix is defined.');
   }
   if (measure.scale === 'logarithmic') {
@@ -1960,6 +2054,52 @@ function validateReferences(spec, errors, warnings) {
   }
 }
 
+function validateEvents(spec, errors, warnings) {
+  if (!Array.isArray(spec.events)) {
+    errors.push('events must be an array when provided.');
+    return;
+  }
+  if (!spec.events.length) return;
+  if (!EVENT_RECIPES.has(spec.recipe)) {
+    errors.push(
+      `events is only supported by ${[...EVENT_RECIPES].join(' and ')}. ` +
+      'A vertical event marker needs an ordered time series to sit against; move the event into supportingFacts or note.'
+    );
+    return;
+  }
+  if (spec.events.length > 2) errors.push('events cannot contain more than 2 items.');
+  const labels = (spec.data || []).map((item) => item?.label);
+  spec.events.forEach((event, index) => {
+    if (!isObject(event)) {
+      errors.push(`events[${index}] must be an object.`);
+      return;
+    }
+    pushLengthIssue(event.label, `events[${index}].label`, 80, errors, warnings, 60);
+    if (typeof event.afterLabel !== 'string' || !event.afterLabel.length) {
+      errors.push(`events[${index}].afterLabel must name the plotted period the event follows.`);
+    } else if (!labels.includes(event.afterLabel)) {
+      errors.push(
+        `events[${index}].afterLabel "${event.afterLabel}" does not match any data label. ` +
+        'Anchor the marker to a plotted period so its position stays semantic.'
+      );
+    }
+    if (event.tone !== undefined && !TONES.has(event.tone)) errors.push(`events[${index}].tone is not supported.`);
+    if (event.lineStyle !== undefined && !['line', 'dashed'].includes(event.lineStyle)) {
+      errors.push(`events[${index}].lineStyle is not supported.`);
+    }
+  });
+  for (let first = 0; first < spec.events.length; first += 1) {
+    for (let second = first + 1; second < spec.events.length; second += 1) {
+      if (spec.events[first]?.afterLabel && spec.events[first].afterLabel === spec.events[second]?.afterLabel) {
+        errors.push(
+          `events[${first}] and events[${second}] draw duplicate markers after the same period. ` +
+          'Keep one clearly labeled marker and move secondary context to supportingFacts.'
+        );
+      }
+    }
+  }
+}
+
 function validateEmphasis(spec, errors) {
   if (spec.emphasis === undefined) return;
   if (!isObject(spec.emphasis)) {
@@ -2179,6 +2319,10 @@ function validateTemporalPriority(spec, errors) {
   const text = `${spec.title || ''} ${spec.subtitle || ''} ${spec.measure?.quantity || ''} ${spec.metadata?.keyFinding || ''}`;
   const durationUnit = /\b(?:day|days|week|weeks|month|months|year|years)\b/.test(unit);
   const durationStory = /\b(?:duration|restriction|ban|reserve|coverage|outage|shutdown|contract|deadline|window|lasts?|runs? for)\b/i.test(text);
+  const rollingWindowSeries = ['trend.line', 'trend.stacked'].includes(spec.recipe)
+    && /\b(?:rolling|trailing)\b/i.test(text)
+    && /\b(?:count|rate|average|mean|sum|total|incidence|frequency)\b/i.test(`${spec.measure?.quantity || ''} ${spec.measure?.axisTitle || ''}`);
+  if (rollingWindowSeries) return;
   if (durationUnit && durationStory) {
     errors.push('Duration is the primary comparison. Use timeline.duration, researching an exact anchor date when needed; anchored durations may use timeline.anchorDate plus data[].duration and durationUnit.');
   }
@@ -2507,6 +2651,7 @@ function validateSpec(input) {
   validatePublicAggregateAnchoring(spec, errors);
   validateVisual(spec, errors);
   validateReferences(spec, errors, warnings);
+  validateEvents(spec, errors, warnings);
   validateThresholdAnchoring(spec, errors);
   validateEmphasis(spec, errors);
   validateSupportingFacts(spec, errors, warnings);

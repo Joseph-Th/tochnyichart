@@ -51,7 +51,7 @@
   "options": {
     "height": "standard",
     "sort": "none",
-    "showLegend": true,
+    "showLegend": false,
     "showLabels": true,
     "animate": false,
     "labelMode": "auto"

@@ -412,7 +412,7 @@ Check that:
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
-`composition.components`, `trend.line`, `trend.stacked`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`matrix.heat`, `composition.components`, `trend.line`, `trend.stacked`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while
@@ -479,6 +479,7 @@ The guide returns recipe selection rules and a validated example path for each r
 | Actual, expected, prior, target, or alternatives for one quantity, scope, and period | `comparison.scenarios` |
 | Positive and negative values of one quantity, scope, and period | `comparison.diverging` |
 | Min-max interval, limit, or threshold for one quantity, scope, and period | `comparison.range` |
+| Complete row-by-column cross-tab of one numeric measure | `matrix.heat` |
 | Ordered time points | `trend.line` |
 | Ordered periods with the same additive category mix | `trend.stacked` |
 | Exact parts of one total when the mix itself is the finding and there is no more informative same-total policy, target, prior, or alternative comparator | `composition.stacked` |
@@ -489,6 +490,21 @@ The guide returns recipe selection rules and a validated example path for each r
 | Categorical conditions where place explains the finding | `map.regional` |
 | One unsupported value or prose-only evidence | Omit until source enrichment supplies visual structure |
 | Several essential mixed-unit or mixed-stage measures | Separate ChartSpecs |
+
+After the evidence shape identifies a likely recipe, check the guide's
+`ambiguityRules` against the nearest plausible alternative. The purpose is to
+make the boundary explicit, not to generate several candidate charts. For
+example, a complete row-by-column cross-tab is a matrix rather than a ranking;
+observed values through time are a trend rather than a duration timeline; and
+positive zero-seated components are a component decomposition rather than a
+running waterfall bridge.
+
+Only after the recipe is fixed should the author choose `narrative.density`
+from the intended reading task. Use `minimal` for a genuinely self-contained
+quick scan, `editorial` as the normal publication default, and `detailed` for a
+close read of information-rich evidence. Do not reduce density merely to make a
+crowded chart fit. Density may simplify renderer furniture but cannot hide
+title-defining evidence or alter the data contract.
 
 For `ranking.horizontal`, distinguish a categorical profile from a focus story.
 A categorical profile uses the renderer's qualitative palette, ordered so
@@ -527,19 +543,22 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
+node tool-api/chart.js image <spec.json> [output.png] --profile auto [--run-id <id>]
+```
+
+The `image` command is the normal static-output path. It routes the recipe,
+uses a disposable HTML shell, performs target-size layout diagnostics, and
+publishes the PNG only after capture succeeds. Use `render` plus `diagnose`
+when an HTML shell or responsive investigation is specifically useful:
+
+```bash
 node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
 node tool-api/chart.js diagnose <output.html>
 ```
 
-Inspect the rendered chart for semantic QA before delivery. Use the review
-command to capture the inspected artifact:
+`image` routes `map.regional` automatically after the ChartSpec has been authored through the regional contract. If the standard HTML render command identifies a regional specification, stop and use the regional workflow. Do not remove `map.regional` merely to pass the command.
 
-```bash
-node tool-api/chart.js review <output.html> \
-  --screenshot --output .work/<run-id>/review/<chart>.png
-```
-
-If the standard render command identifies a regional specification, stop and use the regional workflow. Do not remove `map.regional` merely to pass the command.
+Use `--profile auto` unless the publishing destination requires a fixed shape. `auto` owns recipe-aware dimensions and may expand to avoid clipping. `landscape`, `square`, and `portrait` are fixed publication shapes; failure to fit is a rendering defect or a signal that the requested shape is inappropriate, not permission to author pixel geometry.
 
 ## 6. Regional breakdown workflow
 
@@ -564,8 +583,8 @@ Keep the map object minimal. Do not author coordinates, card positions, route
 points, manual lanes, SVG paths, HTML, CSS, JavaScript, or chart-library
 configuration. Russian regional maps always use the continental mainland
 silhouette. Kaliningrad and island fragments are permanently excluded from the
-map geometry and cannot be active map items. Use a separate standard chart,
-`status.grid`, or another non-map recipe for detached-region evidence.
+map geometry and cannot be active map items. Use an appropriate supported
+standard-chart recipe for detached-region evidence.
 
 Regional summary cards are permanently disabled. The callout cards carry the
 evidence, while the compact header, smaller watermark, and wide regional canvas
@@ -586,9 +605,10 @@ Run:
 ```bash
 node tool-api/chart.js validate <spec.json>
 node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>]
+node tool-api/chart.js image <spec.json> [output.png] --profile auto [--run-id <id>]
 ```
 
-The regional command performs validation, rendering, shell review, and responsive diagnostics. Use `--no-diagnose` only when a browser is unavailable.
+The regional command performs validation, rendering, shell review, and responsive diagnostics when HTML-level regional inspection is needed. The `image` command performs the final target-size regional capture and applies the same final leader-geometry checks to that captured layout. Use `--no-diagnose` only when a browser is unavailable and HTML output is explicitly needed.
 
 ## 7. Failure boundary
 
@@ -613,8 +633,8 @@ For an individual chart, report:
 
 - Selected workflow and recipe.
 - ChartSpec path.
-- Generated HTML path.
-- Optional PNG path.
+- Final PNG path.
+- Generated HTML path only when HTML was explicitly rendered for inspection or delivery.
 - Validation and diagnostic status.
 - Remaining warnings or infrastructure defects.
 

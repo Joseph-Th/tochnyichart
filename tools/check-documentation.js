@@ -35,6 +35,25 @@ const README_ROUTED_AUTHORITIES = Object.freeze([
   'tool-api/README.md'
 ]);
 
+// Protect broad public-contract semantics in addition to links and command
+// names. These intentionally use durable concepts rather than exact prose so
+// documentation can evolve without silently dropping the chart-author boundary.
+const REQUIRED_CONTRACT_PATTERNS = Object.freeze({
+  '.claude/skills/tochnyi-chart.md': Object.freeze([
+    Object.freeze({ pattern: /public Tool API/i, label: 'public Tool API boundary' }),
+    Object.freeze({ pattern: /semantic [`']?ChartSpec/i, label: 'semantic ChartSpec authoring' }),
+    Object.freeze({ pattern: /Do not inspect or modify these implementation directories/i, label: 'implementation-directory prohibition' }),
+    Object.freeze({ pattern: /routingAudit/, label: 'geography-first routing audit' }),
+    Object.freeze({ pattern: /ambiguityRules/, label: 'nearest-alternative recipe check' }),
+    Object.freeze({ pattern: /readingIntent/, label: 'reading-intent density guidance' })
+  ]),
+  'tool-api/README.md': Object.freeze([
+    Object.freeze({ pattern: /PNG is the primary individual-chart artifact/i, label: 'PNG primary artifact rule' }),
+    Object.freeze({ pattern: /runtimeDependencies\.offlineReady/, label: 'runtime dependency disclosure' }),
+    Object.freeze({ pattern: /ambiguityRules/, label: 'machine-readable ambiguity guidance' })
+  ])
+});
+
 const SOURCE_ROUTE_PREFIXES = Object.freeze([
   '.claude/skills/',
   'docs/',
@@ -117,6 +136,7 @@ function sourceRouteFromSpan(value) {
 function checkDocumentation(projectRoot = path.resolve(__dirname, '..')) {
   const errors = [];
   const existing = new Set();
+  let checkedContractRules = 0;
 
   for (const relativePath of REQUIRED_DOCUMENTS) {
     const absolute = path.join(projectRoot, relativePath);
@@ -136,6 +156,17 @@ function checkDocumentation(projectRoot = path.resolve(__dirname, '..')) {
 
   const scripts = new Set(packageScripts(projectRoot));
   const toolApiCommands = implementedToolApiCommands(projectRoot);
+
+  for (const [relativePath, requirements] of Object.entries(REQUIRED_CONTRACT_PATTERNS)) {
+    if (!existing.has(relativePath)) continue;
+    const document = readText(projectRoot, relativePath);
+    for (const requirement of requirements) {
+      checkedContractRules += 1;
+      if (!requirement.pattern.test(document)) {
+        errors.push(`${relativePath} is missing required contract concept: ${requirement.label}`);
+      }
+    }
+  }
 
   for (const relativePath of existing) {
     const document = readText(projectRoot, relativePath);
@@ -183,6 +214,7 @@ function checkDocumentation(projectRoot = path.resolve(__dirname, '..')) {
     documentCount: existing.size,
     checkedNpmScripts: scripts.size,
     checkedToolApiCommands: toolApiCommands.size,
+    checkedContractRules,
     errors
   };
 }
@@ -198,6 +230,7 @@ if (require.main === module) main();
 module.exports = {
   REQUIRED_DOCUMENTS,
   README_ROUTED_AUTHORITIES,
+  REQUIRED_CONTRACT_PATTERNS,
   normalizeRepositoryPath,
   markdownLinkTargets,
   inlineCodeSpans,

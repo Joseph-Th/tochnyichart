@@ -32,18 +32,6 @@
     "valueMode": "share",
     "levelAvailability": "not-applicable"
   },
-  "supportingFacts": [
-    {
-      "value": "10,000+ tons/day",
-      "label": "Approximate gasoline volume actually sold on the exchange.",
-      "tone": "primary"
-    },
-    {
-      "value": "45,000 tons/day",
-      "label": "Approximate demand left unmet after the available volume was allocated.",
-      "tone": "critical"
-    }
-  ],
   "narrative": {
     "frame": "collapse",
     "density": "editorial",
@@ -52,7 +40,7 @@
   "options": {
     "height": "short",
     "sort": "none",
-    "showLegend": true,
+    "showLegend": false,
     "showLabels": true,
     "animate": true,
     "labelMode": "inside"

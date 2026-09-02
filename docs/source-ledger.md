@@ -263,6 +263,14 @@ value. This check is about observations, not the raw count of numeric tokens.
 A single benchmark relationship remains valid when the source genuinely offers
 only an actual value and its benchmark.
 
+For a complete two-dimensional cross-tab intended for `matrix.heat`, add
+`column` to every `visualEvidenceAudit.comparableObservations[]` item. `label`
+is the row category and `column` is the second categorical dimension. Once any
+observation declares `column`, every observation must declare it and the audit
+must inventory the complete 2×2 to 6×6 rectangle. Source coverage then matches
+ChartSpec cells by `(label, column)`, not by row label alone, so repeated row
+names cannot conceal a dropped or changed cell.
+
 For a `rate` or `share` whose tangible basis remains `unavailable` or
 `incomparable`, one independent normalized observation is not enough for a
 standalone chart. `100% - reported share` is a derived complement, not a second

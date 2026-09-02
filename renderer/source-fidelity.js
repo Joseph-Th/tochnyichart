@@ -232,6 +232,17 @@ function contextAround(input, start, end) {
     .trim();
 }
 
+function matrixObservationKey(item) {
+  const row = normalizedSeriesLabel(item?.specLabel || item?.label);
+  const column = normalizedSeriesLabel(item?.column);
+  return row && column ? `${row}\u0000${column}` : row;
+}
+
+function matrixObservationDisplay(item) {
+  const row = item?.specLabel || item?.label || '';
+  return item?.column ? `${row} · ${item.column}` : row;
+}
+
 function normalizedSeriesLabel(value) {
   return String(value || '')
     .toLowerCase()
@@ -313,7 +324,10 @@ function geographicObservationCount(candidate) {
   if (!Array.isArray(observations)) return 0;
   const regions = new Set();
   observations.forEach((observation) => {
-    geographicRegionsInLabel(observation?.label || observation?.specLabel)
+    geographicRegionsInLabel([
+      observation?.label || observation?.specLabel,
+      observation?.column
+    ].filter(Boolean).join(' '))
       .forEach((region) => regions.add(region));
   });
   return regions.size;
@@ -532,10 +546,14 @@ function physicalVolumePhrases(candidate) {
 function sameSeriesSkeleton(first, second) {
   if (!first || !second || first.recipe !== second.recipe) return false;
   const firstLabels = Array.isArray(first.data)
-    ? first.data.map((item) => normalizedSeriesLabel(item && item.label))
+    ? first.data.map((item) => first.recipe === 'matrix.heat'
+        ? matrixObservationKey(item)
+        : normalizedSeriesLabel(item && item.label))
     : [];
   const secondLabels = Array.isArray(second.data)
-    ? second.data.map((item) => normalizedSeriesLabel(item && item.label))
+    ? second.data.map((item) => second.recipe === 'matrix.heat'
+        ? matrixObservationKey(item)
+        : normalizedSeriesLabel(item && item.label))
     : [];
   if (firstLabels.length < 2 || firstLabels.length !== secondLabels.length) return false;
   return firstLabels.every((label, index) => label && label === secondLabels[index]);
@@ -748,6 +766,9 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     );
   }
   const labels = new Set();
+  const matrixRows = new Set();
+  const matrixColumns = new Set();
+  const hasMatrixColumns = audit.comparableObservations.some((observation) => isText(observation?.column));
   audit.comparableObservations.forEach((observation, index) => {
     const observationPrefix = `${prefix}.visualEvidenceAudit.comparableObservations[${index}]`;
     if (!observation || typeof observation !== 'object' || Array.isArray(observation)) {
@@ -769,10 +790,38 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     if (observation.specLabel !== undefined && !isText(observation.specLabel)) {
       errors.push(`${observationPrefix}.specLabel must be a non-empty string when provided.`);
     }
-    const label = normalizedSeriesLabel(observation.specLabel || observation.label);
-    if (label && labels.has(label)) errors.push(`${observationPrefix} duplicates another comparable observation label.`);
+    if (observation.column !== undefined && !isText(observation.column)) {
+      errors.push(`${observationPrefix}.column must be a non-empty string when provided.`);
+    }
+    if (hasMatrixColumns && !isText(observation.column)) {
+      errors.push(`${observationPrefix}.column is required because this evidence audit inventories a two-dimensional cross-tab.`);
+    }
+    const row = normalizedSeriesLabel(observation.specLabel || observation.label);
+    const column = normalizedSeriesLabel(observation.column);
+    const label = matrixObservationKey(observation);
+    if (label && labels.has(label)) {
+      errors.push(`${observationPrefix} duplicates another comparable observation${hasMatrixColumns ? ' row-column cell' : ' label'}.`);
+    }
     if (label) labels.add(label);
+    if (row) matrixRows.add(row);
+    if (column) matrixColumns.add(column);
   });
+
+  if (hasMatrixColumns) {
+    if (matrixRows.size < 2 || matrixRows.size > 6) {
+      errors.push(`${prefix}.visualEvidenceAudit matrix evidence requires 2 to 6 distinct row labels.`);
+    }
+    if (matrixColumns.size < 2 || matrixColumns.size > 6) {
+      errors.push(`${prefix}.visualEvidenceAudit matrix evidence requires 2 to 6 distinct column labels.`);
+    }
+    const expectedCells = matrixRows.size * matrixColumns.size;
+    if (labels.size !== expectedCells) {
+      errors.push(
+        `${prefix}.visualEvidenceAudit matrix evidence must inventory a complete rectangular cross-tab. ` +
+        `Expected ${expectedCells} row-column cells but found ${labels.size}.`
+      );
+    }
+  }
 
   const volumePhrases = physicalVolumePhrases(candidate);
   if (!isCoverageCandidate(candidate) || volumePhrases.length < 2) return;
@@ -875,20 +924,45 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
         value: segment.value
       })))
     : [];
+  const matrixEvidence = observations.some((observation) => isText(observation?.column));
+  if (matrixEvidence && spec?.recipe !== 'matrix.heat') {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} flattens a two-dimensional source cross-tab into ${spec?.recipe || 'a one-dimensional recipe'}. ` +
+      'When comparableObservations inventory row and column dimensions, preserve every row-column cell with matrix.heat rather than collapsing repeated row labels.'
+    );
+    return;
+  }
+  if (spec?.recipe === 'matrix.heat' && !matrixEvidence) {
+    errors.push(
+      `ChartSpec ${candidate.outputSlug} uses matrix.heat but the source ledger does not inventory the column dimension. ` +
+      'Add comparableObservations[].column for every row-column cell so two-dimensional source coverage is machine-checkable.'
+    );
+    return;
+  }
   const plottedItems = ['trend.stacked', 'composition.compared'].includes(spec?.recipe) ? stackedItems : data;
-  const plottedLabels = new Set(plottedItems.map((item) => normalizedSeriesLabel(item?.label)).filter(Boolean));
+  const plottedLabels = new Set(plottedItems.map((item) =>
+    spec?.recipe === 'matrix.heat' ? matrixObservationKey(item) : normalizedSeriesLabel(item?.label)
+  ).filter(Boolean));
   const referenceLabels = new Set(references.map((reference) => normalizedSeriesLabel(reference?.label)).filter(Boolean));
   const missing = observations
     .filter((observation) => {
-      const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
+      const label = spec?.recipe === 'matrix.heat'
+        ? matrixObservationKey(observation)
+        : normalizedSeriesLabel(observation?.specLabel || observation?.label);
       if (plottedLabels.has(label)) return false;
       return !(label === denominatorLabel && referenceLabels.has(label));
     })
-    .map((observation) => observation?.specLabel || observation?.label)
+    .map(matrixObservationDisplay)
     .filter(Boolean);
   const mismatched = observations.filter((observation) => {
-    const label = normalizedSeriesLabel(observation?.specLabel || observation?.label);
-    const item = plottedItems.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
+    const label = spec?.recipe === 'matrix.heat'
+      ? matrixObservationKey(observation)
+      : normalizedSeriesLabel(observation?.specLabel || observation?.label);
+    const item = plottedItems.find((candidate) =>
+      spec?.recipe === 'matrix.heat'
+        ? matrixObservationKey(candidate) === label
+        : normalizedSeriesLabel(candidate?.label) === label
+    );
     if (!item && label === denominatorLabel) {
       const reference = references.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
       if (!reference) return false;
@@ -903,7 +977,7 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     }
     return typeof item.low !== 'number' || typeof item.high !== 'number' ||
       Math.abs(item.low - observation.low) > 1e-9 || Math.abs(item.high - observation.high) > 1e-9;
-  }).map((observation) => observation?.specLabel || observation?.label).filter(Boolean);
+  }).map(matrixObservationDisplay).filter(Boolean);
   if (missing.length || mismatched.length) {
     errors.push(
       `ChartSpec ${candidate.outputSlug} collapses a richer same-scale dataset. ` +

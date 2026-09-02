@@ -232,6 +232,11 @@ Before accepting a chart candidate, apply the visual-evidence gate:
   `comparison.area-squares` before a ranking. Square area must remain
   proportional to the value; do not use area for arbitrary scores or unrelated
   percentages.
+- When one same-scale numeric measure forms a complete 2×2 to 6×6 cross-tab,
+  use `matrix.heat` only when the row-by-column pattern is the finding. Inventory
+  every cell in `visualEvidenceAudit.comparableObservations` using `label` for
+  the row and `column` for the second dimension. Do not flatten repeated row
+  labels into a ranking or delete low-valued cells to simplify the picture.
 - Treat affected-versus-unaffected populations as composition, not a benchmark
   gap. The affected/exposed subset should carry the warning or critical tone;
   the unaffected/outside subset should remain neutral or positive. This is a

@@ -5,12 +5,9 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
 const os = require('node:os');
+const { STANDARD_DIAGNOSTIC_VIEWPORTS } = require('./workflow-contract');
 
-const DEFAULT_DIAGNOSTIC_VIEWPORTS = [
-  { width: 1200, height: 900 },
-  { width: 768, height: 900 },
-  { width: 480, height: 900 }
-];
+const DEFAULT_DIAGNOSTIC_VIEWPORTS = STANDARD_DIAGNOSTIC_VIEWPORTS;
 
 function candidateBrowsers() {
   const programFiles = process.env.PROGRAMFILES || 'C:\Program Files';
@@ -134,6 +131,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   if (options.requireViewportFit) {
     query.set('checkFit', '1');
     if (options.autoFit === true) query.set('fit', '1');
+    if (options.fillViewport === true) query.set('fill', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -166,6 +164,10 @@ function diagnoseHtml(htmlPath, options = {}) {
   const columnAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-column-');
   const rankingAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-ranking-');
   const relationshipAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-relationship-');
+  const scenarioAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-scenario-');
+  const waterfallAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-waterfall-');
+  const heatAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-heat-');
+  const canvasAttributes = extractDataAttributes(result.stdout, null, 'data-canvas-');
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
     throw new Error(`Layout diagnostics did not complete (state: ${state}).`);
@@ -182,6 +184,10 @@ function diagnoseHtml(htmlPath, options = {}) {
     columnAttributes,
     rankingAttributes,
     relationshipAttributes,
+    scenarioAttributes,
+    waterfallAttributes,
+    heatAttributes,
+    canvasAttributes,
     rendered: true
   };
 }
@@ -223,6 +229,10 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
       columnAttributes: run.columnAttributes,
       rankingAttributes: run.rankingAttributes,
       relationshipAttributes: run.relationshipAttributes,
+      scenarioAttributes: run.scenarioAttributes,
+      waterfallAttributes: run.waterfallAttributes,
+      heatAttributes: run.heatAttributes,
+      canvasAttributes: run.canvasAttributes,
       recoveredFromTransientFailure: run.recoveredFromTransientFailure === true
     }))
   };
@@ -235,7 +245,8 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     ...options,
     viewport,
     requireViewportFit,
-    autoFit: options.autoFit === true
+    autoFit: options.autoFit === true,
+    fillViewport: options.fillViewport === true
   });
   let overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
   if (inspection.diagnostics?.status === 'fail' && !overflowIssue && options.retryFailedDiagnostics !== false) {
@@ -245,6 +256,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
         viewport,
         requireViewportFit,
         autoFit: options.autoFit === true,
+        fillViewport: options.fillViewport === true,
         timeout: Math.max(options.timeout || 30000, 60000),
         _diagnosticRetried: true
       });
@@ -304,6 +316,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
   if (requireViewportFit) {
     query.set('checkFit', '1');
     if (options.autoFit === true) query.set('fit', '1');
+    if (options.fillViewport === true) query.set('fill', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -342,7 +355,17 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     outputPath: absoluteOutput,
     bytes: fs.statSync(absoluteOutput).size,
     dimensions,
-    diagnostics: inspection.diagnostics
+    diagnostics: inspection.diagnostics,
+    chartAttributes: inspection.chartAttributes,
+    trendAttributes: inspection.trendAttributes,
+    scaleAttributes: inspection.scaleAttributes,
+    columnAttributes: inspection.columnAttributes,
+    rankingAttributes: inspection.rankingAttributes,
+    relationshipAttributes: inspection.relationshipAttributes,
+    scenarioAttributes: inspection.scenarioAttributes,
+    waterfallAttributes: inspection.waterfallAttributes,
+    heatAttributes: inspection.heatAttributes,
+    canvasAttributes: inspection.canvasAttributes
   };
 }
 

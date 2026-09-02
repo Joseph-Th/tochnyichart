@@ -38,6 +38,170 @@ test('every recipe has a valid example ChartSpec', () => {
   assert.deepEqual([...covered].sort(), [...recipeIds].sort());
 });
 
+test('generated shells pin the chart runtime instead of following the latest CDN alias', () => {
+  const html = renderHtml(validateSpec(loadExample('ai95-price-spike.json')).normalized);
+  assert.match(html, /cdn\.amcharts\.com\/lib\/version\/5\.20\.3\/index\.js/);
+  assert.match(html, /cdn\.amcharts\.com\/lib\/version\/5\.20\.3\/xy\.js/);
+  assert.doesNotMatch(html, /cdn\.amcharts\.com\/lib\/5\/(?:index|xy|percent)\.js/);
+});
+
+test('dumbbell legend explains before-versus-after shape without promising one after color', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /BEFORE \/ BENCHMARK/);
+  assert.match(runtime, /AFTER \/ ACTUAL/);
+  assert.match(runtime, /dumbbell-legend-end'[\s\S]{0,260}fill: TONE_HEX\.neutral|fill: TONE_HEX\.neutral[\s\S]{0,260}dumbbell-legend-end'/);
+  assert.doesNotMatch(runtime, /cx: right - 75, cy: 24, r: 8, fill: TONE_HEX\.primary/);
+});
+
+test('visual planner adds static-reading guides only when they clarify simple scales', () => {
+  const ranking = validateSpec(loadExample('regional-ranking.json')).normalized;
+  const rankingPlan = VisualPlan.resolveVisualPlan(ranking, ranking.data, 1200);
+  assert.equal(rankingPlan.quantitativeGuide.mode, 'ruler');
+  assert.equal(rankingPlan.quantitativeGuide.step, 10);
+  assert.ok(rankingPlan.quantitativeGuide.count >= 8);
+
+  const denseRanking = structuredClone(ranking);
+  denseRanking.data = Array.from({ length: 20 }, (_, index) => ({
+    ...ranking.data[index % ranking.data.length],
+    label: `Category ${index + 1}`,
+    value: 100 - index
+  }));
+  const densePlan = VisualPlan.resolveVisualPlan(denseRanking, denseRanking.data, 1200);
+  assert.equal(densePlan.quantitativeGuide.mode, 'none');
+
+  const trend = {
+    recipe: 'trend.line',
+    data: Array.from({ length: 30 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 })),
+    measure: { baseline: 'zero', scale: 'linear' },
+    narrative: { density: 'editorial', emphasis: 'direction' },
+    options: {}
+  };
+  const trendPlan = VisualPlan.resolveVisualPlan(trend, trend.data, 1200);
+  assert.equal(trendPlan.periodGuide.mode, 'period-ticks');
+  assert.equal(trendPlan.periodGuide.count, 30);
+  assert.equal(trendPlan.trendPoints.mode, 'none');
+
+  trend.data = Array.from({ length: 8 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 }));
+  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).trendPoints.mode, 'all');
+
+  trend.data = Array.from({ length: 90 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 }));
+  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).periodGuide.mode, 'none');
+  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).trendPoints.mode, 'none');
+
+});
+
+test('static-oriented renderer centralizes motion and exposes deterministic guide treatments', () => {
+  assert.equal(Tochnyi.motion.enterDuration, 800);
+  assert.equal(Tochnyi.motion.staggerDelay, 80);
+  assert.deepEqual(Tochnyi.scales.sequentialBlue.startRgb, [238, 243, 248]);
+  assert.deepEqual(Tochnyi.scales.sequentialBlue.endRgb, [0, 91, 187]);
+  assert.ok(Tochnyi.scales.sequentialBlue.lightTextThreshold > 0 && Tochnyi.scales.sequentialBlue.lightTextThreshold < 1);
+  assert.ok(Tochnyi.marks.guide.minorOpacity < Tochnyi.marks.guide.majorOpacity);
+  assert.ok(Tochnyi.marks.periodTick.opacity > 0 && Tochnyi.marks.periodTick.opacity < 0.5);
+
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  function cssVariable(name) {
+    const marker = `${name}:`;
+    const line = css.split('\n').find((candidate) => candidate.trim().startsWith(marker));
+    if (!line) return null;
+    const raw = line.split(':').slice(1).join(':').trim();
+    const semicolon = raw.indexOf(';');
+    return (semicolon >= 0 ? raw.slice(0, semicolon) : raw).trim();
+  }
+  function numericHex(value) {
+    return `#${Number(value).toString(16).padStart(6, '0')}`;
+  }
+  assert.equal(cssVariable('--tochnyi-blue'), numericHex(Tochnyi.colors.blue));
+  assert.equal(cssVariable('--tochnyi-yellow'), numericHex(Tochnyi.colors.yellow));
+  assert.equal(cssVariable('--tochnyi-blue-dark'), numericHex(Tochnyi.colors.blueDark));
+  assert.equal(cssVariable('--tochnyi-yellow-dark'), numericHex(Tochnyi.colors.yellowDark));
+  assert.equal(Number(cssVariable('--tochnyi-column-fill-opacity')), Tochnyi.marks.column.fillOpacity);
+  assert.equal(Number(cssVariable('--tochnyi-watermark-opacity')), Tochnyi.marks.watermarkOpacity);
+  assert.match(cssVariable('--tochnyi-font'), new RegExp(Tochnyi.font.family, 'i'));
+  assert.match(runtime, /prefers-reduced-motion: reduce/);
+  assert.match(runtime, /Tochnyi\.scales.*sequentialBlue/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.tochnyi-map-region\s*\{\s*transition:\s*none/);
+  assert.match(runtime, /data-output-mode/);
+  assert.match(runtime, /addQuantitativeRulerGuides/);
+  assert.match(runtime, /data-ranking-guide-step/);
+  assert.match(runtime, /data-trend-period-guides/);
+  assert.match(runtime, /data-trend-point-mode/);
+  assert.match(runtime, /showBullets:\s*!plan\.trendPoints \|\| plan\.trendPoints\.mode === 'all'/);
+  assert.match(runtime, /data-scenario-mark-mode/);
+});
+
+test('scenario planner uses positional points instead of truncated columns on nonzero scales', () => {
+  const clustered = loadExample('central-bank-scenarios.json');
+  const clusteredPlan = VisualPlan.resolveVisualPlan(clustered, clustered.data, 1200);
+  assert.equal(clusteredPlan.scenarioMarks.mode, 'points');
+  assert.match(clusteredPlan.scenarioMarks.reason, /nonzero/);
+
+  const zeroBased = loadExample('russia-fuel-inflation-july-2026.json');
+  assert.equal(VisualPlan.resolveVisualPlan(zeroBased, zeroBased.data, 1200).scenarioMarks.mode, 'columns');
+
+  zeroBased.options.showLabels = false;
+  const hiddenValues = validateSpec(zeroBased);
+  assert.equal(hiddenValues.valid, false);
+  assert.ok(hiddenValues.errors.some((message) => /requires direct numeric labels/i.test(message)));
+});
+
+test('matrix heat requires a complete directly-labeled categorical cross-tab', () => {
+  const spec = loadExample('support-channel-heatmap.json');
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.measure.baseline, 'auto');
+  assert.equal(result.warnings.some((message) => /Data labels are duplicated/i.test(message)), false);
+
+  const duplicate = structuredClone(spec);
+  duplicate.data[8] = { ...duplicate.data[0] };
+  result = validateSpec(duplicate);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /repeats the cell/i.test(message)));
+
+  const sparse = structuredClone(spec);
+  sparse.data.pop();
+  result = validateSpec(sparse);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /complete rectangular cross-tab/i.test(message)));
+
+  const hiddenLabels = structuredClone(spec);
+  hiddenLabels.options.showLabels = false;
+  result = validateSpec(hiddenLabels);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /direct numeric labels/i.test(message)));
+
+  const hiddenLegend = structuredClone(spec);
+  hiddenLegend.options.showLegend = false;
+  result = validateSpec(hiddenLegend);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /visible quantitative color legend/i.test(message)));
+
+  const semanticTone = structuredClone(spec);
+  semanticTone.data[0].tone = 'critical';
+  result = validateSpec(semanticTone);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /cell color is reserved for the quantitative scale/i.test(message)));
+
+  const logarithmic = structuredClone(spec);
+  logarithmic.measure.scale = 'logarithmic';
+  result = validateSpec(logarithmic);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /requires a linear color scale/i.test(message)));
+
+  const zeroBaseline = structuredClone(spec);
+  zeroBaseline.measure.baseline = 'zero';
+  result = validateSpec(zeroBaseline);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /baseline auto/i.test(message)));
+
+  const sorted = structuredClone(spec);
+  sorted.options.sort = 'descending';
+  result = validateSpec(sorted);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /sort must be none/i.test(message)));
+});
+
 test('affected population splits use composition rather than benchmark-gap colors', () => {
   const spec = loadExample('ai95-price-spike.json');
   spec.title = 'Most sellers had inventory in affected warehouses';
@@ -89,7 +253,18 @@ test('compared composition keeps additive components as segments', () => {
   const result = validateSpec(spec);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.match(renderHtml(result.normalized), /composition\.compared/);
-  assert.ok(result.warnings.some((message) => /entire segment-label family outside.*legend/i.test(message)));
+  assert.equal(result.warnings.some((message) => /entire segment-label family outside.*legend/i.test(message)), false);
+
+  spec.options.showLegend = true;
+  const redundantLegend = validateSpec(spec);
+  assert.equal(redundantLegend.valid, true, redundantLegend.errors.join('; '));
+  assert.ok(redundantLegend.warnings.some((message) => /entire segment-label family outside.*legend/i.test(message)));
+});
+
+test('calendar timelines do not require an unrelated numeric measure unit', () => {
+  const result = validateSpec(loadExample('anchored-duration-timeline.json'));
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.warnings.some((message) => /No measure unit/i.test(message)), false);
 });
 
 test('donut direct labels use simple straight leaders and semantic label color', () => {
@@ -763,6 +938,49 @@ test('common-anchor durations use timelines and abstract duration bars are rejec
   result = validateSpec(bars);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /duration is the primary comparison|use timeline\.duration/i.test(message)));
+});
+
+test('rolling-window trend metrics are not misclassified as duration comparisons', () => {
+  const rolling = {
+    version: '2.0',
+    recipe: 'trend.line',
+    title: 'Warehouse strikes were already rising',
+    subtitle: 'A daily 14-day trailing count shows the pre-event rise.',
+    date: '2026-08-31',
+    data: [
+      { label: 'Jul 6', value: 11, quantity: '14-day trailing site count', scope: 'civilian warehouses', period: '14 days ending Jul 6, 2026' },
+      { label: 'Jul 7', value: 13, quantity: '14-day trailing site count', scope: 'civilian warehouses', period: '14 days ending Jul 7, 2026' },
+      { label: 'Jul 8', value: 14, quantity: '14-day trailing site count', scope: 'civilian warehouses', period: '14 days ending Jul 8, 2026' }
+    ],
+    measure: {
+      quantity: '14-day trailing site count',
+      unit: 'sites / trailing 14 days',
+      valueMode: 'level',
+      levelAvailability: 'retrievable',
+      decimals: 0,
+      baseline: 'zero'
+    },
+    metadata: { keyFinding: 'The trailing 14-day window rose before the event.' }
+  };
+  const result = validateSpec(rolling);
+  assert.equal(result.valid, true, result.errors.join('; '));
+});
+
+test('publication shell review accepts dense validated trend lines', () => {
+  const spec = loadExample('bankruptcies-trend.json');
+  spec.data = Array.from({ length: 91 }, (_, index) => ({
+    label: `Day ${index + 1}`,
+    value: index % 15,
+    quantity: '14-day trailing site count',
+    scope: 'civilian warehouses',
+    period: `day ${index + 1}`
+  }));
+  spec.measure.quantity = '14-day trailing site count';
+  spec.measure.unit = 'sites / trailing 14 days';
+  const validation = validateSpec(spec);
+  assert.equal(validation.valid, true, validation.errors.join('; '));
+  const review = reviewHtml(renderHtml(validation.normalized));
+  assert.equal(review.valid, true, review.errors.join('; '));
 });
 
 test('multi-period slowdown evidence must be plotted as a trend', () => {
@@ -1717,6 +1935,52 @@ test('trend labels remain candidates until measured layout and avoid line geomet
       );
     }
   }
+});
+
+test('trend label orientation lock keeps one family on the same side of the line', () => {
+  const data = [12, 18, 24, 31, 38].map((value, index) => ({
+    label: String(index + 1),
+    value
+  }));
+  const points = [
+    { x: 90, y: 260 },
+    { x: 250, y: 220 },
+    { x: 410, y: 180 },
+    { x: 570, y: 135 },
+    { x: 730, y: 90 }
+  ];
+  const plans = data.map((item, index) => ({
+    showLabel: index > 0,
+    priority: 100,
+    preferredPlacement: 'above',
+    dy: -22,
+    dx: 0,
+    centerXPercent: 50
+  }));
+  const layout = VisualPlan.trendLabelLayout(data, {
+    plans,
+    points,
+    labelSizes: data.map(() => ({ width: 110, height: 28 })),
+    boundary: { left: 20, top: 20, right: 800, bottom: 310 },
+    pointRadius: 6,
+    pointPadding: 5,
+    labelPadding: 8,
+    lineTolerance: 4,
+    lineStrokeWidth: 4,
+    labelBackgroundPadding: 2,
+    orientationLock: 'above'
+  });
+  const placed = layout.filter((item) => item.showLabel);
+  assert.equal(placed.length, 4);
+  placed.forEach((item) => {
+    assert.ok(item.placement.startsWith('above'),
+      `orientation-locked label must stay above, got ${item.placement}`);
+  });
+  assert.equal(
+    VisualPlan.trendLabelLineOverlapCount(layout, points, 8),
+    0,
+    'orientation consistency must not be achieved by allowing labels to cross the plotted line'
+  );
 });
 
 test('trend endpoint labels use bounded two-dimensional search when radial placements fail', () => {
@@ -4025,6 +4289,7 @@ test('editorial validation flags redundant composition copy and internal sources
   const spec = loadExample('spimex-demand-stacked.json');
   spec.source.name = 'Weekly source text (input.txt)';
   spec.data[0].displayValue = '18.1m m²';
+  spec.supportingFacts = [];
   spec.supportingFacts.push({
     value: '18.1%',
     label: 'This repeats the share already encoded in the composition.',
@@ -4058,4 +4323,63 @@ test('default output paths use an arbitrary transient run id', () => {
     () => defaultOutputPath(root, { metadata: { slug: 'example-chart' } }, { runId: '../escape' }),
     /Run id/
   );
+});
+
+test('trend event markers are anchored to a plotted period and refused elsewhere', () => {
+  const spec = loadExample('bankruptcies-trend.json');
+  spec.events = [{ label: 'Policy change', afterLabel: '2024', lineStyle: 'dashed', tone: 'critical' }];
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  spec.events = [{ label: 'Policy change', afterLabel: '2099' }];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('does not match any data label')));
+
+  spec.events = [{ label: 'Policy change', afterLabel: '2024', position: 'right' }];
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('events[0]')));
+
+  const ranking = loadExample('regional-ranking.json');
+  ranking.events = [{ label: 'Policy change', afterLabel: ranking.data[0].label }];
+  result = validateSpec(ranking);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('events is only supported by')));
+});
+
+test('trend event markers reach the rendered chart as a semantic spec field', () => {
+  const spec = loadExample('bankruptcies-trend.json');
+  spec.events = [{ label: 'Policy change', afterLabel: '2024', lineStyle: 'dashed' }];
+  const html = renderHtml(validateSpec(spec).normalized);
+  assert.ok(html.includes('"afterLabel"'));
+  assert.ok(html.includes('Policy change'));
+});
+
+test('trend line accepts dense daily series up to one year', () => {
+  const spec = loadExample('bankruptcies-trend.json');
+  spec.data = Array.from({ length: 198 }, (_, index) => ({
+    label: `Day ${index + 1}`,
+    value: index % 20,
+    displayValue: `${index % 20} sites`,
+    quantity: 'qualifying warehouse site-month record count',
+    scope: 'Russian strikes on civilian Ukrainian warehouse and logistics sites',
+    period: `2026 day ${index + 1}`
+  }));
+  spec.measure.quantity = 'qualifying warehouse site-month record count';
+  spec.measure.unit = 'sites';
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  spec.data.push(...Array.from({ length: 169 }, (_, index) => ({
+    label: `Extra ${index + 1}`,
+    value: index % 20,
+    displayValue: `${index % 20} sites`,
+    quantity: 'qualifying warehouse site-month record count',
+    scope: 'Russian strikes on civilian Ukrainian warehouse and logistics sites',
+    period: `extra day ${index + 1}`
+  })));
+  result = validateSpec(spec);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes('3 to 366')));
 });

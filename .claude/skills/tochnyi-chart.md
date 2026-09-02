@@ -1,7 +1,7 @@
 ---
 name: chart
 description: Produce a validated Tochnyi ChartSpec and chart artifact through the public Tool API
-version: 4.9.0
+version: 5.0.0
 triggers:
   - pattern: "chart"
   - pattern: "visualize"
@@ -16,24 +16,24 @@ The chart author owns evidence, calculations, editorial meaning, copy, recipe ch
 
 ## Primary assignment
 
-The normal assignment begins with `input.txt` at the project root. Treat the
-file as a batch queue containing multiple possible data stories. The caller
+The normal assignment begins with the exact non-empty `input/` source set at the project root. Treat the
+files as a batch source collection containing multiple possible data stories. The caller
 supplies an opaque run ID; it may be a date, client slug, issue number, or any
 other stable label. Never derive storage paths from chart dates.
 
 The agent must:
 
 1. Run `npm run run:init -- <run-id>`.
-2. Read the complete `input.txt`.
-3. Separate it into distinct stories and merge duplicates.
+2. Inventory and read the complete `input/` source set, including materially relevant structured views.
+3. Separate the evidence into distinct stories and merge duplicates.
 4. Inventory every materially relevant same-scale observation in each selected
    candidate's `visualEvidenceAudit`.
 5. Preserve each expert claim and enrich it with reputable sources.
 6. Audit whether actual levels are reported or retrievable and record the selected value representation.
 7. Decide which production tool and chart workflow each story requires.
-8. Produce, validate, render, and diagnose each accepted chart.
-9. Capture one final PNG for every accepted chart.
-10. Assemble the final PNGs into one PowerPoint presentation by following
+8. Author and validate one ChartSpec for every accepted chart.
+9. Use `npm run run:charts -- <run-id>` to render, diagnose, and capture one final PNG for every accepted batch chart.
+10. When a PowerPoint presentation is requested, assemble the final PNGs by following
    `presentation-plan.json` exactly. The default deck has one chart per slide
    and no cover, title, agenda, divider, closing, or other non-chart slide unless
    the user explicitly requested one.
@@ -53,11 +53,13 @@ Use `docs/batch-workflow.md` as the complete batch orchestration contract.
 Use only the public authoring surface during normal chart production:
 
 ```text
-input.txt
+input/
 tool-api/
 docs/batch-workflow.md
 docs/agent-workflows.md
+docs/story-selection.md
 docs/source-enrichment.md
+docs/source-ledger.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
@@ -110,10 +112,10 @@ candidate as `routingAudit`:
    Keep every materially reported continental region in `data[]`. The data
    array is the map evidence inventory, not a box inventory. Use
    `data[].callout: "none"` for fill-only highlights and reserve callout cards
-   for the most informative regions; at most 12 cards may be visible. Put visible
-   cards in deliberate reading order. Use `data[].calloutOrder` when that order
-   differs from `data[]` order. Automatic leaders stay direct and never render
-   origin dots.
+   for the most informative regions; at most 12 cards may be visible. Do not
+   author visual card order. The renderer derives card order from anchor
+   geometry to minimize crossings and travel. Automatic leaders stay direct and
+   never render origin dots.
 3. If a story contains geographic names but is routed to `standard-chart`, the
    rationale must explicitly explain why location is not explanatory.
 4. Do not use missing coordinates, a status-list shape, a ranking shape, or an
@@ -131,7 +133,7 @@ candidate as `routingAudit`:
 ## Shared authoring rules
 
 - Extract exact values, categories, dates, units, ranges, benchmarks, and source.
-- Treat `input.txt` as expert-authored editorial evidence. Assume its factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point.
+- Treat the initialized `input/` source set as authoritative assignment evidence. Assume supplied factual claims, values, comparisons, and interpretation are correct unless a reputable source directly contradicts a material point. Structured sources may support findings through explicit selectors, filters, groupings, or calculations.
 - Treat each entry as routing information as well as evidence; it may be incomplete, but external silence is not a contradiction.
 - Confirm that each supplied URL used for supplementation matches the entity, event, period, and finding before using it.
 - Read and exhaust the full primary source before selecting a recipe.
@@ -234,7 +236,7 @@ candidate as `routingAudit`:
 - Choose the story structure before chart geometry.
 - Use the underlying publication or dataset as `source.name` when available; otherwise omit `source`.
 - Keep the specification small and semantic.
-- Keep presentation copy separate from production context: never mention `input.txt`, internal provenance, verification status, diagnostics, or workflow commentary in a chart or slide.
+- Keep presentation copy separate from production context: never mention internal input paths, provenance mechanics, verification status, diagnostics, or workflow commentary in a chart or slide.
 - Write new specifications to `specs/runs/<run-id>/[slug].json`.
 - Correct semantic failures in the ChartSpec and rerun the Tool API commands.
 
@@ -248,7 +250,15 @@ The full source-enrichment and relevance policy is in `docs/source-enrichment.md
 node tool-api/chart.js guide
 ```
 
-The guide returns the standard recipes and a validated example path for each recipe.
+The guide returns the standard recipes and a validated example path for each recipe. `catalog` is the compact machine-readable choice surface when recipe definitions, selection rules, and static-image priorities are needed together.
+
+Use its `ambiguityRules` when two neighboring recipes remain plausible. Reject
+the nearest semantic alternative explicitly rather than rendering several
+template candidates. After the recipe is fixed, use `readingIntent` to map the
+reader task onto `narrative.density`: quick scan to `minimal`, normal
+publication read to `editorial`, and close read to `detailed`. Density may
+simplify renderer-owned furniture but must never remove essential evidence or
+be lowered merely to force content into a fixed canvas.
 
 Then:
 
@@ -266,31 +276,41 @@ Then:
    node tool-api/chart.js validate specs/runs/<run-id>/[slug].json
    ```
 
-8. Render:
+8. Produce the primary static artifact:
 
    ```bash
-   node tool-api/chart.js render specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].html --run-id <run-id>
+   node tool-api/chart.js image specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].png --profile auto --run-id <run-id>
    ```
 
-9. Diagnose:
+   Use `auto` unless the publishing destination explicitly requires `landscape`, `square`, or `portrait`. Do not author arbitrary pixel dimensions. Fixed profiles fail rather than silently changing shape when content does not fit.
+
+9. Use HTML rendering and responsive diagnostics only when inspection is needed:
 
    ```bash
-   node tool-api/chart.js diagnose charts/<run-id>/[slug].html
+   node tool-api/chart.js render specs/runs/<run-id>/[slug].json .work/<run-id>/rendered/[slug].html --run-id <run-id>
+   node tool-api/chart.js diagnose .work/<run-id>/rendered/[slug].html
    ```
 
-10. Perform semantic QA on the rendered output. State the intended reader
+10. Perform semantic QA on the final PNG. State the intended reader
    takeaway in one sentence and accept the chart only if a reader can recover
    it without mentally reconstructing the argument. Check that the visual
    grammar matches the evidence, derived values are transparent, qualifiers
    remain visible, and the title and labels describe the marks accurately.
 
-11. Correct semantic errors or report an infrastructure defect. For the batch
-   run, capture the final PNG into the run delivery folder:
+11. Correct semantic errors or report an infrastructure defect. `image` is
+   atomic: a failed target-size capture does not replace a prior valid PNG.
+
+The final static artifact must carry all essential meaning without hover,
+tooltips, click state, animation, hidden legend interaction, or panning.
+
+### Optional HTML diagnostic path
+
+When a rendering defect requires deeper inspection:
 
    ```bash
-     node tool-api/chart.js review charts/<run-id>/[slug].html \
-     --screenshot --output charts/<run-id>/[slug].png
-     ```
+   node tool-api/chart.js render specs/runs/<run-id>/[slug].json .work/<run-id>/rendered/[slug].html --run-id <run-id>
+   node tool-api/chart.js diagnose .work/<run-id>/rendered/[slug].html
+   ```
 
 ### Branding and watermark gate
 
@@ -377,40 +397,34 @@ Do not author coordinates, card positions, route points, manual lanes, partial f
 Use these semantic overrides only when the story requires them:
 
 - `data[].calloutSide`
-- `data[].calloutOrder`
 
 Run:
 
 ```bash
 node tool-api/chart.js validate specs/runs/<run-id>/[slug].json
-node tool-api/chart.js regional specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].html --run-id <run-id>
+node tool-api/chart.js image specs/runs/<run-id>/[slug].json charts/<run-id>/[slug].png --profile auto --run-id <run-id>
 ```
 
-The regional command includes responsive diagnostics. Use `--no-diagnose` only when a browser is unavailable.
-
-After the regional chart passes diagnostics, capture its final PNG with the same
-run output convention:
+The image command uses the maintained wide regional canvas and applies final leader-geometry validation to the target-size capture. Use the `regional` command when responsive HTML diagnostics are specifically needed:
 
 ```bash
-node tool-api/chart.js review charts/<run-id>/[slug].html \
-  --screenshot --output charts/<run-id>/[slug].png
+node tool-api/chart.js regional specs/runs/<run-id>/[slug].json .work/<run-id>/rendered/[slug].html --run-id <run-id>
 ```
 
 ## Delivery
 
-For each chart, report the workflow, recipe, ChartSpec path, generated HTML path,
-final PNG path, validation and diagnostic status, and remaining warnings or
+For each chart, report the workflow, recipe, ChartSpec path, final PNG path,
+validation and diagnostic status, and remaining warnings or
 infrastructure defects.
 
-For the completed batch run, confirm that the HTML files, final PNGs, and
-`tochnyi-charts-<run-id>.pptx` are present in `charts/<run-id>/`. Report
+For the completed batch run, confirm that the retained HTML files and final PNGs are present in `charts/<run-id>/`; confirm `tochnyi-charts-<run-id>.pptx` there only when a presentation was requested. Report
 stories that were omitted because they were duplicate, weak, non-visual, directly conflicted, or
 failed validation or diagnostics.
 
 Use `.work/<run-id>/review/` only for temporary review. Final PNGs used in the deck belong in
 the local run delivery folder. Do not include generated implementation code.
 
-`input.txt`, production specs, chart output, previews, and `.work/` are ignored
+`input/`, production specs, chart output, previews, and `.work/` are ignored
 by Git. Run `npm run check:repo` before committing; it must report no tracked
 production or transient files.
 

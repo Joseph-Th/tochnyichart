@@ -123,10 +123,10 @@ node tool-api/chart.js orient
 
 There are two intentionally separate workflows:
 
-| Story | Workflow | First command | Render command |
+| Story | Workflow | First command | Primary image command |
 | --- | --- | --- | --- |
-| Number, comparison, ranking, status list, composition, trend, flow, or sequence without a map | `standard-chart` | `node tool-api/chart.js guide` | `node tool-api/chart.js render <spec.json> [output.html]` |
-| Administrative regions are part of the finding | `regional-breakdown` | `node tool-api/chart.js regional-guide russia` | `node tool-api/chart.js regional <spec.json> [output.html]` |
+| Number, comparison, ranking, composition, trend, flow, or sequence without a map | `standard-chart` | `node tool-api/chart.js guide` | `node tool-api/chart.js image <spec.json> [output.png]` |
+| Administrative regions are part of the finding | `regional-breakdown` | `node tool-api/chart.js regional-guide russia` | `node tool-api/chart.js image <spec.json> [output.png]` |
 
 Verify and read the full primary source before choosing the workflow and recipe.
 Then choose one workflow before writing the spec. A `map.regional` spec is
@@ -162,7 +162,7 @@ semantic ChartSpec JSON
 validation -> selected renderer -> shell review
                                       |
                                       v
-                         browser diagnostics -> semantic QA -> final PNG
+                         target capture diagnostics -> semantic QA -> final PNG
 ```
 
 Validation and responsive diagnostics prove machine-checkable rendering
@@ -205,18 +205,19 @@ These commands return machine-readable JSON. `orient` is the routing decision;
 
 ### Standard chart
 
-Use the standard workflow when geography is not the primary visual structure:
+Use the standard workflow when geography is not the primary visual structure. For the normal static artifact:
 
 ```bash
 node tool-api/chart.js validate specs/examples/ai95-price-spike.json
-node tool-api/chart.js render specs/examples/ai95-price-spike.json --run-id examples
-node tool-api/chart.js diagnose .work/examples/rendered/russia-ai95-price-spike-2026.html
+node tool-api/chart.js image specs/examples/ai95-price-spike.json --profile auto --run-id examples
 ```
 
-`render` performs validation and shell review. `diagnose` launches the browser
+`image` validates, renders through a disposable shell, runs target-size browser diagnostics, and writes the PNG only after the capture is acceptable. Use `render` and `diagnose` for HTML-level inspection. `diagnose` launches the browser
 at the default responsive viewports and exits nonzero when error-level layout
 issues are found. Use `--single` for a targeted viewport or `--fit` when strict
 viewport containment is part of the check.
+
+Image profiles are bounded publishing intents. `auto` starts standard charts at 1200×900 and regional maps at 1450×679 and may expand only to avoid clipping. Fixed `landscape`, `square`, and `portrait` profiles use 1200×900, 1080×1080, and 1080×1350 respectively and fail rather than changing shape when content cannot fit.
 
 ### Regional breakdown
 
@@ -245,6 +246,12 @@ command for human visual inspection:
 ```bash
 node tool-api/chart.js review charts/<run-id>/<chart>.html \
   --screenshot --output .work/<run-id>/review/<chart>.png
+```
+
+For a direct final regional PNG without retaining HTML, use:
+
+```bash
+node tool-api/chart.js image specs/examples/russia-regional-map.json --profile auto --run-id examples
 ```
 
 The chart-author contract is documented in

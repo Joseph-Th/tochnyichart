@@ -121,6 +121,81 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('source fidelity preserves every row-column cell in matrix heat evidence', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-matrix-source-'));
+  const anchor = 'Payment issues dominate support channels: mobile had 148 payment and 84 delivery tickets; web had 112 payment and 61 delivery tickets; partner had 73 payment and 97 delivery tickets.';
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'matrix-source');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    const observations = [
+      ['Payment', 'Mobile', 148], ['Payment', 'Web', 112], ['Payment', 'Partner', 73],
+      ['Delivery', 'Mobile', 84], ['Delivery', 'Web', 61], ['Delivery', 'Partner', 97]
+    ].map(([label, column, value]) => ({
+      label, column, value,
+      quantity: 'support ticket count', unit: 'tickets', period: 'July 2026'
+    }));
+    ledger.candidates = [{
+      id: 'support-matrix',
+      claim: 'Payment issues dominate support channels.',
+      decision: 'selected',
+      outputSlug: 'support-matrix',
+      title: 'Payment issues dominate support channels',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The source reports support ticket counts directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Two issue categories are reported across the same three support channels.',
+        comparableObservations: observations
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'The two dimensions are issue type and support channel, not geography.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'support-matrix.json');
+    const baseSpec = {
+      title: 'Payment issues dominate support channels',
+      recipe: 'matrix.heat',
+      data: observations.map((item) => ({ label: item.label, column: item.column, value: item.value })),
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    };
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.equal(validateSourceLedger(root, 'matrix-source', { requireSpecs: true }).valid, true);
+
+    baseSpec.data.pop();
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'matrix-source', { requireSpecs: true }),
+      /collapses a richer same-scale dataset|Payment · Partner|Delivery · Partner/i
+    );
+
+    baseSpec.data = observations.map((item) => ({ label: item.label, column: item.column, value: item.value }));
+    baseSpec.data[0].value = 999;
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'matrix-source', { requireSpecs: true }),
+      /Changed plotted values|Payment · Mobile/i
+    );
+
+    baseSpec.recipe = 'ranking.horizontal';
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'matrix-source', { requireSpecs: true }),
+      /flattens a two-dimensional source cross-tab/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity rejects path-like output slugs without reading outside the run spec root', () => {
   const root = project();
   try {

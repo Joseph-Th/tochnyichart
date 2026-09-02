@@ -17,6 +17,7 @@
         "comparison.benchmark-gap",
         "comparison.dumbbell",
         "comparison.area-squares",
+        "matrix.heat",
         "relationship.converging-signals",
         "trend.line",
         "trend.stacked",
@@ -74,6 +75,7 @@
           "calloutSide": { "type": "string", "enum": ["auto", "left", "right"] },
           "calloutOrder": { "type": "integer", "minimum": 0, "maximum": 99 },
           "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "column": { "type": "string", "minLength": 1, "maxLength": 60 },
           "quantity": { "type": "string", "minLength": 3, "maxLength": 80 },
           "group": { "type": "string", "minLength": 1, "maxLength": 60 },
           "icon": {
@@ -182,6 +184,25 @@
           "type": "array",
           "maxItems": 0,
           "items": { "type": "string" }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 2,
+      "description": "Dated context events drawn as vertical marker lines on an ordered time series. Anchor each event to the period it follows; it marks when the event happened relative to the plotted sequence and carries no plotted value.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "afterLabel"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "afterLabel": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "tone": {
+            "type": "string",
+            "enum": ["primary", "secondary", "warning", "critical", "neutral", "positive"]
+          },
+          "lineStyle": { "type": "string", "enum": ["line", "dashed"] }
         }
       }
     },
@@ -343,7 +364,7 @@
         "density": { "type": "string", "enum": ["minimal", "editorial", "detailed"] },
         "emphasis": {
           "type": "string",
-          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap", "convergence"]
+          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap", "convergence", "matrix"]
         }
       }
     },
@@ -379,7 +400,7 @@
     {
       "if": {
         "not": {
-          "properties": { "recipe": { "enum": ["map.regional", "trend.stacked"] } }
+          "properties": { "recipe": { "enum": ["map.regional", "trend.line", "trend.stacked", "matrix.heat"] } }
         }
       },
       "then": {
@@ -391,6 +412,33 @@
                 "callout": false
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "trend.line" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 3,
+            "maxItems": 366
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "matrix.heat" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 4,
+            "maxItems": 36,
+            "items": { "required": ["column", "value", "quantity", "scope", "period"] }
           }
         }
       }

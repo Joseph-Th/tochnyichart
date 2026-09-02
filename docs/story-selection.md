@@ -35,6 +35,14 @@ renderer scales each square's **area** to the value (side length uses the square
 root), so authors must not use it for ordinal scores, percentages of unrelated
 totals, or values that do not share one physical basis.
 
+Use `matrix.heat` when one numeric measure forms a complete two-dimensional
+categorical cross-tab and the row-by-column pattern is itself the finding. The
+contract is deliberately small: 2 to 6 rows, 2 to 6 columns, every row-column
+cell present exactly once, one shared quantity/scope/period, direct numeric
+labels in every cell, and a visible renderer-owned sequential color legend.
+Do not use it as a decorative alternative to a ranking, do not assign semantic
+tones to individual cells, and do not omit cells merely to make the matrix fit.
+
 ## Visible units
 
 A numeric label must be interpretable without searching the axis title or source
@@ -444,6 +452,33 @@ across distinct hue families; do not spend the first several categories on
 light/dark variants of the same one or two brand colors. Reserve focus coloring
 for a story that actually emphasizes the leader or another specific item.
 
+## Reading intent comes after recipe selection
+
+Reading speed is a presentation requirement, not a data-shape classifier.
+First choose the recipe that truthfully expresses the evidence relationship.
+Then map the reader task to `narrative.density`: `minimal` for a self-contained
+quick scan, `editorial` for the normal publication read, and `detailed` for a
+close read of dense evidence. The renderer may reduce secondary furniture at a
+lighter density, but essential values, orientation, thresholds, and
+title-defining comparisons must remain visible.
+
+Never select `minimal` merely because a fixed canvas is crowded. If essential
+evidence does not fit, use a better recipe or publishing profile, simplify the
+story semantically, or retain a denser treatment. Density must not become a
+layout escape hatch.
+
+Before finalizing a recipe, compare it with the nearest semantic alternative.
+This is a rejection check, not a template audition. Common boundaries are:
+
+- actual/current against a meaningful enclosing reference: benchmark-gap, not
+  generic change;
+- repeated category before/after pairs: dumbbell, not scenarios;
+- complete two-dimensional cross-tab: matrix, not ranking;
+- numeric observations advancing through time: trend, not duration timeline;
+- positive components compared from zero: components, not waterfall;
+- administrative geography that changes interpretation: regional map, not a
+  ranking of place names.
+
 ## Comparison recipe contracts
 
 | Recipe | Semantic contract |
@@ -454,6 +489,7 @@ for a story that actually emphasizes the leader or another specific item.
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. A one-row range needs a genuinely independent reference; a point or reference equal to the low/high endpoint is redundant. Forecast and target ranges should include an available same-unit actual/current value as a numeric reference. |
 | `comparison.benchmark-gap` | One to six actual/current values shown against meaningful same-quantity, same-unit benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. `gapDisplayValue` must describe the arithmetic difference or percentage context, never a ratio, per-unit equivalence, or cross-unit conversion. |
 | `comparison.dumbbell` | Three to ten categories with one benchmark/before value and one actual/after value each. Quantity, scope, and the named comparison interval stay fixed. Different category magnitudes are allowed; each category's own pair must share a defensible unit and basis. |
+| `matrix.heat` | A complete 2×2 to 6×6 row-by-column cross-tab of one numeric quantity, scope, and period. Every cell is directly labeled and color uses one sequential quantitative ramp. Sparse matrices, per-cell semantic tones, hidden labels, and logarithmic color scales are rejected. |
 | `relationship.converging-signals` | Exactly two quantitative drivers or formula inputs and one different outcome, all measuring distinct real-world quantities. `relationship.formula` states the source-supported mechanism or identity, including material derivations such as quantity × unit price = value. Each measure is drawn as an independent local quantitative signal; the two input paths meet near the outcome, with no decorative merge node and no separate output connector into the outcome signal. Repeated prices, repeated volumes, or one measure at different dates belong in change, scenario, dumbbell, or trend geometry. Connector width never encodes magnitude. Identity mode requires one reconciling scope and period; directional mode shows the supported relationship without implying a shared scale. |
 | `timeline.duration` | Two to eight exact start-to-end intervals placed on one common calendar. |
 | `composition.components` | Two to six positive additive components of one reported total. Every component starts at zero; one numeric reference reconciles the total. A two-component chart also needs an independent same-scale benchmark/denominator beyond that derived sum. Use this instead of a waterfall when the point is component magnitude rather than a running balance. |

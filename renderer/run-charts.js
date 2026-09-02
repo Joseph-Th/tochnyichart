@@ -4,8 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { validateSourceLedger } = require('./source-fidelity');
 const { renderStandardChart } = require('./workflow');
-const { renderRegionalBreakdown } = require('./regional-workflow');
+const {
+  renderRegionalBreakdown,
+  summarizeDiagnosticRun,
+  assertNaturalRegionalRuns
+} = require('./regional-workflow');
 const { diagnoseHtmlResponsive, captureHtml } = require('./capture');
+const { resolveImageProfile } = require('./image-profiles');
 const { buildPresentationPlan, validatePresentationPlan } = require('./presentation-plan');
 const {
   normalizeRunId,
@@ -177,11 +182,26 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       diagnosticWarnings += counts.warnings;
       renderWarnings += Array.isArray(rendered.warnings) ? rendered.warnings.length : 0;
 
+      const imageProfile = resolveImageProfile('auto', spec.recipe);
       const screenshot = dependencies.capture(htmlPath, pngPath, {
         browser: options.browser,
+        viewport: imageProfile.viewport,
         requireViewportFit: true,
-        adaptiveCanvas: true
+        autoFit: true,
+        adaptiveCanvas: imageProfile.adaptive,
+        adaptiveHeight: imageProfile.adaptive
       });
+      const expanded = screenshot.dimensions.width !== imageProfile.viewport.width ||
+        screenshot.dimensions.height !== imageProfile.viewport.height;
+      let finalRegionalDiagnostics = null;
+      if (spec.recipe === 'map.regional') {
+        finalRegionalDiagnostics = summarizeDiagnosticRun({
+          viewport: screenshot.dimensions,
+          diagnostics: screenshot.diagnostics,
+          chartAttributes: screenshot.chartAttributes || {}
+        });
+        assertNaturalRegionalRuns([finalRegionalDiagnostics]);
+      }
 
       rows.push({
         slug: entry.slug,
@@ -196,7 +216,11 @@ function buildRunCharts(projectRoot, runId, options = {}) {
         diagnostics,
         screenshot: {
           bytes: screenshot.bytes,
-          dimensions: screenshot.dimensions
+          dimensions: screenshot.dimensions,
+          profile: imageProfile.id,
+          requestedViewport: imageProfile.viewport,
+          expanded,
+          regionalDiagnostics: finalRegionalDiagnostics
         }
       });
     });

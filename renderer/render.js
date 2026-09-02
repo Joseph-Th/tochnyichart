@@ -6,6 +6,11 @@ const crypto = require('node:crypto');
 const { validateSpec } = require('./validate');
 const { normalizeRunId, workspacePath } = require('./run-workspace');
 const TochnyiMaps = require('../lib/tochnyi-maps');
+const {
+  AMCHARTS_VERSION,
+  MUKTA_FONT_CSS_URL,
+  amChartsScriptUrl
+} = require('./runtime-dependencies');
 
 const SHARED_ASSET_FILES = Object.freeze([
   'tochnyi.css',
@@ -88,13 +93,13 @@ function renderHtml(spec, options = {}) {
   <title>${htmlEscape(spec.title)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="${MUKTA_FONT_CSS_URL}" rel="stylesheet">
   <link rel="stylesheet" href="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi.css', assetVersion))}">
-  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
-  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="${amChartsScriptUrl('index.js')}"></script>
+  <script src="${amChartsScriptUrl('xy.js')}"></script>
+  <script src="${amChartsScriptUrl('percent.js')}"></script>
 ${mapScripts}
-  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <script src="${amChartsScriptUrl('themes/Animated.js')}"></script>
   <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-charts.js', assetVersion))}"></script>
   <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-visual-plan.js', assetVersion))}"></script>
 </head>
@@ -159,5 +164,6 @@ module.exports = {
   renderSpecFile,
   defaultOutputPath,
   assetFingerprint,
+  AMCHARTS_VERSION,
   slugify
 };

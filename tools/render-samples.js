@@ -8,6 +8,12 @@ const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtmlResponsive, findBrowser } = require('../renderer/capture');
 const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { resolveImageProfile } = require('../renderer/image-profiles');
+const {
+  REGIONAL_WORKFLOW_VIEWPORTS,
+  summarizeDiagnosticRun,
+  assertNaturalRegionalRuns
+} = require('../renderer/regional-workflow');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'samples');
@@ -33,22 +39,44 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
 
   const outputSlug = rendered.normalized.metadata?.slug || slug;
   const pngPath = path.join(reviewDir, `${outputSlug}.png`);
-  const responsive = diagnoseHtmlResponsive(rendered.htmlPath, { browser });
+  const profile = resolveImageProfile('auto', rendered.recipe);
+  const responsive = diagnoseHtmlResponsive(rendered.htmlPath, {
+    browser,
+    ...(rendered.recipe === 'map.regional' ? { viewports: REGIONAL_WORKFLOW_VIEWPORTS } : {})
+  });
   if (responsive.status === 'fail') {
     throw new Error(`${file}: responsive diagnostics failed.`);
   }
 
-  const screenshot = captureHtml(rendered.htmlPath, pngPath, { browser });
+  const screenshot = captureHtml(rendered.htmlPath, pngPath, {
+    browser,
+    viewport: profile.viewport,
+    autoFit: true,
+    adaptiveCanvas: profile.adaptive,
+    adaptiveHeight: profile.adaptive
+  });
+  let regionalDiagnostics = null;
+  if (rendered.recipe === 'map.regional') {
+    regionalDiagnostics = summarizeDiagnosticRun({
+      viewport: screenshot.dimensions,
+      diagnostics: screenshot.diagnostics,
+      chartAttributes: screenshot.chartAttributes || {}
+    });
+    assertNaturalRegionalRuns([regionalDiagnostics]);
+  }
   const hash = crypto.createHash('sha256').update(fs.readFileSync(pngPath)).digest('hex');
   captures.push({
     recipe: rendered.recipe,
     spec: path.relative(root, specPath).replace(/\\/g, '/'),
     html: path.relative(root, rendered.htmlPath).replace(/\\/g, '/'),
     preview: path.relative(root, pngPath).replace(/\\/g, '/'),
+    imageProfile: profile.id,
+    requestedViewport: profile.viewport,
     dimensions: screenshot.dimensions,
     bytes: screenshot.bytes,
     sha256: hash,
     responsiveDiagnostics: responsive.runs,
+    regionalDiagnostics,
     warnings: [...new Set([
       ...rendered.warnings,
       ...review.warnings.map((warning) => warning.replace(/^ChartSpec: /, ''))
@@ -59,7 +87,7 @@ for (const file of fs.readdirSync(specsDir).filter((name) => name.endsWith('.jso
 const manifest = {
   generatedAt: new Date().toISOString(),
   browser,
-  viewport: { width: 1200, height: 900 },
+  imageProfile: 'auto',
   captures
 };
 
