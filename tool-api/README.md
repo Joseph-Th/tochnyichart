@@ -18,7 +18,7 @@ node tool-api/chart.js orient
 Chart-author agents may use:
 
 ```text
-input/
+projects/<project-id>/
 tool-api/chart.js
 docs/batch-workflow.md
 docs/agent-workflows.md
@@ -27,15 +27,12 @@ docs/source-ledger.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/runs/<run-id>/
-charts/<run-id>/
-.work/<run-id>/
 ```
 
 The normal authoring lifecycle is:
 
 ```text
-exact non-empty project-root input/ source set
+exact non-empty projects/<project-id>/input/ source set
     |
     v
 inventory every source and quantitative story with excerpts or structured selectors
@@ -66,16 +63,16 @@ The PNG is the primary individual-chart artifact. `image` performs the renderer 
 
 Fixed publishing profiles keep their exact output dimensions while allowing the renderer to adapt its internal chart-stage height. The structured `image` result reports `profile.fitMode` (`natural`, `shrink`, or `fill`) and `profile.stageDelta`; these are diagnostic outcomes, not ChartSpec controls.
 
-## Batch orchestration
+## Project orchestration
 
-The normal user assignment is the project-root `input/` source set, which may
+The normal user assignment is `projects/<project-id>/input/`, which may
 contain multiple files and multiple data stories. The LLM agent, not the chart
 engine, owns the complete batch:
 
 ```text
-initialize .work/<run-id>/
-    -> input/
-    -> reject a missing or empty project-root source set
+projects/<project-id>/input/
+    -> initialize the project
+    -> reject a missing or empty project-local source set
     -> inventory every supplied source file and quantitative story
     -> record selected, omitted, or merged disposition
     -> verify the source ledger before research
@@ -84,19 +81,17 @@ initialize .work/<run-id>/
     -> render and diagnose chart HTML
     -> capture final PNG images
     -> assemble a PowerPoint presentation only when requested
-    -> save ChartSpecs and final delivery artifacts
-    -> finalize and purge transient run data
+    -> save ChartSpecs and final delivery artifacts in the same project folder
+    -> finalize and delete only work/
 ```
 
-Use `npm run run:init -- <run-id>` before production. Store research,
-downloads, helper scripts, logs, review captures, and package staging only under
-the created `.work/<run-id>/` tree. After delivery, run
-`npm run run:finalize -- <run-id>`; it preserves
-`specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and legacy previews. It also preserves `input/`. Production inputs and
-outputs are ignored by Git. The run cannot finalize until
-`.work/<run-id>/source-ledger.json` passes validation and exactly covers the
-final ChartSpecs.
+Create `projects/<project-id>/input/`, put the source files there, then use
+`npm run run:init -- <project-id>`. The project keeps `input/`,
+`source-ledger.json`, `project.json`, `specs/`, `output/`, and `work/` together.
+Only `work/` is transient. Scratch subfolders are created on demand, and chart
+build staging also stays there. After delivery, run
+`npm run run:finalize -- <project-id>`; it verifies source/spec consistency and
+removes only `work/`. The entire `projects/` tree is ignored by Git.
 
 The Tool API is used once per accepted chart story. PowerPoint creation is a
 separate agent capability and must use the final generated PNGs rather than
@@ -105,7 +100,7 @@ recreating the charts manually.
 The canonical presentation filename is:
 
 ```text
-tochnyi-charts-<run-id>.pptx
+tochnyi-charts-<project-id>.pptx
 ```
 
 See [`docs/batch-workflow.md`](../docs/batch-workflow.md) for the complete batch
@@ -114,7 +109,7 @@ ledger fields and evidence-origin rules.
 
 ## Source policy
 
-Treat the initialized project-root `input/` files as the authoritative
+Treat the initialized `projects/<project-id>/input/` files as the authoritative
 assignment source set. Assume supplied factual claims, values, comparisons, and
 interpretation are correct unless a reputable source directly contradicts a
 material point. Structured files may support findings through documented
@@ -209,34 +204,44 @@ node tool-api/chart.js regional-guide [region-set]
 node tool-api/chart.js catalog
 node tool-api/chart.js regions [region-set]
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]
-node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
-node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
+node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]
+node tool-api/chart.js render <spec.json> [output.html] [--project-id <id>]
+node tool-api/chart.js regional <spec.json> [output.html] [--project-id <id>] [--no-diagnose]
 node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
-node tool-api/chart.js review <chart.html> [--screenshot] [--output .work/<run-id>/review/<chart>.png]
+node tool-api/chart.js review <chart.html> [--screenshot] [--output projects/<project-id>/work/review/<chart>.png]
 ```
 
 `catalog` returns the recipe definitions together with the standard selection
-rules, close-alternative ambiguity checks, reading-intent guidance, runtime
-dependency contract, and static-image priorities needed to choose among them,
+rules, close-alternative ambiguity checks, runtime dependency contract, and
+static-image priorities needed to choose among them,
 so an agent can make the common recipe decision from one machine-readable
 response.
 
-Choose the semantic recipe before choosing visual density. `readingIntent`
-maps a quick scan to `narrative.density: "minimal"`, a normal publication read
-to `"editorial"`, and a close read to `"detailed"`. Density changes
-renderer-owned presentation hierarchy only. It cannot remove essential
-evidence, rescue the wrong recipe, or be reduced merely to force crowded
-content into a fixed image profile.
+`relationship.scatter` is the bounded two-measure relationship recipe. Each
+observation supplies `xValue` plus the ordinary `value`; `xMeasure` names and
+units the horizontal quantity while `measure` owns the vertical quantity. Both
+axes are linear in the initial contract, every point remains directly labeled,
+and the renderer does not infer a regression line, bubble size, or third color
+variable. Use it only when both numeric variables are observed for every
+labeled item; ordered time remains `trend.line`.
 
 When two neighboring recipes remain plausible, use `ambiguityRules` to reject
 the closest alternative explicitly. Typical boundaries include benchmark-gap
-versus change, scenarios versus dumbbell, matrix versus ranking, trend versus
-duration timeline, positive components versus waterfall, and categorical
+versus change, scenarios versus dumbbell, matrix versus ranking, scatter versus
+trend/ranking, trend versus duration timeline, positive components versus waterfall, and categorical
 geography versus a regional map. This is a semantic check, not a requirement to
 render several competing charts.
 
-Use `image` for the normal individual-chart deliverable. With no explicit output path it writes a transient PNG under `.work/<run-id>/rendered/`. The default `auto` profile starts standard charts at 1200×900 and regional maps at their maintained 1450×679 wide canvas; it may expand only to avoid clipping. `landscape` is fixed at 1200×900, `square` at 1080×1080, and `portrait` at 1080×1350. Fixed profiles fail rather than silently changing shape when the chart does not fit. These profiles are publishing intents, not author-accessible layout coordinates.
+Use `image` for the normal individual-chart deliverable. With no explicit output
+path, `--project-id <id>` is required and the PNG is published to
+`projects/<id>/output/`. There is no implicit default project. The default
+`auto` profile starts standard charts at 1200×900 and regional maps at their
+maintained 1450×679 wide canvas; it may expand only to avoid clipping.
+`landscape` is fixed at 1200×900, `square` at 1080×1080, and `portrait` at
+1080×1350. Fixed profiles fail rather than silently changing shape when the
+chart does not fit. These profiles are publishing intents, not author-accessible
+layout coordinates. `--run-id` remains accepted only as a compatibility alias
+for `--project-id`.
 
 The older `node tools/chart.js` entrypoint remains available for compatibility, but it is not the documented chart-author surface.
 
@@ -246,7 +251,10 @@ a reviewed release; the Mukta webfont and Russia geodata remain remote
 provider-managed dependencies. Offline packaging is maintainer work, not a
 ChartSpec option.
 
-Batch final PNGs and retained HTML belong in `charts/<run-id>/`; any requested presentation belongs there as well. An individual `image` call does not retain HTML unless the author separately requests a render. Temporary or ad hoc review belongs in
-`.work/<run-id>/review/` and is removed during finalization.
-Production input, generated specifications, chart output, previews, and run
-workspaces are ignored by Git and checked by `npm run check:repo`.
+Batch final PNGs and retained HTML belong in `projects/<project-id>/output/`;
+any requested presentation belongs there as well. Authored production ChartSpecs
+belong in the same project's `specs/`. An individual `image` call does not retain
+HTML unless the author separately requests a render. Temporary or ad hoc review
+belongs in `projects/<project-id>/work/review/` and is removed during
+finalization. The entire local `projects/` tree is ignored by Git and checked by
+`npm run check:repo`.

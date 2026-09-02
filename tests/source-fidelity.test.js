@@ -5,8 +5,28 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { initializeRunWorkspace } = require('../renderer/run-workspace');
+const {
+  initializeRunWorkspace: initializeProjectWorkspace,
+  runProjectPath
+} = require('../renderer/run-workspace');
 const { validateSourceLedger } = require('../renderer/source-fidelity');
+
+function seedProjectInput(root, projectId) {
+  const legacyFixtureInput = path.join(root, 'input');
+  const target = runProjectPath(root, projectId, 'input');
+  if (!fs.existsSync(target) && fs.existsSync(legacyFixtureInput)) {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.cpSync(legacyFixtureInput, target, { recursive: true, force: true });
+  }
+  return target;
+}
+
+function initializeRunWorkspace(root, projectId, options = {}) {
+  if (options.createOutputs !== false && options.requireInput !== false) {
+    seedProjectInput(root, projectId);
+  }
+  return initializeProjectWorkspace(root, projectId, options);
+}
 
 function project() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-source-fidelity-'));
@@ -196,6 +216,92 @@ test('source fidelity preserves every row-column cell in matrix heat evidence', 
   }
 });
 
+test('source fidelity preserves both coordinates of dual-measure scatter evidence', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-scatter-source-'));
+  const anchor = 'Four stores report visits and sales for the same week: Riverside 15,000 visits and $275,000 sales; North 18,000 and $310,000; University 22,000 and $370,000; Harbor 24,000 and $405,000.';
+  fs.mkdirSync(path.join(root, 'input'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'input', 'brief.txt'), anchor);
+  try {
+    const workspace = initializeRunWorkspace(root, 'scatter-source');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    const observations = [
+      ['Riverside', 15000, 275000],
+      ['North', 18000, 310000],
+      ['University', 22000, 370000],
+      ['Harbor', 24000, 405000]
+    ].map(([label, xValue, value]) => ({
+      label,
+      xValue,
+      xQuantity: 'weekly store foot traffic',
+      xUnit: 'visits',
+      value,
+      quantity: 'weekly store sales',
+      unit: 'USD',
+      period: 'Week ending 2026-08-30'
+    }));
+    ledger.candidates = [{
+      id: 'store-scatter',
+      claim: 'Higher store traffic accompanies higher weekly sales.',
+      decision: 'selected',
+      outputSlug: 'store-scatter',
+      title: 'Higher store traffic accompanies higher weekly sales',
+      titleBasis: anchor,
+      representationAudit: {
+        selectedMode: 'level', levelAvailability: 'reported',
+        rationale: 'The source reports both store visits and weekly sales directly.'
+      },
+      visualEvidenceAudit: {
+        rationale: 'Each store has the same two measured quantities for the same week.',
+        comparableObservations: observations
+      },
+      routingAudit: {
+        geographyRole: 'none', workflow: 'standard-chart',
+        rationale: 'Store identity is categorical and no geographic relationship is claimed.'
+      },
+      anchors: [anchor],
+      evidence: [{ statement: anchor, origin: 'input', role: 'primary', anchor }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'store-scatter.json');
+    const baseSpec = {
+      title: 'Higher store traffic accompanies higher weekly sales',
+      recipe: 'relationship.scatter',
+      data: observations.map((item) => ({ label: item.label, xValue: item.xValue, value: item.value })),
+      xMeasure: { quantity: 'weekly store foot traffic', unit: 'visits' },
+      measure: { quantity: 'weekly store sales', unit: 'USD', valueMode: 'level', levelAvailability: 'reported' }
+    };
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.equal(validateSourceLedger(root, 'scatter-source', { requireSpecs: true }).valid, true);
+
+    baseSpec.data[0].xValue = 99999;
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'scatter-source', { requireSpecs: true }),
+      /Changed plotted values|Riverside/i
+    );
+
+    baseSpec.data = observations.map((item) => ({ label: item.label, xValue: item.xValue, value: item.value }));
+    baseSpec.xMeasure.quantity = 'store floor area';
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'scatter-source', { requireSpecs: true }),
+      /xMeasure\.quantity must match/i
+    );
+
+    baseSpec.xMeasure.quantity = 'weekly store foot traffic';
+    delete ledger.candidates[0].visualEvidenceAudit.comparableObservations[0].xValue;
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    fs.writeFileSync(specPath, JSON.stringify(baseSpec));
+    assert.throws(
+      () => validateSourceLedger(root, 'scatter-source', { requireSpecs: true }),
+      /does not inventory both coordinates|xValue/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity rejects path-like output slugs without reading outside the run spec root', () => {
   const root = project();
   try {
@@ -204,7 +310,7 @@ test('source fidelity rejects path-like output slugs without reading outside the
     const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
     ledger.candidates[0].outputSlug = '../escape';
     fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
-    fs.writeFileSync(path.join(root, 'specs', 'runs', 'escape.json'), '{malformed');
+    fs.writeFileSync(path.join(workspace.specificationRoot, 'escape.json'), '{malformed');
 
     assert.throws(
       () => validateSourceLedger(root, 'unsafe-slug', { requireSpecs: true }),
@@ -1455,7 +1561,7 @@ test('source fidelity rejects unsupported anchors, changed input, and untracked 
     fs.writeFileSync(path.join(workspace.specificationRoot, 'unsupported-story.json'), JSON.stringify({ title: 'Unsupported story' }));
     assert.throws(() => validateSourceLedger(root, 'issue-3', { requireSpecs: true }), /must exactly match ChartSpecs/i);
 
-    fs.appendFileSync(path.join(root, 'input', 'brief.txt'), '\nChanged after inventory.');
+    fs.appendFileSync(runProjectPath(root, 'issue-3', 'input', 'brief.txt'), '\nChanged after inventory.');
     assert.throws(() => validateSourceLedger(root, 'issue-3'), /Input materials changed/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

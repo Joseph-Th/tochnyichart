@@ -2,7 +2,7 @@
 
 const path = require('node:path');
 
-function buildPresentationPlan(rows, runId) {
+function buildPresentationPlan(rows, projectId) {
   if (!Array.isArray(rows) || rows.length === 0) {
     throw new Error('A presentation plan requires at least one accepted chart.');
   }
@@ -15,7 +15,7 @@ function buildPresentationPlan(rows, runId) {
   }));
   return {
     version: '1.0',
-    runId,
+    projectId,
     titleSlidesAllowed: false,
     expectedSlideCount: slides.length,
     slides

@@ -12,13 +12,17 @@ const {
 } = require('./regional-workflow');
 const { REGIONAL_WORKFLOW } = require('./workflow-contract');
 const { slugify } = require('./render');
-const { normalizeRunId, normalizeArtifactSlug, workspacePath } = require('./run-workspace');
+const { normalizeRunId, normalizeArtifactSlug, deliveryPath } = require('./run-workspace');
 const { resolveImageProfile } = require('./image-profiles');
 
 function defaultImageOutputPath(projectRoot, spec, options = {}) {
-  const runId = normalizeRunId(options.runId || process.env.TOCHNYI_RUN_ID || 'default');
+  const requestedProject = options.projectId || options.runId || process.env.TOCHNYI_PROJECT_ID || process.env.TOCHNYI_RUN_ID;
+  if (!requestedProject) {
+    throw new Error('Static image output requires either an explicit output path or --project-id <id>.');
+  }
+  const runId = normalizeRunId(requestedProject);
   const slug = normalizeArtifactSlug(spec.metadata?.slug || slugify(spec.title));
-  return workspacePath(projectRoot, runId, 'rendered', `${slug}.png`);
+  return deliveryPath(projectRoot, runId, `${slug}.png`);
 }
 
 function validateImageOutputPath(outputPath) {
@@ -72,7 +76,6 @@ function captureStaticImage(dependencies, htmlPath, pngPath, profile, options = 
       viewport: profile.viewport,
       requireViewportFit: true,
       autoFit: true,
-      fillViewport: !profile.adaptive,
       adaptiveCanvas: profile.adaptive,
       adaptiveHeight: profile.adaptive
     });
@@ -113,13 +116,13 @@ function createStaticImage(specPath, outputPath, options = {}) {
     const rendered = isRegional
       ? dependencies.renderRegional(loaded.specPath, tempHtml, {
           projectRoot,
-          runId: options.runId,
+          projectId: options.projectId || options.runId,
           browser: options.browser,
           diagnose: false
         })
       : dependencies.renderStandard(loaded.specPath, tempHtml, {
           projectRoot,
-          runId: options.runId
+          projectId: options.projectId || options.runId
         });
 
     const screenshot = captureStaticImage(dependencies, tempHtml, tempPng, profile, options);
@@ -139,6 +142,15 @@ function createStaticImage(specPath, outputPath, options = {}) {
     const actualDimensions = { ...screenshot.dimensions };
     const fitMode = screenshot.canvasAttributes?.['data-canvas-fit-mode'] || 'natural';
     const stageDelta = Number(screenshot.canvasAttributes?.['data-canvas-fit-delta'] || 0);
+    const scatterR = Number(screenshot.scatterAttributes?.['data-scatter-pearson-r']);
+    const scatterDiagnostics = recipe === 'relationship.scatter'
+      ? {
+          pointCount: Number(screenshot.scatterAttributes?.['data-scatter-point-count'] || 0),
+          pearsonR: Number.isFinite(scatterR) ? scatterR : null,
+          xQuantity: screenshot.scatterAttributes?.['data-scatter-x-quantity'] || null,
+          yQuantity: screenshot.scatterAttributes?.['data-scatter-y-quantity'] || null
+        }
+      : null;
     return {
       workflow: isRegional ? REGIONAL_WORKFLOW : STANDARD_WORKFLOW,
       recipe: rendered.recipe,
@@ -157,6 +169,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
       },
       diagnostics: staticDiagnosticSummary(screenshot.diagnostics),
       regionalDiagnostics,
+      scatterDiagnostics,
       warnings: rendered.warnings || [],
       htmlRetained: false
     };

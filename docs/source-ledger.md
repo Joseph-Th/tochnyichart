@@ -1,24 +1,25 @@
 # Source ledger contract
 
-Every production run has one transient source ledger:
+Every production project has one durable source ledger beside its input and
+specifications:
 
 ```text
-.work/<run-id>/source-ledger.json
+projects/<project-id>/source-ledger.json
 ```
 
-`npm run run:init -- <run-id>` creates the file from the exact project-root
-`input/` source set. The ledger records every file path, byte count, SHA-256
+`npm run run:init -- <project-id>` creates the file from the exact
+`projects/<project-id>/input/` source set. The ledger records every file path, byte count, SHA-256
 hash, aggregate bytes, and a deterministic source-set hash. Complete the ledger
 before external research, set `inventoryComplete` to `true`, and run:
 
 ```bash
-npm run run:verify-source -- <run-id>
+npm run run:verify-source -- <project-id>
 ```
 
 After the ChartSpecs are written, run:
 
 ```bash
-npm run run:verify-source -- <run-id> --specs
+npm run run:verify-source -- <project-id> --specs
 ```
 
 ## Required structure
@@ -26,7 +27,7 @@ npm run run:verify-source -- <run-id> --specs
 ```json
 {
   "version": "2.0",
-  "runId": "issue-2026-08-12",
+  "projectId": "issue-2026-08-12",
   "input": {
     "path": "input/",
     "kind": "directory",
@@ -211,6 +212,13 @@ support its central claim before a recipe is chosen. Record them in
 - `period`: the observation period or scenario.
 - `value`, or `low` and `high`: the actual numeric observation or interval.
 
+For `relationship.scatter`, each comparable observation additionally records
+`xValue`, `xQuantity`, and `xUnit`. These three fields travel together: the
+source verifier requires every scatter observation to inventory both numeric
+coordinates, requires all X observations to share one X quantity/unit, and
+checks them against the final `xMeasure`. It compares both `xValue` and `value`
+to the ChartSpec so changing or dropping either coordinate fails coverage.
+
 `visualEvidenceAudit.rationale` explains why these observations belong to one
 visual claim. Do not list merely adjacent facts with incompatible quantities.
 Conversely, do not omit named shipment components, category values, or ordered
@@ -270,6 +278,13 @@ observation declares `column`, every observation must declare it and the audit
 must inventory the complete 2×2 to 6×6 rectangle. Source coverage then matches
 ChartSpec cells by `(label, column)`, not by row label alone, so repeated row
 names cannot conceal a dropped or changed cell.
+
+For a two-measure relationship intended for `relationship.scatter`, use the
+ordinary `quantity`, `unit`, and `value` fields for Y and add `xQuantity`,
+`xUnit`, and `xValue` for X. Do not flatten one coordinate into supporting copy
+or substitute observation order for the numeric X value. The ledger must carry
+both coordinates for every labeled item before the scatter ChartSpec can pass
+source verification.
 
 For a `rate` or `share` whose tangible basis remains `unavailable` or
 `incomparable`, one independent normalized observation is not enough for a
@@ -484,7 +499,7 @@ context, or attribution. The primary editorial claim must remain anchored in
 With `--specs`, validation requires:
 
 - Every selected `outputSlug` has exactly one JSON file in
-  `specs/runs/<run-id>/`.
+  `projects/<project-id>/specs/`.
 - No extra ChartSpec exists outside the selected ledger entries.
 - Every ChartSpec title exactly matches its ledger title.
 - Every ChartSpec `measure.valueMode` and `measure.levelAvailability` exactly
@@ -507,5 +522,5 @@ With `--specs`, validation requires:
   chronology, or supplies adjacent facts does not support connector geometry.
   If the explicit linkage is absent, use comparison geometry instead.
 
-`npm run run:finalize -- <run-id>` performs this validation automatically before
-removing transient run files.
+`npm run run:finalize -- <project-id>` performs this validation automatically
+before removing the project's `work/` subtree.

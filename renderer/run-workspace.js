@@ -4,25 +4,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const WORKSPACE_DIRECTORY = '.work';
+const PROJECTS_DIRECTORY = 'projects';
 const LEGACY_PREVIEW_DIRECTORY = 'previews';
-const INPUT_DIRECTORY = 'input';
-const RUN_SPEC_DIRECTORY = Object.freeze(['specs', 'runs']);
-const DELIVERY_DIRECTORY = 'charts';
-const DEFAULT_SUBDIRECTORIES = Object.freeze([
-  'research',
-  'downloads',
-  'scripts',
-  'logs',
-  'review',
-  'package',
-  'rendered'
-]);
+const PROJECT_INPUT_DIRECTORY = 'input';
+const PROJECT_SPEC_DIRECTORY = 'specs';
+const PROJECT_OUTPUT_DIRECTORY = 'output';
+const PROJECT_WORK_DIRECTORY = 'work';
 
 function normalizeRunId(value) {
   const runId = String(value || '').trim();
   if (!/^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$/.test(runId) || runId === '.' || runId === '..') {
-    throw new Error('Run id must be 1-128 characters using letters, numbers, dots, underscores, or hyphens.');
+    throw new Error('Project id must be 1-128 characters using letters, numbers, dots, underscores, or hyphens.');
   }
   return runId;
 }
@@ -44,36 +36,47 @@ function projectPath(projectRoot, ...segments) {
   return target;
 }
 
-function workspaceRoot(projectRoot) {
-  return projectPath(projectRoot, WORKSPACE_DIRECTORY);
+function projectsRoot(projectRoot) {
+  return projectPath(projectRoot, PROJECTS_DIRECTORY);
+}
+
+function runProjectPath(projectRoot, runId, ...segments) {
+  const normalized = normalizeRunId(runId);
+  const runRoot = projectPath(projectRoot, PROJECTS_DIRECTORY, normalized);
+  const target = path.resolve(runRoot, ...segments);
+  if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
+    throw new Error(`Refusing path outside project ${normalized}: ${target}`);
+  }
+  return target;
+}
+
+function workspaceRoot(projectRoot, runId) {
+  return runProjectPath(projectRoot, runId, PROJECT_WORK_DIRECTORY);
 }
 
 function workspacePath(projectRoot, runId, ...segments) {
-  const normalized = normalizeRunId(runId);
-  const runRoot = projectPath(projectRoot, WORKSPACE_DIRECTORY, normalized);
+  const runRoot = workspaceRoot(projectRoot, runId);
   const target = path.resolve(runRoot, ...segments);
   if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
-    throw new Error(`Refusing path outside run workspace: ${target}`);
+    throw new Error(`Refusing path outside project work folder: ${target}`);
   }
   return target;
 }
 
 function runSpecPath(projectRoot, runId, ...segments) {
-  const normalized = normalizeRunId(runId);
-  const runRoot = projectPath(projectRoot, ...RUN_SPEC_DIRECTORY, normalized);
+  const runRoot = runProjectPath(projectRoot, runId, PROJECT_SPEC_DIRECTORY);
   const target = path.resolve(runRoot, ...segments);
   if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
-    throw new Error(`Refusing path outside run specification root: ${target}`);
+    throw new Error(`Refusing path outside project specification root: ${target}`);
   }
   return target;
 }
 
 function deliveryPath(projectRoot, runId, ...segments) {
-  const normalized = normalizeRunId(runId);
-  const runRoot = projectPath(projectRoot, DELIVERY_DIRECTORY, normalized);
+  const runRoot = runProjectPath(projectRoot, runId, PROJECT_OUTPUT_DIRECTORY);
   const target = path.resolve(runRoot, ...segments);
   if (target !== runRoot && !target.startsWith(`${runRoot}${path.sep}`)) {
-    throw new Error(`Refusing path outside run delivery root: ${target}`);
+    throw new Error(`Refusing path outside project output root: ${target}`);
   }
   return target;
 }
@@ -113,9 +116,9 @@ function inputFiles(inputRoot) {
   return files;
 }
 
-function directoryInputSnapshot(projectRoot) {
-  const root = path.resolve(projectRoot);
-  const inputRoot = projectPath(projectRoot, INPUT_DIRECTORY);
+function directoryInputSnapshot(projectRoot, runId) {
+  const root = runProjectPath(projectRoot, runId);
+  const inputRoot = runProjectPath(projectRoot, runId, PROJECT_INPUT_DIRECTORY);
   if (!fs.existsSync(inputRoot) || !fs.statSync(inputRoot).isDirectory()) return null;
   const paths = inputFiles(inputRoot);
   if (!paths.length) {
@@ -140,7 +143,7 @@ function directoryInputSnapshot(projectRoot) {
   return {
     kind: 'directory',
     path: inputRoot,
-    relativePath: 'input/',
+    relativePath: `${PROJECT_INPUT_DIRECTORY}/`,
     files,
     documents: files.filter((file) => file.content).map((file) => ({ path: file.path, content: file.content })),
     content: files.filter((file) => file.content).map((file) => file.content).join('\n\n'),
@@ -149,20 +152,21 @@ function directoryInputSnapshot(projectRoot) {
   };
 }
 
-function readInputSnapshot(projectRoot) {
-  const snapshot = directoryInputSnapshot(projectRoot);
+function readInputSnapshot(projectRoot, runId) {
+  const normalized = normalizeRunId(runId);
+  const snapshot = directoryInputSnapshot(projectRoot, normalized);
   if (!snapshot) {
-    throw new Error('input/ is missing. Production runs require a non-empty project-root input/ folder.');
+    throw new Error(`projects/${normalized}/input/ is missing. Put this project's source materials there before initialization.`);
   }
   return snapshot;
 }
 
-function existingInputTarget(projectRoot) {
-  return projectPath(projectRoot, INPUT_DIRECTORY);
+function existingInputTarget(projectRoot, runId) {
+  return runProjectPath(projectRoot, runId, PROJECT_INPUT_DIRECTORY);
 }
 
 function sourceLedgerPath(projectRoot, runId) {
-  return workspacePath(projectRoot, runId, 'source-ledger.json');
+  return runProjectPath(projectRoot, runId, 'source-ledger.json');
 }
 
 function initializeSourceLedger(projectRoot, runId, snapshot) {
@@ -177,7 +181,7 @@ function initializeSourceLedger(projectRoot, runId, snapshot) {
     };
     fs.writeFileSync(target, `${JSON.stringify({
       version: '2.0',
-      runId: normalizeRunId(runId),
+      projectId: normalizeRunId(runId),
       input,
       inventoryComplete: false,
       ignoredEvidence: [],
@@ -191,20 +195,11 @@ function initializeRunWorkspace(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const createOutputs = options.createOutputs !== false;
   const inputSnapshot = createOutputs && options.requireInput !== false
-    ? readInputSnapshot(projectRoot)
+    ? readInputSnapshot(projectRoot, normalized)
     : null;
-  const root = workspacePath(projectRoot, normalized);
-  const subdirectories = Array.isArray(options.subdirectories)
-    ? options.subdirectories
-    : DEFAULT_SUBDIRECTORIES;
-
-  fs.mkdirSync(root, { recursive: true });
-  const created = [];
-  for (const directory of subdirectories) {
-    const target = workspacePath(projectRoot, normalized, directory);
-    fs.mkdirSync(target, { recursive: true });
-    created.push(target);
-  }
+  const root = runProjectPath(projectRoot, normalized);
+  const workRoot = workspaceRoot(projectRoot, normalized);
+  fs.mkdirSync(workRoot, { recursive: true });
 
   const specificationRoot = createOutputs ? runSpecPath(projectRoot, normalized) : null;
   const deliveryRoot = createOutputs ? deliveryPath(projectRoot, normalized) : null;
@@ -214,29 +209,38 @@ function initializeRunWorkspace(projectRoot, runId, options = {}) {
     ? initializeSourceLedger(projectRoot, normalized, inputSnapshot)
     : null;
 
-  const manifestPath = workspacePath(projectRoot, normalized, 'run.json');
+  const manifestPath = runProjectPath(projectRoot, normalized, 'project.json');
   if (!fs.existsSync(manifestPath)) {
     fs.writeFileSync(manifestPath, `${JSON.stringify({
-      runId: normalized,
-      workspace: path.relative(path.resolve(projectRoot), root).replace(/\\/g, '/'),
-      outputs: createOutputs ? {
-        specifications: path.relative(path.resolve(projectRoot), specificationRoot).replace(/\\/g, '/'),
-        delivery: path.relative(path.resolve(projectRoot), deliveryRoot).replace(/\\/g, '/')
+      version: '1.0',
+      projectId: normalized,
+      paths: createOutputs ? {
+        input: `${PROJECT_INPUT_DIRECTORY}/`,
+        sourceLedger: 'source-ledger.json',
+        specifications: `${PROJECT_SPEC_DIRECTORY}/`,
+        output: `${PROJECT_OUTPUT_DIRECTORY}/`,
+        work: `${PROJECT_WORK_DIRECTORY}/`
       } : null,
       retention: {
-        keepLocal: createOutputs ? [`specs/runs/${normalized}/`, `charts/${normalized}/`] : [],
+        keepLocal: createOutputs ? [
+          `${PROJECT_INPUT_DIRECTORY}/`,
+          'source-ledger.json',
+          `${PROJECT_SPEC_DIRECTORY}/`,
+          `${PROJECT_OUTPUT_DIRECTORY}/`
+        ] : [],
         repository: 'ignored',
-        purge: [`${WORKSPACE_DIRECTORY}/${normalized}/`, LEGACY_PREVIEW_DIRECTORY]
+        purge: [`${PROJECT_WORK_DIRECTORY}/`]
       }
     }, null, 2)}\n`, 'utf8');
   }
 
   return {
-    runId: normalized,
+    projectId: normalized,
     root,
+    workRoot,
     manifestPath,
     ledgerPath,
-    directories: created,
+    directories: [workRoot],
     specificationRoot,
     deliveryRoot
   };
@@ -251,14 +255,17 @@ function removeTarget(target, dryRun) {
 function flushRunWorkspace(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
   const dryRun = Boolean(options.dryRun);
-  const inputTarget = existingInputTarget(projectRoot);
-  const removed = [removeTarget(workspacePath(projectRoot, normalized), dryRun)];
+  const inputTarget = existingInputTarget(projectRoot, normalized);
+  const removed = [removeTarget(workspaceRoot(projectRoot, normalized), dryRun)];
   if (options.removeLegacy) {
-    removed.push(removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun));
+    removed.push(
+      removeTarget(projectPath(projectRoot, '.work'), dryRun),
+      removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun)
+    );
   }
   return {
-    mode: 'run',
-    runId: normalized,
+    mode: 'project',
+    projectId: normalized,
     dryRun,
     removed,
     input: {
@@ -266,6 +273,7 @@ function flushRunWorkspace(projectRoot, runId, options = {}) {
       preserved: true
     },
     preserved: [
+      runProjectPath(projectRoot, normalized),
       runSpecPath(projectRoot, normalized),
       deliveryPath(projectRoot, normalized),
       inputTarget
@@ -275,35 +283,44 @@ function flushRunWorkspace(projectRoot, runId, options = {}) {
 
 function resetTransientWorkspace(projectRoot, options = {}) {
   const dryRun = Boolean(options.dryRun);
-  const removed = [removeTarget(workspaceRoot(projectRoot), dryRun)];
+  const removed = [];
+  const root = projectsRoot(projectRoot);
+  if (fs.existsSync(root)) {
+    for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const projectDirectory = runProjectPath(projectRoot, entry.name);
+      removed.push(removeTarget(workspaceRoot(projectRoot, entry.name), dryRun));
+      if (!dryRun && fs.existsSync(projectDirectory) && fs.readdirSync(projectDirectory).length === 0) {
+        fs.rmSync(projectDirectory, { recursive: true, force: true });
+      }
+    }
+  }
   if (options.removeLegacy !== false) {
-    removed.push(removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun));
+    removed.push(
+      removeTarget(projectPath(projectRoot, '.work'), dryRun),
+      removeTarget(projectPath(projectRoot, LEGACY_PREVIEW_DIRECTORY), dryRun)
+    );
   }
   return {
     mode: 'reset',
     dryRun,
     removed,
-    input: {
-      target: existingInputTarget(projectRoot),
-      preserved: true
-    },
-    preserved: [
-      projectPath(projectRoot, 'specs'),
-      projectPath(projectRoot, DELIVERY_DIRECTORY)
-    ]
+    preserved: [root]
   };
 }
 
 module.exports = {
-  WORKSPACE_DIRECTORY,
+  PROJECTS_DIRECTORY,
   LEGACY_PREVIEW_DIRECTORY,
-  INPUT_DIRECTORY,
-  RUN_SPEC_DIRECTORY,
-  DELIVERY_DIRECTORY,
-  DEFAULT_SUBDIRECTORIES,
+  PROJECT_INPUT_DIRECTORY,
+  PROJECT_SPEC_DIRECTORY,
+  PROJECT_OUTPUT_DIRECTORY,
+  PROJECT_WORK_DIRECTORY,
   normalizeRunId,
   normalizeArtifactSlug,
   projectPath,
+  projectsRoot,
+  runProjectPath,
   workspaceRoot,
   workspacePath,
   runSpecPath,

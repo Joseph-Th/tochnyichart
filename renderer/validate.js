@@ -28,7 +28,7 @@ const FACT_ROLES = new Set(['comparison', 'denominator', 'mechanism', 'consequen
 const LABEL_MODES = new Set(['auto', 'inside', 'outside']);
 const FRAMES = new Set(['neutral', 'warning', 'surprise', 'collapse', 'recovery', 'divergence', 'comparison']);
 const DENSITIES = new Set(['minimal', 'editorial', 'detailed']);
-const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence', 'matrix']);
+const NARRATIVE_EMPHASIS = new Set(['magnitude', 'direction', 'gap', 'composition', 'ranking', 'range', 'flow', 'status', 'geography', 'risk', 'duration', 'benchmark-gap', 'convergence', 'matrix', 'relationship']);
 const ITEM_CALLOUTS = new Set(['auto', 'none']);
 const CALLOUT_SIDES = new Set(['auto', 'left', 'right']);
 const MAP_CALLOUTS = new Set(['auto', 'cards', 'none']);
@@ -61,16 +61,17 @@ const DISABLED_RECIPES = new Map([
 
 const ROOT_KEYS = new Set([
   'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'analysis', 'data', 'references', 'measure',
-  'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline',
+  'xMeasure', 'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline',
   'events'
 ]);
 const SOURCE_KEYS = new Set(['name', 'period', 'url']);
 const ANALYSIS_KEYS = new Set(['name', 'url']);
 const DATA_KEYS = new Set([
-  'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'column', 'quantity', 'group', 'icon', 'direction', 'value', 'low', 'high',
+  'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'column', 'quantity', 'group', 'icon', 'direction', 'value', 'xValue', 'xDisplayValue', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'benchmarkRelation', 'gapTone', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
   'period', 'scope', 'relationshipRole', 'segments'
 ]);
+const X_MEASURE_KEYS = new Set(['quantity', 'unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'scale']);
 const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue', 'tone']);
 const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
 const EVENT_KEYS = new Set(['label', 'afterLabel', 'tone', 'lineStyle']);
@@ -356,13 +357,24 @@ function normalizeSpec(input) {
 
   spec.measure = isObject(spec.measure) ? spec.measure : {};
   spec.measure.decimals = spec.measure.decimals === undefined ? 0 : spec.measure.decimals;
-  spec.measure.baseline = spec.measure.baseline || (spec.recipe === 'matrix.heat' ? 'auto' : 'zero');
+  spec.measure.baseline = spec.measure.baseline || (['matrix.heat', 'relationship.scatter'].includes(spec.recipe) ? 'auto' : 'zero');
   spec.measure.scale = spec.measure.scale || 'linear';
+
+  if (isObject(spec.xMeasure)) {
+    spec.xMeasure = {
+      ...spec.xMeasure,
+      quantity: typeof spec.xMeasure.quantity === 'string' ? spec.xMeasure.quantity.trim() : spec.xMeasure.quantity,
+      unit: typeof spec.xMeasure.unit === 'string' ? spec.xMeasure.unit.trim() : spec.xMeasure.unit,
+      axisTitle: typeof spec.xMeasure.axisTitle === 'string' ? spec.xMeasure.axisTitle.trim() : spec.xMeasure.axisTitle,
+      decimals: spec.xMeasure.decimals === undefined ? 0 : spec.xMeasure.decimals,
+      scale: spec.xMeasure.scale || 'linear'
+    };
+  }
 
   spec.options = isObject(spec.options) ? spec.options : {};
   spec.options.height = spec.options.height || getRecipe(spec.recipe)?.defaults?.height || 'standard';
   spec.options.sort = spec.options.sort || 'none';
-  spec.options.showLegend = spec.options.showLegend === undefined ? true : spec.options.showLegend;
+  spec.options.showLegend = spec.options.showLegend === undefined ? spec.recipe !== 'relationship.scatter' : spec.options.showLegend;
   spec.options.showLabels = spec.options.showLabels === undefined ? true : spec.options.showLabels;
   spec.options.animate = spec.options.animate === undefined ? true : spec.options.animate;
   spec.options.labelMode = spec.options.labelMode || (spec.recipe === 'ranking.horizontal' ? 'outside' : 'auto');
@@ -401,6 +413,9 @@ function normalizeSpec(input) {
         ...(item.displayValue !== undefined
           ? { displayValue: typeof item.displayValue === 'string' ? item.displayValue.trim() : item.displayValue }
           : {}),
+        ...(item.xDisplayValue !== undefined
+          ? { xDisplayValue: typeof item.xDisplayValue === 'string' ? item.xDisplayValue.trim() : item.xDisplayValue }
+          : {}),
         ...(item.benchmarkDisplayValue !== undefined
           ? { benchmarkDisplayValue: typeof item.benchmarkDisplayValue === 'string' ? item.benchmarkDisplayValue.trim() : item.benchmarkDisplayValue }
           : {}),
@@ -432,7 +447,7 @@ function normalizeSpec(input) {
 
   if (Array.isArray(spec.data)) {
     spec.data = spec.data.map((item) => {
-      if (!isObject(item) || item.direction !== undefined) return item;
+      if (!isObject(item) || item.direction !== undefined || ['matrix.heat', 'relationship.scatter'].includes(spec.recipe)) return item;
       const inferredDirection = VisualPlan.inferChangeDirection(item, spec);
       return inferredDirection === 'up' || inferredDirection === 'down'
         ? { ...item, direction: inferredDirection }
@@ -524,6 +539,7 @@ function validateStructure(input, errors) {
     input.events.forEach((event, index) => rejectUnknownKeys(event, EVENT_KEYS, `events[${index}]`, errors));
   }
   if (isObject(input.measure)) rejectUnknownKeys(input.measure, MEASURE_KEYS, 'measure', errors);
+  if (isObject(input.xMeasure)) rejectUnknownKeys(input.xMeasure, X_MEASURE_KEYS, 'xMeasure', errors);
   if (isObject(input.basis)) {
     rejectUnknownKeys(input.basis, BASIS_KEYS, 'basis', errors);
     if (Array.isArray(input.basis.items)) {
@@ -564,7 +580,7 @@ function validateData(spec, errors, warnings) {
     if (item.column !== undefined && (typeof item.column !== 'string' || item.column.trim() === '' || item.column.length > 60)) {
       errors.push(`${path}.column must be a non-empty string of 60 characters or fewer.`);
     }
-    for (const key of ['value', 'low', 'high', 'benchmark']) {
+    for (const key of ['value', 'xValue', 'low', 'high', 'benchmark']) {
       if (item[key] !== undefined && (typeof item[key] !== 'number' || !Number.isFinite(item[key]))) {
         errors.push(`${path}.${key} must be a finite number.`);
       }
@@ -577,6 +593,9 @@ function validateData(spec, errors, warnings) {
     }
     if (item.displayValue !== undefined && (typeof item.displayValue !== 'string' || item.displayValue.length > 50)) {
       errors.push(`${path}.displayValue must be a string of 50 characters or fewer.`);
+    }
+    if (item.xDisplayValue !== undefined && (typeof item.xDisplayValue !== 'string' || item.xDisplayValue.length > 50)) {
+      errors.push(`${path}.xDisplayValue must be a string of 50 characters or fewer.`);
     }
     for (const key of ['benchmarkDisplayValue', 'gapDisplayValue']) {
       if (item[key] !== undefined && (typeof item[key] !== 'string' || item[key].length > 50)) {
@@ -1396,9 +1415,62 @@ function validateRecipe(spec, errors, warnings) {
       }
       break;
     }
+    case 'relationship.scatter': {
+      if (count < 4 || count > 12) errors.push('relationship.scatter requires 4 to 12 observations.');
+      const xValues = [];
+      const yValues = [];
+      data.forEach((item, index) => {
+        if (typeof item?.xValue !== 'number' || !Number.isFinite(item.xValue)) {
+          errors.push(`data[${index}].xValue is required for relationship.scatter.`);
+        } else xValues.push(item.xValue);
+        if (typeof item?.value !== 'number' || !Number.isFinite(item.value)) {
+          errors.push(`data[${index}].value is required for relationship.scatter.`);
+        } else yValues.push(item.value);
+        if (item?.tone !== undefined) {
+          errors.push(`data[${index}].tone is not supported by relationship.scatter; the first version encodes exactly two quantitative variables and point identity, not a third color variable.`);
+        }
+      });
+      if (new Set(xValues).size < 3) errors.push('relationship.scatter requires at least three distinct x values.');
+      if (new Set(yValues).size < 3) errors.push('relationship.scatter requires at least three distinct y values.');
+      if (!isObject(spec.xMeasure)) {
+        errors.push('xMeasure is required for relationship.scatter so the x-axis quantity and unit are explicit.');
+      } else if (normalizeEditorialValue(spec.xMeasure.quantity) === normalizeEditorialValue(spec.measure?.quantity)) {
+        errors.push('relationship.scatter requires two distinct named quantities. If x and y are the same measure, use a paired comparison or time-series recipe instead.');
+      }
+      if (spec.measure?.scale !== 'linear' || spec.xMeasure?.scale !== 'linear') {
+        errors.push('relationship.scatter currently requires linear x and y scales.');
+      }
+      if (spec.measure?.baseline !== 'auto') {
+        errors.push('relationship.scatter requires measure.baseline auto because point position, not length from zero, encodes the y value.');
+      }
+      if (spec.options.showLabels === false) {
+        errors.push('relationship.scatter requires direct point labels in the static image so observation identity is not tooltip-only.');
+      }
+      if (spec.options.sort !== 'none') errors.push('relationship.scatter preserves observations as authored; options.sort must be none.');
+      if ((spec.references || []).length) errors.push('relationship.scatter does not support one-axis reference lines in its first contract; encode the two-variable relationship without ambiguous reference semantics.');
+      if (Number.isFinite(spec.xMeasure?.minimum) && xValues.some((value) => value < spec.xMeasure.minimum)) {
+        errors.push('relationship.scatter contains an xValue below xMeasure.minimum. The x domain cannot clip observed points.');
+      }
+      if (Number.isFinite(spec.xMeasure?.maximum) && xValues.some((value) => value > spec.xMeasure.maximum)) {
+        errors.push('relationship.scatter contains an xValue above xMeasure.maximum. The x domain cannot clip observed points.');
+      }
+      if (Number.isFinite(spec.measure?.minimum) && yValues.some((value) => value < spec.measure.minimum)) {
+        errors.push('relationship.scatter contains a value below measure.minimum. The y domain cannot clip observed points.');
+      }
+      if (Number.isFinite(spec.measure?.maximum) && yValues.some((value) => value > spec.measure.maximum)) {
+        errors.push('relationship.scatter contains a value above measure.maximum. The y domain cannot clip observed points.');
+      }
+      break;
+    }
     case 'comparison.scenarios':
       if (count < 3 || count > 5) errors.push('comparison.scenarios requires 3 to 5 independent data items.');
       requireNumericValues(spec, errors);
+      if (spec.measure?.scale !== 'linear') {
+        errors.push('comparison.scenarios uses column length and therefore requires a linear quantitative scale.');
+      }
+      if (spec.measure?.baseline !== 'zero' && !(spec.measure?.baseline === 'explicit' && Number(spec.measure?.minimum) === 0)) {
+        errors.push('comparison.scenarios uses column length and requires a zero-seated baseline. Truncated scenario bars are not allowed.');
+      }
       if (spec.options.showLabels === false) {
         errors.push('comparison.scenarios requires direct numeric labels. The static image must not hide exact alternative values behind tooltips or axis estimation.');
       }
@@ -1714,6 +1786,46 @@ function validateRecipe(spec, errors, warnings) {
       errors.push(`recipe must be one of: ${[...recipeIds, ...LEGACY_RECIPES].join(', ')}.`);
   }
   validateForecastOrientationAnchor(spec, errors);
+}
+
+function validateXMeasure(spec, errors) {
+  if (spec.xMeasure === undefined) {
+    if (spec.recipe === 'relationship.scatter') errors.push('xMeasure is required for relationship.scatter.');
+    return;
+  }
+  if (spec.recipe !== 'relationship.scatter') {
+    errors.push('xMeasure is only supported by relationship.scatter.');
+    return;
+  }
+  const measure = spec.xMeasure;
+  if (!isObject(measure)) {
+    errors.push('xMeasure must be an object.');
+    return;
+  }
+  if (typeof measure.quantity !== 'string' || measure.quantity.trim().length < 3 || measure.quantity.length > 80) {
+    errors.push('xMeasure.quantity must be a specific string of 3 to 80 characters.');
+  }
+  if (typeof measure.unit !== 'string' || measure.unit.length > 40) errors.push('xMeasure.unit must be a string of 40 characters or fewer.');
+  if (typeof measure.axisTitle !== 'string' || measure.axisTitle.trim() === '' || measure.axisTitle.length > 80) {
+    errors.push('xMeasure.axisTitle must be a non-empty string of 80 characters or fewer.');
+  }
+  if (!Number.isInteger(measure.decimals) || measure.decimals < 0 || measure.decimals > 4) {
+    errors.push('xMeasure.decimals must be an integer from 0 to 4.');
+  }
+  if (measure.scale !== 'linear') errors.push('xMeasure.scale must be linear.');
+  for (const [key, max] of [['prefix', 12], ['suffix', 20]]) {
+    if (measure[key] !== undefined && (typeof measure[key] !== 'string' || measure[key].length > max)) {
+      errors.push(`xMeasure.${key} must be a string of ${max} characters or fewer.`);
+    }
+  }
+  for (const key of ['minimum', 'maximum']) {
+    if (measure[key] !== undefined && (typeof measure[key] !== 'number' || !Number.isFinite(measure[key]))) {
+      errors.push(`xMeasure.${key} must be a finite number.`);
+    }
+  }
+  if (Number.isFinite(measure.minimum) && Number.isFinite(measure.maximum) && measure.minimum >= measure.maximum) {
+    errors.push('xMeasure.minimum must be lower than xMeasure.maximum.');
+  }
 }
 
 function validateMeasure(spec, errors, warnings) {
@@ -2645,6 +2757,7 @@ function validateSpec(input) {
   validateSmallExactCountSeriesStrength(spec, spec.data || [], errors);
   validateSharedScaleSemantics(spec, errors);
   validateMeasure(spec, errors, warnings);
+  validateXMeasure(spec, errors);
   validateBasis(spec, errors, warnings);
   validateValueRepresentation(spec, errors, warnings);
   validateBasisPrimaryGeometry(spec, errors);

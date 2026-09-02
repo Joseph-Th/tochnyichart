@@ -45,12 +45,17 @@ const REQUIRED_CONTRACT_PATTERNS = Object.freeze({
     Object.freeze({ pattern: /Do not inspect or modify these implementation directories/i, label: 'implementation-directory prohibition' }),
     Object.freeze({ pattern: /routingAudit/, label: 'geography-first routing audit' }),
     Object.freeze({ pattern: /ambiguityRules/, label: 'nearest-alternative recipe check' }),
-    Object.freeze({ pattern: /readingIntent/, label: 'reading-intent density guidance' })
+    Object.freeze({ pattern: /projects\/<project-id>\//, label: 'single project-folder contract' }),
+    Object.freeze({ pattern: /relationship\.scatter/, label: 'dual-measure scatter guidance' }),
+    Object.freeze({ pattern: /xMeasure/, label: 'scatter x-measure contract' })
   ]),
   'tool-api/README.md': Object.freeze([
     Object.freeze({ pattern: /PNG is the primary individual-chart artifact/i, label: 'PNG primary artifact rule' }),
     Object.freeze({ pattern: /runtimeDependencies\.offlineReady/, label: 'runtime dependency disclosure' }),
-    Object.freeze({ pattern: /ambiguityRules/, label: 'machine-readable ambiguity guidance' })
+    Object.freeze({ pattern: /ambiguityRules/, label: 'machine-readable ambiguity guidance' }),
+    Object.freeze({ pattern: /projects\/<project-id>\//, label: 'single project-folder contract' }),
+    Object.freeze({ pattern: /relationship\.scatter/, label: 'public scatter recipe' }),
+    Object.freeze({ pattern: /xMeasure/, label: 'public scatter x-measure contract' })
   ])
 });
 

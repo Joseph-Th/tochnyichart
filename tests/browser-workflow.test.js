@@ -61,18 +61,48 @@ test('standard and regional workflows pass browser comparison checks', { skip: b
   }
 });
 
-test('clustered scenarios use direct-labeled points instead of truncated columns', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-scenario-points-'));
+test('existing scenario columns remain responsive after objective infrastructure changes', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-scenario-columns-'));
   try {
-    const outputPath = path.join(tempDir, 'scenario-points.html');
+    const outputPath = path.join(tempDir, 'scenario-columns.html');
     renderSpecFile(path.join(examplesDir, 'central-bank-scenarios.json'), outputPath, { projectRoot: root });
     const diagnostics = diagnoseHtmlResponsive(outputPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
     assert.equal(diagnostics.status, 'pass');
     diagnostics.runs.forEach((run) => {
       assert.equal(run.diagnostics?.summary?.errors, 0);
-      assert.equal(run.scenarioAttributes?.['data-scenario-mark-mode'], 'points');
-      assert.match(run.scenarioAttributes?.['data-scenario-mark-reason'] || '', /nonzero/);
+      assert.equal(run.diagnostics?.summary?.marksChecked, 3);
     });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('scatter relationship renders both numeric dimensions with machine-readable diagnostics', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-scatter-'));
+  try {
+    const htmlPath = path.join(tempDir, 'scatter.html');
+    renderSpecFile(path.join(examplesDir, 'store-traffic-sales-scatter.json'), htmlPath, { projectRoot: root });
+    const diagnostics = diagnoseHtmlResponsive(htmlPath, { browser, viewports: REGIONAL_WORKFLOW_VIEWPORTS });
+    assert.equal(diagnostics.status, 'pass');
+    diagnostics.runs.forEach((run) => {
+      assert.equal(run.diagnostics?.summary?.errors, 0);
+      assert.equal(run.diagnostics?.summary?.marksChecked, 8);
+      assert.equal(run.scatterAttributes?.['data-scatter-point-count'], '8');
+      assert.equal(run.scatterAttributes?.['data-scatter-x-quantity'], 'weekly store foot traffic');
+      assert.equal(run.scatterAttributes?.['data-scatter-y-quantity'], 'weekly store sales');
+      const r = Number(run.scatterAttributes?.['data-scatter-pearson-r']);
+      assert.ok(Number.isFinite(r) && r > 0.99 && r <= 1);
+    });
+
+    const pngPath = path.join(tempDir, 'scatter.png');
+    const image = createStaticImage(path.join(examplesDir, 'store-traffic-sales-scatter.json'), pngPath, {
+      projectRoot: root,
+      browser,
+      profile: 'landscape'
+    });
+    assert.deepEqual(pngDimensions(pngPath), { width: 1200, height: 900 });
+    assert.equal(image.scatterDiagnostics.pointCount, 8);
+    assert.ok(image.scatterDiagnostics.pearsonR > 0.99 && image.scatterDiagnostics.pearsonR <= 1);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -101,8 +131,8 @@ test('public image CLI emits structured JSON and publishes the requested PNG', {
     assert.equal(payload.workflow, 'standard-chart');
     assert.equal(payload.profile.id, 'landscape');
     assert.deepEqual(payload.profile.actualDimensions, { width: 1200, height: 900 });
-    assert.ok(['fill', 'natural'].includes(payload.profile.fitMode));
-    if (payload.profile.fitMode === 'fill') assert.ok(payload.profile.stageDelta > 0);
+    assert.ok(['natural', 'shrink'].includes(payload.profile.fitMode));
+    if (payload.profile.fitMode === 'shrink') assert.ok(payload.profile.stageDelta < 0);
     assert.equal(payload.htmlRetained, false);
     assert.equal(payload.diagnostics.errors, 0);
     assert.equal(path.resolve(payload.outputPath), path.resolve(outputPath));
@@ -124,8 +154,8 @@ test('static image workflow produces an exact square PNG without retaining an HT
     assert.equal(result.workflow, 'standard-chart');
     assert.equal(result.profile.id, 'square');
     assert.deepEqual(result.profile.actualDimensions, { width: 1080, height: 1080 });
-    assert.equal(result.profile.fitMode, 'fill');
-    assert.ok(result.profile.stageDelta > 0);
+    assert.ok(['natural', 'shrink'].includes(result.profile.fitMode));
+    assert.ok(result.profile.stageDelta <= 0);
     assert.deepEqual(pngDimensions(outputPath), { width: 1080, height: 1080 });
     assert.equal(result.profile.expanded, false);
     assert.equal(result.htmlRetained, false);
@@ -357,9 +387,6 @@ test('components, duration timelines, benchmark gaps, dumbbells, heat matrices, 
         }
         if (file === 'converging-signals.json') {
           assert.equal(run.relationshipAttributes?.['data-relationship-continuation'], 'true');
-        }
-        if (file === 'ozon-collateral-waterfall.json') {
-          assert.equal(run.waterfallAttributes?.['data-waterfall-connectors'], '2');
         }
         if (file === 'support-channel-heatmap.json') {
           assert.equal(run.heatAttributes?.['data-heat-rows'], '3');

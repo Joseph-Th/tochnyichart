@@ -4,41 +4,43 @@ This document defines the public Tool API contract for agents producing charts. 
 
 A chart-author agent should treat the deterministic engine as a tool. It supplies source fidelity, calculations, editorial meaning, and a semantic `ChartSpec`. It does not inspect rendering machinery.
 
-## Batch workflow
+## Project workflow
 
-The normal assignment is a user-supplied `input/` folder containing source
-materials for one or more data stories. The LLM agent owns the complete batch orchestration:
+The normal assignment is one `projects/<project-id>/` folder containing the
+source set, ledger, specs, delivery, and scratch for one or more data stories.
+The LLM agent owns the complete orchestration:
 
 ```text
-initialize .work/<run-id>/
-    -> input/
-    -> fail if the exact project-root source set is missing or empty
+projects/<project-id>/input/
+    -> initialize project
+    -> fail if the exact project-local source set is missing or empty
     -> inventory supplied files and supported quantitative stories
     -> inventory every materially relevant same-scale observation in visualEvidenceAudit
     -> record selected, omitted, or merged disposition for every candidate
-    -> verify .work/<run-id>/source-ledger.json
+    -> verify projects/<project-id>/source-ledger.json
     -> preserve inventoried claims and enrich without originating new stories
     -> audit actual-level availability and record the value representation
     -> decide the appropriate production tool for each story
     -> author the complete selected ChartSpec set
     -> run the chart builder to render, diagnose, capture, and manifest the set
     -> if requested, assemble one PowerPoint presentation from presentation-plan.json, one chart per slide
-    -> save retained specs and final artifacts
-    -> finalize and purge transient run data
+    -> save retained specs and final artifacts in the same project folder
+    -> finalize and delete only work/
 ```
 
-Start each batch with `npm run run:init -- <run-id>`. Keep research notes,
-downloads, helper scripts, logs, review captures, and package staging under the
-created `.work/<run-id>/` tree. Complete the generated source ledger and run
-`npm run run:verify-source -- <run-id>` before external research. After all
-selected ChartSpecs are authored, run `npm run run:charts -- <run-id>` to
+Create `projects/<project-id>/input/`, put the source files there, and start with
+`npm run run:init -- <project-id>`. Keep research notes, downloads, helper
+scripts, logs, review captures, renders, and package staging under the same
+project's `work/` subtree. Complete the generated source ledger and run
+`npm run run:verify-source -- <project-id>` before external research. After all
+selected ChartSpecs are authored, run `npm run run:charts -- <project-id>` to
 produce the HTML charts, final PNGs, manifest, QA report, and
 `presentation-plan.json`. The plan forbids unrequested cover, title, agenda,
 divider, and closing slides. End with
-`npm run run:finalize -- <run-id>`, which preserves
-`specs/runs/<run-id>/` and `charts/<run-id>/` locally while removing transient
-material and legacy previews. It also preserves `input/`. Both retained
-production paths are ignored by Git. Finalization fails unless selected ledger
+`npm run run:finalize -- <project-id>`, which removes only
+`projects/<project-id>/work/` and preserves `input/`, `source-ledger.json`,
+`project.json`, `specs/`, and `output/`. The entire project tree is ignored by
+Git. Finalization fails unless selected ledger
 slugs and titles exactly match the final ChartSpecs.
 
 The Tool API described below handles individual chart production. The run chart
@@ -126,7 +128,7 @@ or explanation needs explicit labeling; the validator allows at most 12 cards.
 A chart-author agent may use:
 
 ```text
-input/
+projects/<project-id>/
 tool-api/
 docs/batch-workflow.md
 docs/agent-workflows.md
@@ -135,9 +137,6 @@ docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/runs/<run-id>/
-charts/<run-id>/
-.work/<run-id>/
 ```
 
 During normal chart production, do not inspect or modify:
@@ -155,7 +154,7 @@ Presentation copy must stay editorial. Use source attribution when available and
 
 ## 3. Source enrichment before recipe selection
 
-The initialized `input/` folder is the authoritative assignment source set.
+The initialized `projects/<project-id>/input/` folder is the authoritative assignment source set.
 Preserve supplied claims and datapoints by default. Structured datasets may
 support a finding through a documented filter, grouping, or calculation, and
 reputable reporting may supplement the supplied material.
@@ -226,14 +225,14 @@ Every route follows the same semantic stages:
    while the title asserts a mechanism or consequence that the evidence does
    not support.
 10. Correct semantic errors and rerun the checks.
-11. For a batch run, capture the final PNG into `charts/<run-id>/` after
-   diagnostics pass. Use `.work/<run-id>/review/` only for temporary or ad
-   hoc review.
+11. For a project, capture the final PNG into
+   `projects/<project-id>/output/` after diagnostics pass. Use
+   `projects/<project-id>/work/review/` only for temporary or ad hoc review.
 
 Write new specifications to:
 
 ```text
-specs/runs/<run-id>/[slug].json
+projects/<project-id>/specs/[slug].json
 ```
 
 The chart author owns source fidelity, calculations, copy, statuses, region IDs, and recipe choice. The engine owns HTML, CSS, chart-library configuration, geometry, typography, colors, responsive layout, map projection, callout placement, and leader routing.
@@ -543,7 +542,7 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js image <spec.json> [output.png] --profile auto [--run-id <id>]
+node tool-api/chart.js image <spec.json> [output.png] --profile auto [--project-id <id>]
 ```
 
 The `image` command is the normal static-output path. It routes the recipe,
@@ -552,7 +551,7 @@ publishes the PNG only after capture succeeds. Use `render` plus `diagnose`
 when an HTML shell or responsive investigation is specifically useful:
 
 ```bash
-node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
+node tool-api/chart.js render <spec.json> [output.html] [--project-id <id>]
 node tool-api/chart.js diagnose <output.html>
 ```
 
@@ -604,8 +603,8 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>]
-node tool-api/chart.js image <spec.json> [output.png] --profile auto [--run-id <id>]
+node tool-api/chart.js regional <spec.json> [output.html] [--project-id <id>]
+node tool-api/chart.js image <spec.json> [output.png] --profile auto [--project-id <id>]
 ```
 
 The regional command performs validation, rendering, shell review, and responsive diagnostics when HTML-level regional inspection is needed. The `image` command performs the final target-size regional capture and applies the same final leader-geometry checks to that captured layout. Use `--no-diagnose` only when a browser is unavailable and HTML output is explicitly needed.
@@ -644,16 +643,17 @@ For a completed batch run, the agent must also:
 
 - Capture one final PNG for every accepted chart.
 - Assemble the accepted images into one PowerPoint presentation when requested.
-- Save the rendered HTML files and final PNGs in `charts/<run-id>/`; save
-  `tochnyi-charts-<run-id>.pptx` there when a deck is requested.
-- Save authored ChartSpecs in `specs/runs/<run-id>/`.
-- Run `npm run run:finalize -- <run-id>` after delivery.
+- Save the rendered HTML files and final PNGs in
+  `projects/<project-id>/output/`; save
+  `tochnyi-charts-<project-id>.pptx` there when a deck is requested.
+- Save authored ChartSpecs in `projects/<project-id>/specs/`.
+- Run `npm run run:finalize -- <project-id>` after delivery.
 - Report omitted, duplicate, non-visual, directly conflicted, or failed stories.
 
-Temporary review belongs in `.work/<run-id>/review/`. Final images belong in
-the local `charts/<run-id>/` folder. No run-specific
-notes, scripts, logs, downloads, or staging files should remain elsewhere.
-Production input, generated specifications, chart output, previews, and run
-workspaces must remain untracked; `npm run check:repo` enforces that boundary.
+Temporary review belongs in `projects/<project-id>/work/review/`. Final images
+belong in that project's `output/` folder. Project-specific notes, scripts,
+logs, downloads, or staging files must stay under `work/` and disappear at
+finalization. The complete local `projects/` tree remains untracked;
+`npm run check:repo` enforces that boundary.
 
 Infrastructure architecture and maintenance are documented separately in `docs/architecture.md` and `docs/maintainer-workflows.md`.

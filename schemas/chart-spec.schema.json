@@ -18,6 +18,7 @@
         "comparison.dumbbell",
         "comparison.area-squares",
         "matrix.heat",
+        "relationship.scatter",
         "relationship.converging-signals",
         "trend.line",
         "trend.stacked",
@@ -84,6 +85,8 @@
           },
           "direction": { "type": "string", "enum": ["up", "down", "neutral"] },
           "value": { "type": "number" },
+          "xValue": { "type": "number" },
+          "xDisplayValue": { "type": "string", "maxLength": 50 },
           "valueStatus": { "type": "string", "enum": ["reported", "derived", "bound", "approximate"] },
           "period": { "type": "string", "minLength": 1, "maxLength": 80 },
           "scope": { "type": "string", "minLength": 1, "maxLength": 80 },
@@ -145,6 +148,22 @@
             }
           }
         }
+      }
+    },
+    "xMeasure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantity", "unit", "axisTitle"],
+      "properties": {
+        "quantity": { "type": "string", "minLength": 3, "maxLength": 80 },
+        "unit": { "type": "string", "maxLength": 40 },
+        "axisTitle": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "prefix": { "type": "string", "maxLength": 12 },
+        "suffix": { "type": "string", "maxLength": 20 },
+        "decimals": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "scale": { "type": "string", "enum": ["linear"] }
       }
     },
     "relationship": {
@@ -364,7 +383,7 @@
         "density": { "type": "string", "enum": ["minimal", "editorial", "detailed"] },
         "emphasis": {
           "type": "string",
-          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap", "convergence", "matrix"]
+          "enum": ["magnitude", "direction", "gap", "composition", "ranking", "range", "flow", "status", "geography", "risk", "duration", "benchmark-gap", "convergence", "matrix", "relationship"]
         }
       }
     },
@@ -439,6 +458,21 @@
             "minItems": 4,
             "maxItems": 36,
             "items": { "required": ["column", "value", "quantity", "scope", "period"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "recipe": { "const": "relationship.scatter" } }
+      },
+      "then": {
+        "required": ["measure", "xMeasure"],
+        "properties": {
+          "data": {
+            "minItems": 4,
+            "maxItems": 12,
+            "items": { "required": ["value", "xValue", "scope", "period"] }
           }
         }
       }

@@ -7,7 +7,7 @@ const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, diagnoseHtmlResponsive, findBrowser } = require('../renderer/capture');
-const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { freshToolWorkspace } = require('./tool-workspace');
 const { resolveImageProfile } = require('../renderer/image-profiles');
 const {
   REGIONAL_WORKFLOW_VIEWPORTS,
@@ -17,10 +17,9 @@ const {
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'samples');
-const runId = 'sample-review';
-initializeRunWorkspace(root, runId, { createOutputs: false });
-const renderedDir = workspacePath(root, runId, 'rendered');
-const reviewDir = workspacePath(root, runId, 'review');
+const toolRoot = freshToolWorkspace(root, 'render-samples');
+const renderedDir = path.join(toolRoot, 'rendered');
+const reviewDir = path.join(toolRoot, 'review');
 const browser = findBrowser();
 
 if (!browser) {

@@ -32,6 +32,9 @@ completion lane small while preserving explicit broader checkpoints.
 The broad deterministic regression suite covers:
 
 - Recipe coverage and ChartSpec validation.
+- Dual-measure scatter validation, including independent X/Y quantities,
+  unclipped domains, direct point identity, and rejection of inferred third
+  visual variables.
 - Generated-shell policy and asset cache versioning.
 - Visual planning and shared quantitative mark policy.
 - Regional registry, projection, framing, landmass, summary, routing, and
@@ -62,6 +65,10 @@ regional viewport set for comparable coverage, and runs the regional wrapper
 through its full responsive diagnostics. It checks:
 
 - Successful browser rendering at desktop, tablet, and mobile sizes.
+- `relationship.scatter` retains every point and direct observation label at
+  maintained responsive widths, and exposes point count plus descriptive
+  Pearson correlation as machine-readable diagnostics without drawing an
+  inferred regression line.
 - The public `image` CLI publishes structured JSON plus the requested PNG.
 - Fixed square output is exactly 1080×1080 and retains no temporary HTML artifact.
 - Regional `auto` output uses the same wide desktop viewport that anchors regional responsive diagnostics.

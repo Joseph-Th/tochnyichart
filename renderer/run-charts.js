@@ -17,7 +17,8 @@ const {
   normalizeArtifactSlug,
   sourceLedgerPath,
   runSpecPath,
-  deliveryPath
+  deliveryPath,
+  workspacePath
 } = require('./run-workspace');
 
 function loadJson(filePath, label) {
@@ -96,7 +97,10 @@ function isRebuiltArtifact(name, runId) {
 }
 
 function publishStagedDelivery(stagingRoot, outputRoot, runId) {
-  const backupRoot = `${outputRoot}.previous-${process.pid}-${Date.now()}`;
+  const backupRoot = path.join(
+    path.dirname(stagingRoot),
+    `output-previous-${process.pid}-${Date.now()}`
+  );
   fs.rmSync(backupRoot, { recursive: true, force: true });
 
   if (fs.existsSync(outputRoot)) {
@@ -137,8 +141,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const selected = selectedChartsFromLedger(ledger);
   const outputRoot = deliveryPath(root, normalized);
-  const stagingRunId = `${normalized}.building-${process.pid}-${Date.now()}`;
-  const stagingRoot = deliveryPath(root, stagingRunId);
+  const stagingRoot = workspacePath(root, normalized, `output-building-${process.pid}-${Date.now()}`);
   fs.rmSync(stagingRoot, { recursive: true, force: true });
   fs.mkdirSync(stagingRoot, { recursive: true });
 
@@ -159,7 +162,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       if (spec.recipe === 'map.regional') {
         rendered = dependencies.renderRegional(specPath, htmlPath, {
           projectRoot: root,
-          runId: normalized,
+          projectId: normalized,
           browser: options.browser,
           diagnose: options.diagnose !== false
         });
@@ -167,7 +170,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       } else {
         rendered = dependencies.renderStandard(specPath, htmlPath, {
           projectRoot: root,
-          runId: normalized
+          projectId: normalized
         });
         diagnostics = options.diagnose === false
           ? { status: 'not-run', runs: [] }
@@ -239,7 +242,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
     const stagedQaPath = path.join(stagingRoot, 'qa-report.json');
     const qa = {
       version: '1.0',
-      runId: normalized,
+      projectId: normalized,
       passed: diagnosticErrors === 0,
       sourceCoverage: fidelity,
       artifacts: {
@@ -282,7 +285,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
     publishStagedDelivery(stagingRoot, outputRoot, normalized);
 
     return {
-      runId: normalized,
+      projectId: normalized,
       outputRoot,
       chartCount: rows.length,
       manifestPath: path.join(outputRoot, 'manifest.csv'),

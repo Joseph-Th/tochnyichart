@@ -21,17 +21,23 @@ The repository has three explicit operating roles:
 
 See [`docs/architecture.md`](docs/architecture.md) for the boundary.
 
-## Primary batch workflow
+## Primary project workflow
 
-The normal job begins with a user-supplied source folder:
+The normal job lives in one folder:
 
 ```text
-input/
+projects/<project-id>/
+├── input/
+├── source-ledger.json
+├── project.json
+├── specs/
+├── output/
+└── work/
 ```
 
-The folder may contain prose briefs, CSV/TSV data, JSON, notebooks, or other
+The project's `input/` folder may contain prose briefs, CSV/TSV data, JSON, notebooks, or other
 supporting material. The LLM agent is the batch orchestrator. It inventories the
-exact project-root source set, records a selected, omitted, or merged disposition
+exact project-local source set, records a selected, omitted, or merged disposition
 for each proposed story, inventories every materially relevant same-scale
 observation in `visualEvidenceAudit`, verifies that ledger, and only then enriches
 the selected input-supported stories. Prose sources use exact excerpts; structured
@@ -39,55 +45,58 @@ data may use explicit file selectors and documented groupings or calculations.
 The agent renders accepted charts, captures final PNG images, and assembles a
 PowerPoint presentation when the assignment calls for one.
 
-Initialize a disposable run workspace before reading the input:
+Create the project input folder, place the source material there, and initialize
+the project:
 
 ```bash
-npm run run:init -- <run-id>
+mkdir -p projects/<project-id>/input
+npm run run:init -- <project-id>
 ```
 
-Initialization fails when `input/` is missing or contains no source files and
-creates `.work/<run-id>/source-ledger.json` with a deterministic file inventory,
+Initialization fails when `projects/<project-id>/input/` is missing or contains no source files and
+creates `projects/<project-id>/source-ledger.json` with a deterministic file inventory,
 per-file hashes, and a source-set hash. Never substitute a sibling project or
 prior batch. Complete the ledger and verify it before research:
 
 ```bash
-npm run run:verify-source -- <run-id>
+npm run run:verify-source -- <project-id>
 ```
 
-The run ID is an opaque caller-supplied label. It may be a date, issue number,
+The project ID is an opaque caller-supplied label. It may be a date, issue number,
 client slug, or another stable identifier. The renderer never derives storage
 paths from chart dates.
 
-All research notes, downloads, helper scripts, logs, review captures, and package
-staging must stay under `.work/<run-id>/`. Only `specs/runs/<run-id>/` and
-`charts/<run-id>/` are retained locally. `input/`, generated specifications,
-charts, previews, and workspaces are ignored by Git. After the selected
+All durable material stays inside the same project. `input/`,
+`source-ledger.json`, `project.json`, `specs/`, and `output/` are retained;
+temporary research notes, downloads, helper scripts, logs, review captures,
+renders, and staging stay under `work/`. Scratch subfolders are created only on
+demand. The entire `projects/` tree is ignored by Git. After the selected
 ChartSpecs are complete, build every chart in ledger order with one command:
 
 ```bash
-npm run run:charts -- <run-id>
+npm run run:charts -- <project-id>
 ```
 
 This command verifies source/spec coverage, routes standard and regional
 charts correctly, runs responsive browser diagnostics, captures the final PNGs,
 and writes `manifest.csv`, `presentation-plan.json`, and `qa-report.json` in
-`charts/<run-id>/`.
+`projects/<project-id>/output/`.
 It publishes through a staged directory, so a failed rebuild leaves the prior
-delivery untouched. A successful chart rebuild removes any prior presentation
+delivery untouched. Staging lives inside the same project's `work/` subtree. A successful chart rebuild removes any prior presentation
 and chart-image archive because those files would contain stale images.
 PowerPoint assembly remains an optional orchestration step when the requested
 deliverable includes a deck. After delivery, finalize the run:
 
 ```bash
-npm run run:finalize -- <run-id>
+npm run run:finalize -- <project-id>
 ```
 
-Finalization removes the run workspace and legacy `previews/`. It preserves
-`input/` and never deletes `specs/` or `charts/`. It refuses to finalize
+Finalization removes only `projects/<project-id>/work/`. It preserves the
+project input, ledger, manifest, specs, and output. It refuses to finalize
 unless the selected source-ledger slugs and titles exactly match the ChartSpecs.
 
 ```text
-input/
+projects/<project-id>/input/
     -> hashed source-set inventory
     -> complete anchored/derived source ledger
     -> complete same-scale observation inventory
@@ -98,7 +107,7 @@ input/
     -> rendered HTML charts
     -> final PNG images
     -> optional PowerPoint presentation
-    -> charts/<run-id>/
+    -> projects/<project-id>/output/
 ```
 
 The chart Tool API produces individual chart artifacts. The run chart builder
@@ -209,7 +218,7 @@ Use the standard workflow when geography is not the primary visual structure. Fo
 
 ```bash
 node tool-api/chart.js validate specs/examples/ai95-price-spike.json
-node tool-api/chart.js image specs/examples/ai95-price-spike.json --profile auto --run-id examples
+node tool-api/chart.js image specs/examples/ai95-price-spike.json --profile auto --project-id examples
 ```
 
 `image` validates, renders through a disposable shell, runs target-size browser diagnostics, and writes the PNG only after the capture is acceptable. Use `render` and `diagnose` for HTML-level inspection. `diagnose` launches the browser
@@ -228,12 +237,13 @@ node tool-api/chart.js regional-guide russia
 node tool-api/chart.js regions russia
 node tool-api/chart.js validate specs/examples/russia-regional-map.json
 node tool-api/chart.js regional specs/examples/russia-regional-map.json \
-  --run-id examples
+  --project-id examples
 ```
 
-Example and smoke-test renders must use an explicit path under `.work/`.
-Pass an explicit `--run-id`; otherwise the renderer uses the isolated
-`.work/default/` workspace. It never writes default output into `charts/`.
+Example and smoke-test renders must use an explicit output path or an explicit
+`--project-id`. There is no implicit `default` project. With `--project-id`,
+HTML inspection output defaults to `projects/<project-id>/work/rendered/` and
+final images default to `projects/<project-id>/output/`.
 
 The regional command validates, renders, performs shell review, and runs the
 desktop/tablet/mobile diagnostics used by the regional workflow. It reports the
@@ -244,14 +254,14 @@ Use `--no-diagnose` only when a browser is unavailable. Use the generic review
 command for human visual inspection:
 
 ```bash
-node tool-api/chart.js review charts/<run-id>/<chart>.html \
-  --screenshot --output .work/<run-id>/review/<chart>.png
+node tool-api/chart.js review projects/<project-id>/output/<chart>.html \
+  --screenshot --output projects/<project-id>/work/review/<chart>.png
 ```
 
 For a direct final regional PNG without retaining HTML, use:
 
 ```bash
-node tool-api/chart.js image specs/examples/russia-regional-map.json --profile auto --run-id examples
+node tool-api/chart.js image specs/examples/russia-regional-map.json --profile auto --project-id examples
 ```
 
 The chart-author contract is documented in
@@ -262,13 +272,13 @@ mixed-evidence, composition-value, pictogram, and regional information-economy
 contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional routing
 internals are maintainer-only and documented in `docs/regional-routing.md`.
 
-Final run delivery uses `charts/<run-id>/`. The folder contains the
+Final project delivery uses `projects/<project-id>/output/`. The folder contains the
 rendered HTML files, final PNG images, `manifest.csv`, `presentation-plan.json`,
 and `qa-report.json`. When a deck is requested, it also contains
-`tochnyi-charts-<run-id>.pptx`; finalization reads its slide count and rejects a
+`tochnyi-charts-<project-id>.pptx`; finalization reads its slide count and rejects a
 deck that does not contain exactly the chart slides listed in the plan.
 Temporary review images belong under the
-matching `.work/<run-id>/review/` directory and are deleted at finalization.
+matching `projects/<project-id>/work/review/` directory and are deleted at finalization.
 
 ## Authoring contract
 
@@ -424,14 +434,12 @@ schemas/                  ChartSpec schema
 recipes/                  Recipe catalog
 specs/examples/           One validated fixture per recipe
 specs/samples/             Editorial sample specs
-specs/runs/               Local production ChartSpecs, ignored by Git
 renderer/                 Validation, workflows, rendering, review, capture
 lib/                      Shared runtime, visual plan, maps, styles, diagnostics
 tools/                    Internal scripts and compatibility CLI implementation
 tests/                    Unit, workflow, browser, and performance tests
 docs/                     Architecture, author, maintainer, routing, and testing guidance
-charts/                   Local run delivery: HTML, final PNG, QA artifacts, and optional presentation by run ID
-.work/                    Disposable research, scripts, logs, review, and staging by run id
+projects/                 Ignored local project folders: input, ledger, specs, output, and work
 ```
 
 ## Extending the system
@@ -453,7 +461,8 @@ Keep implementation guidance in maintainer documentation. Keep the chart-author
 skill and Tool API focused on editorial decisions, semantic ChartSpec authoring,
 structured checks, and the correct workflow route.
 
-Generated delivery output under `charts/` and transient output under `.work/`
-is intentionally ignored. Production ChartSpecs under `specs/runs/` and the
-user-supplied `input/` source set are also ignored. Curated fixtures under
+The entire local `projects/` tree is intentionally ignored. Each project keeps
+its input, ledger, ChartSpecs, delivery output, and disposable work together.
+Legacy root `input/`, `.work/`, `charts/`, and `specs/runs/` remain ignored for
+migration safety but are not used for new production. Curated fixtures under
 `specs/examples/`, `specs/samples/`, and `specs/stress/` remain tracked.

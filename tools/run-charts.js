@@ -7,11 +7,12 @@ const { buildRunCharts } = require('../renderer/run-charts');
 function usage() {
   return [
     'Usage:',
-    '  node tools/run-charts.js <run-id> [--no-diagnose]',
+    '  node tools/run-charts.js <project-id> [--no-diagnose]',
     '',
     'Verifies source/spec coverage, renders every selected ChartSpec in ledger order,',
     'runs responsive diagnostics, captures final PNGs, and writes manifest.csv plus',
-    'qa-report.json to charts/<run-id>/. Output is staged before publication. Any prior',
+    'qa-report.json to projects/<project-id>/output/. Staging stays inside that project\'s',
+    'work/ folder. Any prior',
     'presentation or chart-image archive is removed because presentation assembly remains',
     'a separate step and must use the newly captured PNGs.'
   ].join('\n');
@@ -19,12 +20,12 @@ function usage() {
 
 function main() {
   const args = process.argv.slice(2);
-  const runId = args.find((value) => !value.startsWith('--'));
+  const projectId = args.find((value) => !value.startsWith('--'));
   const unknown = args.filter((value) => value.startsWith('--') && value !== '--no-diagnose');
   if (unknown.length) throw new Error(`Unknown flag: ${unknown[0]}`);
-  if (!runId) throw new Error(usage());
+  if (!projectId) throw new Error(usage());
   const projectRoot = path.resolve(process.env.TOCHNYI_PROJECT_ROOT || path.join(__dirname, '..'));
-  const result = buildRunCharts(projectRoot, runId, {
+  const result = buildRunCharts(projectRoot, projectId, {
     diagnose: !args.includes('--no-diagnose')
   });
   console.log(JSON.stringify(result, null, 2));

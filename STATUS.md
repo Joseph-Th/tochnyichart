@@ -31,17 +31,34 @@ provider-managed remote assets. Offline or air-gapped rendering therefore
 requires a separate dependency-packaging change rather than ad hoc copies of
 third-party assets.
 
-## Supported batch input
+## Supported project boundary
 
-The exact project-root `input/` directory is the current batch source boundary.
+Every production assignment has one local folder:
 
-- A run begins by inventorying and hashing the source files under `input/`.
+```text
+projects/<project-id>/
+├── input/
+├── source-ledger.json
+├── project.json
+├── specs/
+├── output/
+└── work/
+```
+
+The exact `projects/<project-id>/input/` directory is the source boundary for
+that project. A project begins by inventorying and hashing those source files.
+
+- `input/`, `source-ledger.json`, `specs/`, and `output/` are durable project material.
+- `work/` is the only disposable subtree and is removed by finalization.
+- Optional research, download, review, render, and staging folders are created under `work/` only when a tool needs them; initialization does not pre-create empty scratch directories.
 - Prose may be anchored by exact excerpts.
 - Structured sources may use explicit selectors and documented groupings or calculations.
 - The generated source ledger records selected, merged, omitted, and conflicted story decisions.
 - External research may enrich an input-supported story under the source policy but does not silently originate unrelated stories.
 
-`input.txt` is not the current batch-input contract for this repository. Do not substitute a sibling repository, prior run, or alternate input path.
+`input.txt`, repository-root `input/`, `.work/`, `specs/runs/`, and `charts/` are
+legacy locations and are not used for new projects. Legacy durable output is
+never deleted implicitly.
 
 ## Supported chart workflows
 
@@ -56,11 +73,18 @@ Current workflow families are:
 
 The semantic contract is owned by `schemas/chart-spec.schema.json`, `recipes/catalog.json`, and Tool API validation. Unknown or forbidden fields are rejected rather than treated as hidden renderer controls.
 
+The standard recipe catalog includes one- and two-dimensional quantitative
+contracts. `matrix.heat` preserves complete categorical row×column evidence;
+`relationship.scatter` preserves two distinct measured numeric variables per
+labeled observation through `xMeasure`/`xValue` and `measure`/`value`. Scatter
+does not infer regression, causality, bubble size, or a third color variable.
+The source ledger verifies both plotted coordinates before batch publication.
+
 For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. The `auto` image profile is recipe-aware; fixed `landscape`, `square`, and `portrait` profiles express publishing shape without exposing arbitrary pixel geometry to chart authors.
 
-## Supported batch lifecycle
+## Supported project lifecycle
 
-The maintained run lifecycle is:
+The maintained lifecycle is:
 
 ```text
 run:init
@@ -72,11 +96,11 @@ run:init
   -> run:finalize
 ```
 
-The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures final PNGs using the same recipe-aware static image profile policy, and writes run-level manifest/plan/QA artifacts.
+The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures final PNGs using the same recipe-aware static image profile policy, and writes manifest/plan/QA artifacts under the same project's `output/` folder.
 
-Publication uses a staged directory. A failed rebuild must leave the previous valid delivery untouched. A successful chart rebuild invalidates downstream artifacts that would embed stale chart images.
+Publication stages inside `projects/<project-id>/work/`. A failed rebuild must leave the previous valid `output/` untouched. A successful chart rebuild invalidates downstream artifacts that would embed stale chart images.
 
-Finalization removes transient run workspace material only after source-ledger and ChartSpec consistency checks pass. It preserves the retained specification and delivery trees defined by the batch workflow.
+Finalization removes only `projects/<project-id>/work/` after source-ledger and ChartSpec consistency checks pass. It preserves the project folder, input, ledger, specs, output, and project manifest.
 
 ## Current artifact boundary
 
@@ -87,7 +111,7 @@ The following are generated delivery or evidence artifacts, not architecture aut
 - manifests and QA reports;
 - presentation plans;
 - optional requested PowerPoint files;
-- transient research notes, captures, logs, downloads, and staging data under the run workspace.
+- transient research notes, captures, logs, downloads, and staging data under the project's `work/` subtree.
 
 Production artifacts must be regenerated from current semantic inputs rather than manually repaired after rendering.
 
@@ -108,7 +132,7 @@ The current supported product does not treat these as normal authoring behavior:
 - treating browser diagnostics as proof of editorial or factual correctness;
 - treating external-search silence as proof that supplied editorial evidence is false;
 - treating an optional PowerPoint deck as mandatory when the requested deliverable does not include one;
-- treating ignored run artifacts as repository architecture or durable source-of-truth documents.
+- treating ignored project artifacts as repository architecture authorities rather than project-local data.
 - describing the current browser renderer as fully offline-reproducible while remote font and regional-geodata dependencies remain.
 
 ## Verification

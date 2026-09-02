@@ -2,15 +2,15 @@
 
 Tochnyi Charts has three deliberately separate operational layers.
 
-## 1. LLM batch orchestration
+## 1. LLM project orchestration
 
-The LLM agent receives `input/` and owns the complete batch production job.
+The LLM agent owns one complete `projects/<project-id>/` production job.
 
 ```text
-initialize .work/<run-id>/
+projects/<project-id>/input/
     |
     v
-input/
+initialize project, ledger, specs/, output/, work/
     |
     v
 story parsing, source verification, enrichment, and tool selection
@@ -22,10 +22,10 @@ individual chart production through the Tool API
 final PNG capture and optional PowerPoint assembly
     |
     v
-charts/<run-id>/
+projects/<project-id>/output/
     |
     v
-finalize and purge transient run data
+finalize and delete only work/
 ```
 
 The orchestrator decides which stories are accepted, merged, omitted, or
@@ -62,7 +62,7 @@ The Tool API exposes:
 - Rendering, diagnostics, and review commands for HTML-level inspection.
 - Structured JSON results and failure signals.
 
-The Tool API does not inventory the complete batch `input/` source set or assemble the
+The Tool API does not inventory the complete project `input/` source set or assemble the
 PowerPoint deck. It also does not expose implementation decisions. Chart authors
 do not choose chart-library configuration, HTML structure, CSS, typography,
 color policy, coordinates, responsive geometry, map projection, callout
@@ -114,23 +114,20 @@ Infrastructure work is performed only when the task explicitly concerns the engi
 The batch orchestrator may read or write:
 
 ```text
-input/
+projects/<project-id>/
 docs/batch-workflow.md
 docs/agent-workflows.md
 docs/source-enrichment.md
-specs/runs/<run-id>/
-charts/<run-id>/
-.work/<run-id>/
 ```
 
 It interprets the source set, conducts source work, invokes the Tool API for each
 accepted chart, captures final PNGs, optionally assembles
-`tochnyi-charts-<run-id>.pptx`, finalizes the run workspace, and reports
+`tochnyi-charts-<project-id>.pptx`, finalizes the project work subtree, and reports
 omissions or failures.
 
-`input/`, `.work/`, `charts/`, `previews/`, and production specifications
-outside the curated fixture directories are ignored by Git. The repository
-hygiene check rejects them if they are force-added.
+The entire `projects/` tree is ignored by Git. Legacy root `input/`, `.work/`,
+`charts/`, and `specs/runs/` remain ignored only for migration safety. The
+repository hygiene check rejects project-local data if it is force-added.
 
 ### Chart author
 
@@ -138,15 +135,13 @@ A chart author may read or write:
 
 ```text
 tool-api/
+projects/<project-id>/
 docs/batch-workflow.md
 docs/agent-workflows.md
 docs/source-enrichment.md
 schemas/chart-spec.schema.json
 recipes/catalog.json
 specs/examples/
-specs/runs/<run-id>/
-charts/<run-id>/
-.work/<run-id>/
 ```
 
 A chart author verifies and enriches source evidence, corrects semantic inputs, and reports infrastructure defects. It does not investigate implementation code during normal chart production.
@@ -176,7 +171,7 @@ Failures are classified before files are changed.
 | --- | --- | --- |
 | Duplicate, weak, or non-visual story derived from `input/` | Batch orchestrator | Merge or omit it and report the decision. Do not omit a supplied editorial claim merely because external search is silent. |
 | Reputable source directly contradicts a material input claim | Batch orchestrator | Preserve both positions in working notes and escalate for editorial resolution. Do not silently rewrite the supplied evidence. |
-| A requested deck is missing after accepted charts are complete | Batch orchestrator | Assemble the PowerPoint from the final PNGs and save it in the run delivery folder. |
+| A requested deck is missing after accepted charts are complete | Batch orchestrator | Assemble the PowerPoint from the final PNGs and save it in `projects/<project-id>/output/`. |
 | Supplied URL does not match the input note | Chart author | Resolve or report the mismatch. Do not silently combine the sources. |
 | Primary source lacks a material comparator, denominator, scale, or explanation | Chart author | Research only the named evidence gap using the documented source order. |
 | Additional context is adjacent but does not strengthen the central claim | Chart author | Exclude it. Do not add noise for visual complexity. |

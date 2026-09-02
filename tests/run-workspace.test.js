@@ -12,6 +12,8 @@ const {
   initializeRunWorkspace,
   flushRunWorkspace,
   resetTransientWorkspace,
+  runProjectPath,
+  workspaceRoot,
   runSpecPath,
   deliveryPath
 } = require('../renderer/run-workspace');
@@ -27,9 +29,14 @@ function temporaryProject() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-run-workspace-'));
   fs.mkdirSync(path.join(root, 'specs', 'examples'), { recursive: true });
   fs.writeFileSync(path.join(root, 'specs', 'examples', 'fixture.json'), '{}\n');
-  fs.mkdirSync(path.join(root, 'input'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'input', 'brief.txt'), 'temporary batch source\n');
   return root;
+}
+
+function writeProjectInput(root, projectId, content = 'temporary batch source\n') {
+  const inputRoot = runProjectPath(root, projectId, 'input');
+  fs.mkdirSync(inputRoot, { recursive: true });
+  fs.writeFileSync(path.join(inputRoot, 'brief.txt'), content);
+  return inputRoot;
 }
 
 function fakePowerPointArchive(entryNames) {
@@ -49,19 +56,26 @@ function fakePowerPointArchive(entryNames) {
   return Buffer.concat([centralDirectory, end]);
 }
 
-test('run workspace initialization centralizes transient data and creates ignored local outputs', () => {
+test('project initialization keeps durable and transient artifacts under one project folder', () => {
   const root = temporaryProject();
   try {
+    writeProjectInput(root, RUN_ID);
     const result = initializeRunWorkspace(root, RUN_ID);
-    assert.equal(path.basename(result.root), RUN_ID);
+    assert.equal(result.root, path.join(root, 'projects', RUN_ID));
+    assert.equal(result.workRoot, path.join(result.root, 'work'));
+    assert.equal(fs.existsSync(result.workRoot), true);
     for (const directory of ['research', 'downloads', 'scripts', 'logs', 'review', 'package', 'rendered']) {
-      assert.equal(fs.existsSync(path.join(result.root, directory)), true);
+      assert.equal(fs.existsSync(path.join(result.workRoot, directory)), false, `${directory} should be created only on demand`);
     }
-    assert.equal(result.specificationRoot, path.join(root, 'specs', 'runs', RUN_ID));
-    assert.equal(result.deliveryRoot, path.join(root, 'charts', RUN_ID));
-    assert.equal(result.ledgerPath, path.join(root, '.work', RUN_ID, 'source-ledger.json'));
+    assert.equal(result.specificationRoot, path.join(result.root, 'specs'));
+    assert.equal(result.deliveryRoot, path.join(result.root, 'output'));
+    assert.equal(result.ledgerPath, path.join(result.root, 'source-ledger.json'));
+    assert.equal(result.manifestPath, path.join(result.root, 'project.json'));
     assert.equal(fs.existsSync(result.specificationRoot), true);
     assert.equal(fs.existsSync(result.deliveryRoot), true);
+    assert.equal(fs.existsSync(path.join(root, '.work')), false);
+    assert.equal(fs.existsSync(path.join(root, 'charts')), false);
+    assert.equal(fs.existsSync(path.join(root, 'specs', 'runs')), false);
     const ledger = JSON.parse(fs.readFileSync(result.ledgerPath, 'utf8'));
     assert.equal(ledger.input.path, 'input/');
     assert.equal(ledger.input.kind, 'directory');
@@ -71,10 +85,21 @@ test('run workspace initialization centralizes transient data and creates ignore
     assert.equal(ledger.inventoryComplete, false);
 
     const manifest = JSON.parse(fs.readFileSync(result.manifestPath, 'utf8'));
+    assert.equal(manifest.projectId, RUN_ID);
+    assert.deepEqual(manifest.paths, {
+      input: 'input/',
+      sourceLedger: 'source-ledger.json',
+      specifications: 'specs/',
+      output: 'output/',
+      work: 'work/'
+    });
     assert.deepEqual(manifest.retention.keepLocal, [
-      `specs/runs/${RUN_ID}/`,
-      `charts/${RUN_ID}/`
+      'input/',
+      'source-ledger.json',
+      'specs/',
+      'output/'
     ]);
+    assert.deepEqual(manifest.retention.purge, ['work/']);
     assert.equal(manifest.retention.repository, 'ignored');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -84,11 +109,9 @@ test('run workspace initialization centralizes transient data and creates ignore
 test('production initialization rejects missing or empty input without searching elsewhere', () => {
   const root = temporaryProject();
   try {
-    fs.rmSync(path.join(root, 'input'), { recursive: true, force: true });
     assert.throws(() => initializeRunWorkspace(root, 'missing-input'), /input\/ is missing|input\/ is empty/i);
 
-    fs.mkdirSync(path.join(root, 'input'), { recursive: true });
-    fs.writeFileSync(path.join(root, 'input', 'brief.txt'), '   \n');
+    writeProjectInput(root, 'empty-input', '   \n');
     assert.throws(() => initializeRunWorkspace(root, 'empty-input'), /input\/ contains no non-empty source files/i);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -98,16 +121,16 @@ test('production initialization rejects missing or empty input without searching
 test('directory input snapshots inventory and hash every supplied source file', () => {
   const root = temporaryProject();
   try {
-    fs.rmSync(path.join(root, 'input'), { recursive: true, force: true });
-    fs.mkdirSync(path.join(root, 'input'), { recursive: true });
-    fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Category,Value\nA,10\nB,8\n');
-    fs.writeFileSync(path.join(root, 'input', 'context.ipynb'), JSON.stringify({
+    const inputRoot = runProjectPath(root, 'directory-input', 'input');
+    fs.mkdirSync(inputRoot, { recursive: true });
+    fs.writeFileSync(path.join(inputRoot, 'data.csv'), 'Category,Value\nA,10\nB,8\n');
+    fs.writeFileSync(path.join(inputRoot, 'context.ipynb'), JSON.stringify({
       cells: [
         { cell_type: 'markdown', source: ['# Context\n', 'Category analysis'] }
       ]
     }));
 
-    const snapshot = readInputSnapshot(root);
+    const snapshot = readInputSnapshot(root, 'directory-input');
     assert.equal(snapshot.kind, 'directory');
     assert.equal(snapshot.relativePath, 'input/');
     assert.deepEqual(snapshot.files.map((file) => file.path), [
@@ -130,27 +153,55 @@ test('directory input snapshots inventory and hash every supplied source file', 
   }
 });
 
+test('project folders isolate source snapshots and durable outputs from sibling projects', () => {
+  const root = temporaryProject();
+  try {
+    writeProjectInput(root, 'project-a', 'alpha source\n');
+    writeProjectInput(root, 'project-b', 'beta source\n');
+    const first = initializeRunWorkspace(root, 'project-a');
+    const second = initializeRunWorkspace(root, 'project-b');
+
+    const firstSnapshot = readInputSnapshot(root, 'project-a');
+    const secondSnapshot = readInputSnapshot(root, 'project-b');
+    assert.notEqual(firstSnapshot.sha256, secondSnapshot.sha256);
+    assert.match(firstSnapshot.content, /alpha source/);
+    assert.doesNotMatch(firstSnapshot.content, /beta source/);
+    assert.match(secondSnapshot.content, /beta source/);
+    assert.doesNotMatch(secondSnapshot.content, /alpha source/);
+
+    fs.writeFileSync(path.join(first.specificationRoot, 'alpha.json'), '{}\n');
+    fs.writeFileSync(path.join(second.deliveryRoot, 'beta.png'), 'png');
+    assert.equal(fs.existsSync(path.join(second.specificationRoot, 'alpha.json')), false);
+    assert.equal(fs.existsSync(path.join(first.deliveryRoot, 'beta.png')), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('internal tools can request a transient-only workspace', () => {
   const root = temporaryProject();
   try {
     const result = initializeRunWorkspace(root, 'routing-stress', { createOutputs: false });
     assert.equal(result.specificationRoot, null);
     assert.equal(result.deliveryRoot, null);
-    assert.equal(fs.existsSync(path.join(root, 'specs', 'runs', 'routing-stress')), false);
-    assert.equal(fs.existsSync(path.join(root, 'charts', 'routing-stress')), false);
+    assert.equal(fs.existsSync(runProjectPath(root, 'routing-stress', 'specs')), false);
+    assert.equal(fs.existsSync(runProjectPath(root, 'routing-stress', 'output')), false);
+    assert.equal(fs.existsSync(workspaceRoot(root, 'routing-stress')), true);
     const manifest = JSON.parse(fs.readFileSync(result.manifestPath, 'utf8'));
-    assert.equal(manifest.outputs, null);
+    assert.equal(manifest.paths, null);
     assert.deepEqual(manifest.retention.keepLocal, []);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('finalization removes run data while preserving input, local specs, and charts', () => {
+test('finalization removes only project work while preserving the complete durable project', () => {
   const root = temporaryProject();
   try {
+    writeProjectInput(root, RUN_ID);
     const workspace = initializeRunWorkspace(root, RUN_ID);
-    fs.writeFileSync(path.join(workspace.root, 'research', 'notes.txt'), 'private notes\n');
+    fs.mkdirSync(path.join(workspace.workRoot, 'research'), { recursive: true });
+    fs.writeFileSync(path.join(workspace.workRoot, 'research', 'notes.txt'), 'private notes\n');
     fs.writeFileSync(path.join(workspace.specificationRoot, 'story.json'), '{}\n');
     fs.writeFileSync(path.join(workspace.deliveryRoot, 'story.html'), '<html></html>\n');
     fs.mkdirSync(path.join(root, 'previews', 'legacy-production'), { recursive: true });
@@ -160,93 +211,104 @@ test('finalization removes run data while preserving input, local specs, and cha
       removeLegacy: true
     });
 
-    assert.equal(fs.existsSync(workspace.root), false);
+    assert.equal(fs.existsSync(workspace.root), true);
+    assert.equal(fs.existsSync(workspace.workRoot), false);
     assert.equal(fs.existsSync(path.join(root, 'previews')), false);
-    assert.equal(fs.readFileSync(path.join(root, 'input', 'brief.txt'), 'utf8'), 'temporary batch source\n');
+    assert.equal(fs.readFileSync(path.join(workspace.root, 'input', 'brief.txt'), 'utf8'), 'temporary batch source\n');
+    assert.equal(fs.existsSync(workspace.ledgerPath), true);
+    assert.equal(fs.existsSync(workspace.manifestPath), true);
     assert.equal(fs.existsSync(path.join(workspace.specificationRoot, 'story.json')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'story.html')), true);
     assert.equal(result.input.preserved, true);
-    assert.equal(result.preserved.length, 3);
+    assert.ok(result.preserved.includes(workspace.root));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('cold reset removes all transient work but never curated fixtures, local outputs, or input', () => {
+test('cold reset removes work from every project but preserves each project boundary', () => {
   const root = temporaryProject();
   try {
+    writeProjectInput(root, 'internal-review', 'first project source\n');
+    writeProjectInput(root, RUN_ID, 'second project source\n');
     const first = initializeRunWorkspace(root, 'internal-review');
     const second = initializeRunWorkspace(root, RUN_ID);
     fs.writeFileSync(path.join(first.specificationRoot, 'story.json'), '{}\n');
     fs.writeFileSync(path.join(second.deliveryRoot, 'story.html'), '<html></html>\n');
+    fs.writeFileSync(path.join(first.workRoot, 'temporary.txt'), 'temporary\n');
+    fs.writeFileSync(path.join(second.workRoot, 'temporary.txt'), 'temporary\n');
     fs.mkdirSync(path.join(root, 'previews'), { recursive: true });
     fs.writeFileSync(path.join(root, 'previews', 'temporary.html'), 'temporary\n');
 
     const result = resetTransientWorkspace(root, { removeLegacy: true });
 
-    assert.equal(fs.existsSync(path.join(root, '.work')), false);
+    assert.equal(fs.existsSync(first.workRoot), false);
+    assert.equal(fs.existsSync(second.workRoot), false);
     assert.equal(fs.existsSync(path.join(root, 'previews')), false);
-    assert.equal(fs.readFileSync(path.join(root, 'input', 'brief.txt'), 'utf8'), 'temporary batch source\n');
-    assert.equal(result.input.preserved, true);
+    assert.equal(fs.readFileSync(path.join(first.root, 'input', 'brief.txt'), 'utf8'), 'first project source\n');
+    assert.equal(fs.readFileSync(path.join(second.root, 'input', 'brief.txt'), 'utf8'), 'second project source\n');
     assert.equal(fs.existsSync(path.join(root, 'specs', 'examples', 'fixture.json')), true);
     assert.equal(fs.existsSync(path.join(first.specificationRoot, 'story.json')), true);
     assert.equal(fs.existsSync(path.join(second.deliveryRoot, 'story.html')), true);
+    assert.deepEqual(result.preserved, [path.join(root, 'projects')]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('run ids are opaque labels and cannot escape the workspace root', () => {
-  assert.throws(() => normalizeRunId('../client-alpha'), /Run id/);
-  assert.throws(() => normalizeRunId('client/alpha'), /Run id/);
+test('project ids are opaque labels and cannot escape the project root', () => {
+  assert.throws(() => normalizeRunId('../client-alpha'), /Project id/);
+  assert.throws(() => normalizeRunId('client/alpha'), /Project id/);
   assert.equal(normalizeRunId(RUN_ID), RUN_ID);
   assert.equal(normalizeRunId('2026-08-05'), '2026-08-05');
 });
 
-test('artifact slugs and run-specific paths reject traversal', () => {
+test('artifact slugs and project-specific paths reject traversal', () => {
   const root = temporaryProject();
   try {
     assert.equal(normalizeArtifactSlug('first-story-2026'), 'first-story-2026');
     assert.throws(() => normalizeArtifactSlug('../escape'), /Artifact slug/);
     assert.throws(() => normalizeArtifactSlug('Story One'), /Artifact slug/);
     assert.throws(() => normalizeArtifactSlug('a'.repeat(129)), /Artifact slug/);
-    assert.throws(() => runSpecPath(root, RUN_ID, '..', 'escape.json'), /outside run specification root/);
-    assert.throws(() => deliveryPath(root, RUN_ID, '..', 'escape.html'), /outside run delivery root/);
+    assert.throws(() => runSpecPath(root, RUN_ID, '..', 'escape.json'), /outside project specification root/);
+    assert.throws(() => deliveryPath(root, RUN_ID, '..', 'escape.html'), /outside project output root/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('run chart builder rejects an unsafe ledger slug before staging artifacts', () => {
+test('project chart builder rejects an unsafe ledger slug before staging artifacts', () => {
   const root = temporaryProject();
-  const runId = 'unsafe-slug';
+  const projectId = 'unsafe-slug';
   try {
-    const workspace = initializeRunWorkspace(root, runId);
+    writeProjectInput(root, projectId);
+    const workspace = initializeRunWorkspace(root, projectId);
     fs.writeFileSync(workspace.ledgerPath, JSON.stringify({
       candidates: [{ id: 'escape', decision: 'selected', outputSlug: '../escape', title: 'Escape' }]
     }));
 
     assert.throws(
-      () => buildRunCharts(root, runId, {
+      () => buildRunCharts(root, projectId, {
         dependencies: { verify: () => ({ valid: true, selected: 1, specificationsChecked: 1 }) }
       }),
       /invalid outputSlug.*Artifact slug/
     );
-    assert.equal(fs.existsSync(path.join(root, 'charts', 'escape.html')), false);
-    assert.equal(fs.readdirSync(path.join(root, 'charts')).some((name) => name.includes('.building-')), false);
+    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'escape.html')), false);
+    assert.equal(fs.readdirSync(workspace.workRoot).some((name) => name.startsWith('output-building-')), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('run chart builder renders selected stories in ledger order and writes QA artifacts', () => {
+test('project chart builder renders selected stories in ledger order and writes QA artifacts', () => {
   const root = temporaryProject();
-  const runId = 'batch-render';
+  const projectId = 'batch-render';
   try {
-    const workspace = initializeRunWorkspace(root, runId);
+    writeProjectInput(root, projectId);
+    const workspace = initializeRunWorkspace(root, projectId);
     const ledger = {
       version: '2.0',
-      runId,
+      projectId,
       input: {
         path: 'input/',
         kind: 'directory',
@@ -269,7 +331,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     fs.writeFileSync(path.join(workspace.specificationRoot, 'regional-story.json'), JSON.stringify({
       recipe: 'map.regional', title: 'Regional story'
     }));
-    fs.writeFileSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${runId}.pptx`), 'stale deck');
+    fs.writeFileSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${projectId}.pptx`), 'stale deck');
     fs.writeFileSync(path.join(workspace.deliveryRoot, 'editorial-notes.txt'), 'preserve me');
 
     const calls = [];
@@ -287,7 +349,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
       };
     }
 
-    const result = buildRunCharts(root, runId, {
+    const result = buildRunCharts(root, projectId, {
       dependencies: {
         verify: () => ({ valid: true, selected: 2, merged: 1, omitted: 0, specificationsChecked: 2 }),
         renderStandard: (specPath, htmlPath) => render('standard', specPath, htmlPath),
@@ -329,6 +391,8 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.match(manifest, /comparison\.change/);
     assert.match(manifest, /map\.regional/);
     const qa = JSON.parse(fs.readFileSync(result.qaPath, 'utf8'));
+    assert.equal(result.projectId, projectId);
+    assert.equal(qa.projectId, projectId);
     assert.equal(qa.artifacts.htmlCharts, 2);
     assert.equal(qa.artifacts.pngCharts, 2);
     assert.equal(qa.visualQa.diagnosticErrors, 0);
@@ -337,6 +401,7 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.equal(qa.presentation.titleSlidesAllowed, false);
     assert.equal(qa.presentation.expectedSlideCount, 2);
     const presentationPlan = JSON.parse(fs.readFileSync(result.presentationPlanPath, 'utf8'));
+    assert.equal(presentationPlan.projectId, projectId);
     assert.equal(presentationPlan.titleSlidesAllowed, false);
     assert.equal(presentationPlan.expectedSlideCount, 2);
     assert.deepEqual(presentationPlan.slides.map((slide) => slide.kind), ['chart', 'chart']);
@@ -353,18 +418,19 @@ test('run chart builder renders selected stories in ledger order and writes QA a
     assert.equal(qa.charts[1].image.regionalDiagnostics.renderedCrossings, 0);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'first-story.png')), true);
     assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, 'regional-story.png')), true);
-    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${runId}.pptx`)), false);
+    assert.equal(fs.existsSync(path.join(workspace.deliveryRoot, `tochnyi-charts-${projectId}.pptx`)), false);
     assert.equal(fs.readFileSync(path.join(workspace.deliveryRoot, 'editorial-notes.txt'), 'utf8'), 'preserve me');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('run chart builder preserves the previous delivery when staged capture fails', () => {
+test('project chart builder preserves the previous delivery when staged capture fails', () => {
   const root = temporaryProject();
-  const runId = 'atomic-render';
+  const projectId = 'atomic-render';
   try {
-    const workspace = initializeRunWorkspace(root, runId);
+    writeProjectInput(root, projectId);
+    const workspace = initializeRunWorkspace(root, projectId);
     fs.writeFileSync(workspace.ledgerPath, JSON.stringify({
       candidates: [{ id: 'story', decision: 'selected', outputSlug: 'story', title: 'Story' }]
     }));
@@ -373,7 +439,7 @@ test('run chart builder preserves the previous delivery when staged capture fail
     }));
     fs.writeFileSync(path.join(workspace.deliveryRoot, 'story.html'), 'previous delivery\n');
 
-    assert.throws(() => buildRunCharts(root, runId, {
+    assert.throws(() => buildRunCharts(root, projectId, {
       dependencies: {
         verify: () => ({ valid: true, selected: 1, specificationsChecked: 1 }),
         renderStandard: (specPath, htmlPath) => {
@@ -387,7 +453,7 @@ test('run chart builder preserves the previous delivery when staged capture fail
 
     assert.equal(fs.readFileSync(path.join(workspace.deliveryRoot, 'story.html'), 'utf8'), 'previous delivery\n');
     assert.equal(
-      fs.readdirSync(path.join(root, 'charts')).some((name) => name.startsWith(`${runId}.building-`)),
+      fs.readdirSync(workspace.workRoot).some((name) => name.startsWith('output-building-') || name.startsWith('output-previous-')),
       false
     );
   } finally {

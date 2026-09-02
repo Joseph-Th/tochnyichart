@@ -4,13 +4,11 @@
 const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { diagnoseHtmlResponsive } = require('../renderer/capture');
-const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { freshToolWorkspace } = require('./tool-workspace');
 
 const root = path.join(__dirname, '..');
 const specPath = path.join(root, 'specs', 'stress', 'range-label-collision.json');
-const runId = 'layout-stress';
-initializeRunWorkspace(root, runId, { createOutputs: false });
-const htmlPath = workspacePath(root, runId, 'rendered', 'range-label-collision.html');
+const htmlPath = path.join(freshToolWorkspace(root, 'layout-stress'), 'range-label-collision.html');
 
 const rendered = renderSpecFile(specPath, htmlPath, { projectRoot: root });
 const result = diagnoseHtmlResponsive(htmlPath, {

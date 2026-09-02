@@ -148,6 +148,22 @@
       }
     },
     {
+      "id": "relationship.scatter",
+      "purpose": "Show the relationship between two distinct quantitative variables across the same observations.",
+      "data": "4 to 12 labeled observations. data[].xValue is measured by xMeasure and data[].value is measured by measure. Both axes are linear and independently scaled; point position encodes the two quantities and direct labels preserve observation identity. No regression line, bubble size, or third color variable is inferred by the renderer.",
+      "bestFor": [
+        "price versus demand across comparable entities",
+        "traffic versus sales across locations",
+        "capacity versus output across facilities",
+        "other paired numeric relationships where both variables are observed for every labeled item"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "full",
+        "supportingFacts": 2
+      }
+    },
+    {
       "id": "trend.line",
       "purpose": "Show a sequence over time.",
       "data": "3 to 366 ordered labeled numeric values; 5 or more preferred. Dense daily series are supported when the date sequence itself is analytically useful. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",

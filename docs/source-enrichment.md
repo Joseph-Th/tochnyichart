@@ -6,7 +6,7 @@ The objective is not to maximize the number of data points or make every chart v
 
 ## Core rule
 
-Treat the initialized project-root `input/` folder as the authoritative source
+Treat the initialized `projects/<project-id>/input/` folder as the authoritative source
 set for the assignment. Preserve supplied claims, values, comparisons, and
 editorial interpretation unless a reputable source directly contradicts a
 material point.
@@ -57,7 +57,7 @@ diverging comparison, or calendar duration. Otherwise enrich, merge, or omit.
 Use this order before recipe selection:
 
 ```text
-exact project-root input/
+projects/<project-id>/input/
     |
     v
 inventory source files and supported quantitative stories
@@ -93,8 +93,8 @@ select the evidence spine and recipe
 ## 1. Confirm and attribute sources
 
 Do not search for or use a sibling project, previous batch, or alternate source
-collection. If the project-root `input/` source set is missing, empty, or changed
-after initialization, stop the run.
+collection. If `projects/<project-id>/input/` is missing, empty, or changed
+after initialization, stop the project.
 
 When a URL is provided, confirm that the page matches the input note before
 extracting supplemental data.

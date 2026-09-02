@@ -131,7 +131,6 @@ function diagnoseHtml(htmlPath, options = {}) {
   if (options.requireViewportFit) {
     query.set('checkFit', '1');
     if (options.autoFit === true) query.set('fit', '1');
-    if (options.fillViewport === true) query.set('fill', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -164,9 +163,8 @@ function diagnoseHtml(htmlPath, options = {}) {
   const columnAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-column-');
   const rankingAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-ranking-');
   const relationshipAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-relationship-');
-  const scenarioAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-scenario-');
-  const waterfallAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-waterfall-');
   const heatAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-heat-');
+  const scatterAttributes = extractDataAttributes(result.stdout, 'chartdiv', 'data-scatter-');
   const canvasAttributes = extractDataAttributes(result.stdout, null, 'data-canvas-');
   if (expectsDiagnostics && !diagnostics) {
     const state = result.stdout.match(/data-layout-diagnostics="([^"]+)"/)?.[1] || 'missing';
@@ -184,9 +182,8 @@ function diagnoseHtml(htmlPath, options = {}) {
     columnAttributes,
     rankingAttributes,
     relationshipAttributes,
-    scenarioAttributes,
-    waterfallAttributes,
     heatAttributes,
+    scatterAttributes,
     canvasAttributes,
     rendered: true
   };
@@ -229,9 +226,8 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
       columnAttributes: run.columnAttributes,
       rankingAttributes: run.rankingAttributes,
       relationshipAttributes: run.relationshipAttributes,
-      scenarioAttributes: run.scenarioAttributes,
-      waterfallAttributes: run.waterfallAttributes,
       heatAttributes: run.heatAttributes,
+      scatterAttributes: run.scatterAttributes,
       canvasAttributes: run.canvasAttributes,
       recoveredFromTransientFailure: run.recoveredFromTransientFailure === true
     }))
@@ -245,8 +241,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     ...options,
     viewport,
     requireViewportFit,
-    autoFit: options.autoFit === true,
-    fillViewport: options.fillViewport === true
+    autoFit: options.autoFit === true
   });
   let overflowIssue = inspection.diagnostics?.issues?.find((issue) => issue.code === 'canvas-overflow');
   if (inspection.diagnostics?.status === 'fail' && !overflowIssue && options.retryFailedDiagnostics !== false) {
@@ -256,7 +251,6 @@ function captureHtml(htmlPath, outputPath, options = {}) {
         viewport,
         requireViewportFit,
         autoFit: options.autoFit === true,
-        fillViewport: options.fillViewport === true,
         timeout: Math.max(options.timeout || 30000, 60000),
         _diagnosticRetried: true
       });
@@ -316,7 +310,6 @@ function captureHtml(htmlPath, outputPath, options = {}) {
   if (requireViewportFit) {
     query.set('checkFit', '1');
     if (options.autoFit === true) query.set('fit', '1');
-    if (options.fillViewport === true) query.set('fill', '1');
   }
   const url = `${pathToFileURL(absoluteHtml).href}?${query.toString()}`;
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-'));
@@ -362,9 +355,8 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     columnAttributes: inspection.columnAttributes,
     rankingAttributes: inspection.rankingAttributes,
     relationshipAttributes: inspection.relationshipAttributes,
-    scenarioAttributes: inspection.scenarioAttributes,
-    waterfallAttributes: inspection.waterfallAttributes,
     heatAttributes: inspection.heatAttributes,
+    scatterAttributes: inspection.scatterAttributes,
     canvasAttributes: inspection.canvasAttributes
   };
 }

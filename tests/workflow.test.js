@@ -61,9 +61,9 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.sharedContract.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(orientation.sharedContract.resources.storySelection, 'docs/story-selection.md');
   assert.equal(orientation.sharedContract.stages[0].id, 'preserve-input');
-  assert.match(orientation.sharedContract.sourceEnrichment.coreRule, /project-root input\/ folder.*authoritative source set/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.coreRule, /projects\/<project-id>\/input\/.*authoritative source set/i);
   assert.match(orientation.sharedContract.sourceEnrichment.inputRule, /structured datasets.*documented filters/i);
-  assert.match(orientation.sharedContract.sourceEnrichment.inputIdentityRule, /exact non-empty project-root input\/ source set/i);
+  assert.match(orientation.sharedContract.sourceEnrichment.inputIdentityRule, /exact non-empty projects\/<project-id>\/input\/ source set/i);
   assert.match(orientation.sharedContract.sourceEnrichment.inventoryRule, /inventory the source files/i);
   assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /Do not replace, downgrade, or relabel/i);
   assert.match(orientation.sharedContract.sourceEnrichment.supplementationRule, /actual levels that directly express the same input-anchored change/i);
@@ -86,31 +86,32 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.sharedContract.visualEvidenceContract.normalizedOrientationRule, /derived complement.*not independent/i);
   assert.match(orientation.sharedContract.staticImageContract.primaryArtifactRule, /final PNG.*primary chart artifact/i);
   assert.match(orientation.sharedContract.staticImageContract.visibleEvidenceRule, /Never rely on hover, tooltip, click, animation/i);
-  assert.match(orientation.sharedContract.staticImageContract.treatmentRule, /renderer may add deterministic ruler guides, period ticks/i);
+  assert.match(orientation.sharedContract.staticImageContract.treatmentRule, /mark families stay stable/i);
   assert.equal(orientation.sharedContract.runtimeDependencies.offlineReady, false);
   assert.equal(
     orientation.sharedContract.runtimeDependencies.dependencies.find((entry) => entry.id === 'amcharts5-core').version,
     '5.20.3'
   );
-  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'quick-scan').density, 'minimal');
-  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'standard-read').density, 'editorial');
-  assert.equal(orientation.sharedContract.readingIntent.modes.find((entry) => entry.intent === 'close-read').density, 'detailed');
-  assert.match(orientation.sharedContract.readingIntent.guard, /Never choose minimal.*fit/i);
   assert.ok(orientation.sharedContract.recipeAmbiguityRules.some((entry) =>
     entry.candidates.includes('matrix.heat') && entry.candidates.includes('ranking.horizontal')
   ));
+  assert.ok(orientation.sharedContract.recipeAmbiguityRules.some((entry) =>
+    entry.candidates.includes('relationship.scatter') && entry.candidates.includes('trend.line')
+  ));
   assert.match(orientation.sharedContract.sourceEnrichment.exactCountRule, /dot-counting|third comparable count/i);
   assert.match(orientation.sharedContract.sourceEnrichment.componentRule, /composition\.components|begins at zero/i);
-  assert.equal(orientation.batchWorkflow.input, 'input/');
+  assert.equal(orientation.batchWorkflow.projectFolder, 'projects/<project-id>/');
+  assert.equal(orientation.batchWorkflow.input, 'projects/<project-id>/input/');
   assert.match(orientation.batchWorkflow.inputAuthority, /user-supplied source materials/i);
   assert.match(orientation.batchWorkflow.inputAuthority, /authoritative for the assignment/i);
-  assert.equal(orientation.batchWorkflow.deliveryFolder, 'charts/<run-id>/');
-  assert.equal(orientation.batchWorkflow.specificationFolder, 'specs/runs/<run-id>/');
-  assert.equal(orientation.batchWorkflow.presentation, 'charts/<run-id>/tochnyi-charts-<run-id>.pptx');
-  assert.equal(orientation.batchWorkflow.sourceLedger, '.work/<run-id>/source-ledger.json');
-  assert.equal(orientation.batchWorkflow.sourceVerificationCommand, 'npm run run:verify-source -- <run-id>');
-  assert.equal(orientation.batchWorkflow.sourceAndSpecVerificationCommand, 'npm run run:verify-source -- <run-id> --specs');
-  assert.equal(orientation.batchWorkflow.chartBuildCommand, 'npm run run:charts -- <run-id>');
+  assert.equal(orientation.batchWorkflow.deliveryFolder, 'projects/<project-id>/output/');
+  assert.equal(orientation.batchWorkflow.specificationFolder, 'projects/<project-id>/specs/');
+  assert.equal(orientation.batchWorkflow.presentation, 'projects/<project-id>/output/tochnyi-charts-<project-id>.pptx');
+  assert.equal(orientation.batchWorkflow.sourceLedger, 'projects/<project-id>/source-ledger.json');
+  assert.equal(orientation.batchWorkflow.temporaryWorkspace, 'projects/<project-id>/work/');
+  assert.equal(orientation.batchWorkflow.sourceVerificationCommand, 'npm run run:verify-source -- <project-id>');
+  assert.equal(orientation.batchWorkflow.sourceAndSpecVerificationCommand, 'npm run run:verify-source -- <project-id> --specs');
+  assert.equal(orientation.batchWorkflow.chartBuildCommand, 'npm run run:charts -- <project-id>');
   assert.match(orientation.batchWorkflow.boundary, /orchestration layer still owns source interpretation/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
@@ -132,11 +133,11 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'headline.metric'), false);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.dumbbell'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'comparison.area-squares'), true);
+  assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.scatter'), true);
   assert.equal(standard.selectionRules.some((entry) => entry.use === 'relationship.converging-signals'), true);
   assert.ok(standard.ambiguityRules.some((entry) =>
     entry.candidates.includes('composition.components') && entry.candidates.includes('flow.waterfall')
   ));
-  assert.match(standard.readingIntent.rule, /after the evidence and recipe are settled/i);
   assert.match(standard.visualEvidenceContract.minimumMarks, /at least three independent quantitative observations/i);
   assert.match(standard.visualEvidenceContract.standalonePairRule, /requires at least three independent values/i);
   assert.match(standard.visualEvidenceContract.redundancyRule, /complement|remainder|zero-gap/i);
@@ -201,11 +202,19 @@ test('fixed image profile failure preserves the prior PNG and gives model-safe g
   }
 });
 
-test('default image output path rejects an unsafe metadata slug before writing', () => {
+test('default image output stays in project output and rejects unsafe or unscoped paths', () => {
+  assert.equal(defaultImageOutputPath(root, {
+    title: 'Safe title',
+    metadata: { slug: 'safe-title' }
+  }, { projectId: 'image-path-safety' }), path.join(root, 'projects', 'image-path-safety', 'output', 'safe-title.png'));
   assert.throws(() => defaultImageOutputPath(root, {
     title: 'Safe title',
     metadata: { slug: '../escape' }
-  }, { runId: 'image-path-safety' }), /Artifact slug/);
+  }, { projectId: 'image-path-safety' }), /Artifact slug/);
+  assert.throws(() => defaultImageOutputPath(root, {
+    title: 'Safe title',
+    metadata: { slug: 'safe-title' }
+  }), /explicit output path or --project-id/i);
 });
 
 test('tool API manifest exposes a narrow chart-author surface', () => {
@@ -222,17 +231,18 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.equal(fs.existsSync(path.join(root, manifest.resources.batchPolicy)), true);
   assert.equal(fs.existsSync(path.join(root, manifest.resources.storySelection)), true);
   assert.equal(manifest.batchWorkflow.owner, 'llm-agent');
-  assert.equal(manifest.batchWorkflow.input, 'input/');
+  assert.equal(manifest.batchWorkflow.projectFolder, 'projects/<project-id>/');
+  assert.equal(manifest.batchWorkflow.input, 'projects/<project-id>/input/');
   assert.match(manifest.batchWorkflow.inputAuthority, /user-supplied source materials/i);
-  assert.equal(manifest.batchWorkflow.deliveryFolder, 'charts/<run-id>/');
-  assert.equal(manifest.batchWorkflow.specificationFolder, 'specs/runs/<run-id>/');
+  assert.equal(manifest.batchWorkflow.deliveryFolder, 'projects/<project-id>/output/');
+  assert.equal(manifest.batchWorkflow.specificationFolder, 'projects/<project-id>/specs/');
   assert.ok(manifest.batchWorkflow.steps.some((step) => step.includes('PowerPoint')));
   assert.ok(manifest.allowedWork.some((entry) => entry.includes('PowerPoint')));
   assert.deepEqual(
     manifest.sourceEnrichment.evidenceRoles,
     ['magnitude', 'comparison', 'mechanism', 'consequence']
   );
-  assert.match(manifest.sourceEnrichment.coreRule, /input\/ folder.*authoritative source set/i);
+  assert.match(manifest.sourceEnrichment.coreRule, /projects\/<project-id>\/input\/.*authoritative source set/i);
   assert.match(manifest.sourceEnrichment.complexityRule, /one-point|visual comparison/i);
   assert.match(manifest.sourceEnrichment.redundancyRule, /duplicated totals|zero-gap/i);
   assert.deepEqual(manifest.visualEvidenceContract.rejectedRecipes, ['status.grid', 'headline.metric', 'comparison.pictogram']);
@@ -262,8 +272,7 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.21');
-  assert.equal(manifest.readingIntent.modes.length, 3);
+  assert.equal(manifest.version, '1.23');
   assert.ok(manifest.recipeAmbiguityRules.length >= 6);
   assert.equal(manifest.runtimeDependencies.offlineReady, false);
   assert.equal(TochnyiMaps.getRegionSet('russia').geodataScript, RUSSIA_GEODATA_URL);
@@ -272,12 +281,13 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
   assert.equal(manifest.resources.batchPolicy, 'docs/batch-workflow.md');
   assert.equal(manifest.resources.storySelection, 'docs/story-selection.md');
-  assert.equal(manifest.batchWorkflow.input, 'input/');
-  assert.equal(manifest.batchWorkflow.presentation, 'charts/<run-id>/tochnyi-charts-<run-id>.pptx');
-  assert.equal(manifest.batchWorkflow.temporaryWorkspace, '.work/<run-id>/');
-  assert.equal(manifest.batchWorkflow.finalizeCommand, 'npm run run:finalize -- <run-id>');
-  assert.match(manifest.batchWorkflow.retentionRule, /specs\/runs\/<run-id>\/ and charts\/<run-id>\/ are retained locally/i);
-  assert.match(manifest.batchWorkflow.retentionRule, /input\/ is also retained/i);
+  assert.equal(manifest.batchWorkflow.projectFolder, 'projects/<project-id>/');
+  assert.equal(manifest.batchWorkflow.input, 'projects/<project-id>/input/');
+  assert.equal(manifest.batchWorkflow.presentation, 'projects/<project-id>/output/tochnyi-charts-<project-id>.pptx');
+  assert.equal(manifest.batchWorkflow.temporaryWorkspace, 'projects/<project-id>/work/');
+  assert.equal(manifest.batchWorkflow.finalizeCommand, 'npm run run:finalize -- <project-id>');
+  assert.match(manifest.batchWorkflow.retentionRule, /complete durable project stays in projects\/<project-id>/i);
+  assert.match(manifest.batchWorkflow.retentionRule, /Only work\/ is transient/i);
   assert.match(manifest.batchWorkflow.retentionRule, /ignored by Git/i);
   assert.match(manifest.firstCommand, /tool-api\/chart\.js orient/);
   assert.equal(manifest.imageProfiles.find((profile) => profile.id === 'square').width, 1080);
@@ -317,10 +327,7 @@ test('static image workflow routes a standard spec, captures a strict profile, a
             dimensions: { width: 1080, height: 1080 },
             diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0, labelsChecked: 8, marksChecked: 4 } },
             chartAttributes: {},
-            canvasAttributes: {
-              'data-canvas-fit-mode': 'fill',
-              'data-canvas-fit-delta': '120'
-            }
+            canvasAttributes: {}
           };
         },
         publish: publishImage
@@ -329,14 +336,14 @@ test('static image workflow routes a standard spec, captures a strict profile, a
     assert.equal(result.workflow, 'standard-chart');
     assert.equal(result.profile.id, 'square');
     assert.equal(result.profile.adaptive, false);
-    assert.equal(result.profile.fitMode, 'fill');
-    assert.equal(result.profile.stageDelta, 120);
+    assert.equal(result.profile.fitMode, 'natural');
+    assert.equal(result.profile.stageDelta, 0);
     assert.equal(result.profile.expanded, false);
     assert.equal(result.htmlRetained, false);
     assert.equal(result.diagnostics.status, 'pass');
     assert.deepEqual(capturedOptions.viewport, { width: 1080, height: 1080 });
     assert.equal(capturedOptions.autoFit, true);
-    assert.equal(capturedOptions.fillViewport, true);
+    assert.equal(capturedOptions.fillViewport, undefined);
     assert.equal(capturedOptions.adaptiveCanvas, false);
     assert.equal(fs.readFileSync(outputPath, 'utf8'), 'png-fixture');
   } finally {
@@ -418,7 +425,7 @@ test('catalog gives an LLM recipe definitions plus compact static-image decision
   assert.ok(catalog.decision.ambiguityRules.some((entry) =>
     entry.candidates.includes('trend.line') && entry.candidates.includes('timeline.duration')
   ));
-  assert.equal(catalog.decision.readingIntent.modes.find((entry) => entry.intent === 'standard-read').density, 'editorial');
+  assert.ok(catalog.decision.selectionRules.some((entry) => entry.use === 'relationship.scatter'));
   const standardRecipeIds = catalog.recipes
     .map((recipe) => recipe.id)
     .filter((id) => id !== 'map.regional')
@@ -432,7 +439,7 @@ test('catalog gives an LLM recipe definitions plus compact static-image decision
   });
   assert.match(catalog.decision.staticImagePriorities.visibleEvidence, /static image|tooltip|panning/i);
   assert.match(catalog.decision.staticImagePriorities.directLabels, /direct labels/i);
-  assert.match(catalog.decision.staticImagePriorities.density, /simplest visual treatment/i);
+  assert.match(catalog.decision.staticImagePriorities.density, /preserve the selected recipe and all primary evidence/i);
 });
 
 test('workflow validation reports the correct route for each recipe family', () => {

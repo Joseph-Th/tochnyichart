@@ -793,6 +793,18 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     if (observation.column !== undefined && !isText(observation.column)) {
       errors.push(`${observationPrefix}.column must be a non-empty string when provided.`);
     }
+    if (observation.xValue !== undefined && (typeof observation.xValue !== 'number' || !Number.isFinite(observation.xValue))) {
+      errors.push(`${observationPrefix}.xValue must be a finite number when provided.`);
+    }
+    if (observation.xQuantity !== undefined && !isText(observation.xQuantity)) {
+      errors.push(`${observationPrefix}.xQuantity must be a non-empty string when provided.`);
+    }
+    if (observation.xUnit !== undefined && !isText(observation.xUnit)) {
+      errors.push(`${observationPrefix}.xUnit must be a non-empty string when provided.`);
+    }
+    if (observation.xValue !== undefined && (!isText(observation.xQuantity) || !isText(observation.xUnit))) {
+      errors.push(`${observationPrefix} requires xQuantity and xUnit whenever xValue is inventoried.`);
+    }
     if (hasMatrixColumns && !isText(observation.column)) {
       errors.push(`${observationPrefix}.column is required because this evidence audit inventories a two-dimensional cross-tab.`);
     }
@@ -925,12 +937,33 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
       })))
     : [];
   const matrixEvidence = observations.some((observation) => isText(observation?.column));
+  const scatterEvidence = observations.some((observation) => typeof observation?.xValue === 'number' && Number.isFinite(observation.xValue));
   if (matrixEvidence && spec?.recipe !== 'matrix.heat') {
     errors.push(
       `ChartSpec ${candidate.outputSlug} flattens a two-dimensional source cross-tab into ${spec?.recipe || 'a one-dimensional recipe'}. ` +
       'When comparableObservations inventory row and column dimensions, preserve every row-column cell with matrix.heat rather than collapsing repeated row labels.'
     );
     return;
+  }
+  if (spec?.recipe === 'relationship.scatter') {
+    if (!scatterEvidence || observations.some((observation) =>
+      typeof observation?.xValue !== 'number' || !Number.isFinite(observation.xValue) ||
+      !isText(observation?.xQuantity) || !isText(observation?.xUnit)
+    )) {
+      errors.push(
+        `ChartSpec ${candidate.outputSlug} uses relationship.scatter but the source ledger does not inventory both coordinates for every observation. ` +
+        'Add comparableObservations[].xValue, xQuantity, and xUnit alongside the existing y value/quantity/unit so dual-measure coverage is machine-checkable.'
+      );
+      return;
+    }
+    const xQuantities = new Set(observations.map((observation) => normalizedSeriesLabel(observation.xQuantity)).filter(Boolean));
+    const xUnits = new Set(observations.map((observation) => normalizedSeriesLabel(observation.xUnit)).filter(Boolean));
+    if (xQuantities.size !== 1 || !xQuantities.has(normalizedSeriesLabel(spec.xMeasure?.quantity))) {
+      errors.push(`ChartSpec ${candidate.outputSlug} xMeasure.quantity must match the source-ledger xQuantity for every scatter observation.`);
+    }
+    if (xUnits.size !== 1 || !xUnits.has(normalizedSeriesLabel(spec.xMeasure?.unit))) {
+      errors.push(`ChartSpec ${candidate.outputSlug} xMeasure.unit must match the source-ledger xUnit for every scatter observation.`);
+    }
   }
   if (spec?.recipe === 'matrix.heat' && !matrixEvidence) {
     errors.push(
@@ -972,8 +1005,15 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     }
     if (!item) return false;
     if (typeof observation.value === 'number' && Number.isFinite(observation.value)) {
-      return typeof item.value !== 'number' || !Number.isFinite(item.value) ||
+      const yMismatch = typeof item.value !== 'number' || !Number.isFinite(item.value) ||
         Math.abs(item.value - observation.value) > 1e-9;
+      if (yMismatch) return true;
+      if (spec?.recipe === 'relationship.scatter') {
+        return typeof item.xValue !== 'number' || !Number.isFinite(item.xValue) ||
+          typeof observation.xValue !== 'number' || !Number.isFinite(observation.xValue) ||
+          Math.abs(item.xValue - observation.xValue) > 1e-9;
+      }
+      return false;
     }
     return typeof item.low !== 'number' || typeof item.high !== 'number' ||
       Math.abs(item.low - observation.low) > 1e-9 || Math.abs(item.high - observation.high) > 1e-9;
@@ -1122,26 +1162,30 @@ function validateForecastOrientationSpecCoverage(candidate, spec, errors) {
 
 function validateSourceLedger(projectRoot, runId, options = {}) {
   const normalized = normalizeRunId(runId);
-  const snapshot = readInputSnapshot(projectRoot);
+  const snapshot = readInputSnapshot(projectRoot, normalized);
   const ledgerPath = sourceLedgerPath(projectRoot, normalized);
   const ledger = loadJson(ledgerPath, 'Source ledger');
   const errors = [];
 
   const expectedVersion = '2.0';
   if (ledger.version !== expectedVersion) errors.push(`Source ledger version must be ${expectedVersion}.`);
-  if (ledger.runId !== normalized) errors.push(`Source ledger runId must be ${normalized}.`);
+  const ledgerProjectId = ledger.projectId || ledger.runId;
+  if (ledgerProjectId !== normalized) errors.push(`Source ledger projectId must be ${normalized}.`);
+  if (ledger.projectId && ledger.runId && ledger.projectId !== ledger.runId) {
+    errors.push('Source ledger projectId and legacy runId cannot disagree.');
+  }
   if (!ledger.input || ledger.input.path !== snapshot.relativePath) {
-    errors.push(`Source ledger must identify the project-root ${snapshot.relativePath} source set.`);
+    errors.push(`Source ledger must identify the project-local ${snapshot.relativePath} source set.`);
   }
   if (!ledger.input || ledger.input.sha256 !== snapshot.sha256 || ledger.input.bytes !== snapshot.bytes) {
-    errors.push('Input materials changed after the source ledger was initialized. Restart the run or rebuild the ledger from the current input/ source set.');
+    errors.push('Input materials changed after the source ledger was initialized. Reinitialize the project or rebuild the ledger from the current input/ source set.');
   }
   if (ledger.input?.kind !== 'directory' || !Array.isArray(ledger.input?.files)) {
     errors.push('Directory-based source ledgers must inventory every file under input/.');
   } else {
     const expectedFiles = snapshot.files.map((file) => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }));
     if (JSON.stringify(ledger.input.files) !== JSON.stringify(expectedFiles)) {
-      errors.push('The input/ file inventory changed after initialization. Restart the run or rebuild the ledger.');
+      errors.push('The input/ file inventory changed after initialization. Reinitialize the project or rebuild the ledger.');
     }
   }
   if (ledger.inventoryComplete !== true) {
@@ -1407,7 +1451,7 @@ function validateSourceLedger(projectRoot, runId, options = {}) {
 
   return {
     valid: true,
-    runId: normalized,
+    projectId: normalized,
     input: { path: snapshot.relativePath, bytes: snapshot.bytes, sha256: snapshot.sha256, files: snapshot.files.length },
     candidates: ledger.candidates.length,
     selected: selected.length,

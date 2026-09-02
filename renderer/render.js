@@ -114,7 +114,11 @@ ${mapScripts}
 }
 
 function defaultOutputPath(projectRoot, spec, options = {}) {
-  const runId = normalizeRunId(options.runId || process.env.TOCHNYI_RUN_ID || 'default');
+  const requestedProject = options.projectId || options.runId || process.env.TOCHNYI_PROJECT_ID || process.env.TOCHNYI_RUN_ID;
+  if (!requestedProject) {
+    throw new Error('HTML output requires either an explicit output path or --project-id <id>.');
+  }
+  const runId = normalizeRunId(requestedProject);
   const slug = spec.metadata?.slug || slugify(spec.title);
   return workspacePath(projectRoot, runId, 'rendered', `${slug}.html`);
 }

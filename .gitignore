@@ -14,7 +14,10 @@ node_modules/
 # Logs
 *.log
 
-# User input and generated run data
+# Project-local input and generated production data
+/projects/
+
+# Legacy production locations kept ignored during migration/cleanup
 /input/
 /input.txt
 /charts/

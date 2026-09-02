@@ -29,9 +29,9 @@ Usage:
   node tool-api/chart.js guide [region-set]
   node tool-api/chart.js regional-guide [region-set]
   node tool-api/chart.js validate <spec.json>
-  node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]
-  node tool-api/chart.js render <spec.json> [output.html] [--run-id <id>]
-  node tool-api/chart.js regional <spec.json> [output.html] [--run-id <id>] [--no-diagnose]
+  node tool-api/chart.js image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]
+  node tool-api/chart.js render <spec.json> [output.html] [--project-id <id>]
+  node tool-api/chart.js regional <spec.json> [output.html] [--project-id <id>] [--no-diagnose]
   node tool-api/chart.js diagnose <chart.html> [--single] [--fit]
   node tool-api/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
@@ -41,11 +41,21 @@ AMCharts configuration, branding, layout, and export behavior.
 The public chart-author entrypoint is node tool-api/chart.js. The tools/chart.js
 path remains available for backward compatibility and infrastructure work.
 
-This CLI produces individual chart artifacts. The orchestration layer owns the
-input batch, story selection, final PNG capture, presentation assembly, and
-delivery to charts/<run-id>/. See docs/batch-workflow.md.`;
+This CLI produces individual chart artifacts. When no explicit output path is
+given, --project-id scopes the artifact under projects/<id>/: final PNGs go to
+output/ and HTML inspection shells go to work/. --run-id remains a compatibility
+alias for --project-id. See docs/batch-workflow.md.`;
   console.log(text);
   process.exit(exitCode);
+}
+
+function projectOption(args) {
+  const projectId = optionValue(args, '--project-id');
+  const legacyRunId = optionValue(args, '--run-id');
+  if (projectId && legacyRunId && projectId !== legacyRunId) {
+    throw new Error('--project-id and legacy --run-id cannot name different projects.');
+  }
+  return projectId || legacyRunId || undefined;
 }
 
 function printResult(result) {
@@ -97,7 +107,6 @@ function main() {
         defaultRule: guide.defaultRule,
         selectionRules: guide.selectionRules,
         ambiguityRules: guide.ambiguityRules,
-        readingIntent: guide.readingIntent,
         staticImagePriorities: {
           visibleEvidence: guide.staticImageContract.visibleEvidenceRule,
           directLabels: guide.staticImageContract.directLabelRule,
@@ -145,29 +154,29 @@ function main() {
   }
 
   if (command === 'image') {
-    const positionals = commandPositionals(args, ['--run-id', '--profile']);
+    const positionals = commandPositionals(args, ['--project-id', '--run-id', '--profile']);
     if (!positionals[0]) usage(1);
     printResult(createStaticImage(positionals[0], positionals[1], {
-      runId: optionValue(args, '--run-id') || undefined,
+      projectId: projectOption(args),
       profile: optionValue(args, '--profile') || 'auto'
     }));
     return;
   }
 
   if (command === 'render') {
-    const positionals = commandPositionals(args, ['--run-id']);
+    const positionals = commandPositionals(args, ['--project-id', '--run-id']);
     if (!positionals[0]) usage(1);
     printResult(renderStandardChart(positionals[0], positionals[1], {
-      runId: optionValue(args, '--run-id') || undefined
+      projectId: projectOption(args)
     }));
     return;
   }
 
   if (command === 'regional') {
-    const positionals = commandPositionals(args, ['--run-id']);
+    const positionals = commandPositionals(args, ['--project-id', '--run-id']);
     if (!positionals[0]) usage(1);
     const result = renderRegionalBreakdown(positionals[0], positionals[1], {
-      runId: optionValue(args, '--run-id') || undefined,
+      projectId: projectOption(args),
       diagnose: !args.includes('--no-diagnose')
     });
     printResult(result);

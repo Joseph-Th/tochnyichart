@@ -7,16 +7,15 @@ const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { reviewFile } = require('../renderer/review');
 const { captureHtml, findBrowser } = require('../renderer/capture');
-const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { freshToolWorkspace } = require('./tool-workspace');
 const { resolveImageProfile } = require('../renderer/image-profiles');
 const { summarizeDiagnosticRun, assertNaturalRegionalRuns } = require('../renderer/regional-workflow');
 
 const root = path.join(__dirname, '..');
 const specsDir = path.join(root, 'specs', 'examples');
-const runId = 'example-visual-review';
-initializeRunWorkspace(root, runId, { createOutputs: false });
-const chartsDir = workspacePath(root, runId, 'rendered');
-const reviewDir = workspacePath(root, runId, 'review');
+const toolRoot = freshToolWorkspace(root, 'visual-review-examples');
+const chartsDir = path.join(toolRoot, 'rendered');
+const reviewDir = path.join(toolRoot, 'review');
 const browser = findBrowser();
 
 if (!browser) {

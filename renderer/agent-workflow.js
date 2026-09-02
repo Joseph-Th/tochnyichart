@@ -6,7 +6,7 @@ const { listImageProfiles } = require('./image-profiles');
 const { RUNTIME_DEPENDENCY_CONTRACT } = require('./runtime-dependencies');
 const DEFAULT_REGION_SET_ID = 'russia';
 const TOOL_API_ENTRYPOINT = 'node tool-api/chart.js';
-const AUTHOR_SPEC_PATH = 'specs/runs/<run-id>/[slug].json';
+const AUTHOR_SPEC_PATH = 'projects/<project-id>/specs/[slug].json';
 
 const TOOL_API_RESOURCES = Object.freeze({
   schema: 'schemas/chart-spec.schema.json',
@@ -20,11 +20,12 @@ const TOOL_API_RESOURCES = Object.freeze({
 
 const BATCH_WORKFLOW = Object.freeze({
   owner: 'llm-agent',
-  input: 'input/',
+  projectFolder: 'projects/<project-id>/',
+  input: 'projects/<project-id>/input/',
   inputAuthority: 'User-supplied source materials. Treat supplied data and editorial context as authoritative for the assignment unless a reputable source directly contradicts a material point.',
   purpose: 'Produce one or more Tochnyi chart or infographic artifacts from supplied source materials, with presentation assembly only when requested.',
   steps: Object.freeze([
-    'initialize .work/<run-id>/ from the exact non-empty project-root input/ source set and create its hashed source ledger',
+    'place the exact source set in projects/<project-id>/input/, initialize that project, and create its hashed source ledger beside the project input',
     'inventory every supplied input file and identify the quantitative stories, analyses, and structured datasets relevant to the assignment',
     'inventory every materially relevant same-scale observation in visualEvidenceAudit before choosing a recipe',
     'inventory orientation anchors and material formula inputs as well: actual/current values for forecasts and targets, plus mixed-unit factors that materially explain a derived outcome',
@@ -40,14 +41,14 @@ const BATCH_WORKFLOW = Object.freeze({
     'capture one final PNG image per accepted chart',
     'when a PowerPoint presentation is requested, assemble the final PNG images by following presentation-plan.json exactly, with one chart per slide and no unrequested title or divider slides',
     'verify that selected source-ledger slugs and titles exactly match the final ChartSpecs',
-    'save the ChartSpecs, HTML files, final PNGs, and any requested presentation in the retained local run folders',
-    'finalize the run to remove .work/<run-id>/ and legacy previews while preserving input/, specs/runs/<run-id>/, and charts/<run-id>/'
+    'save the ChartSpecs, HTML files, final PNGs, and any requested presentation under the same projects/<project-id>/ folder',
+    'finalize the project by deleting only projects/<project-id>/work/ while preserving input/, source-ledger.json, specs/, and output/'
   ]),
-  initializeCommand: 'npm run run:init -- <run-id>',
-  deliveryFolder: 'charts/<run-id>/',
-  specificationFolder: 'specs/runs/<run-id>/',
-  presentation: 'charts/<run-id>/tochnyi-charts-<run-id>.pptx',
-  presentationPlan: 'charts/<run-id>/presentation-plan.json',
+  initializeCommand: 'npm run run:init -- <project-id>',
+  deliveryFolder: 'projects/<project-id>/output/',
+  specificationFolder: 'projects/<project-id>/specs/',
+  presentation: 'projects/<project-id>/output/tochnyi-charts-<project-id>.pptx',
+  presentationPlan: 'projects/<project-id>/output/presentation-plan.json',
   presentationRule: 'The default deck contains exactly one slide per accepted chart in presentation-plan order. Do not add a cover, title, agenda, divider, closing, or other non-chart slide unless the user explicitly requested it.',
   finalArtifacts: Object.freeze([
     'authored ChartSpec JSON files',
@@ -56,22 +57,22 @@ const BATCH_WORKFLOW = Object.freeze({
     'presentation-plan.json as an optional presentation assembly guide',
     'one PowerPoint presentation when requested'
   ]),
-  temporaryWorkspace: '.work/<run-id>/',
-  temporaryReviewFolder: '.work/<run-id>/review/',
-  sourceLedger: '.work/<run-id>/source-ledger.json',
-  sourceVerificationCommand: 'npm run run:verify-source -- <run-id>',
-  sourceAndSpecVerificationCommand: 'npm run run:verify-source -- <run-id> --specs',
-  chartBuildCommand: 'npm run run:charts -- <run-id>',
-  finalizeCommand: 'npm run run:finalize -- <run-id>',
+  temporaryWorkspace: 'projects/<project-id>/work/',
+  temporaryReviewFolder: 'projects/<project-id>/work/review/',
+  sourceLedger: 'projects/<project-id>/source-ledger.json',
+  sourceVerificationCommand: 'npm run run:verify-source -- <project-id>',
+  sourceAndSpecVerificationCommand: 'npm run run:verify-source -- <project-id> --specs',
+  chartBuildCommand: 'npm run run:charts -- <project-id>',
+  finalizeCommand: 'npm run run:finalize -- <project-id>',
   coldResetCommand: 'npm run run:reset',
-  retentionRule: 'specs/runs/<run-id>/ and charts/<run-id>/ are retained locally. input/ is also retained. Production inputs and outputs are ignored by Git. All research notes, downloads, helper scripts, logs, review captures, package staging, and legacy previews are transient.',
+  retentionRule: 'The complete durable project stays in projects/<project-id>/: input/, source-ledger.json, specs/, and output/. Only work/ is transient and removed at finalization. Production projects are ignored by Git. Optional work subfolders are created on demand rather than pre-created.',
   boundary: 'The Tool API produces individual chart artifacts. The run chart builder coordinates verified ChartSpecs through HTML, responsive diagnostics, PNG capture, manifest, and QA reporting. The orchestration layer still owns source interpretation, story selection, and any requested presentation assembly.'
 });
 
 const SOURCE_ENRICHMENT_POLICY = Object.freeze({
-  coreRule: 'Treat the project-root input/ folder as the authoritative source set for the assignment. Preserve supplied claims and datapoints unless a reputable source directly contradicts a material point.',
+  coreRule: 'Treat projects/<project-id>/input/ as the authoritative source set for that project. Preserve supplied claims and datapoints unless a reputable source directly contradicts a material point.',
   inputRule: 'Treat each supplied file as evidence, context, or routing information. Structured datasets may support findings through documented filters, groupings, or calculations rather than literal prose excerpts.',
-  inputIdentityRule: 'Use only the exact non-empty project-root input/ source set initialized for the run. Never substitute a sibling project, prior batch, or alternate source collection.',
+  inputIdentityRule: 'Use only the exact non-empty projects/<project-id>/input/ source set initialized for the project. Never substitute a sibling project, prior batch, or alternate source collection.',
   inventoryRule: 'Before research, inventory the source files and every selected quantitative story. Use exact excerpts for prose sources and explicit file selectors or documented derivations for structured data.',
   supplementationRule: 'Use reputable external sources only after the input story is inventoried. They may add attribution, comparators, denominators, historical series, mechanisms, consequences, current status, or actual levels that directly express the same input-anchored change. They may not create the subject, central claim, or title. Changing from a percentage or index to its corresponding actual levels is a representation improvement, not a new story. Do not replace, downgrade, or relabel an input claim merely because a second source was not found.',
   titleFidelityRule: 'Every substantive title concept must be supported by the recorded titleBasis in the supplied source set. Prose claims use exact excerpts; structured-data findings use a documented source path plus the grouping, filter, or formula that produces the finding.',
@@ -167,35 +168,10 @@ const STATIC_IMAGE_CONTRACT = Object.freeze({
   primaryArtifactRule: 'Treat the final PNG as the primary chart artifact. The HTML shell is a deterministic rendering surface and review aid, not the publication format the reader should need in order to understand the chart.',
   visibleEvidenceRule: 'Everything required to understand the claim must be visible in the static image. Never rely on hover, tooltip, click, animation state, hidden legend interaction, or panning for category identity, units, values, thresholds, dates, or the title-defining comparison.',
   directLabelRule: 'Prefer direct labels and visible orientation over interaction. Dense charts may label representative or editorially important points while axes and geometry preserve the complete series, but no essential observation may exist only inside a tooltip.',
-  treatmentRule: 'Authors choose semantic evidence and recipe, not decorative treatments. The renderer may add deterministic ruler guides, period ticks, label rails, textures, or other static-reading aids when they make the same data relationship easier to read without changing its meaning.',
-  densityRule: 'Use the simplest visual treatment that makes the relationship legible at image size. Additional marks are justified only when they encode real units, periods, hierarchy, or orientation; decorative density is not evidence.',
+  treatmentRule: 'Authors choose semantic evidence and recipe, not renderer styling. Existing recipe mark families stay stable across publishing profiles; output fitting may reduce geometry only to prevent clipping and never changes bars into points, removes observations, or invents analytical marks.',
+  densityRule: 'narrative.density is an explicit author field, not an automatic reading-time heuristic. The renderer may adjust spacing and secondary furniture for the declared density, but it must preserve the selected recipe and all primary evidence.',
   interactionRule: 'Any interactive behavior in the HTML preview is optional and must degrade to the same complete static message. Interactivity never rescues an otherwise ambiguous PNG.',
   profileRule: 'Output profiles express publishing intent, not renderer geometry. Use auto for the maintained recipe-aware canvas, or request landscape, square, or portrait when the destination requires that fixed image shape. The engine owns the pixel dimensions and refuses a fixed profile when content cannot fit.'
-});
-
-const READING_INTENT_CONTRACT = Object.freeze({
-  rule: 'Choose narrative.density from the reader task only after the evidence and recipe are settled. Density changes renderer-owned presentation hierarchy; it must never remove title-defining evidence, change the quantitative relationship, or justify a different recipe.',
-  modes: Object.freeze([
-    Object.freeze({
-      intent: 'quick-scan',
-      approximateRead: 'under about 10 seconds',
-      density: 'minimal',
-      useWhen: 'One comparison or pattern is already self-contained in the primary geometry and can survive reduced grid, axis, and secondary furniture.'
-    }),
-    Object.freeze({
-      intent: 'standard-read',
-      approximateRead: 'about 10 to 30 seconds',
-      density: 'editorial',
-      useWhen: 'Default for publication charts that need direct values plus enough axis, reference, or context structure to explain the claim without interaction.'
-    }),
-    Object.freeze({
-      intent: 'close-read',
-      approximateRead: 'more than about 30 seconds',
-      density: 'detailed',
-      useWhen: 'The reader must inspect a dense ranking, matrix, map, multi-period composition, or another information-rich visual where retaining structural context is more important than a single-glance read.'
-    })
-  ]),
-  guard: 'Never choose minimal merely to make crowded content fit. If essential evidence disappears at the intended density or output profile, simplify the story, choose a more appropriate recipe/profile, or keep editorial/detailed density.'
 });
 
 const RECIPE_AMBIGUITY_RULES = Object.freeze([
@@ -214,6 +190,14 @@ const RECIPE_AMBIGUITY_RULES = Object.freeze([
   Object.freeze({
     candidates: Object.freeze(['matrix.heat', 'ranking.horizontal']),
     choose: 'Use matrix.heat when one measure forms a complete row-by-column cross-tab and the two-dimensional pattern is the finding. Use ranking.horizontal when there is one categorical dimension with one comparable value per category.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['relationship.scatter', 'ranking.horizontal']),
+    choose: 'Use relationship.scatter when every labeled observation has two distinct measured numeric variables and their relationship is the finding. Use ranking.horizontal when category identity plus one numeric magnitude is the complete quantitative structure.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['relationship.scatter', 'trend.line']),
+    choose: 'Use relationship.scatter when x is an observed quantitative variable in its own unit. Use trend.line when the horizontal dimension is ordered time or period identity rather than a second measured quantity.'
   }),
   Object.freeze({
     candidates: Object.freeze(['trend.line', 'timeline.duration']),
@@ -243,6 +227,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Three or more categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
   Object.freeze({ when: 'Three to eight positive physical-size magnitudes where proportional area is itself intuitive, such as facility floor area, land area, storage footprint, or capacity blocks', use: 'comparison.area-squares', example: 'specs/examples/facility-area-squares.json' }),
   Object.freeze({ when: 'One numeric measure forms a complete two-dimensional categorical cross-tab with 2 to 6 row categories and 2 to 6 column categories, and the pattern or concentration across both dimensions is the finding', use: 'matrix.heat', example: 'specs/examples/support-channel-heatmap.json' }),
+  Object.freeze({ when: 'Four to twelve labeled observations each contain two distinct measured numeric variables and the relationship between those variables across observations is the finding', use: 'relationship.scatter', example: 'specs/examples/store-traffic-sales-scatter.json' }),
   Object.freeze({ when: 'Two source-supported quantitative drivers or formula inputs and one different outcome measure three distinct quantities, with an explicit mechanism formula. This includes material mixed-unit derivations such as quantity × unit price = value; never use it for repeated prices, repeated volumes, or one measure at different dates.', use: 'relationship.converging-signals', example: 'specs/examples/converging-signals.json' }),
   Object.freeze({ when: 'Three or more ordered time points, especially when slowdown, acceleration, reversal, or persistence is the finding. Do not use trend.line for a 3–4 point sequence of tiny exact counts unless a real denominator/portfolio benchmark or richer magnitude anchor makes the series interpretable.', use: 'trend.line', example: 'specs/examples/bankruptcies-trend.json' }),
   Object.freeze({ when: 'Three to twenty-four ordered periods contain the same additive categories and the changing category mix plus total volume is the finding. Retain zero-valued categories so stack colors stay stable across periods.', use: 'trend.stacked', example: 'specs/examples/monthly-category-stack.json' }),
@@ -319,7 +304,7 @@ const COMPOSABLE_FEATURES = Object.freeze([
 const SHARED_AUTHORING_RULES = Object.freeze([
   'Author a ChartSpec JSON file; never author generated HTML, CSS, JavaScript, or chart geometry.',
   'Use the underlying publication or dataset as the source when available; otherwise omit source attribution.',
-  'Treat the initialized input/ source set as authoritative for the assignment. Preserve supplied claims and datapoints by default; structured datasets may support findings through documented calculations.',
+  'Treat the initialized projects/<project-id>/input/ source set as authoritative for the assignment. Preserve supplied claims and datapoints by default; structured datasets may support findings through documented calculations.',
   'Use external research to supplement or attribute the input, not to vote on whether it is true. External silence is not contradiction.',
   'Never label an input claim uncorroborated, unsupported, or not independently confirmed solely because a second source was not found.',
   'Escalate only direct material contradictions from reputable sources. Mark the external evidence conflictStatus material, preserve both positions, and do not select or visualize the story until editorial resolution.',
@@ -375,7 +360,7 @@ const SHARED_AUTHORING_RULES = Object.freeze([
 ]);
 
 const SHARED_STAGES = Object.freeze([
-  Object.freeze({ id: 'preserve-input', action: 'Treat the initialized input/ source set as authoritative assignment evidence and preserve supplied claims unless a reputable source directly contradicts a material point.' }),
+  Object.freeze({ id: 'preserve-input', action: 'Treat the initialized projects/<project-id>/input/ source set as authoritative assignment evidence and preserve supplied claims unless a reputable source directly contradicts a material point.' }),
   Object.freeze({ id: 'confirm-source', action: 'Confirm that supplied sources used for supplementation match the entity, event, period, and finding.' }),
   Object.freeze({ id: 'enrich-source', action: 'Read the full primary source and extract relevant supplemental evidence and safe derivations.' }),
   Object.freeze({ id: 'fill-evidence-gap', action: 'Research beyond supplied sources to fill a named material evidence gap or add useful attribution and context.' }),
@@ -385,7 +370,7 @@ const SHARED_STAGES = Object.freeze([
   Object.freeze({ id: 'author', action: 'Write the smallest semantic ChartSpec that expresses that story.' }),
   Object.freeze({ id: 'validate', command: `${TOOL_API_ENTRYPOINT} validate <spec.json>` }),
   Object.freeze({ id: 'render', action: 'Run the Tool API render command for the selected workflow.' }),
-  Object.freeze({ id: 'review', action: 'Resolve errors before delivery. Capture the final PNG into charts/<run-id>/ after diagnostics pass; temporary review belongs in .work/<run-id>/review/.' })
+  Object.freeze({ id: 'review', action: 'Resolve errors before delivery. Capture the final PNG into projects/<project-id>/output/ after diagnostics pass; temporary review belongs in projects/<project-id>/work/review/.' })
 ]);
 
 const REGIONAL_STATUSES = Object.freeze([
@@ -435,7 +420,6 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       'Audit actual-level availability and select the least normalized representation that preserves the story.',
       'Classify the enriched evidence with the selection rules below.',
       'When neighboring recipes remain plausible, use ambiguityRules to state why the rejected alternative does not match the evidence contract.',
-      'After the recipe is fixed, choose narrative.density from readingIntent. Density may simplify presentation furniture but never evidence.',
       'Write a semantic ChartSpec using the selected recipe.',
       'Validate the ChartSpec, then use the image command for the primary static artifact. Use render and diagnose only when HTML-level inspection is needed.'
     ],
@@ -447,14 +431,13 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     commands: {
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
-      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`,
+      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--project-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
-      review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
+      review: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output projects/<project-id>/work/review/<chart>.png`
     },
     selectionRules: clone(STANDARD_SELECTION_RULES),
     ambiguityRules: clone(RECIPE_AMBIGUITY_RULES),
-    readingIntent: clone(READING_INTENT_CONTRACT),
     authoringRules: [...SHARED_AUTHORING_RULES],
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     staticImageContract: clone(STATIC_IMAGE_CONTRACT),
@@ -479,14 +462,14 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
   return {
     workflow: REGIONAL_WORKFLOW,
     recipe: 'map.regional',
-    command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
+    command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
     startHere: 'Use this path when geography is part of the finding. Keep all materially reported regions highlighted; reserve callout cards for the locations that need explicit evidence labels.',
     steps: [
       'Preserve the supplied claim or documented data-derived finding, then read supplied sources and fill useful evidence gaps.',
       `Use stable IDs from \`${TOOL_API_ENTRYPOINT} regions ${regionSet.id}\`.`,
       'Author every materially reported region. Use data[].callout = "none" for fill-only highlights. Do not author visual card order; the renderer orders cards from anchor geometry to minimize straight-line crossings and travel.',
       'Validate the spec, then run the regional command for shell review and responsive diagnostics.',
-      'Use the generic review command with --screenshot to capture the final PNG into charts/<run-id>/.'
+      'Use the image command for the final PNG in projects/<project-id>/output/. Use review screenshots only for temporary inspection under projects/<project-id>/work/review/.'
     ],
     authoringSurface: {
       role: 'chart-author',
@@ -498,10 +481,10 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     commands: {
       regions: `${TOOL_API_ENTRYPOINT} regions ${regionSet.id}`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
-      render: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
-      renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>] --no-diagnose`,
-      screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output .work/<run-id>/review/<chart>.png`
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`,
+      render: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
+      renderWithoutBrowser: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>] --no-diagnose`,
+      screenshot: `${TOOL_API_ENTRYPOINT} review <output.html> --screenshot --output projects/<project-id>/work/review/<chart>.png`
     },
     authoringRule: 'Specify editorial content and stable continental region IDs. The data array is the geographic evidence inventory, not a list of boxes: keep reported regions in data[] even when they do not need callouts. Automatic layout ignores source order and calloutOrder for geometry, places cards near their anchors, and optimizes vertical order for straight non-crossing leaders with minimum travel. Any rendered leader crossing is a delivery failure. Regional maps never render origin dots on leaders. Russian regional maps permanently omit Kaliningrad and island fragments, suppress summary cards, and reserve the wide canvas for the mainland map. Detached-region evidence must use a non-map story format.',
     requiredTopLevel: ['title', 'date', 'data', 'metadata.slug'],
@@ -533,29 +516,29 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.21',
+    version: '1.23',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
       entrypoint: TOOL_API_ENTRYPOINT,
       manifestCommand: `${TOOL_API_ENTRYPOINT} api`
     },
-    startHere: 'For a batch run, treat the initialized input/ folder as the authoritative source set, preserve supplied claims and datapoints by default, and follow the batch workflow. For each accepted chart story, choose exactly one chart workflow before writing a spec.',
+    startHere: 'For a project, keep input, ledger, specs, output, and transient work under projects/<project-id>/. Treat that project input as authoritative, preserve supplied claims and datapoints by default, and choose exactly one chart workflow before writing a spec.',
     batchWorkflow: clone(BATCH_WORKFLOW),
     decision: [
       {
         if: 'Administrative regions are part of the finding and spatial location changes the interpretation; some highlighted regions may be fill-only without callout cards.',
         workflow: REGIONAL_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
-        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
+        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`
       },
       {
         if: 'The story has enough independent quantitative structure for the selected recipe and is a comparison, ranking, composition, trend, or flow without a map. Generic categorical bars require at least three observations; relationship-specific two-value recipes may use two.',
         workflow: STANDARD_WORKFLOW,
         firstCommand: `${TOOL_API_ENTRYPOINT} guide`,
-        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
-        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
+        renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--project-id <id>]`,
+        imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`
       }
     ],
     sharedContract: {
@@ -566,7 +549,6 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
       visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
       staticImageContract: clone(STATIC_IMAGE_CONTRACT),
       runtimeDependencies: clone(RUNTIME_DEPENDENCY_CONTRACT),
-      readingIntent: clone(READING_INTENT_CONTRACT),
       recipeAmbiguityRules: clone(RECIPE_AMBIGUITY_RULES),
       sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
       valueRepresentationContract: clone(VALUE_REPRESENTATION_CONTRACT),
@@ -588,19 +570,19 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
         regionCount: Object.keys(regionSet.regions).length
       },
       guideCommand: `${TOOL_API_ENTRYPOINT} regional-guide ${regionSet.id}`,
-      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
-      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
+      renderCommand: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
+      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`
     },
     standard: {
       workflow: STANDARD_WORKFLOW,
       guideCommand: `${TOOL_API_ENTRYPOINT} guide`,
-      renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
+      renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--project-id <id>]`,
       diagnoseCommand: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
-      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`
+      imageCommand: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`
     },
     authoringRules: [...SHARED_AUTHORING_RULES],
     boundary: {
-      publicSurface: ['input/', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/', 'specs/runs/<run-id>/', 'charts/<run-id>/', '.work/<run-id>/'],
+      publicSurface: ['projects/<project-id>/', 'tool-api/', 'docs/batch-workflow.md', 'docs/agent-workflows.md', 'docs/story-selection.md', 'docs/source-enrichment.md', 'schemas/chart-spec.schema.json', 'recipes/catalog.json', 'specs/examples/'],
       implementation: ['renderer/', 'lib/', 'tests/', 'tools/'],
       rule: 'Chart authors stay on the public surface. Implementation directories are maintainer-only unless the user explicitly requests infrastructure work.'
     }
@@ -611,7 +593,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.21',
+    version: '1.23',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,
@@ -624,11 +606,11 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
       catalog: `${TOOL_API_ENTRYPOINT} catalog`,
       regions: `${TOOL_API_ENTRYPOINT} regions [region-set]`,
       validate: `${TOOL_API_ENTRYPOINT} validate <spec.json>`,
-      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--run-id <id>]`,
-      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--run-id <id>]`,
-      regional: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--run-id <id>]`,
+      image: `${TOOL_API_ENTRYPOINT} image <spec.json> [output.png] [--profile auto|landscape|square|portrait] [--project-id <id>]`,
+      render: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--project-id <id>]`,
+      regional: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
       diagnose: `${TOOL_API_ENTRYPOINT} diagnose <chart.html>`,
-      review: `${TOOL_API_ENTRYPOINT} review <chart.html> [--screenshot] [--output .work/<run-id>/review/<chart>.png]`
+      review: `${TOOL_API_ENTRYPOINT} review <chart.html> [--screenshot] [--output projects/<project-id>/work/review/<chart>.png]`
     },
     resources: clone(TOOL_API_RESOURCES),
     batchWorkflow: clone(BATCH_WORKFLOW),
@@ -636,7 +618,6 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     visualEvidenceContract: clone(VISUAL_EVIDENCE_CONTRACT),
     staticImageContract: clone(STATIC_IMAGE_CONTRACT),
     runtimeDependencies: clone(RUNTIME_DEPENDENCY_CONTRACT),
-    readingIntent: clone(READING_INTENT_CONTRACT),
     recipeAmbiguityRules: clone(RECIPE_AMBIGUITY_RULES),
     imageProfiles: listImageProfiles(),
     sharedScaleContract: clone(SHARED_SCALE_CONTRACT),
@@ -644,8 +625,8 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
     waterfallContract: clone(WATERFALL_CONTRACT),
     regionSet: { id: regionSet.id, label: regionSet.label },
     allowedWork: [
-      'initialize and finalize the isolated run workspace',
-      'inventory input/ materials and derive supported data stories',
+      'initialize and finalize the isolated project folder',
+      'inventory projects/<project-id>/input/ materials and derive supported data stories',
       'preserve supplied evidence and analyze supplemental sources',
       'select, merge, or omit stories for the requested deliverable',
       'choose a workflow and recipe',
@@ -675,7 +656,6 @@ module.exports = {
   SOURCE_ENRICHMENT_POLICY,
   VISUAL_EVIDENCE_CONTRACT,
   STATIC_IMAGE_CONTRACT,
-  READING_INTENT_CONTRACT,
   RECIPE_AMBIGUITY_RULES,
   SHARED_SCALE_CONTRACT,
   VALUE_REPRESENTATION_CONTRACT,

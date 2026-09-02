@@ -53,51 +53,12 @@ test('dumbbell legend explains before-versus-after shape without promising one a
   assert.doesNotMatch(runtime, /cx: right - 75, cy: 24, r: 8, fill: TONE_HEX\.primary/);
 });
 
-test('visual planner adds static-reading guides only when they clarify simple scales', () => {
-  const ranking = validateSpec(loadExample('regional-ranking.json')).normalized;
-  const rankingPlan = VisualPlan.resolveVisualPlan(ranking, ranking.data, 1200);
-  assert.equal(rankingPlan.quantitativeGuide.mode, 'ruler');
-  assert.equal(rankingPlan.quantitativeGuide.step, 10);
-  assert.ok(rankingPlan.quantitativeGuide.count >= 8);
-
-  const denseRanking = structuredClone(ranking);
-  denseRanking.data = Array.from({ length: 20 }, (_, index) => ({
-    ...ranking.data[index % ranking.data.length],
-    label: `Category ${index + 1}`,
-    value: 100 - index
-  }));
-  const densePlan = VisualPlan.resolveVisualPlan(denseRanking, denseRanking.data, 1200);
-  assert.equal(densePlan.quantitativeGuide.mode, 'none');
-
-  const trend = {
-    recipe: 'trend.line',
-    data: Array.from({ length: 30 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 })),
-    measure: { baseline: 'zero', scale: 'linear' },
-    narrative: { density: 'editorial', emphasis: 'direction' },
-    options: {}
-  };
-  const trendPlan = VisualPlan.resolveVisualPlan(trend, trend.data, 1200);
-  assert.equal(trendPlan.periodGuide.mode, 'period-ticks');
-  assert.equal(trendPlan.periodGuide.count, 30);
-  assert.equal(trendPlan.trendPoints.mode, 'none');
-
-  trend.data = Array.from({ length: 8 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 }));
-  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).trendPoints.mode, 'all');
-
-  trend.data = Array.from({ length: 90 }, (_, index) => ({ label: `Day ${index + 1}`, value: index + 1 }));
-  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).periodGuide.mode, 'none');
-  assert.equal(VisualPlan.resolveVisualPlan(trend, trend.data, 1200).trendPoints.mode, 'none');
-
-});
-
-test('static-oriented renderer centralizes motion and exposes deterministic guide treatments', () => {
+test('renderer centralizes deterministic tokens without changing established mark families', () => {
   assert.equal(Tochnyi.motion.enterDuration, 800);
   assert.equal(Tochnyi.motion.staggerDelay, 80);
   assert.deepEqual(Tochnyi.scales.sequentialBlue.startRgb, [238, 243, 248]);
   assert.deepEqual(Tochnyi.scales.sequentialBlue.endRgb, [0, 91, 187]);
   assert.ok(Tochnyi.scales.sequentialBlue.lightTextThreshold > 0 && Tochnyi.scales.sequentialBlue.lightTextThreshold < 1);
-  assert.ok(Tochnyi.marks.guide.minorOpacity < Tochnyi.marks.guide.majorOpacity);
-  assert.ok(Tochnyi.marks.periodTick.opacity > 0 && Tochnyi.marks.periodTick.opacity < 0.5);
 
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
@@ -123,27 +84,67 @@ test('static-oriented renderer centralizes motion and exposes deterministic guid
   assert.match(runtime, /Tochnyi\.scales.*sequentialBlue/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.tochnyi-map-region\s*\{\s*transition:\s*none/);
   assert.match(runtime, /data-output-mode/);
-  assert.match(runtime, /addQuantitativeRulerGuides/);
-  assert.match(runtime, /data-ranking-guide-step/);
-  assert.match(runtime, /data-trend-period-guides/);
-  assert.match(runtime, /data-trend-point-mode/);
-  assert.match(runtime, /showBullets:\s*!plan\.trendPoints \|\| plan\.trendPoints\.mode === 'all'/);
-  assert.match(runtime, /data-scenario-mark-mode/);
+  assert.doesNotMatch(runtime, /addQuantitativeRulerGuides|data-ranking-guide-step|data-trend-period-guides|data-trend-point-mode/);
+  assert.doesNotMatch(runtime, /data-scenario-mark-mode|data-waterfall-connectors|fillCaptureRequested/);
+  assert.match(runtime, /showBullets:\s*true/);
 });
 
-test('scenario planner uses positional points instead of truncated columns on nonzero scales', () => {
+test('scenario comparisons retain their established column grammar and require visible values', () => {
   const clustered = loadExample('central-bank-scenarios.json');
-  const clusteredPlan = VisualPlan.resolveVisualPlan(clustered, clustered.data, 1200);
-  assert.equal(clusteredPlan.scenarioMarks.mode, 'points');
-  assert.match(clusteredPlan.scenarioMarks.reason, /nonzero/);
+  let result = validateSpec(clustered);
+  assert.equal(result.valid, true, result.errors.join('; '));
+
+  const truncated = structuredClone(clustered);
+  truncated.measure.baseline = 'explicit';
+  truncated.measure.minimum = 13;
+  result = validateSpec(truncated);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /zero-seated baseline|truncated scenario bars/i.test(message)));
 
   const zeroBased = loadExample('russia-fuel-inflation-july-2026.json');
-  assert.equal(VisualPlan.resolveVisualPlan(zeroBased, zeroBased.data, 1200).scenarioMarks.mode, 'columns');
-
   zeroBased.options.showLabels = false;
   const hiddenValues = validateSpec(zeroBased);
   assert.equal(hiddenValues.valid, false);
   assert.ok(hiddenValues.errors.some((message) => /requires direct numeric labels/i.test(message)));
+});
+
+test('scatter relationship preserves two independent quantitative measures without a third encoded variable', () => {
+  const spec = loadExample('store-traffic-sales-scatter.json');
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.measure.baseline, 'auto');
+  assert.equal(result.normalized.xMeasure.scale, 'linear');
+  assert.equal(result.normalized.data.some((item) => item.direction !== undefined), false);
+
+  const missingX = structuredClone(spec);
+  delete missingX.data[0].xValue;
+  result = validateSpec(missingX);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /xValue is required/i.test(message)));
+
+  const sameMeasure = structuredClone(spec);
+  sameMeasure.xMeasure.quantity = sameMeasure.measure.quantity;
+  result = validateSpec(sameMeasure);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /two distinct named quantities/i.test(message)));
+
+  const hiddenLabels = structuredClone(spec);
+  hiddenLabels.options.showLabels = false;
+  result = validateSpec(hiddenLabels);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /direct point labels/i.test(message)));
+
+  const thirdColorVariable = structuredClone(spec);
+  thirdColorVariable.data[0].tone = 'critical';
+  result = validateSpec(thirdColorVariable);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /third color variable/i.test(message)));
+
+  const clipped = structuredClone(spec);
+  clipped.xMeasure.maximum = 30000;
+  result = validateSpec(clipped);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /cannot clip observed points/i.test(message)));
 });
 
 test('matrix heat requires a complete directly-labeled categorical cross-tab', () => {
@@ -4308,20 +4309,24 @@ test('editorial validation flags redundant composition copy and internal sources
   assert.ok(titleResult.errors.some((error) => /presentation copy cannot expose internal provenance/i.test(error)));
 });
 
-test('default output paths use an arbitrary transient run id', () => {
+test('default HTML output stays inside the selected project work folder', () => {
   const root = path.join(os.tmpdir(), 'tochnyi-default-output');
   const output = defaultOutputPath(root, {
     metadata: { slug: 'example-chart' }
   }, {
-    runId: 'client-alpha.issue-7'
+    projectId: 'client-alpha.issue-7'
   });
   assert.equal(
     output,
-    path.join(root, '.work', 'client-alpha.issue-7', 'rendered', 'example-chart.html')
+    path.join(root, 'projects', 'client-alpha.issue-7', 'work', 'rendered', 'example-chart.html')
   );
   assert.throws(
-    () => defaultOutputPath(root, { metadata: { slug: 'example-chart' } }, { runId: '../escape' }),
-    /Run id/
+    () => defaultOutputPath(root, { metadata: { slug: 'example-chart' } }),
+    /explicit output path or --project-id/i
+  );
+  assert.throws(
+    () => defaultOutputPath(root, { metadata: { slug: 'example-chart' } }, { projectId: '../escape' }),
+    /Project id/
   );
 });
 

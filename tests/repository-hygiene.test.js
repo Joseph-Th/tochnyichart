@@ -21,6 +21,11 @@ function productionJavaScriptFiles(directory) {
 }
 
 test('repository hygiene classifies generated data and permits curated fixtures', () => {
+  assert.match(transientReason('projects/client-a/input/source.csv'), /project data.*local/i);
+  assert.match(transientReason('projects/client-a/source-ledger.json'), /project data.*local/i);
+  assert.match(transientReason('projects/client-a/specs/chart.json'), /project data.*local/i);
+  assert.match(transientReason('projects/client-a/output/chart.png'), /project data.*local/i);
+  assert.match(transientReason('projects/client-a/work/review/chart.png'), /project data.*local/i);
   assert.match(transientReason('input.txt'), /local/);
   assert.match(transientReason('input/source.csv'), /local/);
   assert.match(transientReason('.work/client-a/logs/render.log'), /transient/);

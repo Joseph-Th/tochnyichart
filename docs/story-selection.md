@@ -43,6 +43,16 @@ labels in every cell, and a visible renderer-owned sequential color legend.
 Do not use it as a decorative alternative to a ranking, do not assign semantic
 tones to individual cells, and do not omit cells merely to make the matrix fit.
 
+Use `relationship.scatter` when the evidence consists of the same labeled
+observations measured on two distinct numeric variables and the relationship
+between those variables is the finding. Put the horizontal quantity in
+`xMeasure` and `data[].xValue`; put the vertical quantity in `measure` and
+`data[].value`. The first contract accepts 4 to 12 observations, requires direct
+point labels, and keeps both axes linear. It does not infer a regression line,
+causal direction, bubble size, or third color variable. A chronological x-axis
+is still a `trend.line`, and a one-number-per-category story is still a ranking
+or comparison.
+
 ## Visible units
 
 A numeric label must be interpretable without searching the axis title or source
@@ -452,21 +462,6 @@ across distinct hue families; do not spend the first several categories on
 light/dark variants of the same one or two brand colors. Reserve focus coloring
 for a story that actually emphasizes the leader or another specific item.
 
-## Reading intent comes after recipe selection
-
-Reading speed is a presentation requirement, not a data-shape classifier.
-First choose the recipe that truthfully expresses the evidence relationship.
-Then map the reader task to `narrative.density`: `minimal` for a self-contained
-quick scan, `editorial` for the normal publication read, and `detailed` for a
-close read of dense evidence. The renderer may reduce secondary furniture at a
-lighter density, but essential values, orientation, thresholds, and
-title-defining comparisons must remain visible.
-
-Never select `minimal` merely because a fixed canvas is crowded. If essential
-evidence does not fit, use a better recipe or publishing profile, simplify the
-story semantically, or retain a denser treatment. Density must not become a
-layout escape hatch.
-
 Before finalizing a recipe, compare it with the nearest semantic alternative.
 This is a rejection check, not a template audition. Common boundaries are:
 
@@ -474,6 +469,8 @@ This is a rejection check, not a template audition. Common boundaries are:
   generic change;
 - repeated category before/after pairs: dumbbell, not scenarios;
 - complete two-dimensional cross-tab: matrix, not ranking;
+- two measured numeric variables per labeled observation: scatter, not ranking;
+- numeric x variable: scatter; ordered time/period identity: trend;
 - numeric observations advancing through time: trend, not duration timeline;
 - positive components compared from zero: components, not waterfall;
 - administrative geography that changes interpretation: regional map, not a
@@ -484,7 +481,7 @@ This is a rejection check, not a template audition. Common boundaries are:
 | Recipe | Semantic contract |
 | --- | --- |
 | `comparison.change` | Two periods of one quantity for one scope only when one value cannot be read naturally as the positive actual/current level against a prior, standard, limit, target, or other benchmark. Typical uses are sign-crossing levels, zero-to-nonzero movement, and native rate/index changes. |
-| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Requires three to five independent items. Two generic bars are not a valid scenarios chart, even with supporting copy or a derived total. Repeated category/time pairs are not scenarios. |
+| `comparison.scenarios` | One quantity, one scope, one period; only the scenario or assumption changes. Requires three to five independent items. Because this recipe uses column length, the quantitative scale must be linear and zero-seated; truncated scenario bars are invalid. Two generic bars are not a valid scenarios chart, even with supporting copy or a derived total. Repeated category/time pairs are not scenarios. |
 | `comparison.diverging` | Positive and negative values of one quantity, one scope, and one period. |
 | `comparison.range` | Exact values, intervals, or thresholds for one quantity, one scope, and one period. A one-row range needs a genuinely independent reference; a point or reference equal to the low/high endpoint is redundant. Forecast and target ranges should include an available same-unit actual/current value as a numeric reference. |
 | `comparison.benchmark-gap` | One to six actual/current values shown against meaningful same-quantity, same-unit benchmarks. Prefer one row whenever two positive levels are naturally actual/current versus prior, standard, limit, target, or reference. `gapDisplayValue` must describe the arithmetic difference or percentage context, never a ratio, per-unit equivalence, or cross-unit conversion. |

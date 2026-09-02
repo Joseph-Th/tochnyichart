@@ -15,17 +15,17 @@ const { validatePresentationFile } = require('../renderer/presentation-file');
 function usage() {
   return [
     'Usage:',
-    '  node tools/workspace.js init <run-id>',
-    '  node tools/workspace.js verify <run-id> [--specs]',
-    '  node tools/workspace.js flush <run-id> [--legacy] [--dry-run]',
-    '  node tools/workspace.js finalize <run-id> [--legacy] [--dry-run]',
+    '  node tools/workspace.js init <project-id>',
+    '  node tools/workspace.js verify <project-id> [--specs]',
+    '  node tools/workspace.js flush <project-id> [--legacy] [--dry-run]',
+    '  node tools/workspace.js finalize <project-id> [--legacy] [--dry-run]',
     '  node tools/workspace.js reset [--legacy] [--dry-run]',
     '',
-    'The command never deletes specs/runs/<run-id>/ or charts/<run-id>/.',
-    'Those local production paths are ignored by Git.',
+    'Each production project lives entirely under projects/<project-id>/.',
+    'Finalize deletes only that project\'s work/ subtree after verification.',
+    'input/, source-ledger.json, specs/, and output/ remain together and are ignored by Git.',
     'Finalize verifies source fidelity, ChartSpec coverage, and any generated PowerPoint against presentation-plan.json before cleanup.',
-    'All workspace commands preserve the project-root input/ folder.',
-    'Use --legacy to remove the old previews/ tree during migration.'
+    'Use --legacy to remove old .work/ and previews/ scratch trees during migration; legacy charts/ and specs/runs/ are never deleted implicitly.'
   ].join('\n');
 }
 
@@ -33,12 +33,12 @@ function parseArguments(argv) {
   const flags = new Set(argv.filter((value) => value.startsWith('--')));
   const positional = argv.filter((value) => !value.startsWith('--'));
   const command = positional[0];
-  const runId = positional[1];
+  const projectId = positional[1];
   const unknownFlags = [...flags].filter((flag) => !['--legacy', '--dry-run', '--specs'].includes(flag));
   if (unknownFlags.length) throw new Error(`Unknown flag: ${unknownFlags[0]}`);
   return {
     command,
-    runId,
+    projectId,
     removeLegacy: flags.has('--legacy'),
     dryRun: flags.has('--dry-run'),
     requireSpecs: flags.has('--specs')
@@ -51,28 +51,28 @@ function main() {
   let result;
 
   if (options.command === 'init') {
-    if (!options.runId) throw new Error('init requires a run id.');
-    result = initializeRunWorkspace(projectRoot, options.runId);
+    if (!options.projectId) throw new Error('init requires a project id.');
+    result = initializeRunWorkspace(projectRoot, options.projectId);
   } else if (options.command === 'verify') {
-    if (!options.runId) throw new Error('verify requires a run id.');
-    result = validateSourceLedger(projectRoot, options.runId, {
+    if (!options.projectId) throw new Error('verify requires a project id.');
+    result = validateSourceLedger(projectRoot, options.projectId, {
       requireSpecs: options.requireSpecs
     });
   } else if (options.command === 'flush') {
-    if (!options.runId) throw new Error('flush requires a run id.');
-    result = flushRunWorkspace(projectRoot, options.runId, options);
+    if (!options.projectId) throw new Error('flush requires a project id.');
+    result = flushRunWorkspace(projectRoot, options.projectId, options);
   } else if (options.command === 'finalize') {
-    if (!options.runId) throw new Error('finalize requires a run id.');
-    const fidelity = validateSourceLedger(projectRoot, options.runId, { requireSpecs: true });
-    const outputRoot = deliveryPath(projectRoot, options.runId);
+    if (!options.projectId) throw new Error('finalize requires a project id.');
+    const fidelity = validateSourceLedger(projectRoot, options.projectId, { requireSpecs: true });
+    const outputRoot = deliveryPath(projectRoot, options.projectId);
     const planPath = path.join(outputRoot, 'presentation-plan.json');
     let presentation = null;
     if (fs.existsSync(planPath)) {
       const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
-      const pptxPath = path.join(outputRoot, `tochnyi-charts-${options.runId}.pptx`);
+      const pptxPath = path.join(outputRoot, `tochnyi-charts-${options.projectId}.pptx`);
       if (fs.existsSync(pptxPath)) presentation = validatePresentationFile(pptxPath, plan);
     }
-    const cleanup = flushRunWorkspace(projectRoot, options.runId, options);
+    const cleanup = flushRunWorkspace(projectRoot, options.projectId, options);
     result = { fidelity, presentation, cleanup };
   } else if (options.command === 'reset') {
     result = resetTransientWorkspace(projectRoot, {

@@ -1,0 +1,121 @@
+{
+  "version": "2.0",
+  "recipe": "relationship.scatter",
+  "title": "Higher Foot Traffic Accompanies Higher Weekly Sales",
+  "subtitle": "Eight comparable stores observed during the same reporting week.",
+  "date": "2026-09-02",
+  "source": {
+    "name": "Illustrative store operations dataset",
+    "period": "Week ending 2026-08-30"
+  },
+  "data": [
+    {
+      "label": "Riverside",
+      "xValue": 15000,
+      "xDisplayValue": "15,000 visits",
+      "value": 275000,
+      "displayValue": "$275,000",
+      "scope": "Riverside store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "North",
+      "xValue": 18000,
+      "xDisplayValue": "18,000 visits",
+      "value": 310000,
+      "displayValue": "$310,000",
+      "scope": "North store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "University",
+      "xValue": 22000,
+      "xDisplayValue": "22,000 visits",
+      "value": 370000,
+      "displayValue": "$370,000",
+      "scope": "University store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "Harbor",
+      "xValue": 24000,
+      "xDisplayValue": "24,000 visits",
+      "value": 405000,
+      "displayValue": "$405,000",
+      "scope": "Harbor store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "West",
+      "xValue": 27000,
+      "xDisplayValue": "27,000 visits",
+      "value": 450000,
+      "displayValue": "$450,000",
+      "scope": "West store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "Central",
+      "xValue": 31000,
+      "xDisplayValue": "31,000 visits",
+      "value": 515000,
+      "displayValue": "$515,000",
+      "scope": "Central store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "Market",
+      "xValue": 33000,
+      "xDisplayValue": "33,000 visits",
+      "value": 540000,
+      "displayValue": "$540,000",
+      "scope": "Market store",
+      "period": "Week ending 2026-08-30"
+    },
+    {
+      "label": "Airport",
+      "xValue": 36000,
+      "xDisplayValue": "36,000 visits",
+      "value": 590000,
+      "displayValue": "$590,000",
+      "scope": "Airport store",
+      "period": "Week ending 2026-08-30"
+    }
+  ],
+  "xMeasure": {
+    "quantity": "weekly store foot traffic",
+    "unit": "visits",
+    "axisTitle": "Weekly foot traffic (visits)",
+    "decimals": 0,
+    "scale": "linear"
+  },
+  "measure": {
+    "quantity": "weekly store sales",
+    "unit": "USD",
+    "axisTitle": "Weekly sales (USD)",
+    "prefix": "$",
+    "decimals": 0,
+    "baseline": "auto",
+    "scale": "linear",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "comparison",
+    "density": "editorial",
+    "emphasis": "relationship"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLegend": false,
+    "showLabels": true,
+    "animate": true
+  },
+  "metadata": {
+    "slug": "store-traffic-sales-relationship",
+    "topic": "store performance",
+    "dataPeriod": "Week ending 2026-08-30",
+    "keyFinding": "Stores with more weekly visits also report higher weekly sales in this illustrative sample."
+  }
+}

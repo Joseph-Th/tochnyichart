@@ -2,23 +2,37 @@
 
 This is the primary end-to-end workflow for producing Tochnyi chart and infographic deliverables from a supplied source set.
 
-## Input
+## Project folder
 
-The user provides source materials in the project-root folder:
+Every assignment has one local project folder:
 
 ```text
-input/
+projects/<project-id>/
+├── input/
+├── source-ledger.json
+├── project.json
+├── specs/
+├── output/
+└── work/
 ```
 
-`input/` may contain editorial notes, source documents, structured datasets,
+Put the user-provided source materials in
+`projects/<project-id>/input/`. `input/` may contain editorial notes, source documents, structured datasets,
 notebooks, links, and partially summarized evidence. Treat the supplied source
 set as authoritative for the assignment unless a reputable source directly
 contradicts a material point. Structured data can support a story through a
 documented filter, grouping, or calculation rather than a literal prose excerpt.
 
-The exact project-root source set is mandatory. A missing, empty, or changed
-`input/` stops the run. Never substitute a sibling project, prior batch, or
+The exact project-local source set is mandatory. A missing, empty, or changed
+`projects/<project-id>/input/` stops the project. Never substitute a sibling project, prior batch, or
 alternate source collection.
+
+The storage rule is intentionally simple:
+
+- `input/`, `source-ledger.json`, `project.json`, `specs/`, and `output/` stay with the project.
+- `work/` is disposable scratch and is the only subtree removed by finalization.
+- Scratch subfolders such as `research/`, `downloads/`, `review/`, `rendered/`, and staging directories are created only when needed.
+- New production work never writes to repository-root `.work/`, `specs/runs/`, or `charts/`.
 
 ## Agent responsibility
 
@@ -29,10 +43,10 @@ The deterministic chart engine is one tool used by the agent. It does not interp
 ## Required sequence
 
 ```text
-initialize .work/<run-id>/
+projects/<project-id>/input/
     |
     v
-input/
+initialize the project and hash its input
     |
     v
 inventory source files and derive supported data stories
@@ -50,7 +64,7 @@ inventory same-unit orientation anchors and material mixed-unit formula inputs
 record selected, omitted, or merged disposition for every candidate
     |
     v
-verify .work/<run-id>/source-ledger.json
+verify projects/<project-id>/source-ledger.json
     |
     v
 preserve each inventoried claim and enrich it from reputable sources
@@ -80,42 +94,46 @@ render and diagnose the chart HTML
 capture one final PNG image per accepted chart
     |
     v
-write the run manifest and visual QA report
+write the project manifest and visual QA report
     |
     v
 if requested, assemble the accepted images into a PowerPoint presentation
     |
     v
-save the complete run delivery in charts/<run-id>/
+save the complete delivery in projects/<project-id>/output/
     |
     v
-finalize the run and purge transient material
+finalize the project and delete only projects/<project-id>/work/
 ```
 
-## 0. Initialize isolated transient storage
+## 0. Initialize the project
 
-Before reading the assignment, create the run workspace:
+Create the project input folder, place the source set there, then initialize it:
 
 ```bash
-npm run run:init -- <run-id>
+mkdir -p projects/<project-id>/input
+npm run run:init -- <project-id>
 ```
 
-Store every non-retained artifact under `.work/<run-id>/`, including
-research notes, downloaded sources, helper scripts, logs, diagnostic dumps,
-review screenshots, and package staging. Do not create run-specific scripts or
 data files at the repository root. Do not use `previews/` for new work.
+Initialization creates `source-ledger.json`, `project.json`, `specs/`, `output/`,
+and one empty `work/` directory. It does not pre-create a collection of empty
+scratch folders. When temporary material is needed, create it beneath
+`projects/<project-id>/work/`. Do not create project-specific scripts, data,
+captures, or staging directories at the repository root.
 
-Production input, generated ChartSpecs, chart output, previews, and workspaces
-are local artifacts. Git ignores `input/`, `specs/runs/`, `charts/`,
-`previews/`, and `.work/`. Run `npm run check:repo` before committing; it fails
-if any production or transient artifact is tracked, including force-added files.
+The entire `projects/` tree is local production data and is ignored by Git. The
+repository retains legacy ignore rules for root `input/`, `.work/`, `charts/`,
+and `specs/runs/` only so old material cannot be accidentally committed during
+migration. New projects do not use those locations. Run `npm run check:repo`
+before committing; it fails if project or transient material is tracked.
 
 ## 1. Parse the assignment
 
-Read the complete `input/` source set and separate it into distinct data stories.
+Read the complete `projects/<project-id>/input/` source set and separate it into distinct data stories.
 
-`npm run run:init -- <run-id>` creates
-`.work/<run-id>/source-ledger.json` with the input file inventory, per-file
+`npm run run:init -- <project-id>` creates
+`projects/<project-id>/source-ledger.json` with the input file inventory, per-file
 hashes, aggregate byte count, and source-set SHA-256 hash. Complete this ledger
 before external research. Every selected quantitative story must receive one
 disposition: `selected`, `omitted`, or `merged`. Follow `docs/source-ledger.md`
@@ -180,7 +198,7 @@ its destination. Set `inventoryComplete` to true only after the complete input
 has been checked against the ledger, then run:
 
 ```bash
-npm run run:verify-source -- <run-id>
+npm run run:verify-source -- <project-id>
 ```
 
 ## 2. Verify and enrich each story
@@ -533,31 +551,32 @@ source verification before authoring it.
 ## 4. Produce each chart
 
 For every accepted chart story, write a semantic `ChartSpec` to
-`specs/runs/<run-id>/[slug].json`. After the complete selected set is authored,
+`projects/<project-id>/specs/[slug].json`. After the complete selected set is authored,
 run:
 
 ```bash
-npm run run:charts -- <run-id>
+npm run run:charts -- <project-id>
 ```
 
-The run chart builder verifies source/spec coverage, preserves source-ledger
+The project chart builder verifies source/spec coverage, preserves source-ledger
 order, routes each specification through the standard or regional workflow,
 runs responsive diagnostics, captures the approved PNG, and writes
-`manifest.csv` plus `qa-report.json` to `charts/<run-id>/`. It stops on the
+`manifest.csv` plus `qa-report.json` to `projects/<project-id>/output/`. It stops on the
 first validation, rendering, diagnostic, or capture failure rather than
-publishing a partial successful-looking run. Successful output is published by
+publishing a partial successful-looking project. Successful output is published by
 replacing the prior chart set only after the complete staged build passes. Any
 existing presentation or chart-image archive is removed at that point because
-it would contain stale images and must be rebuilt from the new PNGs.
+it would contain stale images and must be rebuilt from the new PNGs. Staging and
+rollback material stays inside `projects/<project-id>/work/`.
 
 To inspect coverage without rendering, run:
 
 ```bash
-npm run run:verify-source -- <run-id> --specs
+npm run run:verify-source -- <project-id> --specs
 ```
 
 This requires the selected source-ledger output slugs to exactly match the JSON
-files in `specs/runs/<run-id>/` and requires every ChartSpec title to exactly
+files in `projects/<project-id>/specs/` and requires every ChartSpec title to exactly
 match its ledger title. It also rejects selected pairs that repeat the same input
 passage, publication and reporting period, recipe, and category or time-label
 sequence. Consolidate these pairs before rendering. Keep one primary visual and
@@ -614,14 +633,16 @@ bounded, approximate, mixed-period, mixed-scope, or non-reconciling steps. In
 particular, an operating-profit figure is not a pre-charge net-result figure,
 and a prior-period expense cannot be used as a current-period change.
 
-For an isolated manual recapture, use the run delivery path:
+For an isolated manual recapture, keep the review capture in project scratch:
 
 ```bash
-node tool-api/chart.js review charts/<run-id>/[slug].html \
-  --screenshot --output charts/<run-id>/[slug].png
+node tool-api/chart.js review projects/<project-id>/output/[slug].html \
+  --screenshot --output projects/<project-id>/work/review/[slug].png
 ```
 
-The HTML and PNG are generated artifacts. Do not edit them directly.
+Use `image` or `run:charts` to publish a final PNG into `output/`; a manual
+review screenshot is diagnostic scratch. Generated HTML and PNG files must not
+be edited directly.
 
 ## 5. Optional presentation assembly
 
@@ -642,20 +663,22 @@ The presentation should:
 
 PowerPoint assembly belongs to the LLM orchestration layer. It is not an implementation responsibility of the chart renderer.
 
-## 6. Run delivery folder
+## 6. Project output folder
 
 The canonical delivery folder is:
 
 ```text
-charts/<run-id>/
+projects/<project-id>/output/
 ```
 
-Use a caller-supplied run ID. It may be a date, publication identifier, client slug, issue number, or another stable label; the workflow does not infer one from chart data.
+Use a caller-supplied project ID. It may be a date, publication identifier,
+client slug, issue number, or another stable label; the workflow does not infer
+one from chart data.
 
 The completed chart folder should contain:
 
 ```text
-charts/<run-id>/
+projects/<project-id>/output/
 ├── [slug-1].html
 ├── [slug-1].png
 ├── [slug-2].html
@@ -666,40 +689,40 @@ charts/<run-id>/
 ```
 
 The exact number of chart files depends on the number of accepted stories. When
-a PowerPoint deck is requested, add `tochnyi-charts-<run-id>.pptx` to the same
+a PowerPoint deck is requested, add `tochnyi-charts-<project-id>.pptx` to the same
 folder.
 
 Temporary or ad hoc review output belongs in
-`.work/<run-id>/review/`. Final PNGs belong in the local `charts/<run-id>/`
-delivery folder beside the HTML files and any requested PowerPoint presentation.
+`projects/<project-id>/work/review/`. Final PNGs belong in the same project's
+`output/` folder beside the HTML files and any requested PowerPoint presentation.
 
 ## 7. Finalize and flush
 
-After the retained specifications and delivery folder are complete, run:
+After the project specifications and output folder are complete, run:
 
 ```bash
-npm run run:finalize -- <run-id>
+npm run run:finalize -- <project-id>
 ```
 
 Finalization first reruns source-ledger validation with ChartSpec coverage. When
 a generated PowerPoint package exists, it opens that package and requires its
 slide count to exactly match `presentation-plan.json`. This rejects unrequested
 cover, title, agenda, divider, closing, or other extra slides before cleanup. A
-chart-only delivery does not require a `.pptx`. Finalization then deletes `.work/<run-id>/` and removes the
-legacy `previews/` tree. It
-preserves `input/` and does not delete `specs/runs/<run-id>/` or
-`charts/<run-id>/`.
+chart-only delivery does not require a `.pptx`. Finalization then deletes only
+`projects/<project-id>/work/`. It preserves `input/`, `source-ledger.json`,
+`project.json`, `specs/`, and `output/` in the same project folder.
 
-Use `npm run run:flush -- <run-id>` when only the selected run workspace should
-be removed. Use `npm run run:reset` before a cold-agent test to remove every
-transient workspace and legacy previews while retaining the source set,
-specifications, and chart folders.
+Use `npm run run:flush -- <project-id>` when only that project's `work/` subtree
+should be removed. Use `npm run run:reset` before a cold-agent test to remove
+`work/` from every project plus legacy `.work/`/`previews/` scratch while
+retaining each project's durable contents. Legacy `charts/` and `specs/runs/`
+are not deleted implicitly.
 
 ## Completion condition
 
-The batch run is complete only when:
+The project is complete only when:
 
-- The complete `input/` source set has been inventoried and reviewed.
+- The complete `projects/<project-id>/input/` source set has been inventoried and reviewed.
 - Each included story preserves the supplied claim or documented data-derived finding and has a clear central finding.
 - The source ledger records every story considered for production with an explicit
   selected, omitted, or merged disposition.
@@ -710,12 +733,12 @@ The batch run is complete only when:
 - Each chart has a validated ChartSpec.
 - Each rendered chart passes the applicable diagnostics.
 - Each accepted chart has a final PNG.
-- The HTML files and final PNGs are present in `charts/<run-id>/`.
+- The HTML files and final PNGs are present in `projects/<project-id>/output/`.
 - When a PowerPoint was requested, it has been assembled from those final images
   and its slide count exactly matches `presentation-plan.json`; by default this
   is one slide per accepted chart and zero non-chart slides.
-- The ChartSpecs are present in `specs/runs/<run-id>/`.
-- The run has been finalized, leaving no run-specific notes, scripts, logs,
-  downloads, review files, or package staging outside the retained `specs/` and
-  `charts/` folders. The original `input/` source set remains available.
+- The ChartSpecs are present in `projects/<project-id>/specs/`.
+- The project has been finalized, so `projects/<project-id>/work/` is absent
+  while `input/`, `source-ledger.json`, `project.json`, `specs/`, and `output/`
+  remain together.
 - Remaining omissions, direct source conflicts, source mismatches, warnings, or infrastructure defects are reported.

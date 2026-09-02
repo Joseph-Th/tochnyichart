@@ -5,13 +5,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 const { renderRegionalBreakdown } = require('../renderer/regional-workflow');
-const { initializeRunWorkspace, workspacePath } = require('../renderer/run-workspace');
+const { freshToolWorkspace } = require('./tool-workspace');
 
 const projectRoot = path.resolve(__dirname, '..');
-const runId = 'regional-routing-matrix';
-initializeRunWorkspace(projectRoot, runId, { createOutputs: false });
-const specDirectory = workspacePath(projectRoot, runId, 'specs');
-const chartDirectory = workspacePath(projectRoot, runId, 'rendered');
+const toolRoot = freshToolWorkspace(projectRoot, 'regional-routing-matrix');
+const specDirectory = path.join(toolRoot, 'specs');
+const chartDirectory = path.join(toolRoot, 'rendered');
 const defaultSeed = 0x5eedc0de;
 const syntheticDate = '2000-01-01';
 const sampleCount = 3;
