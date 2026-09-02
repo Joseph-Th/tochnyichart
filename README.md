@@ -70,7 +70,9 @@ All durable material stays inside the same project. `input/`,
 `source-ledger.json`, `project.json`, `specs/`, and `output/` are retained;
 temporary research notes, downloads, helper scripts, logs, review captures,
 renders, and staging stay under `work/`. Scratch subfolders are created only on
-demand. The entire `projects/` tree is ignored by Git. After the selected
+demand. Production project folders under `projects/<project-id>/` are ignored
+by Git; the tracked `projects/README.md` keeps the entrypoint visible in a clean
+checkout. After the selected
 ChartSpecs are complete, build every chart in ledger order with one command:
 
 ```bash
@@ -461,8 +463,9 @@ Keep implementation guidance in maintainer documentation. Keep the chart-author
 skill and Tool API focused on editorial decisions, semantic ChartSpec authoring,
 structured checks, and the correct workflow route.
 
-The entire local `projects/` tree is intentionally ignored. Each project keeps
-its input, ledger, ChartSpecs, delivery output, and disposable work together.
+Production project folders under `projects/` are intentionally ignored; only
+`projects/README.md` is tracked so the production entrypoint remains visible.
+Each project keeps its input, ledger, ChartSpecs, delivery output, and disposable work together.
 Legacy root `input/`, `.work/`, `charts/`, and `specs/runs/` remain ignored for
 migration safety but are not used for new production. Curated fixtures under
 `specs/examples/`, `specs/samples/`, and `specs/stress/` remain tracked.

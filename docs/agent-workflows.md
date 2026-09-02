@@ -39,8 +39,9 @@ produce the HTML charts, final PNGs, manifest, QA report, and
 divider, and closing slides. End with
 `npm run run:finalize -- <project-id>`, which removes only
 `projects/<project-id>/work/` and preserves `input/`, `source-ledger.json`,
-`project.json`, `specs/`, and `output/`. The entire project tree is ignored by
-Git. Finalization fails unless selected ledger
+`project.json`, `specs/`, and `output/`. Each production
+`projects/<project-id>/` folder is ignored by Git; the tracked
+`projects/README.md` only keeps the production entrypoint visible. Finalization fails unless selected ledger
 slugs and titles exactly match the final ChartSpecs.
 
 The Tool API described below handles individual chart production. The run chart

@@ -14,8 +14,10 @@ node_modules/
 # Logs
 *.log
 
-# Project-local input and generated production data
-/projects/
+# Project-local input and generated production data. Keep the tracked README so
+# the production entrypoint remains visible in a clean checkout.
+/projects/*
+!/projects/README.md
 
 # Legacy production locations kept ignored during migration/cleanup
 /input/

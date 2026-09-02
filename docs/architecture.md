@@ -125,9 +125,11 @@ accepted chart, captures final PNGs, optionally assembles
 `tochnyi-charts-<project-id>.pptx`, finalizes the project work subtree, and reports
 omissions or failures.
 
-The entire `projects/` tree is ignored by Git. Legacy root `input/`, `.work/`,
-`charts/`, and `specs/runs/` remain ignored only for migration safety. The
-repository hygiene check rejects project-local data if it is force-added.
+Production folders under `projects/<project-id>/` are ignored by Git. The
+tracked `projects/README.md` keeps the production entrypoint visible in a clean
+checkout. Legacy root `input/`, `.work/`, `charts/`, and `specs/runs/` remain
+ignored only for migration safety. The repository hygiene check rejects
+project-local data if it is force-added.
 
 ### Chart author
 

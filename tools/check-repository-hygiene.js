@@ -22,6 +22,7 @@ function transientReason(filePath) {
   const normalized = normalizeRepositoryPath(filePath);
   const lower = normalized.toLowerCase();
 
+  if (lower === 'projects/readme.md') return null;
   if (lower.startsWith('projects/')) return 'production project data must remain local';
   if (lower === 'input.txt' || lower.startsWith('input/')) return 'user input must remain local';
   if (lower === 'nul') return 'reserved-name scratch file must not be tracked';
@@ -81,6 +82,7 @@ function checkIgnoreContract(projectRoot) {
     'specs/arbitrary-run/chart.json'
   ];
   const mustTrack = [
+    'projects/README.md',
     'specs/examples/fixture.json',
     'specs/samples/fixture.json',
     'specs/stress/fixture.json',

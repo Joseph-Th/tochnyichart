@@ -91,7 +91,8 @@ Create `projects/<project-id>/input/`, put the source files there, then use
 Only `work/` is transient. Scratch subfolders are created on demand, and chart
 build staging also stays there. After delivery, run
 `npm run run:finalize -- <project-id>`; it verifies source/spec consistency and
-removes only `work/`. The entire `projects/` tree is ignored by Git.
+removes only `work/`. Production `projects/<project-id>/` folders are ignored by
+Git; `projects/README.md` is tracked only to keep the entrypoint visible.
 
 The Tool API is used once per accepted chart story. PowerPoint creation is a
 separate agent capability and must use the final generated PNGs rather than
@@ -256,5 +257,6 @@ any requested presentation belongs there as well. Authored production ChartSpecs
 belong in the same project's `specs/`. An individual `image` call does not retain
 HTML unless the author separately requests a render. Temporary or ad hoc review
 belongs in `projects/<project-id>/work/review/` and is removed during
-finalization. The entire local `projects/` tree is ignored by Git and checked by
-`npm run check:repo`.
+finalization. Production project folders under `projects/` are ignored by Git;
+the tracked `projects/README.md` is the sole entrypoint exception. This is checked
+by `npm run check:repo`.

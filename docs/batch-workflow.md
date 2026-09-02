@@ -122,11 +122,13 @@ scratch folders. When temporary material is needed, create it beneath
 `projects/<project-id>/work/`. Do not create project-specific scripts, data,
 captures, or staging directories at the repository root.
 
-The entire `projects/` tree is local production data and is ignored by Git. The
-repository retains legacy ignore rules for root `input/`, `.work/`, `charts/`,
-and `specs/runs/` only so old material cannot be accidentally committed during
-migration. New projects do not use those locations. Run `npm run check:repo`
-before committing; it fails if project or transient material is tracked.
+Each `projects/<project-id>/` folder is local production data and is ignored by
+Git. The tracked `projects/README.md` is the only repository file kept there so
+the production entrypoint is visible in a clean checkout. The repository retains
+legacy ignore rules for root `input/`, `.work/`, `charts/`, and `specs/runs/`
+only so old material cannot be accidentally committed during migration. New
+projects do not use those locations. Run `npm run check:repo` before committing;
+it fails if project or transient material is tracked.
 
 ## 1. Parse the assignment
 
