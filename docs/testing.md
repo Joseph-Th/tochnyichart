@@ -70,7 +70,7 @@ through its full responsive diagnostics. It checks:
   Pearson correlation as machine-readable diagnostics without drawing an
   inferred regression line.
 - The public `image` CLI publishes structured JSON plus the requested PNG.
-- Fixed square output is exactly 1080×1080 and retains no temporary HTML artifact.
+- Fixed square output is exactly 1080×1080 and publishes exactly one same-named companion HTML.
 - Regional `auto` output uses the same wide desktop viewport that anchors regional responsive diagnostics.
 - Zero diagnostic errors.
 - Regional workflow metadata in the rendered chart.
@@ -97,16 +97,20 @@ When changing a workflow or regional planner, select evidence by contract instea
 The wrapper contract intentionally exposes comparable fields:
 
 ```text
-workflow, specPath, htmlPath, assetVersion, recipe, bytes,
+workflow, specPath, htmlPath, recipe, bytes,
 warnings, review, diagnostics (regional only)
 ```
 
-The static image workflow has a separate artifact contract because its HTML is intentionally disposable:
+The static image workflow publishes the PNG and its self-contained companion HTML:
 
 ```text
-workflow, recipe, specPath, outputPath, bytes, profile,
-diagnostics, regionalDiagnostics, warnings, htmlRetained=false
+workflow, recipe, specPath, outputPath, htmlPath, bytes, profile,
+diagnostics, regionalDiagnostics, warnings, htmlRetained=true
 ```
+
+Every generated shell is self-contained: shell review rejects any `src`/`href`
+outside the embedded `data-tochnyi-asset` blocks, and a unit test verifies
+every `vendor/manifest.json` checksum.
 
 `profile.requestedViewport` comes from `renderer/workflow-contract.js`; `profile.actualDimensions` records the approved capture canvas. Only `auto` may expand for fit. A fixed profile must either preserve its exact dimensions or fail before publication.
 

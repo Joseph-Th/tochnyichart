@@ -13,7 +13,7 @@ const {
 const { REGIONAL_WORKFLOW } = require('./workflow-contract');
 const { slugify } = require('./render');
 const { normalizeRunId, normalizeArtifactSlug, deliveryPath } = require('./run-workspace');
-const { resolveImageProfile } = require('./image-profiles');
+const { defaultImageProfileId, resolveImageProfile } = require('./image-profiles');
 
 function defaultImageOutputPath(projectRoot, spec, options = {}) {
   const requestedProject = options.projectId || options.runId || process.env.TOCHNYI_PROJECT_ID || process.env.TOCHNYI_RUN_ID;
@@ -33,8 +33,8 @@ function validateImageOutputPath(outputPath) {
   return absolute;
 }
 
-function publishImage(stagedPath, outputPath) {
-  const target = validateImageOutputPath(outputPath);
+// Atomically replace target with stagedPath, keeping the previous file if the swap fails.
+function publishFile(stagedPath, target) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const token = `${process.pid}-${Date.now()}`;
   const incoming = `${target}.building-${token}`;
@@ -57,6 +57,15 @@ function publishImage(stagedPath, outputPath) {
     if (fs.existsSync(target)) fs.rmSync(backup, { force: true });
   }
   return target;
+}
+
+function publishImage(stagedPath, outputPath) {
+  return publishFile(stagedPath, validateImageOutputPath(outputPath));
+}
+
+// The self-contained, editable HTML ships next to its PNG with the same basename.
+function companionHtmlPath(pngPath) {
+  return pngPath.replace(/\.png$/i, '.html');
 }
 
 function staticDiagnosticSummary(diagnostics) {
@@ -84,7 +93,7 @@ function captureStaticImage(dependencies, htmlPath, pngPath, profile, options = 
       const { width, height } = profile.viewport;
       throw new Error(
         `Static image profile "${profile.id}" (${width}×${height}) cannot fit this chart without clipping. ` +
-        'Use the auto profile or another destination-compatible fixed profile; do not add pixel geometry to the ChartSpec. ' +
+        'Reduce secondary copy or chart density so the fixed publication shape fits. Use --profile auto only when variable-height output is explicitly acceptable; do not add pixel geometry to the ChartSpec. ' +
         `Renderer detail: ${error.message}`
       );
     }
@@ -96,7 +105,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.join(__dirname, '..'));
   const loaded = readSpecFile(specPath);
   const recipe = loaded.spec?.recipe || '';
-  const profile = resolveImageProfile(options.profile || 'auto', recipe);
+  const profile = resolveImageProfile(options.profile || defaultImageProfileId(recipe), recipe);
   const target = validateImageOutputPath(
     outputPath || defaultImageOutputPath(projectRoot, loaded.spec, options)
   );
@@ -108,6 +117,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
     renderRegional: renderRegionalBreakdown,
     capture: captureHtml,
     publish: publishImage,
+    publishHtml: publishFile,
     ...(options.dependencies || {})
   };
 
@@ -138,6 +148,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
     }
 
     const finalPath = dependencies.publish(tempPng, target);
+    const htmlPath = dependencies.publishHtml(tempHtml, companionHtmlPath(finalPath));
     const requestedViewport = { ...profile.viewport };
     const actualDimensions = { ...screenshot.dimensions };
     const fitMode = screenshot.canvasAttributes?.['data-canvas-fit-mode'] || 'natural';
@@ -156,6 +167,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
       recipe: rendered.recipe,
       specPath: loaded.specPath,
       outputPath: finalPath,
+      htmlPath,
       bytes: screenshot.bytes,
       profile: {
         id: profile.id,
@@ -171,7 +183,7 @@ function createStaticImage(specPath, outputPath, options = {}) {
       regionalDiagnostics,
       scatterDiagnostics,
       warnings: rendered.warnings || [],
-      htmlRetained: false
+      htmlRetained: true
     };
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -183,6 +195,8 @@ module.exports = {
   defaultImageOutputPath,
   validateImageOutputPath,
   publishImage,
+  publishFile,
+  companionHtmlPath,
   staticDiagnosticSummary,
   captureStaticImage
 };

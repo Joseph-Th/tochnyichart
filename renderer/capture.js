@@ -4,8 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
+
+// --dump-dom returns the whole page, including the engine and vendor code inlined into self-contained shells.
+const DOM_DUMP_MAX_BUFFER = 64 * 1024 * 1024;
 const os = require('node:os');
-const { STANDARD_DIAGNOSTIC_VIEWPORTS } = require('./workflow-contract');
+const {
+  STANDARD_STATIC_VIEWPORT,
+  STANDARD_DIAGNOSTIC_VIEWPORTS
+} = require('./workflow-contract');
 
 const DEFAULT_DIAGNOSTIC_VIEWPORTS = STANDARD_DIAGNOSTIC_VIEWPORTS;
 
@@ -102,6 +108,24 @@ function extractDataAttributes(dom, elementId = null, prefix = 'data-map-') {
   return result;
 }
 
+function trendLabelConsistencyFailure(trendAttributes, tolerance = 1) {
+  const attributes = trendAttributes || {};
+  const layoutState = attributes['data-trend-label-layout'];
+  if (layoutState === undefined) return null;
+  if (layoutState !== 'measured') {
+    return `Trend value-label layout did not settle before capture (state: ${layoutState}).`;
+  }
+  const centerError = Number(attributes['data-trend-label-center-error']);
+  if (!Number.isFinite(centerError)) {
+    return 'Trend value-label centering could not be verified before capture.';
+  }
+  if (Math.abs(centerError) > tolerance) {
+    return `Trend value labels are not horizontally centered on their points ` +
+      `(maximum center error ${centerError.toFixed(2)}px; allowed ${tolerance.toFixed(2)}px).`;
+  }
+  return null;
+}
+
 function commonBrowserArgs(profileDir, viewport) {
   return [
     '--headless=new',
@@ -122,7 +146,7 @@ function diagnoseHtml(htmlPath, options = {}) {
   if (!browser) throw new Error('No supported Edge or Chrome executable was found. Set TOCHNYI_BROWSER to override.');
 
   const absoluteHtml = path.resolve(htmlPath);
-  const viewport = options.viewport || { width: 1200, height: 900 };
+  const viewport = options.viewport || { ...STANDARD_STATIC_VIEWPORT };
   const query = new URLSearchParams({
     static: '1',
     captureWidth: String(viewport.width),
@@ -139,6 +163,7 @@ function diagnoseHtml(htmlPath, options = {}) {
     result = spawnSync(browser, [...commonBrowserArgs(profileDir, viewport), '--dump-dom', url], {
       encoding: 'utf8',
       timeout: options.timeout || 30000,
+      maxBuffer: DOM_DUMP_MAX_BUFFER,
       windowsHide: true
     });
   } finally {
@@ -236,7 +261,7 @@ function diagnoseHtmlResponsive(htmlPath, options = {}) {
 
 function captureHtml(htmlPath, outputPath, options = {}) {
   const requireViewportFit = options.requireViewportFit !== false;
-  const viewport = options.viewport || { width: 1200, height: 900 };
+  const viewport = options.viewport || { ...STANDARD_STATIC_VIEWPORT };
   let inspection = diagnoseHtml(htmlPath, {
     ...options,
     viewport,
@@ -297,6 +322,10 @@ function captureHtml(htmlPath, outputPath, options = {}) {
   if (inspection.diagnostics?.status === 'fail') {
     throw new Error('PNG capture refused because layout diagnostics still fail after a stable recheck.');
   }
+  const trendConsistencyFailure = trendLabelConsistencyFailure(inspection.trendAttributes);
+  if (trendConsistencyFailure) {
+    throw new Error(`PNG capture refused: ${trendConsistencyFailure}`);
+  }
   const browser = inspection.browser;
   const absoluteHtml = inspection.htmlPath;
   const absoluteOutput = path.resolve(outputPath || absoluteHtml.replace(/\.html?$/i, '.png'));
@@ -323,6 +352,7 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     result = spawnSync(browser, args, {
       encoding: 'utf8',
       timeout: options.timeout || 30000,
+      maxBuffer: DOM_DUMP_MAX_BUFFER,
       windowsHide: true
     });
   } finally {
@@ -367,6 +397,7 @@ module.exports = {
   diagnoseHtmlResponsive,
   extractLayoutDiagnostics,
   extractDataAttributes,
+  trendLabelConsistencyFailure,
   DEFAULT_DIAGNOSTIC_VIEWPORTS,
   findBrowser,
   pngDimensions

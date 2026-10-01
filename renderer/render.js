@@ -2,32 +2,27 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const crypto = require('node:crypto');
 const { validateSpec } = require('./validate');
 const { normalizeRunId, workspacePath } = require('./run-workspace');
 const TochnyiMaps = require('../lib/tochnyi-maps');
+const catalog = require('../recipes/catalog.json');
 const {
   AMCHARTS_VERSION,
-  MUKTA_FONT_CSS_URL,
-  amChartsScriptUrl
+  AMCHARTS_SCRIPTS,
+  MUKTA_FONT_CSS,
+  vendorPath
 } = require('./runtime-dependencies');
 
-const SHARED_ASSET_FILES = Object.freeze([
-  'tochnyi.css',
-  'tochnyi-charts.js',
-  'tochnyi-visual-plan.js',
-  'tochnyi-runtime.js',
-  'tochnyi-diagnostics.js',
-  'tochnyi-maps.js',
-  'tochnyi-map-runtime.js',
-  'tochnyi-logo.png',
-  'watermark.svg'
-]);
+const LIB_ROOT = path.join(__dirname, '..', 'lib');
+const IMAGE_ASSETS = Object.freeze({
+  'tochnyi-logo.png': 'image/png',
+  'watermark.svg': 'image/svg+xml'
+});
 
 function slugify(value) {
   return String(value)
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -49,65 +44,129 @@ function htmlEscape(value) {
     .replace(/"/g, '&quot;');
 }
 
-function ensureTrailingSlash(value) {
-  return value.endsWith('/') ? value : `${value}/`;
+// ---------- inline asset bundle ----------
+// Assets are read once per process; generated HTML is self-contained and renders offline.
+const assetCache = new Map();
+
+function readCached(absolutePath, encoding) {
+  const key = `${encoding || 'buffer'}:${absolutePath}`;
+  if (!assetCache.has(key)) assetCache.set(key, fs.readFileSync(absolutePath, encoding));
+  return assetCache.get(key);
 }
 
-function assetFingerprint(projectRoot) {
-  const hash = crypto.createHash('sha256');
-  SHARED_ASSET_FILES.forEach((filename) => {
-    const absolutePath = path.join(projectRoot, 'lib', filename);
-    if (!fs.existsSync(absolutePath)) return;
-    hash.update(filename);
-    hash.update('\0');
-    hash.update(fs.readFileSync(absolutePath));
-    hash.update('\0');
-  });
-  return hash.digest('hex').slice(0, 12);
+function dataUri(absolutePath, mediaType) {
+  return `data:${mediaType};base64,${readCached(absolutePath).toString('base64')}`;
 }
 
-function localAssetUrl(assetPrefix, filename, assetVersion) {
-  const base = `${assetPrefix}${filename}`;
-  return assetVersion
-    ? `${base}?v=${encodeURIComponent(assetVersion)}`
-    : base;
+function fontCss() {
+  const cssPath = vendorPath(MUKTA_FONT_CSS);
+  return readCached(cssPath, 'utf8').replace(/url\(([^)]+\.woff2)\)/g, (match, file) =>
+    `url(${dataUri(path.join(path.dirname(cssPath), file), 'font/woff2')})`);
 }
 
-function renderHtml(spec, options = {}) {
-  const assetPrefix = ensureTrailingSlash(options.assetPrefix || '../../lib/');
-  const assetVersion = options.assetVersion ? String(options.assetVersion) : '';
+function inlineScript(name, source) {
+  // A literal "</script" inside inlined code would end the element early.
+  const safe = source.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
+  return `<script data-tochnyi-asset="${htmlEscape(name)}">\n${safe}\n</script>`;
+}
+
+function inlineStyle(name, source) {
+  return `<style data-tochnyi-asset="${htmlEscape(name)}">\n${source.replace(/<\/style/gi, '<\\/style')}\n</style>`;
+}
+
+function libScript(filename) {
+  return inlineScript(`lib/${filename}`, readCached(path.join(LIB_ROOT, filename), 'utf8'));
+}
+
+// Exact-match fixes applied when a vendored file is inlined; the vendored file itself stays byte-identical
+// to upstream. amCharts derives its lazy-chunk base path from document.currentScript.src, which is empty
+// for an inline script, so the unguarded regex match crashes before am5 is defined. Lazy chunks are only
+// used by export plugins, which charts never load, so an empty base path is safe.
+const INLINE_PATCHES = Object.freeze({
+  [`amcharts5/${AMCHARTS_VERSION}/index.js`]: Object.freeze([{
+    find: '/(.*\\/)[^\\/]*$/.exec(_)[1]',
+    replace: '(/(.*\\/)[^\\/]*$/.exec(_)||[0,""])[1]'
+  }])
+});
+
+function vendorScript(relativePath) {
+  let source = readCached(vendorPath(relativePath), 'utf8');
+  for (const patch of INLINE_PATCHES[relativePath] || []) {
+    const occurrences = source.split(patch.find).length - 1;
+    if (occurrences !== 1) {
+      throw new Error(`Inline patch for vendor/${relativePath} expected 1 match of ${patch.find}, found ${occurrences}.`);
+    }
+    source = source.replace(patch.find, () => patch.replace);
+  }
+  return inlineScript(`vendor/${relativePath}`, source);
+}
+
+function imageAssetsScript() {
+  const assets = Object.fromEntries(Object.entries(IMAGE_ASSETS).map(([filename, mediaType]) =>
+    [filename, dataUri(path.join(LIB_ROOT, filename), mediaType)]));
+  return inlineScript('lib/brand-images', `window.TOCHNYI_ASSETS = ${JSON.stringify(assets)};`);
+}
+
+// ---------- editing guide ----------
+function commentSafe(value) {
+  return String(value || '').replace(/--/g, '–').replace(/>/g, '›');
+}
+
+function editingGuide(spec) {
+  const recipe = (catalog.recipes || []).find((entry) => entry.id === spec.recipe) || {};
+  const fields = Object.keys(spec).filter((key) => key !== 'recipe').join(', ');
+  return `<!--
+  TOCHNYI CHART: SELF-CONTAINED, EDITABLE FILE
+  Everything this page needs is embedded (chart engine, amCharts ${AMCHARTS_VERSION}, fonts, logo, watermark),
+  so it opens offline in any modern browser and can be handed over on its own.
+
+  HOW TO CHANGE THE CHART
+  Edit the ChartSpec JSON in <script id="tochnyi-spec"> directly below, then reopen the page. The chart,
+  axes, labels and layout are recomputed from it on load. Titles, subtitle, notes, sources, data values,
+  labels and highlights all live there. Keep field names and nesting as they are: change values, and
+  add or remove data rows in the same shape as the existing ones. Numbers and the text written about them
+  are separate fields (for example value vs displayValue, gap or benchmark labels, title, notes, facts):
+  when a number changes, update every label and sentence that states it. Do not edit the embedded engine
+  code (blocks marked data-tochnyi-asset); it is generated.
+
+  Recipe: ${commentSafe(spec.recipe)}
+  Purpose: ${commentSafe(recipe.purpose)}
+  Data: ${commentSafe(recipe.data)}
+  Top-level fields in this chart: ${commentSafe(fields)}
+-->`;
+}
+
+// ---------- shell ----------
+function renderHtml(spec) {
   const metadata = spec.metadata || {};
   const description = metadata.keyFinding || spec.subtitle || spec.title;
-  const payload = jsonForHtml(spec);
   const regionSet = spec.recipe === 'map.regional' ? TochnyiMaps.getRegionSet(spec.map.regionSet) : null;
   const mapScripts = regionSet
-    ? `\n  <script src="${htmlEscape(regionSet.geodataScript)}"></script>\n  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-maps.js', assetVersion))}"></script>\n  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-map-runtime.js', assetVersion))}"></script>`
-    : '';
+    ? [vendorScript(regionSet.geodataScript), libScript('tochnyi-maps.js'), libScript('tochnyi-map-runtime.js')]
+    : [];
 
   return `<!DOCTYPE html>
-<html lang="en" data-assets="${htmlEscape(assetPrefix)}" data-assets-version="${htmlEscape(assetVersion)}">
+${editingGuide(spec)}
+<html lang="en" data-standalone="true">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="${htmlEscape(description)}">
   <title>${htmlEscape(spec.title)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="${MUKTA_FONT_CSS_URL}" rel="stylesheet">
-  <link rel="stylesheet" href="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi.css', assetVersion))}">
-  <script src="${amChartsScriptUrl('index.js')}"></script>
-  <script src="${amChartsScriptUrl('xy.js')}"></script>
-  <script src="${amChartsScriptUrl('percent.js')}"></script>
-${mapScripts}
-  <script src="${amChartsScriptUrl('themes/Animated.js')}"></script>
-  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-charts.js', assetVersion))}"></script>
-  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-visual-plan.js', assetVersion))}"></script>
+  <script id="tochnyi-spec" type="application/json">${jsonForHtml(spec)}</script>
+${inlineStyle('vendor/fonts/mukta/mukta.css', fontCss())}
+${inlineStyle('lib/tochnyi.css', readCached(path.join(LIB_ROOT, 'tochnyi.css'), 'utf8'))}
+${AMCHARTS_SCRIPTS.filter((file) => !file.endsWith('themes/Animated.js')).map(vendorScript).join('\n')}
+${mapScripts.join('\n')}
+${vendorScript(AMCHARTS_SCRIPTS.find((file) => file.endsWith('themes/Animated.js')))}
+${libScript('tochnyi-charts.js')}
+${libScript('tochnyi-visual-plan.js')}
+${imageAssetsScript()}
 </head>
 <body>
   <div id="tochnyi-app"></div>
-  <script id="tochnyi-spec" type="application/json">${payload}</script>
-  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-runtime.js', assetVersion))}"></script>
-  <script src="${htmlEscape(localAssetUrl(assetPrefix, 'tochnyi-diagnostics.js', assetVersion))}"></script>
+${libScript('tochnyi-runtime.js')}
+${libScript('tochnyi-diagnostics.js')}
 </body>
 </html>
 `;
@@ -127,11 +186,8 @@ function renderValidatedSpecFile(specPath, normalized, outputPath, options = {})
   const projectRoot = path.resolve(options.projectRoot || path.join(__dirname, '..'));
   const absoluteSpecPath = path.resolve(specPath);
   const targetPath = path.resolve(outputPath || defaultOutputPath(projectRoot, normalized, options));
-  const targetDir = path.dirname(targetPath);
-  fs.mkdirSync(targetDir, { recursive: true });
-  const assetPrefix = ensureTrailingSlash(path.relative(targetDir, path.join(projectRoot, 'lib')).replace(/\\/g, '/') || '.');
-  const version = options.assetVersion || assetFingerprint(projectRoot);
-  const html = renderHtml(normalized, { assetPrefix, assetVersion: version });
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  const html = renderHtml(normalized);
   fs.writeFileSync(targetPath, html, 'utf8');
 
   return {
@@ -167,7 +223,6 @@ module.exports = {
   renderValidatedSpecFile,
   renderSpecFile,
   defaultOutputPath,
-  assetFingerprint,
   AMCHARTS_VERSION,
   slugify
 };

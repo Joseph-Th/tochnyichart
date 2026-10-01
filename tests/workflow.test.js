@@ -29,8 +29,8 @@ const {
   validateImageOutputPath,
   defaultImageOutputPath
 } = require('../renderer/image-workflow');
-const { resolveImageProfile } = require('../renderer/image-profiles');
-const { RUSSIA_GEODATA_URL } = require('../renderer/runtime-dependencies');
+const { defaultImageProfileId, resolveImageProfile } = require('../renderer/image-profiles');
+const { verifyVendorAssets, vendorPath } = require('../renderer/runtime-dependencies');
 const TochnyiMaps = require('../lib/tochnyi-maps');
 const {
   STANDARD_STATIC_VIEWPORT,
@@ -87,7 +87,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(orientation.sharedContract.staticImageContract.primaryArtifactRule, /final PNG.*primary chart artifact/i);
   assert.match(orientation.sharedContract.staticImageContract.visibleEvidenceRule, /Never rely on hover, tooltip, click, animation/i);
   assert.match(orientation.sharedContract.staticImageContract.treatmentRule, /mark families stay stable/i);
-  assert.equal(orientation.sharedContract.runtimeDependencies.offlineReady, false);
+  assert.equal(orientation.sharedContract.runtimeDependencies.offlineReady, true);
   assert.equal(
     orientation.sharedContract.runtimeDependencies.dependencies.find((entry) => entry.id === 'amcharts5-core').version,
     '5.20.3'
@@ -113,6 +113,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.batchWorkflow.sourceAndSpecVerificationCommand, 'npm run run:verify-source -- <project-id> --specs');
   assert.equal(orientation.batchWorkflow.chartBuildCommand, 'npm run run:charts -- <project-id>');
   assert.match(orientation.batchWorkflow.boundary, /orchestration layer still owns source interpretation/i);
+  assert.match(orientation.batchWorkflow.staticOutputRule, /fixed landscape.*1600×900/i);
   assert.deepEqual(
     orientation.decision.map((entry) => entry.workflow),
     ['regional-breakdown', 'standard-chart']
@@ -120,6 +121,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.equal(orientation.regional.workflow, 'regional-breakdown');
   assert.match(orientation.regional.guideCommand, /regional-guide russia/);
   assert.equal(orientation.standard.workflow, 'standard-chart');
+  assert.equal(orientation.standard.defaultImageProfile, 'landscape');
   assert.match(orientation.standard.renderCommand, /render <spec\.json>/);
   assert.match(orientation.standard.imageCommand, /image <spec\.json>/);
   assert.match(orientation.regional.imageCommand, /image <spec\.json>/);
@@ -157,7 +159,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
   assert.match(standard.staticImageContract.directLabelRule, /direct labels and visible orientation/i);
   assert.match(standard.staticImageContract.interactionRule, /Interactivity never rescues.*PNG/i);
   assert.match(standard.staticImageContract.profileRule, /publishing intent.*landscape.*square.*portrait/i);
-  assert.equal(standard.runtimeDependencies.offlineReady, false);
+  assert.equal(standard.runtimeDependencies.offlineReady, true);
   assert.match(standard.commands.image, /--profile auto\|landscape\|square\|portrait/);
   assert.match(standard.sourceEnrichment.normalizedOrientationRule, /same-unit peer|regional observation/i);
   assert.ok(standard.authoringRules.some((rule) => /source-family sweep/i));
@@ -170,6 +172,7 @@ test('agent orientation keeps standard and regional workflows distinct', () => {
 
   const regional = regionalAgentGuide('russia');
   assert.equal(regional.workflow, 'regional-breakdown');
+  assert.equal(regional.defaultImageProfile, 'auto');
   assert.deepEqual(regional.requiredDataItem, ['label', 'regionId or regionIds']);
   assert.ok(regional.automaticByDefault.includes('straight region-to-card leader routing'));
   assert.ok(regional.neverAuthor.includes('coordinates or pixel positions'));
@@ -195,7 +198,7 @@ test('fixed image profile failure preserves the prior PNG and gives model-safe g
           throw new Error('PNG capture refused because content still exceeds the canvas by 0px horizontally and 80px vertically.');
         }
       }
-    }), /profile "square" \(1080×1080\).*Use the auto profile.*do not add pixel geometry/is);
+    }), /profile "square" \(1080×1080\).*Reduce secondary copy.*--profile auto.*do not add pixel geometry/is);
     assert.equal(fs.readFileSync(outputPath, 'utf8'), 'previous-valid-image');
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -257,6 +260,7 @@ test('tool API manifest exposes a narrow chart-author surface', () => {
   assert.match(manifest.valueRepresentationContract.exceptionRule, /normalizationNote/i);
   assert.equal(manifest.commands.image.includes('image <spec.json>'), true);
   assert.deepEqual(manifest.imageProfiles.map((profile) => profile.id), ['auto', 'landscape', 'square', 'portrait']);
+  assert.deepEqual(manifest.imageProfiles[0].standardViewport, { width: 1600, height: 900 });
   assert.deepEqual(manifest.imageProfiles[0].regionalViewport, { width: 1450, height: 679 });
 
   const guide = standardAgentGuide('russia');
@@ -272,10 +276,10 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(result.stdout);
   assert.equal(manifest.name, 'Tochnyi Charts Tool API');
-  assert.equal(manifest.version, '1.23');
+  assert.equal(manifest.version, '1.24');
   assert.ok(manifest.recipeAmbiguityRules.length >= 6);
-  assert.equal(manifest.runtimeDependencies.offlineReady, false);
-  assert.equal(TochnyiMaps.getRegionSet('russia').geodataScript, RUSSIA_GEODATA_URL);
+  assert.equal(manifest.runtimeDependencies.offlineReady, true);
+  assert.ok(fs.existsSync(vendorPath(TochnyiMaps.getRegionSet('russia').geodataScript)), 'region geodata must be vendored');
   assert.match(manifest.staticImageContract.visibleEvidenceRule, /tooltip|panning/i);
   assert.equal(manifest.role, 'chart-author');
   assert.equal(manifest.resources.sourcePolicy, 'docs/source-enrichment.md');
@@ -294,8 +298,11 @@ test('public Tool API entrypoint returns the machine-readable manifest', () => {
 });
 
 test('static image profiles are semantic publishing choices with engine-owned dimensions', () => {
+  assert.equal(defaultImageProfileId('ranking.horizontal'), 'landscape');
+  assert.equal(defaultImageProfileId('map.regional'), 'auto');
   assert.deepEqual(resolveImageProfile('auto', 'ranking.horizontal').viewport, STANDARD_STATIC_VIEWPORT);
   assert.deepEqual(resolveImageProfile('auto', 'map.regional').viewport, REGIONAL_STATIC_VIEWPORT);
+  assert.deepEqual(resolveImageProfile('landscape', 'trend.line').viewport, { width: 1600, height: 900 });
   assert.deepEqual(resolveImageProfile('square', 'trend.line').viewport, { width: 1080, height: 1080 });
   assert.equal(resolveImageProfile('portrait', 'trend.line').adaptive, false);
   assert.equal(STANDARD_DIAGNOSTIC_VIEWPORTS[0], STANDARD_STATIC_VIEWPORT);
@@ -303,7 +310,46 @@ test('static image profiles are semantic publishing choices with engine-owned di
   assert.throws(() => resolveImageProfile('poster', 'trend.line'), /Unknown image profile/);
 });
 
-test('static image workflow routes a standard spec, captures a strict profile, and retains no HTML artifact', () => {
+test('static image workflow defaults standard charts to fixed landscape', () => {
+  const tempDir = tempDirectory('tochnyi-static-default-landscape-');
+  const outputPath = path.join(tempDir, 'chart.png');
+  let capturedOptions = null;
+  try {
+    const result = createStaticImage(example('ai95-price-spike.json'), outputPath, {
+      projectRoot: root,
+      dependencies: {
+        renderStandard(specPath, htmlPath) {
+          fs.writeFileSync(htmlPath, '<!DOCTYPE html><div>fixture</div>', 'utf8');
+          return { workflow: 'standard-chart', recipe: 'comparison.benchmark-gap', warnings: [] };
+        },
+        renderRegional() {
+          throw new Error('standard image must not route through regional rendering');
+        },
+        capture(htmlPath, pngPath, options) {
+          capturedOptions = options;
+          fs.writeFileSync(pngPath, 'png-fixture', 'utf8');
+          return {
+            bytes: 11,
+            dimensions: { width: 1600, height: 900 },
+            diagnostics: { status: 'pass', summary: { errors: 0, warnings: 0 } },
+            chartAttributes: {},
+            canvasAttributes: {}
+          };
+        },
+        publish: publishImage
+      }
+    });
+    assert.equal(result.profile.id, 'landscape');
+    assert.equal(result.profile.adaptive, false);
+    assert.deepEqual(capturedOptions.viewport, { width: 1600, height: 900 });
+    assert.equal(capturedOptions.adaptiveCanvas, false);
+    assert.equal(result.profile.expanded, false);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('static image workflow routes a standard spec, captures a strict profile, and publishes the companion HTML', () => {
   const tempDir = tempDirectory('tochnyi-static-image-');
   const outputPath = path.join(tempDir, 'chart.png');
   let capturedOptions = null;
@@ -339,7 +385,9 @@ test('static image workflow routes a standard spec, captures a strict profile, a
     assert.equal(result.profile.fitMode, 'natural');
     assert.equal(result.profile.stageDelta, 0);
     assert.equal(result.profile.expanded, false);
-    assert.equal(result.htmlRetained, false);
+    assert.equal(result.htmlRetained, true);
+    assert.equal(result.htmlPath, path.join(tempDir, 'chart.html'));
+    assert.equal(fs.readFileSync(result.htmlPath, 'utf8'), '<!DOCTYPE html><div>fixture</div>');
     assert.equal(result.diagnostics.status, 'pass');
     assert.deepEqual(capturedOptions.viewport, { width: 1080, height: 1080 });
     assert.equal(capturedOptions.autoFit, true);
@@ -417,7 +465,7 @@ test('catalog gives an LLM recipe definitions plus compact static-image decision
   const catalog = JSON.parse(result.stdout);
   assert.ok(Array.isArray(catalog.recipes) && catalog.recipes.length > 0);
   assert.deepEqual(catalog.imageProfiles.map((profile) => profile.id), ['auto', 'landscape', 'square', 'portrait']);
-  assert.equal(catalog.runtimeDependencies.offlineReady, false);
+  assert.equal(catalog.runtimeDependencies.offlineReady, true);
   assert.equal(catalog.decision.primaryKey, 'quantitative relationship and data shape');
   assert.ok(Array.isArray(catalog.decision.selectionRules));
   assert.ok(catalog.decision.selectionRules.some((entry) => entry.use === 'ranking.horizontal'));
@@ -547,4 +595,9 @@ test('workflow helpers explain malformed JSON files with structured context', ()
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('vendored runtime assets match their manifest checksums', () => {
+  const result = verifyVendorAssets();
+  assert.equal(result.valid, true, result.problems.join('; '));
 });

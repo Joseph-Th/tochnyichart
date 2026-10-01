@@ -23,7 +23,7 @@
 
     /* Grid and quantitative marks */
     --tochnyi-grid-opacity: 0.3;
-    --tochnyi-column-fill-opacity: 0.66;
+    --tochnyi-column-fill-opacity: 1;
     --tochnyi-watermark-opacity: 0.085;
     --tochnyi-watermark-opacity-quiet: 0.065;
     --tochnyi-watermark-opacity-corner: 0.10;
@@ -36,7 +36,7 @@
 
     /* Spacing */
     --tochnyi-padding: 40px;
-    --tochnyi-max-width: 1200px;
+    --tochnyi-max-width: 1520px;
     --tochnyi-logo-height: 56px;
     --tochnyi-logo-height-compact: 48px;
 }
@@ -535,6 +535,14 @@ body.tochnyi-regional-matrix-page {
     text-align: right;
 }
 
+.tochnyi-credits {
+    margin-top: 15px;
+    margin-left: auto;
+    font-size: 13px;
+    color: #737b82;
+    text-align: right;
+}
+
 a.tochnyi-analysis {
     color: var(--tochnyi-blue);
     text-decoration: none;
@@ -629,6 +637,12 @@ a.tochnyi-analysis:hover {
     width: min(1200px, 100%);
 }
 
+/* Grouped comparisons lay out from the measured stage, so they use the wider
+   publishing column; fixed-viewBox recipes keep the reviewed 1200px column. */
+.tochnyi-v2.recipe-comparison-grouped {
+    width: min(1440px, 100%);
+}
+
 .tochnyi-v2 .tochnyi-title {
     line-height: 1.08;
     text-wrap: balance;
@@ -650,11 +664,11 @@ a.tochnyi-analysis:hover {
 }
 
 .tochnyi-v2.title-left .tochnyi-title {
-    max-width: 1000px;
+    max-width: 1240px;
 }
 
 .tochnyi-v2.title-left .tochnyi-subtitle {
-    max-width: 980px;
+    max-width: 1200px;
 }
 
 .tochnyi-v2.density-minimal .tochnyi-header {
@@ -889,17 +903,18 @@ a.tochnyi-analysis:hover {
 }
 
 .tochnyi-bottom {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
     margin-top: 13px;
     padding-top: 10px;
     border-top: 1px solid #eceff1;
 }
 
 .tochnyi-v2 .tochnyi-source,
-.tochnyi-v2 .tochnyi-analysis {
+.tochnyi-v2 .tochnyi-analysis,
+.tochnyi-v2 .tochnyi-credits {
     float: none;
     clear: none;
     margin-top: 0;
@@ -913,8 +928,29 @@ a.tochnyi-analysis:hover {
     text-decoration: underline;
 }
 
-.tochnyi-v2 .tochnyi-analysis {
-    margin-left: auto;
+.tochnyi-bottom-start,
+.tochnyi-bottom-end {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tochnyi-bottom-end { align-items: flex-end; text-align: right; }
+
+.tochnyi-v2 .tochnyi-source-additional::before { content: ''; }
+
+.tochnyi-footnote {
+    max-width: 480px;
+    color: #737b82;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.tochnyi-v2 .tochnyi-credits {
+    color: #4a525b;
+    font-weight: 600;
 }
 
 .tochnyi-headline-stage {
@@ -2221,9 +2257,13 @@ a.tochnyi-analysis:hover {
     .tochnyi-emphasis-rail { min-height: 58px; padding: 6px 8px 0; }
     .tochnyi-v2 .tochnyi-chart-container.standard { height: 480px; }
     .tochnyi-v2 .tochnyi-chart-container.tall { height: 620px; }
-    .tochnyi-v2 .tochnyi-bottom { flex-direction: column; align-items: stretch; }
+    .tochnyi-v2 .tochnyi-bottom { grid-template-columns: 1fr; gap: 6px; }
+    .tochnyi-v2 .tochnyi-bottom-end { align-items: flex-start; text-align: left; }
+    .tochnyi-v2 .tochnyi-footnote { max-width: 100%; text-align: left; }
+    .tochnyi-v2 .tochnyi-footnote.empty { display: none; }
     .tochnyi-v2 .tochnyi-source { max-width: 100%; overflow-wrap: anywhere; }
     .tochnyi-v2 .tochnyi-analysis { max-width: 100%; margin-left: 0; text-align: left; overflow-wrap: anywhere; }
+    .tochnyi-v2 .tochnyi-credits { max-width: 100%; margin-left: 0; text-align: left; overflow-wrap: anywhere; }
     .tochnyi-context-rail { grid-template-columns: 1fr; gap: 8px; }
     .tochnyi-basis-rail { grid-template-columns: 1fr; gap: 10px; padding: 12px 13px; }
     .tochnyi-basis-items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
@@ -2330,3 +2370,23 @@ a.tochnyi-analysis:hover {
     text-decoration: underline;
     text-decoration-thickness: 2px;
 }
+
+/* ===== Grouped comparison (comparison.grouped) ===== */
+.tochnyi-grouped-svg { font-family: var(--tochnyi-font); }
+.tochnyi-grouped-stage { padding: 4px 0 0; place-items: stretch; }
+.tochnyi-grouped-stage svg { width: 100%; height: 100%; }
+.tochnyi-grouped-baseline { stroke: #b9bec4; stroke-width: 1; }
+.tochnyi-grouped-svg .tochnyi-svg-grid { stroke: #e6e8eb; }
+.tochnyi-grouped-svg .tochnyi-svg-tick { fill: #7b838c; font-size: 14px; }
+.tochnyi-grouped-legend { fill: #4a525b; font-size: 16px; font-weight: 600; }
+.tochnyi-grouped-panel-title { fill: var(--tochnyi-black); font-size: 18px; font-weight: 700; }
+.tochnyi-grouped-category { fill: #1b2127; font-size: 17px; font-weight: 600; }
+.tochnyi-grouped-value { fill: var(--tochnyi-black); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tochnyi-grouped-value.compact { font-size: 13px; }
+.tochnyi-grouped-annotation { fill: #7b838c; font-size: 13px; font-weight: 500; }
+.tochnyi-grouped-detail { fill: #7b838c; font-size: 13px; font-weight: 500; }
+.tochnyi-grouped-detail.inside { font-weight: 700; }
+.tochnyi-grouped-svg .on-dark { fill: #ffffff; }
+.tochnyi-grouped-svg .on-light { fill: #111418; }
+.tochnyi-grouped-reference-value { fill: var(--tochnyi-black); font-size: 16px; font-weight: 700; }
+.tochnyi-grouped-reference-label { fill: #4a525b; font-size: 13px; font-weight: 500; }

@@ -243,6 +243,17 @@ function matrixObservationDisplay(item) {
   return item?.column ? `${row} · ${item.column}` : row;
 }
 
+function groupedTrendObservationKey(item) {
+  const label = normalizedSeriesLabel(item?.specLabel || item?.label);
+  const group = normalizedSeriesLabel(item?.group);
+  return group && label ? `${group}\u0000${label}` : label;
+}
+
+function groupedTrendObservationDisplay(item) {
+  const label = item?.specLabel || item?.label || '';
+  return item?.group ? `${label} · ${item.group}` : label;
+}
+
 function normalizedSeriesLabel(value) {
   return String(value || '')
     .toLowerCase()
@@ -769,6 +780,7 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
   const matrixRows = new Set();
   const matrixColumns = new Set();
   const hasMatrixColumns = audit.comparableObservations.some((observation) => isText(observation?.column));
+  const hasSeriesGroups = audit.comparableObservations.some((observation) => isText(observation?.group));
   audit.comparableObservations.forEach((observation, index) => {
     const observationPrefix = `${prefix}.visualEvidenceAudit.comparableObservations[${index}]`;
     if (!observation || typeof observation !== 'object' || Array.isArray(observation)) {
@@ -790,6 +802,12 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     if (observation.specLabel !== undefined && !isText(observation.specLabel)) {
       errors.push(`${observationPrefix}.specLabel must be a non-empty string when provided.`);
     }
+    if (observation.group !== undefined && !isText(observation.group)) {
+      errors.push(`${observationPrefix}.group must be a non-empty string when provided.`);
+    }
+    if (hasSeriesGroups && !isText(observation.group)) {
+      errors.push(`${observationPrefix}.group is required because this evidence audit inventories grouped series.`);
+    }
     if (observation.column !== undefined && !isText(observation.column)) {
       errors.push(`${observationPrefix}.column must be a non-empty string when provided.`);
     }
@@ -810,9 +828,13 @@ function validateVisualEvidenceAudit(candidate, prefix, errors) {
     }
     const row = normalizedSeriesLabel(observation.specLabel || observation.label);
     const column = normalizedSeriesLabel(observation.column);
-    const label = matrixObservationKey(observation);
+    const label = hasMatrixColumns
+      ? matrixObservationKey(observation)
+      : hasSeriesGroups
+        ? groupedTrendObservationKey(observation)
+        : normalizedSeriesLabel(observation.specLabel || observation.label);
     if (label && labels.has(label)) {
-      errors.push(`${observationPrefix} duplicates another comparable observation${hasMatrixColumns ? ' row-column cell' : ' label'}.`);
+      errors.push(`${observationPrefix} duplicates another comparable observation${hasMatrixColumns ? ' row-column cell' : hasSeriesGroups ? ' group-label pair' : ' label'}.`);
     }
     if (label) labels.add(label);
     if (row) matrixRows.add(row);
@@ -973,28 +995,39 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     return;
   }
   const plottedItems = ['trend.stacked', 'composition.compared'].includes(spec?.recipe) ? stackedItems : data;
+  const groupedTrend = spec?.recipe === 'trend.line' && plottedItems.some((item) => isText(item?.group));
   const plottedLabels = new Set(plottedItems.map((item) =>
-    spec?.recipe === 'matrix.heat' ? matrixObservationKey(item) : normalizedSeriesLabel(item?.label)
+    spec?.recipe === 'matrix.heat'
+      ? matrixObservationKey(item)
+      : groupedTrend
+        ? groupedTrendObservationKey(item)
+        : normalizedSeriesLabel(item?.label)
   ).filter(Boolean));
   const referenceLabels = new Set(references.map((reference) => normalizedSeriesLabel(reference?.label)).filter(Boolean));
   const missing = observations
     .filter((observation) => {
       const label = spec?.recipe === 'matrix.heat'
         ? matrixObservationKey(observation)
-        : normalizedSeriesLabel(observation?.specLabel || observation?.label);
+        : groupedTrend
+          ? groupedTrendObservationKey(observation)
+          : normalizedSeriesLabel(observation?.specLabel || observation?.label);
       if (plottedLabels.has(label)) return false;
       return !(label === denominatorLabel && referenceLabels.has(label));
     })
-    .map(matrixObservationDisplay)
+    .map(groupedTrend ? groupedTrendObservationDisplay : matrixObservationDisplay)
     .filter(Boolean);
   const mismatched = observations.filter((observation) => {
     const label = spec?.recipe === 'matrix.heat'
       ? matrixObservationKey(observation)
-      : normalizedSeriesLabel(observation?.specLabel || observation?.label);
+      : groupedTrend
+        ? groupedTrendObservationKey(observation)
+        : normalizedSeriesLabel(observation?.specLabel || observation?.label);
     const item = plottedItems.find((candidate) =>
       spec?.recipe === 'matrix.heat'
         ? matrixObservationKey(candidate) === label
-        : normalizedSeriesLabel(candidate?.label) === label
+        : groupedTrend
+          ? groupedTrendObservationKey(candidate) === label
+          : normalizedSeriesLabel(candidate?.label) === label
     );
     if (!item && label === denominatorLabel) {
       const reference = references.find((candidate) => normalizedSeriesLabel(candidate?.label) === label);
@@ -1017,7 +1050,7 @@ function validateVisualEvidenceCoverage(candidate, spec, errors) {
     }
     return typeof item.low !== 'number' || typeof item.high !== 'number' ||
       Math.abs(item.low - observation.low) > 1e-9 || Math.abs(item.high - observation.high) > 1e-9;
-  }).map(matrixObservationDisplay).filter(Boolean);
+  }).map(groupedTrend ? groupedTrendObservationDisplay : matrixObservationDisplay).filter(Boolean);
   if (missing.length || mismatched.length) {
     errors.push(
       `ChartSpec ${candidate.outputSlug} collapses a richer same-scale dataset. ` +

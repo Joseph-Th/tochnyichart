@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('node:path');
-const { renderValidatedSpecFile, assetFingerprint } = require('./render');
+const { renderValidatedSpecFile } = require('./render');
 const { diagnoseHtmlResponsive } = require('./capture');
 const { regionalWorkflowGuide } = require('./agent-workflow');
 const {
@@ -101,10 +101,8 @@ function assertNaturalRegionalRuns(runs) {
 function renderRegionalBreakdown(specPath, outputPath, options = {}) {
   const checked = validateRegionalSpec(specPath);
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..'));
-  const assetVersion = options.assetVersion || assetFingerprint(projectRoot);
   const rendered = renderValidatedSpecFile(checked.specPath, checked.validation.normalized, outputPath, {
     projectRoot,
-    assetVersion,
     runId: options.projectId || options.runId,
     warnings: checked.validation.warnings
   });
@@ -134,7 +132,6 @@ function renderRegionalBreakdown(specPath, outputPath, options = {}) {
     workflow: REGIONAL_WORKFLOW,
     specPath: checked.specPath,
     htmlPath: rendered.htmlPath,
-    assetVersion,
     recipe: checked.validation.normalized.recipe,
     bytes: rendered.bytes,
     regionSet: checked.validation.normalized.map.regionSet,

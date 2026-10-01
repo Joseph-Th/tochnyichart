@@ -49,7 +49,7 @@ tool-api/chart.js + ChartSpec contract
 deterministic chart engine
     |
     v
-final PNG, with disposable HTML and diagnostics when needed
+final PNG plus its self-contained, editable HTML
 ```
 
 The Tool API exposes:
@@ -58,7 +58,7 @@ The Tool API exposes:
 - Workflow orientation and recipe guidance.
 - The `ChartSpec` schema and recipe catalog.
 - Validated examples.
-- A first-class static `image` command that validates, routes, renders, diagnoses the target capture, and publishes a PNG without retaining its temporary HTML shell.
+- A first-class static `image` command that validates, routes, renders, diagnoses the target capture, and publishes a PNG with its same-named self-contained HTML.
 - Rendering, diagnostics, and review commands for HTML-level inspection.
 - Structured JSON results and failure signals.
 
@@ -97,13 +97,16 @@ It owns:
 - Browser diagnostics, screenshots, and performance checks.
 - Automated tests and fixture generation.
 
-The browser shell currently has an explicit external-runtime boundary. Core
-amCharts JavaScript is loaded from a version-pinned CDN release. The Mukta
-webfont and Russia geodata remain provider-managed remote dependencies, so the
-current capture stack is not an air-gapped/offline bundle. That dependency
-contract is machine-readable through the Tool API. Moving those assets local is
-a maintainer dependency/licensing change, not a ChartSpec option and not a
-reason for chart authors to edit generated HTML.
+The browser shell is self-contained. `renderer/render.js` inlines the engine
+stylesheet and scripts from `lib/`, the vendored amCharts release, Russia
+geodata, and Mukta webfont from `vendor/`, and the brand images, so every
+generated HTML renders offline and capture needs no network. The embedded
+ChartSpec sits at the top of the file under an editing guide; the shell review
+strips the marked `data-tochnyi-asset` blocks and rejects anything else that
+references an external file. `vendor/manifest.json` pins each vendored file by
+SHA-256 (verified by the unit tests) and `vendor/README.md` records provenance
+and licences. The dependency contract is machine-readable through the Tool API
+as `runtimeDependencies`.
 
 Infrastructure work is performed only when the task explicitly concerns the engine, validation rules, rendering behavior, diagnostics, performance, tests, or extension of the Tool API.
 

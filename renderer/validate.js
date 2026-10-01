@@ -41,7 +41,8 @@ const ICONS = new Set(['dot', 'person', 'shield', 'warehouse', 'pause', 'exit', 
 const VISUAL_TYPES = new Set(['auto', 'number', 'progress', 'pictogram']);
 const SHARED_SCALE_RECIPES = new Set([
   'comparison.change', 'comparison.scenarios', 'comparison.diverging', 'comparison.range', 'comparison.benchmark-gap', 'comparison.dumbbell',
-  'comparison.area-squares', 'matrix.heat', 'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components'
+  'comparison.area-squares', 'matrix.heat', 'trend.line', 'trend.stacked', 'ranking.horizontal', 'composition.components',
+  'comparison.grouped'
 ]);
 const LEGACY_RECIPES = new Set(['story.facets']);
 const DISABLED_RECIPES = new Map([
@@ -60,20 +61,24 @@ const DISABLED_RECIPES = new Map([
 ]);
 
 const ROOT_KEYS = new Set([
-  'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'analysis', 'data', 'references', 'measure',
+  'version', 'recipe', 'title', 'subtitle', 'date', 'source', 'analysis', 'credits', 'data', 'references', 'panels', 'measure',
   'xMeasure', 'basis', 'emphasis', 'primaryMetric', 'supportingFacts', 'visual', 'note', 'narrative', 'options', 'metadata', 'map', 'relationship', 'timeline',
   'events'
 ]);
-const SOURCE_KEYS = new Set(['name', 'period', 'url']);
+const SOURCE_KEYS = new Set(['name', 'period', 'url', 'additional']);
+const ADDITIONAL_SOURCE_KEYS = new Set(['name', 'period', 'url']);
+const PANEL_KEYS = new Set(['id', 'title', 'measure']);
+const SERIES_SCALES = new Set(['categorical', 'sequential']);
 const ANALYSIS_KEYS = new Set(['name', 'url']);
+const CREDITS_KEYS = new Set(['dataGatheredBy', 'analysisBy']);
 const DATA_KEYS = new Set([
   'id', 'regionId', 'regionIds', 'callout', 'calloutSide', 'calloutOrder', 'label', 'column', 'quantity', 'group', 'icon', 'direction', 'value', 'xValue', 'xDisplayValue', 'low', 'high',
   'benchmark', 'benchmarkDisplayValue', 'gapDisplayValue', 'benchmarkRelation', 'gapTone', 'start', 'end', 'duration', 'durationUnit', 'displayValue', 'detail', 'annotation', 'tone', 'status', 'role', 'valueStatus',
-  'period', 'scope', 'relationshipRole', 'segments'
+  'period', 'scope', 'relationshipRole', 'segments', 'panel'
 ]);
 const X_MEASURE_KEYS = new Set(['quantity', 'unit', 'axisTitle', 'prefix', 'suffix', 'decimals', 'minimum', 'maximum', 'scale']);
 const STACK_SEGMENT_KEYS = new Set(['label', 'value', 'displayValue', 'tone']);
-const REFERENCE_KEYS = new Set(['value', 'label', 'tone', 'lineStyle']);
+const REFERENCE_KEYS = new Set(['value', 'endValue', 'label', 'tone', 'lineStyle']);
 const EVENT_KEYS = new Set(['label', 'afterLabel', 'tone', 'lineStyle']);
 const EVENT_RECIPES = new Set(['trend.line', 'trend.stacked']);
 const MEASURE_KEYS = new Set([
@@ -87,7 +92,7 @@ const BASIS_KEYS = new Set(['type', 'label', 'formula', 'items']);
 const BASIS_ITEM_KEYS = new Set(['role', 'label', 'value', 'low', 'high', 'displayValue', 'unit', 'valueStatus', 'tone']);
 const VISUAL_KEYS = new Set(['type', 'icon', 'total', 'filled', 'columns']);
 const NARRATIVE_KEYS = new Set(['frame', 'density', 'emphasis']);
-const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'animate', 'labelMode']);
+const OPTION_KEYS = new Set(['height', 'sort', 'showLegend', 'showLabels', 'showPoints', 'independentYAxes', 'animate', 'labelMode', 'seriesScale']);
 const METADATA_KEYS = new Set(['slug', 'topic', 'country', 'dataPeriod', 'keyFinding']);
 const MAP_KEYS = new Set([
   'regionSet', 'callouts', 'calloutDistribution', 'summaryPosition', 'summaryDisplay',
@@ -284,20 +289,34 @@ function isMagnitudeOnlyDisplayValue(value) {
   return /^[≈~<>+\-−]?\s*\d[\d.,]*(?:\s*(?:k|m|mn|bn|tn))?$/i.test(normalized);
 }
 
+// comparison.grouped panels may carry their own measure; every other recipe
+// (and an unpanelled grouped chart) reads the top-level measure.
+function itemMeasure(spec, item) {
+  if (spec.recipe !== 'comparison.grouped' || !Array.isArray(spec.panels) || !isObject(item)) return spec.measure || {};
+  const panel = spec.panels.find((entry) => isObject(entry) && entry.id === item.panel);
+  return { ...(spec.measure || {}), ...(isObject(panel?.measure) ? panel.measure : {}) };
+}
+
+function measureUnitText(measure) {
+  return measure?.unit || measure?.suffix || measure?.prefix;
+}
+
 function validateVisibleUnits(spec, errors) {
   if (['map.regional', 'story.facets'].includes(spec.recipe)) return;
-  const unit = spec.measure?.unit || spec.measure?.suffix || spec.measure?.prefix;
-  if (!unit) return;
+  const unit = measureUnitText(spec.measure);
   const context = `${spec.title || ''} ${spec.subtitle || ''}`;
-  const contextDefinesUnit = visibleTextContainsUnit(context, unit);
   (spec.data || []).forEach((item, index) => {
     if (!isObject(item) || !isMagnitudeOnlyDisplayValue(item.displayValue)) return;
-    if (contextDefinesUnit || visibleTextContainsUnit(item.displayValue, unit)) return;
+    const itemUnit = measureUnitText(itemMeasure(spec, item));
+    if (!itemUnit) return;
+    if (visibleTextContainsUnit(context, itemUnit) || visibleTextContainsUnit(item.displayValue, itemUnit)) return;
     errors.push(
-      `data[${index}].displayValue "${item.displayValue}" is unitless while measure.unit is "${unit}"; ` +
+      `data[${index}].displayValue "${item.displayValue}" is unitless while measure.unit is "${itemUnit}"; ` +
       'add the unit to displayValue or state it explicitly in the title or subtitle.'
     );
   });
+  if (!unit) return;
+  const contextDefinesUnit = visibleTextContainsUnit(context, unit);
   (spec.data || []).forEach((item, index) => {
     if (!isObject(item) || !isMagnitudeOnlyDisplayValue(item.benchmarkDisplayValue)) return;
     if (contextDefinesUnit || visibleTextContainsUnit(item.benchmarkDisplayValue, unit)) return;
@@ -324,10 +343,19 @@ function normalizeSource(source) {
       .replace(/^(?:Ъ|Коммерсантъ?|Kommersant)\s*[:—-]\s*(?=[«“"'])/i, '')
       .trim();
   }
+  function cleanEntry(entry) {
+    if (!isObject(entry)) return entry;
+    return {
+      name: cleanSourceName(entry.name),
+      ...(entry.period !== undefined ? { period: typeof entry.period === 'string' ? entry.period.trim() : entry.period } : {}),
+      ...(entry.url !== undefined ? { url: typeof entry.url === 'string' ? entry.url.trim() : entry.url } : {})
+    };
+  }
   return {
-    name: cleanSourceName(source.name),
-    ...(source.period !== undefined ? { period: typeof source.period === 'string' ? source.period.trim() : source.period } : {}),
-    ...(source.url !== undefined ? { url: typeof source.url === 'string' ? source.url.trim() : source.url } : {})
+    ...cleanEntry(source),
+    ...(source.additional !== undefined
+      ? { additional: Array.isArray(source.additional) ? source.additional.map(cleanEntry) : source.additional }
+      : {})
   };
 }
 
@@ -376,8 +404,11 @@ function normalizeSpec(input) {
   spec.options.sort = spec.options.sort || 'none';
   spec.options.showLegend = spec.options.showLegend === undefined ? spec.recipe !== 'relationship.scatter' : spec.options.showLegend;
   spec.options.showLabels = spec.options.showLabels === undefined ? true : spec.options.showLabels;
+  spec.options.showPoints = spec.options.showPoints === undefined ? true : spec.options.showPoints;
+  spec.options.independentYAxes = spec.options.independentYAxes === undefined ? false : spec.options.independentYAxes;
   spec.options.animate = spec.options.animate === undefined ? true : spec.options.animate;
   spec.options.labelMode = spec.options.labelMode || (spec.recipe === 'ranking.horizontal' ? 'outside' : 'auto');
+  if (spec.recipe === 'comparison.grouped') spec.options.seriesScale = spec.options.seriesScale || 'categorical';
 
   spec.narrative = isObject(spec.narrative) ? spec.narrative : {};
   spec.narrative.frame = spec.narrative.frame || 'neutral';
@@ -447,7 +478,7 @@ function normalizeSpec(input) {
 
   if (Array.isArray(spec.data)) {
     spec.data = spec.data.map((item) => {
-      if (!isObject(item) || item.direction !== undefined || ['matrix.heat', 'relationship.scatter'].includes(spec.recipe)) return item;
+      if (!isObject(item) || item.direction !== undefined || ['matrix.heat', 'relationship.scatter', 'comparison.grouped'].includes(spec.recipe)) return item;
       const inferredDirection = VisualPlan.inferChangeDirection(item, spec);
       return inferredDirection === 'up' || inferredDirection === 'down'
         ? { ...item, direction: inferredDirection }
@@ -517,10 +548,25 @@ function validateStructure(input, errors) {
   if (input.version !== undefined && input.version !== '2.0') errors.push('version must be "2.0".');
 
   if (input.source !== undefined && !isObject(input.source)) errors.push('source must be an object with a name when provided.');
-  else if (isObject(input.source)) rejectUnknownKeys(input.source, SOURCE_KEYS, 'source', errors);
+  else if (isObject(input.source)) {
+    rejectUnknownKeys(input.source, SOURCE_KEYS, 'source', errors);
+    if (input.source.additional !== undefined) {
+      if (!Array.isArray(input.source.additional) || input.source.additional.length < 1 || input.source.additional.length > 3) {
+        errors.push('source.additional must contain 1 to 3 further sources.');
+      } else {
+        input.source.additional.forEach((entry, index) => {
+          if (!isObject(entry)) errors.push(`source.additional[${index}] must be an object with a name.`);
+          else rejectUnknownKeys(entry, ADDITIONAL_SOURCE_KEYS, `source.additional[${index}]`, errors);
+        });
+      }
+    }
+  }
 
   if (input.analysis !== undefined && !isObject(input.analysis)) errors.push('analysis must be an object with a name when provided.');
   else if (isObject(input.analysis)) rejectUnknownKeys(input.analysis, ANALYSIS_KEYS, 'analysis', errors);
+
+  if (input.credits !== undefined && !isObject(input.credits)) errors.push('credits must be an object when provided.');
+  else if (isObject(input.credits)) rejectUnknownKeys(input.credits, CREDITS_KEYS, 'credits', errors);
 
   if (Array.isArray(input.data)) {
     input.data.forEach((item, index) => {
@@ -534,6 +580,12 @@ function validateStructure(input, errors) {
   }
   if (Array.isArray(input.references)) {
     input.references.forEach((reference, index) => rejectUnknownKeys(reference, REFERENCE_KEYS, `references[${index}]`, errors));
+  }
+  if (Array.isArray(input.panels)) {
+    input.panels.forEach((panel, index) => {
+      rejectUnknownKeys(panel, PANEL_KEYS, `panels[${index}]`, errors);
+      if (isObject(panel?.measure)) rejectUnknownKeys(panel.measure, MEASURE_KEYS, `panels[${index}].measure`, errors);
+    });
   }
   if (Array.isArray(input.events)) {
     input.events.forEach((event, index) => rejectUnknownKeys(event, EVENT_KEYS, `events[${index}]`, errors));
@@ -566,7 +618,7 @@ function validateData(spec, errors, warnings) {
     return;
   }
   if (spec.data.length === 0) errors.push('data must contain at least one item.');
-  if (!['map.regional', 'ranking.horizontal', 'trend.line', 'trend.stacked', 'matrix.heat'].includes(spec.recipe) && spec.data.length > 12) {
+  if (!['map.regional', 'ranking.horizontal', 'trend.line', 'trend.stacked', 'matrix.heat', 'comparison.grouped'].includes(spec.recipe) && spec.data.length > 12) {
     errors.push('data cannot contain more than 12 items for this recipe.');
   }
 
@@ -684,6 +736,12 @@ function validateData(spec, errors, warnings) {
   const labels = spec.data.map((item) => {
     if (spec.recipe === 'matrix.heat' && item?.label && item?.column) {
       return `${item.label}\u0000${item.column}`;
+    }
+    if (spec.recipe === 'trend.line' && item?.label && item?.group) {
+      return `${item.group}\u0000${item.label}`;
+    }
+    if (spec.recipe === 'comparison.grouped' && item?.label) {
+      return `${item.panel || ''}\u0000${item.label}\u0000${item.group || ''}`;
     }
     return item?.label;
   }).filter(Boolean);
@@ -812,9 +870,10 @@ function validateSharedScaleSemantics(spec, errors) {
   const data = Array.isArray(spec.data) ? spec.data : [];
   const scopes = [];
   data.forEach((item, index) => {
+    const expectedQuantity = typeof itemMeasure(spec, item).quantity === 'string' ? itemMeasure(spec, item).quantity.trim() : quantity;
     if (typeof item?.quantity !== 'string' || !item.quantity.trim()) {
       errors.push(`data[${index}].quantity is required for ${spec.recipe}.`);
-    } else if (quantity && normalizeEditorialValue(item.quantity) !== normalizeEditorialValue(quantity)) {
+    } else if (expectedQuantity && normalizeEditorialValue(item.quantity) !== normalizeEditorialValue(expectedQuantity)) {
       errors.push(`data[${index}].quantity must match measure.quantity exactly. Split unlike measures into separate charts or choose one primary quantity and keep the rest as inline context.`);
     }
     if (typeof item?.scope !== 'string' || !item.scope.trim()) {
@@ -826,6 +885,9 @@ function validateSharedScaleSemantics(spec, errors) {
       errors.push(`data[${index}].period is required for ${spec.recipe}.`);
     }
   });
+  // Grouped comparisons deliberately compare scopes or periods across their
+  // categories and series; each item still carries its own explicit scope/period.
+  if (spec.recipe === 'comparison.grouped') return;
   if (new Set(scopes).size > 1) {
     errors.push(`${spec.recipe} cannot place unlike scopes on one scale. Split unlike scopes into separate charts or keep secondary evidence in the unboxed supportingFacts context rail.`);
   }
@@ -908,7 +970,9 @@ function numericDisplayMeta(value) {
   };
 }
 
-function thresholdValuesFromCopy(copy) {
+const DURATION_AFTER_NUMBER = /^\s*(?:-\s*)?(?:years?|yrs?|months?|weeks?|days?|hours?)\b/i;
+
+function thresholdValuesFromCopy(copy, options = {}) {
   if (typeof copy !== 'string' || !THRESHOLD_CUE_PATTERN.test(copy)) return [];
   const cueExpression = new RegExp(THRESHOLD_CUE_PATTERN.source, 'gi');
   const numberExpression = new RegExp(DISPLAY_NUMBER_TOKEN.source, 'g');
@@ -935,6 +999,8 @@ function thresholdValuesFromCopy(copy) {
     });
     if (!nearest || nearestDistance > 48) return;
     const start = nearest.index || 0;
+    // A term such as "15 years" is not a threshold in a non-time measure.
+    if (options.ignoreDurations && DURATION_AFTER_NUMBER.test(copy.slice(start + nearest[0].length, start + nearest[0].length + 14))) return;
     const meta = numericDisplayMeta(copy.slice(start, start + nearest[0].length + 24));
     if (meta && !values.some((value) => nearlyEqual(value, meta.value))) values.push(meta.value);
   });
@@ -1226,7 +1292,8 @@ function numericValueFromDisplay(value) {
 
 function validateThresholdAnchoring(spec, errors) {
   const editorial = `${spec.title || ''} ${spec.subtitle || ''} ${spec.metadata?.keyFinding || ''}`;
-  const thresholdValues = thresholdValuesFromCopy(editorial);
+  const durationMeasure = [spec.measure?.unit, spec.measure?.suffix].some((text) => /^\s*(?:years?|yrs?|months?|weeks?|days?|hours?)\s*$/i.test(String(text || '')));
+  const thresholdValues = thresholdValuesFromCopy(editorial, { ignoreDurations: !durationMeasure });
   if (!thresholdValues.length) return;
   const data = Array.isArray(spec.data) ? spec.data : [];
   const references = Array.isArray(spec.references) ? spec.references : [];
@@ -1238,7 +1305,9 @@ function validateThresholdAnchoring(spec, errors) {
       if (!THRESHOLD_CUE_PATTERN.test(label)) return false;
       return nearlyEqual(item?.value, thresholdValue) || nearlyEqual(item?.low, thresholdValue) || nearlyEqual(item?.high, thresholdValue);
     });
-    if (referenceVisible || benchmarkVisible || thresholdDataVisible) return;
+    // In a grouped comparison the limits themselves are plotted bars (for example loan caps by tier).
+    const groupedValueVisible = spec.recipe === 'comparison.grouped' && data.some((item) => nearlyEqual(item?.value, thresholdValue));
+    if (referenceVisible || benchmarkVisible || thresholdDataVisible || groupedValueVisible) return;
     errors.push(
       `The title or key finding is defined by a numeric threshold (${thresholdValue}), but that threshold is missing from primary geometry. ` +
       'Plot it as a labeled numeric reference, use it as the benchmark, or encode it as a threshold mark. ' +
@@ -1330,9 +1399,100 @@ function validateRangeInformationDensity(spec, data, errors) {
   }
 }
 
+// A label list such as "After · 3 children · ₽18m" or "Moscow Region · ₽12m" is a
+// cross-tab flattened into one axis: at least one label position repeats across
+// items while still varying. Those stories belong in comparison.grouped, where
+// each dimension gets its own visual channel instead of being re-read from text.
+const FLATTENED_LABEL_SEPARATOR = /\s+[·•|]\s+/;
+
+function flattenedCrossTabPosition(data) {
+  const parts = data.map((item) => typeof item?.label === 'string' ? item.label.split(FLATTENED_LABEL_SEPARATOR).map(normalizeEditorialValue) : []);
+  if (parts.length < 4 || parts.some((segments) => segments.length < 2)) return -1;
+  const width = parts[0].length;
+  if (parts.some((segments) => segments.length !== width)) return -1;
+  for (let position = 0; position < width; position += 1) {
+    const counts = new Map();
+    parts.forEach((segments) => counts.set(segments[position], (counts.get(segments[position]) || 0) + 1));
+    if (counts.size >= 2 && counts.size < parts.length && [...counts.values()].some((value) => value >= 2)) return position;
+  }
+  return -1;
+}
+
+function validateFlattenedCrossTab(spec, data, errors) {
+  if (!['ranking.horizontal', 'comparison.scenarios', 'relationship.scatter'].includes(spec.recipe)) return;
+  if (flattenedCrossTabPosition(data) < 0) return;
+  errors.push(
+    `${spec.recipe} labels encode a flattened cross-tab (repeated "A · B" label parts). ` +
+    'Use comparison.grouped: put the category in data[].label and the repeated dimension in data[].group ' +
+    '(and use panels when the dimensions carry different measures) so each dimension has its own visual channel.'
+  );
+}
+
+function validateGroupedComparison(spec, data, errors) {
+  const count = data.length;
+  if (count < 2 || count > 48) errors.push('comparison.grouped requires 2 to 48 data items.');
+  requireNumericValues(spec, errors);
+  if (data.some((item) => typeof item?.value === 'number' && item.value < 0)) {
+    errors.push('comparison.grouped draws bar length from zero; values must be zero or greater. Use comparison.diverging for signed changes.');
+  }
+  if (spec.measure?.baseline !== 'zero') errors.push('comparison.grouped requires measure.baseline zero because bar length encodes the value.');
+  if (spec.measure?.scale !== 'linear') errors.push('comparison.grouped requires a linear scale.');
+  if (spec.options.sort !== 'none') errors.push('comparison.grouped preserves the authored category and series order; options.sort must be none.');
+  if (spec.options.showLabels === false) errors.push('comparison.grouped requires direct value labels on every bar.');
+
+  const categories = new Set();
+  const series = new Set();
+  const grouped = data.filter((item) => item?.group !== undefined).length;
+  if (grouped > 0 && grouped !== count) errors.push('comparison.grouped requires data[].group on every item or on none.');
+  data.forEach((item, index) => {
+    if (item?.tone !== undefined) errors.push(`data[${index}].tone is not supported by comparison.grouped; color identifies the series.`);
+    if (item?.detail !== undefined && String(item.detail).length > 24) {
+      errors.push(`data[${index}].detail must be 24 characters or fewer in comparison.grouped; it is a short caption on or under the bar.`);
+    }
+    if (item?.annotation !== undefined && String(item.annotation).length > 40) {
+      errors.push(`data[${index}].annotation must be 40 characters or fewer in comparison.grouped; it is a short note beside the value.`);
+    }
+    if (item?.label) categories.add(item.label);
+    if (item?.group) series.add(item.group);
+  });
+  if (categories.size < 2 || categories.size > 10) errors.push('comparison.grouped requires 2 to 10 distinct categories in data[].label.');
+  if (series.size > 4) errors.push('comparison.grouped supports at most 4 series in data[].group; facet or split the chart instead of adding hues.');
+  if (series.size === 1) errors.push('comparison.grouped with one data[].group value is a single series; omit group so the title names the measure.');
+
+  const panels = Array.isArray(spec.panels) ? spec.panels : [];
+  const panelIds = new Set();
+  panels.forEach((panel, index) => {
+    if (!isObject(panel)) {
+      errors.push(`panels[${index}] must be an object.`);
+      return;
+    }
+    if (typeof panel.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(panel.id)) errors.push(`panels[${index}].id must use lowercase letters, numbers, and single hyphens.`);
+    if (panelIds.has(panel.id)) errors.push(`panels[${index}].id repeats another panel.`);
+    panelIds.add(panel.id);
+    if (typeof panel.title !== 'string' || !panel.title.trim() || panel.title.length > 60) errors.push(`panels[${index}].title must be a non-empty string of 60 characters or fewer.`);
+    if (panel.measure !== undefined && !isObject(panel.measure)) errors.push(`panels[${index}].measure must be an object.`);
+    if (isObject(panel.measure) && (panel.measure.baseline && panel.measure.baseline !== 'zero' || panel.measure.scale && panel.measure.scale !== 'linear')) {
+      errors.push(`panels[${index}].measure must keep a zero baseline and linear scale.`);
+    }
+  });
+  if (panels.length) {
+    if (panels.length < 2 || panels.length > 3) errors.push('panels must contain 2 or 3 panels; one panel is the ordinary chart.');
+    if ((spec.references || []).length) errors.push('comparison.grouped references are drawn on a single shared axis and cannot be combined with panels.');
+    data.forEach((item, index) => {
+      if (!panelIds.has(item?.panel)) errors.push(`data[${index}].panel must name one of panels[].id.`);
+    });
+    panelIds.forEach((id) => {
+      if (!data.some((item) => item?.panel === id)) errors.push(`panel "${id}" has no data items.`);
+    });
+  } else if (data.some((item) => item?.panel !== undefined)) {
+    errors.push('data[].panel requires a panels array.');
+  }
+}
+
 function validateRecipe(spec, errors, warnings) {
   const count = Array.isArray(spec.data) ? spec.data.length : 0;
   const data = Array.isArray(spec.data) ? spec.data : [];
+  validateFlattenedCrossTab(spec, data, errors);
   switch (spec.recipe) {
     case 'comparison.change':
       if (count !== 2) errors.push('comparison.change requires exactly 2 data items.');
@@ -1415,6 +1575,9 @@ function validateRecipe(spec, errors, warnings) {
       }
       break;
     }
+    case 'comparison.grouped':
+      validateGroupedComparison(spec, data, errors);
+      break;
     case 'relationship.scatter': {
       if (count < 4 || count > 12) errors.push('relationship.scatter requires 4 to 12 observations.');
       const xValues = [];
@@ -1563,10 +1726,58 @@ function validateRecipe(spec, errors, warnings) {
       validateConvergingSignals(spec, data, errors);
       break;
     case 'trend.line':
-      if (count < 3 || count > 366) errors.push('trend.line requires 3 to 366 data items.');
-      else if (count < 5) warnings.push('trend.line is usually clearer with at least 5 data points.');
+      {
+        const hasGroups = data.some((item) => typeof item?.group === 'string' && item.group.trim());
+        if (hasGroups) {
+          if (count < 6 || count > 732) errors.push('Grouped trend.line requires 2 to 6 aligned series with no more than 732 total data items.');
+        } else {
+          if (count < 3 || count > 366) errors.push('trend.line requires 3 to 366 data items.');
+          else if (count < 5) warnings.push('trend.line is usually clearer with at least 5 data points.');
+        }
+      }
       requireNumericValues(spec, errors);
-      if (count === 3 && data[0]?.value === 0 && data[0]?.valueStatus === 'derived' &&
+      {
+        const groupedItems = data.filter((item) => typeof item?.group === 'string' && item.group.trim());
+        if (groupedItems.length && groupedItems.length !== data.length) {
+          errors.push('Grouped trend.line data must declare data[].group on every item.');
+        }
+        if (groupedItems.length === data.length && data.length) {
+          const groups = Array.from(new Set(data.map((item) => item.group.trim())));
+          if (groups.length < 2 || groups.length > 6) {
+            errors.push('Grouped trend.line requires 2 to 6 named series.');
+          }
+          if (spec.options.independentYAxes && (groups.length < 2 || groups.length > 3)) {
+            errors.push('options.independentYAxes requires two or three grouped trend.line series.');
+          }
+          const seriesByGroup = groups.map((group) => data.filter((item) => item.group.trim() === group));
+          if (seriesByGroup.some((series) => series.length < 3 || series.length > 366)) {
+            errors.push('Every grouped trend.line series requires 3 to 366 aligned observations.');
+          }
+          const firstLabels = (seriesByGroup[0] || []).map((item) => normalizeEditorialValue(item.label));
+          seriesByGroup.slice(1).forEach((series) => {
+            const labels = series.map((item) => normalizeEditorialValue(item.label));
+            if (labels.length !== firstLabels.length || labels.some((label, index) => label !== firstLabels[index])) {
+              errors.push('Grouped trend.line series must use the same ordered data labels so both lines share one time axis.');
+            }
+          });
+          if (spec.options.showLegend === false && !spec.options.independentYAxes) {
+            errors.push('Grouped trend.line requires a visible legend so each line remains identifiable in the static image.');
+          }
+          if (spec.options.showLabels !== false) {
+            errors.push('Grouped trend.line currently requires options.showLabels false; series identity belongs in the legend and exact values remain available on the shared axis.');
+          }
+          if (data.some((item) => typeof item?.annotation === 'string' && item.annotation.trim())) {
+            errors.push('Grouped trend.line does not support point annotations in its current contract.');
+          }
+          if (spec.options.independentYAxes && Array.isArray(spec.references) && spec.references.length) {
+            errors.push('Grouped trend.line with options.independentYAxes does not support shared numeric references because the target axis would be ambiguous.');
+          }
+        }
+        if (spec.options.independentYAxes && groupedItems.length !== data.length) {
+          errors.push('options.independentYAxes is only supported by two or three fully grouped trend.line series.');
+        }
+      }
+      if (!data.some((item) => item?.group) && count === 3 && data[0]?.value === 0 && data[0]?.valueStatus === 'derived' &&
           data.slice(1).every((item) => Number.isFinite(item?.value) && item.value > 0)) {
         errors.push('trend.line cannot use a derived zero as a synthetic pre-event time anchor when only two subsequent positive states are available. Compare the dated observed states directly and use a real denominator, total, or benchmark for scale orientation.');
       }
@@ -2142,6 +2353,13 @@ function validateReferences(spec, errors, warnings) {
       return;
     }
     if (typeof reference.value !== 'number' || !Number.isFinite(reference.value)) errors.push(`references[${index}].value must be a finite number.`);
+    if (reference.endValue !== undefined) {
+      if (typeof reference.endValue !== 'number' || !Number.isFinite(reference.endValue)) {
+        errors.push(`references[${index}].endValue must be a finite number.`);
+      } else if (Number.isFinite(reference.value) && nearlyEqual(reference.value, reference.endValue)) {
+        errors.push(`references[${index}].endValue must differ from value so the reference band has a visible span.`);
+      }
+    }
     pushLengthIssue(reference.label, `references[${index}].label`, 80, errors, warnings, 55);
     if (typeof reference.label === 'string' && reference.label.trim() && !/[\p{L}\p{N}]/u.test(reference.label)) {
       errors.push(
@@ -2527,8 +2745,19 @@ function validateOptions(spec, errors) {
   if (!HEIGHTS.has(spec.options.height)) errors.push('options.height is not supported.');
   if (!SORTS.has(spec.options.sort)) errors.push('options.sort is not supported.');
   if (!LABEL_MODES.has(spec.options.labelMode)) errors.push('options.labelMode is not supported.');
-  for (const key of ['showLegend', 'showLabels', 'animate']) {
+  for (const key of ['showLegend', 'showLabels', 'showPoints', 'independentYAxes', 'animate']) {
     if (typeof spec.options[key] !== 'boolean') errors.push(`options.${key} must be a boolean.`);
+  }
+  if (spec.options.independentYAxes && spec.recipe !== 'trend.line') {
+    errors.push('options.independentYAxes is only supported by trend.line.');
+  }
+  if (spec.options.seriesScale !== undefined && spec.recipe !== 'comparison.grouped') {
+    errors.push('options.seriesScale is only supported by comparison.grouped.');
+  } else if (spec.options.seriesScale !== undefined && !SERIES_SCALES.has(spec.options.seriesScale)) {
+    errors.push('options.seriesScale must be categorical or sequential.');
+  }
+  if (spec.panels !== undefined && spec.recipe !== 'comparison.grouped') {
+    errors.push('panels are only supported by comparison.grouped.');
   }
 }
 
@@ -2745,11 +2974,31 @@ function validateSpec(input) {
       errors.push('source.period must be a string of 80 characters or fewer.');
     }
     if (spec.source.url && !isHttpUrl(spec.source.url)) errors.push('source.url must be an HTTP or HTTPS URL.');
+    (Array.isArray(spec.source.additional) ? spec.source.additional : []).forEach((entry, index) => {
+      if (!isObject(entry)) return;
+      pushLengthIssue(entry.name, `source.additional[${index}].name`, 180, errors, warnings, 120);
+      if (entry.period !== undefined && (typeof entry.period !== 'string' || entry.period.length > 80)) {
+        errors.push(`source.additional[${index}].period must be a string of 80 characters or fewer.`);
+      }
+      if (entry.url && !isHttpUrl(entry.url)) errors.push(`source.additional[${index}].url must be an HTTP or HTTPS URL.`);
+    });
   }
 
   if (isObject(spec.analysis)) {
     pushLengthIssue(spec.analysis.name, 'analysis.name', 120, errors, warnings, 80);
     if (spec.analysis.url && !isHttpUrl(spec.analysis.url)) errors.push('analysis.url must be an HTTP or HTTPS URL.');
+  }
+
+  if (isObject(spec.credits)) {
+    if (!spec.credits.dataGatheredBy && !spec.credits.analysisBy) {
+      errors.push('credits requires dataGatheredBy, analysisBy, or both.');
+    }
+    if (spec.credits.dataGatheredBy !== undefined) {
+      pushLengthIssue(spec.credits.dataGatheredBy, 'credits.dataGatheredBy', 120, errors, warnings, 90);
+    }
+    if (spec.credits.analysisBy !== undefined) {
+      pushLengthIssue(spec.credits.analysisBy, 'credits.analysisBy', 120, errors, warnings, 90);
+    }
   }
 
   validateData(spec, errors, warnings);

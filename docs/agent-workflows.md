@@ -412,7 +412,7 @@ Check that:
 
 For `comparison.change`, `comparison.scenarios`, `comparison.diverging`,
 `comparison.range`, `comparison.benchmark-gap`, `comparison.dumbbell`,
-`matrix.heat`, `composition.components`, `trend.line`, `trend.stacked`, and `ranking.horizontal`, the validator requires `measure.quantity`,
+`comparison.grouped`, `matrix.heat`, `composition.components`, `trend.line`, `trend.stacked`, and `ranking.horizontal`, the validator requires `measure.quantity`,
 `data[].quantity`, `data[].scope`, and `data[].period`. The item quantity must
 match the measure quantity exactly and scopes must match. Rankings and
 non-change comparisons must share a period; trend periods may advance while
@@ -543,12 +543,14 @@ Run:
 
 ```bash
 node tool-api/chart.js validate <spec.json>
-node tool-api/chart.js image <spec.json> [output.png] --profile auto [--project-id <id>]
+node tool-api/chart.js image <spec.json> [output.png] [--project-id <id>]
 ```
 
 The `image` command is the normal static-output path. It routes the recipe,
-uses a disposable HTML shell, performs target-size layout diagnostics, and
-publishes the PNG only after capture succeeds. Use `render` plus `diagnose`
+renders a self-contained HTML shell, performs target-size layout diagnostics,
+and publishes the PNG only after capture succeeds, together with that HTML as
+a same-named companion file recipients can open offline and edit through its
+embedded ChartSpec. Use `render` plus `diagnose`
 when an HTML shell or responsive investigation is specifically useful:
 
 ```bash
@@ -558,7 +560,7 @@ node tool-api/chart.js diagnose <output.html>
 
 `image` routes `map.regional` automatically after the ChartSpec has been authored through the regional contract. If the standard HTML render command identifies a regional specification, stop and use the regional workflow. Do not remove `map.regional` merely to pass the command.
 
-Use `--profile auto` unless the publishing destination requires a fixed shape. `auto` owns recipe-aware dimensions and may expand to avoid clipping. `landscape`, `square`, and `portrait` are fixed publication shapes; failure to fit is a rendering defect or a signal that the requested shape is inappropriate, not permission to author pixel geometry.
+Standard charts default to fixed `landscape` at 1600×900. If one does not fit, revise semantic copy or density and rerun until the fixed canvas passes; do not accept an expanded publication image. Regional maps default to the maintained adaptive `auto` canvas. Use `--profile auto` for a standard chart only when variable-height output is explicitly acceptable. `square` and `portrait` remain explicit fixed publication shapes. Failure to fit is not permission to author pixel geometry.
 
 ## 6. Regional breakdown workflow
 

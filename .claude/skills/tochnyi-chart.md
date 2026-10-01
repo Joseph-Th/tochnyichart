@@ -212,6 +212,13 @@ candidate as `routingAudit`:
   into `comparison.scenarios`. Scenarios are same-period alternatives. Use
   `comparison.benchmark-gap` for one or two paired categories and
   `comparison.dumbbell` for three or more.
+- When a quantity crosses two dimensions (family size × region, area × loan
+  amount), use `comparison.grouped`: category in `data[].label`, series in
+  `data[].group`. Put different measures for the same categories in
+  `panels`, benchmarks such as the pre-change value in `references`, a short
+  per-bar caption in `detail`, and ratios such as "2.6× Moscow Region" in
+  `annotation`. Compound "A · B" labels in rankings, scenarios, or scatter
+  charts are rejected.
 - Use `relationship.converging-signals` only when exactly two source-supported
   causal drivers and one different outcome measure three distinct real-world
   quantities. `relationship.formula` must state the mechanism. Repeated prices,
@@ -416,7 +423,7 @@ For each chart, report the workflow, recipe, ChartSpec path, final PNG path,
 validation and diagnostic status, and remaining warnings or
 infrastructure defects.
 
-For the completed project, confirm that the retained HTML files and final PNGs are present in `projects/<project-id>/output/`; confirm `tochnyi-charts-<project-id>.pptx` there only when a presentation was requested. Report
+For the completed project, confirm that the retained HTML files and final PNGs are present in `projects/<project-id>/output/`. Each HTML is self-contained and renders offline, so it can be handed to a recipient on its own; its embedded ChartSpec and editing guide let them, or their assistant, change the chart later; confirm `tochnyi-charts-<project-id>.pptx` there only when a presentation was requested. Report
 stories that were omitted because they were duplicate, weak, non-visual, directly conflicted, or
 failed validation or diagnostics.
 

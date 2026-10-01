@@ -22,14 +22,14 @@ verified evidence
 
 Chart authors provide evidence, calculations, editorial meaning, workflow selection, and semantic `ChartSpec` values. The engine owns HTML structure, CSS, typography, chart-library configuration, coordinates, responsive layout, map geometry, callout placement, diagnostics, and capture behavior.
 
-Generated HTML is not an editable source of truth.
+Generated HTML is not an editable source of truth inside this repository.
 
-Browser rendering is not yet fully offline. Core amCharts scripts are pinned to
-a repository-reviewed release so upstream library upgrades cannot silently
-change output, but the Mukta webfont and Russia geodata still resolve from
-provider-managed remote assets. Offline or air-gapped rendering therefore
-requires a separate dependency-packaging change rather than ad hoc copies of
-third-party assets.
+Generated chart HTML is self-contained and renders offline. The engine
+stylesheet and scripts, amCharts 5.20.3, the Russia geodata, the Mukta webfont,
+and brand images are inlined into every file from `vendor/` (checksummed in
+`vendor/manifest.json`) and `lib/`. Each delivered PNG has a companion HTML of
+the same name whose embedded `ChartSpec` and editing guide let a recipient, or
+their assistant, change the chart without this repository.
 
 ## Supported project boundary
 
@@ -79,8 +79,18 @@ contracts. `matrix.heat` preserves complete categorical row×column evidence;
 labeled observation through `xMeasure`/`xValue` and `measure`/`value`. Scatter
 does not infer regression, causality, bubble size, or a third color variable.
 The source ledger verifies both plotted coordinates before batch publication.
+`comparison.grouped` carries cross-tabs of one quantity (categories × 2–4
+series) and side-by-side panels of related measures for the same categories,
+with optional labeled benchmark references; the validator rejects compound
+"A · B" labels that flatten such a cross-tab into a ranking, scenario, or
+scatter chart.
 
-For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. The `auto` image profile is recipe-aware; fixed `landscape`, `square`, and `portrait` profiles express publishing shape without exposing arbitrary pixel geometry to chart authors.
+Standard charts keep the plot free of the watermark (the header logo carries
+the brand; maps keep a restrained mark behind geography), use solid
+quantitative fills without outlines, and place the source at the left, an
+optional note centered, and credits at the right of the footer.
+
+For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. Standard charts default to fixed `landscape` at 1600×900 and fail instead of expanding when they do not fit. Regional maps default to the adaptive `auto` profile. `auto` remains available as an explicit variable-height standard-chart opt-in, while fixed `square` and `portrait` profiles express other publishing shapes without exposing arbitrary pixel geometry to chart authors.
 
 ## Supported project lifecycle
 
@@ -96,7 +106,7 @@ run:init
   -> run:finalize
 ```
 
-The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures final PNGs using the same recipe-aware static image profile policy, and writes manifest/plan/QA artifacts under the same project's `output/` folder.
+The chart builder verifies source/spec coverage, routes each specification through its supported workflow, renders charts, runs browser diagnostics, captures standard-chart PNGs at fixed 1600×900 landscape and regional-map PNGs on the maintained adaptive wide canvas, and writes manifest/plan/QA artifacts under the same project's `output/` folder.
 
 Publication stages inside `projects/<project-id>/work/`. A failed rebuild must leave the previous valid `output/` untouched. A successful chart rebuild invalidates downstream artifacts that would embed stale chart images.
 

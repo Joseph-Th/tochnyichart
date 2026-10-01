@@ -4,6 +4,7 @@
 const path = require('node:path');
 const { renderSpecFile } = require('../renderer/render');
 const { diagnoseHtmlResponsive } = require('../renderer/capture');
+const { STANDARD_DIAGNOSTIC_VIEWPORTS } = require('../renderer/workflow-contract');
 const { freshToolWorkspace } = require('./tool-workspace');
 
 const root = path.join(__dirname, '..');
@@ -12,11 +13,7 @@ const htmlPath = path.join(freshToolWorkspace(root, 'layout-stress'), 'range-lab
 
 const rendered = renderSpecFile(specPath, htmlPath, { projectRoot: root });
 const result = diagnoseHtmlResponsive(htmlPath, {
-  viewports: [
-    { width: 1200, height: 900 },
-    { width: 768, height: 900 },
-    { width: 480, height: 900 }
-  ]
+  viewports: STANDARD_DIAGNOSTIC_VIEWPORTS
 });
 
 const nonPassing = result.runs.filter((run) => run.diagnostics?.status !== 'pass');

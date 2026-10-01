@@ -43,7 +43,8 @@ path remains available for backward compatibility and infrastructure work.
 
 This CLI produces individual chart artifacts. When no explicit output path is
 given, --project-id scopes the artifact under projects/<id>/: final PNGs go to
-output/ and HTML inspection shells go to work/. --run-id remains a compatibility
+output/ with a self-contained, editable companion HTML of the same name, and
+HTML inspection shells go to work/. --run-id remains a compatibility
 alias for --project-id. See docs/batch-workflow.md.`;
   console.log(text);
   process.exit(exitCode);
@@ -158,7 +159,7 @@ function main() {
     if (!positionals[0]) usage(1);
     printResult(createStaticImage(positionals[0], positionals[1], {
       projectId: projectOption(args),
-      profile: optionValue(args, '--profile') || 'auto'
+      profile: optionValue(args, '--profile') || undefined
     }));
     return;
   }

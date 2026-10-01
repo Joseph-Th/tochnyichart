@@ -16,6 +16,7 @@
         "comparison.range",
         "comparison.benchmark-gap",
         "comparison.dumbbell",
+        "comparison.grouped",
         "comparison.area-squares",
         "matrix.heat",
         "relationship.scatter",
@@ -42,7 +43,23 @@
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 180 },
         "period": { "type": "string", "maxLength": 80 },
-        "url": { "type": "string", "format": "uri" }
+        "url": { "type": "string", "format": "uri" },
+        "additional": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "description": "Further sources shown after the primary source in the footer when a chart combines evidence from several publications.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "maxLength": 180 },
+              "period": { "type": "string", "maxLength": 80 },
+              "url": { "type": "string", "format": "uri" }
+            }
+          }
+        }
       }
     },
     "analysis": {
@@ -54,10 +71,19 @@
         "url": { "type": "string", "format": "uri" }
       }
     },
+    "credits": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "dataGatheredBy": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "analysisBy": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
     "data": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 100,
+      "maxItems": 732,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -127,6 +153,11 @@
           "relationshipRole": {
             "type": "string",
             "enum": ["driver", "outcome"]
+          },
+          "panel": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "comparison.grouped only: the panels[].id this item is drawn in."
           },
           "segments": {
             "type": "array",
@@ -225,6 +256,22 @@
         }
       }
     },
+    "panels": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "description": "comparison.grouped only: side-by-side panels that share categories and series but measure different quantities, such as a rate and a loan limit. Each panel has its own axis; panel measure fields override the top-level measure.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "measure": { "$ref": "#/properties/measure" }
+        }
+      }
+    },
     "references": {
       "type": "array",
       "maxItems": 4,
@@ -234,6 +281,7 @@
         "required": ["value", "label"],
         "properties": {
           "value": { "type": "number" },
+          "endValue": { "type": "number" },
           "label": { "type": "string", "minLength": 1, "maxLength": 80 },
           "tone": {
             "type": "string",
@@ -395,11 +443,21 @@
         "sort": { "type": "string", "enum": ["none", "ascending", "descending"] },
         "showLegend": { "type": "boolean" },
         "showLabels": { "type": "boolean" },
+        "showPoints": { "type": "boolean" },
+        "independentYAxes": {
+          "type": "boolean",
+          "description": "For two or three aligned grouped trend.line series, use independent Y scales. The renderer assigns the first series to the left and additional series to the right, and colors axis labels/titles to match the corresponding lines."
+        },
         "animate": { "type": "boolean" },
         "labelMode": {
           "type": "string",
           "enum": ["auto", "inside", "outside"],
           "description": "Column-label preference. auto is family-coherent: keep all labels outside when they fit, move the full bar family inside when endpoint headroom requires it and all bars can support inside labels, and mix placements only for a genuine physical-fit conflict."
+        },
+        "seriesScale": {
+          "type": "string",
+          "enum": ["categorical", "sequential"],
+          "description": "comparison.grouped only. categorical (default) gives each series a distinct hue; sequential shades one hue light-to-dark for series that are ordered levels of one quantity, such as loan sizes or years."
         }
       }
     },
@@ -416,6 +474,20 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": { "recipe": { "const": "comparison.grouped" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "minItems": 2,
+            "maxItems": 48,
+            "items": { "required": ["value", "quantity", "scope", "period"] }
+          }
+        }
+      }
+    },
     {
       "if": {
         "not": {
@@ -443,7 +515,7 @@
         "properties": {
           "data": {
             "minItems": 3,
-            "maxItems": 366
+            "maxItems": 732
           }
         }
       }

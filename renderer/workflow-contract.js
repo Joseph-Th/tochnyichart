@@ -2,7 +2,7 @@
 
 const STANDARD_WORKFLOW = 'standard-chart';
 const REGIONAL_WORKFLOW = 'regional-breakdown';
-const STANDARD_STATIC_VIEWPORT = Object.freeze({ width: 1200, height: 900 });
+const STANDARD_STATIC_VIEWPORT = Object.freeze({ width: 1600, height: 900 });
 const REGIONAL_STATIC_VIEWPORT = Object.freeze({ width: 1450, height: 679 });
 const TABLET_VIEWPORT = Object.freeze({ width: 768, height: 900 });
 const MOBILE_VIEWPORT = Object.freeze({ width: 480, height: 900 });

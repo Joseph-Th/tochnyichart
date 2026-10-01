@@ -571,6 +571,8 @@ existing presentation or chart-image archive is removed at that point because
 it would contain stale images and must be rebuilt from the new PNGs. Staging and
 rollback material stays inside `projects/<project-id>/work/`.
 
+The batch publishing shape is enforced by the builder. Standard charts are fixed 1600×900 landscape images. They must fail rather than expand vertically; revise semantic copy or density and rebuild until the fixed canvas passes. Regional maps keep their maintained adaptive wide `auto` canvas. Variable-height `auto` output for a standard chart is an explicit individual-chart override, not the batch default.
+
 To inspect coverage without rendering, run:
 
 ```bash

@@ -207,6 +207,8 @@ support its central claim before a recipe is chosen. Record them in
 
 - `label`: the working evidence label.
 - `specLabel`: the final ChartSpec label when it differs from `label`.
+- `group`: for a grouped `trend.line`, the series identity paired with the
+  observation label. Every observation in that audit must declare a group.
 - `quantity`: the real-world quantity measured.
 - `unit`: the common unit.
 - `period`: the observation period or scenario.
@@ -218,6 +220,11 @@ source verifier requires every scatter observation to inventory both numeric
 coordinates, requires all X observations to share one X quantity/unit, and
 checks them against the final `xMeasure`. It compares both `xValue` and `value`
 to the ChartSpec so changing or dropping either coordinate fails coverage.
+
+For grouped `trend.line`, each series must use the same ordered label/time
+skeleton and one shared measure/scope. Source coverage matches observations by
+`(group, label)` so two lines may carry distinct values at the same date without
+colliding in the ledger inventory.
 
 `visualEvidenceAudit.rationale` explains why these observations belong to one
 visual claim. Do not list merely adjacent facts with incompatible quantities.
@@ -248,8 +255,9 @@ Supported roles are `threshold`, `benchmark`, `baseline`, `limit`, `target`,
 and `denominator`. Orientation anchors do not replace comparable observations;
 they explain the scale on which those observations become meaningful.
 
-Standard-chart candidates may inventory at most 100 comparable observations,
-matching the ChartSpec data ceiling. Recipe-specific limits still apply later:
+Standard-chart candidates may inventory at most 500 comparable observations.
+Recipe-specific limits still apply later; this larger audit ceiling allows a
+pair of aligned daily trend series to preserve dense multi-month evidence:
 large finite categorical domains belong in `ranking.horizontal`, while recipes
 with smaller semantic limits must not silently truncate the evidence merely to
 fit their renderer. For `regional-breakdown`, the audit may inventory up to the

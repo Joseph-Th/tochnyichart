@@ -381,7 +381,7 @@ test('project chart builder renders selected stories in ledger order and writes 
       viewport: capture.options.viewport,
       adaptiveCanvas: capture.options.adaptiveCanvas
     })), [
-      { slug: 'first-story', viewport: { width: 1200, height: 900 }, adaptiveCanvas: true },
+      { slug: 'first-story', viewport: { width: 1600, height: 900 }, adaptiveCanvas: false },
       { slug: 'regional-story', viewport: { width: 1450, height: 679 }, adaptiveCanvas: true }
     ]);
     assert.equal(result.chartCount, 2);
@@ -408,10 +408,10 @@ test('project chart builder renders selected stories in ledger order and writes 
     assert.deepEqual(presentationPlan.slides.map((slide) => slide.slug), ['first-story', 'regional-story']);
     assert.deepEqual(qa.charts.map((chart) => chart.slug), ['first-story', 'regional-story']);
     assert.deepEqual(qa.charts.map((chart) => chart.image.requestedViewport), [
-      { width: 1200, height: 900 },
+      { width: 1600, height: 900 },
       { width: 1450, height: 679 }
     ]);
-    assert.ok(qa.charts.every((chart) => chart.image.profile === 'auto'));
+    assert.deepEqual(qa.charts.map((chart) => chart.image.profile), ['landscape', 'auto']);
     assert.ok(qa.charts.every((chart) => chart.image.expanded === false));
     assert.equal(qa.charts[0].image.regionalDiagnostics, null);
     assert.equal(qa.charts[1].image.regionalDiagnostics.workflow, 'regional-breakdown');

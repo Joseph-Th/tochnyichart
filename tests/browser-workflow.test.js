@@ -10,7 +10,8 @@ const { validateSpec } = require('../renderer/validate');
 const { renderSpecFile } = require('../renderer/render');
 const {
   diagnoseHtmlResponsive,
-  findBrowser
+  findBrowser,
+  trendLabelConsistencyFailure
 } = require('../renderer/capture');
 const {
   REGIONAL_WORKFLOW_VIEWPORTS,
@@ -29,6 +30,22 @@ function nonNullNumbers(runs, field) {
     .map((run) => run[field])
     .filter((value) => value !== null && value !== undefined);
 }
+
+test('PNG capture rejects inconsistent trend value-label centering', () => {
+  assert.equal(trendLabelConsistencyFailure({}), null);
+  assert.equal(trendLabelConsistencyFailure({
+    'data-trend-label-layout': 'measured',
+    'data-trend-label-center-error': '0.75'
+  }), null);
+  assert.match(trendLabelConsistencyFailure({
+    'data-trend-label-layout': 'measured',
+    'data-trend-label-center-error': '6.25'
+  }), /not horizontally centered/i);
+  assert.match(trendLabelConsistencyFailure({
+    'data-trend-label-layout': 'waiting',
+    'data-trend-label-center-error': 'pending'
+  }), /did not settle/i);
+});
 
 test('standard and regional workflows pass browser comparison checks', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-browser-workflow-'));
@@ -100,7 +117,7 @@ test('scatter relationship renders both numeric dimensions with machine-readable
       browser,
       profile: 'landscape'
     });
-    assert.deepEqual(pngDimensions(pngPath), { width: 1200, height: 900 });
+    assert.deepEqual(pngDimensions(pngPath), { width: 1600, height: 900 });
     assert.equal(image.scatterDiagnostics.pointCount, 8);
     assert.ok(image.scatterDiagnostics.pearsonR > 0.99 && image.scatterDiagnostics.pearsonR <= 1);
   } finally {
@@ -108,7 +125,7 @@ test('scatter relationship renders both numeric dimensions with machine-readable
   }
 });
 
-test('public image CLI emits structured JSON and publishes the requested PNG', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('public image CLI defaults standard output to fixed landscape', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-static-cli-'));
   try {
     const outputPath = path.join(tempDir, 'cli-landscape.png');
@@ -117,9 +134,7 @@ test('public image CLI emits structured JSON and publishes the requested PNG', {
       cliPath,
       'image',
       path.join(examplesDir, 'ai95-price-spike.json'),
-      outputPath,
-      '--profile',
-      'landscape'
+      outputPath
     ], {
       cwd: root,
       encoding: 'utf8',
@@ -130,19 +145,20 @@ test('public image CLI emits structured JSON and publishes the requested PNG', {
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.workflow, 'standard-chart');
     assert.equal(payload.profile.id, 'landscape');
-    assert.deepEqual(payload.profile.actualDimensions, { width: 1200, height: 900 });
+    assert.deepEqual(payload.profile.actualDimensions, { width: 1600, height: 900 });
     assert.ok(['natural', 'shrink'].includes(payload.profile.fitMode));
     if (payload.profile.fitMode === 'shrink') assert.ok(payload.profile.stageDelta < 0);
-    assert.equal(payload.htmlRetained, false);
+    assert.equal(payload.htmlRetained, true);
+    assert.equal(path.resolve(payload.htmlPath), path.resolve(outputPath.replace(/\.png$/, '.html')));
     assert.equal(payload.diagnostics.errors, 0);
     assert.equal(path.resolve(payload.outputPath), path.resolve(outputPath));
-    assert.deepEqual(pngDimensions(outputPath), { width: 1200, height: 900 });
+    assert.deepEqual(pngDimensions(outputPath), { width: 1600, height: 900 });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 });
 
-test('static image workflow produces an exact square PNG without retaining an HTML shell', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
+test('static image workflow produces an exact square PNG with its self-contained HTML', { skip: browser ? false : 'Edge or Chrome is unavailable.' }, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-static-square-'));
   try {
     const outputPath = path.join(tempDir, 'square.png');
@@ -158,9 +174,9 @@ test('static image workflow produces an exact square PNG without retaining an HT
     assert.ok(result.profile.stageDelta <= 0);
     assert.deepEqual(pngDimensions(outputPath), { width: 1080, height: 1080 });
     assert.equal(result.profile.expanded, false);
-    assert.equal(result.htmlRetained, false);
+    assert.equal(result.htmlRetained, true);
     assert.equal(result.diagnostics.errors, 0);
-    assert.equal(fs.readdirSync(tempDir).filter((name) => name.endsWith('.html')).length, 0);
+    assert.deepEqual(fs.readdirSync(tempDir).filter((name) => name.endsWith('.html')), ['square.html']);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -240,6 +256,8 @@ test('trend value labels clear measured plot points at every responsive viewport
       assert.equal(run.diagnostics?.summary?.marksChecked, 8);
       assert.equal(run.trendAttributes?.['data-trend-label-layout'], 'measured');
       assert.equal(Number(run.trendAttributes?.['data-trend-label-line-overlaps']), 0);
+      assert.ok(Number(run.trendAttributes?.['data-trend-label-center-error']) <= 1,
+        'centered trend value labels must stay within 1px of their point centers');
       assert.ok(Number(run.trendAttributes?.['data-trend-label-visible-count']) >= 3);
       const visibleIndices = String(
         run.trendAttributes?.['data-trend-label-visible-indices'] || ''

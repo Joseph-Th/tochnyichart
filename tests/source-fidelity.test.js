@@ -141,6 +141,48 @@ test('source fidelity accepts a complete anchored inventory and exact spec cover
   }
 });
 
+test('source fidelity matches grouped trend observations by group and label', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-grouped-trend-'));
+  fs.mkdirSync(path.join(root, 'input'));
+  fs.writeFileSync(path.join(root, 'input', 'data.csv'), 'Date,Series,Count\nJan,A,1\nJan,B,2\nFeb,A,3\nFeb,B,4\nMar,A,5\nMar,B,6\n');
+  try {
+    const workspace = initializeRunWorkspace(root, 'grouped-trend');
+    const ledger = JSON.parse(fs.readFileSync(workspace.ledgerPath, 'utf8'));
+    ledger.inventoryComplete = true;
+    const observations = ['Jan', 'Feb', 'Mar'].flatMap((label, index) => [
+      { label, group: 'A', quantity: 'cumulative record count', unit: 'records', period: `${label} 2026`, value: index * 2 + 1 },
+      { label, group: 'B', quantity: 'cumulative record count', unit: 'records', period: `${label} 2026`, value: index * 2 + 2 }
+    ]);
+    ledger.candidates = [{
+      id: 'grouped-trend', claim: 'Two cumulative record series are compared over time.', decision: 'selected',
+      outputSlug: 'grouped-trend', title: 'Two cumulative record series',
+      titleBasis: { type: 'derived', sourcePath: 'input/data.csv', description: 'Group by series and date.', method: 'Cumulative count by series and date.' },
+      representationAudit: { selectedMode: 'level', levelAvailability: 'reported', rationale: 'The source supplies exact counts.' },
+      visualEvidenceAudit: { rationale: 'Both series share one count scale and time skeleton.', comparableObservations: observations },
+      routingAudit: { geographyRole: 'none', workflow: 'standard-chart', rationale: 'The story is temporal.' },
+      anchors: [{ sourcePath: 'input/data.csv', selector: 'Group by series and date.' }],
+      evidence: [{ statement: 'The grouped values come from the supplied rows.', origin: 'input', role: 'primary', anchor: { sourcePath: 'input/data.csv', selector: 'Group by series and date.' } }]
+    }];
+    fs.writeFileSync(workspace.ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const specPath = path.join(workspace.specificationRoot, 'grouped-trend.json');
+    fs.writeFileSync(specPath, JSON.stringify({
+      title: 'Two cumulative record series', recipe: 'trend.line',
+      data: observations.map((item) => ({ label: item.label, group: item.group, value: item.value })),
+      measure: { valueMode: 'level', levelAvailability: 'reported' }
+    }));
+    assert.equal(validateSourceLedger(root, 'grouped-trend', { requireSpecs: true }).valid, true);
+    const changed = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+    changed.data.find((item) => item.label === 'Feb' && item.group === 'B').value = 99;
+    fs.writeFileSync(specPath, JSON.stringify(changed));
+    assert.throws(
+      () => validateSourceLedger(root, 'grouped-trend', { requireSpecs: true }),
+      /Changed plotted values or ranges: Feb · B/i
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('source fidelity preserves every row-column cell in matrix heat evidence', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tochnyi-matrix-source-'));
   const anchor = 'Payment issues dominate support channels: mobile had 148 payment and 84 delivery tickets; web had 112 payment and 61 delivery tickets; partner had 73 payment and 97 delivery tickets.';

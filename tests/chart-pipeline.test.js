@@ -6,8 +6,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { validateSpec } = require('../renderer/validate');
-const { renderHtml, renderSpecFile, assetFingerprint, defaultOutputPath } = require('../renderer/render');
-const { reviewHtml, reviewFile } = require('../renderer/review');
+const { renderHtml, renderSpecFile, defaultOutputPath } = require('../renderer/render');
+const { reviewHtml, reviewFile, extractSpec, embeddedAssets, authoredShell } = require('../renderer/review');
 const { recipeIds } = require('../renderer/catalog');
 const { extractLayoutDiagnostics, extractDataAttributes } = require('../renderer/capture');
 const {
@@ -38,11 +38,11 @@ test('every recipe has a valid example ChartSpec', () => {
   assert.deepEqual([...covered].sort(), [...recipeIds].sort());
 });
 
-test('generated shells pin the chart runtime instead of following the latest CDN alias', () => {
-  const html = renderHtml(validateSpec(loadExample('ai95-price-spike.json')).normalized);
-  assert.match(html, /cdn\.amcharts\.com\/lib\/version\/5\.20\.3\/index\.js/);
-  assert.match(html, /cdn\.amcharts\.com\/lib\/version\/5\.20\.3\/xy\.js/);
-  assert.doesNotMatch(html, /cdn\.amcharts\.com\/lib\/5\/(?:index|xy|percent)\.js/);
+test('generated shells embed the pinned vendored chart runtime', () => {
+  const assets = embeddedAssets(renderHtml(validateSpec(loadExample('ai95-price-spike.json')).normalized));
+  assert.ok(assets.includes('vendor/amcharts5/5.20.3/index.js'));
+  assert.ok(assets.includes('vendor/amcharts5/5.20.3/xy.js'));
+  assert.ok(assets.includes('vendor/amcharts5/5.20.3/percent.js'));
 });
 
 test('dumbbell legend explains before-versus-after shape without promising one after color', () => {
@@ -86,7 +86,7 @@ test('renderer centralizes deterministic tokens without changing established mar
   assert.match(runtime, /data-output-mode/);
   assert.doesNotMatch(runtime, /addQuantitativeRulerGuides|data-ranking-guide-step|data-trend-period-guides|data-trend-point-mode/);
   assert.doesNotMatch(runtime, /data-scenario-mark-mode|data-waterfall-connectors|fillCaptureRequested/);
-  assert.match(runtime, /showBullets:\s*true/);
+  assert.match(runtime, /showBullets:\s*spec\.options\.showPoints\s*!==\s*false/);
 });
 
 test('scenario comparisons retain their established column grammar and require visible values', () => {
@@ -1763,12 +1763,13 @@ test('generated shells contain no chart implementation or inline styles', () => 
     const html = renderHtml(validated.normalized);
     const review = reviewHtml(html);
     assert.equal(review.valid, true, `${file}: ${review.errors.join('; ')}`);
-    assert.equal(/<style[\s>]/i.test(html), false);
-    assert.equal(/\sstyle\s*=/.test(html), false);
-    assert.equal(/am5(?:xy|percent)?\.[A-Za-z]+\.new\s*\(/.test(html), false);
-    assert.equal(html.includes('tochnyi-diagnostics.js'), true);
-    assert.equal(html.includes('tochnyi-visual-plan.js'), true);
-    assert.ok(Buffer.byteLength(html) < 12000, `${file} shell is unexpectedly large`);
+    const shell = authoredShell(html);
+    assert.equal(/<style[\s>]/i.test(shell), false);
+    assert.equal(/\sstyle\s*=/.test(shell), false);
+    assert.equal(/am5(?:xy|percent)?\.[A-Za-z]+\.new\s*\(/.test(shell), false);
+    assert.equal(embeddedAssets(html).includes('lib/tochnyi-diagnostics.js'), true);
+    assert.equal(embeddedAssets(html).includes('lib/tochnyi-visual-plan.js'), true);
+    assert.ok(Buffer.byteLength(shell) < 12000, `${file} authored shell is unexpectedly large`);
   }
 });
 
@@ -1789,16 +1790,21 @@ test('source and analysis attribution are separate semantic fields', () => {
   const spec = loadExample('regional-ranking.json');
   spec.source = { name: 'Tochnyi Team' };
   spec.analysis = { name: '@HartreeFock', url: 'https://x.com/HartreeFock' };
+  spec.credits = { dataGatheredBy: '@collector', analysisBy: '@analyst' };
   let result = validateSpec(spec);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.normalized.source.name, 'Tochnyi Team');
   assert.equal(result.normalized.analysis.name, '@HartreeFock');
   assert.equal(result.normalized.analysis.url, 'https://x.com/HartreeFock');
+  assert.equal(result.normalized.credits.dataGatheredBy, '@collector');
+  assert.equal(result.normalized.credits.analysisBy, '@analyst');
 
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   assert.match(runtime, /'Source: ' \+ spec\.source\.name/);
   assert.match(runtime, /'Analysis: ' \+ spec\.analysis\.name/);
   assert.match(runtime, /analysis\.href = spec\.analysis\.url/);
+  assert.match(runtime, /'Data gathered by ' \+ spec\.credits\.dataGatheredBy/);
+  assert.match(runtime, /'Analysis by ' \+ spec\.credits\.analysisBy/);
 
   spec.analysis.url = 'mailto:analyst@example.com';
   result = validateSpec(spec);
@@ -1806,31 +1812,50 @@ test('source and analysis attribution are separate semantic fields', () => {
   assert.ok(result.errors.some((message) => /analysis\.url must be an HTTP or HTTPS URL/i.test(message)));
 });
 
-test('generated chart shells version local assets to invalidate browser caches', () => {
+test('generated chart shells are self-contained and carry an editing guide', () => {
   const validated = validateSpec(loadExample('russia-regional-map.json'));
-  const html = renderHtml(validated.normalized, {
-    assetPrefix: '../../lib/',
-    assetVersion: 'routing-fix-123'
-  });
-  assert.match(html, /data-assets-version="routing-fix-123"/);
+  const html = renderHtml(validated.normalized);
+  const assets = embeddedAssets(html);
   [
-    'tochnyi.css',
-    'tochnyi-maps.js',
-    'tochnyi-map-runtime.js',
-    'tochnyi-charts.js',
-    'tochnyi-visual-plan.js',
-    'tochnyi-runtime.js',
-    'tochnyi-diagnostics.js'
-  ].forEach((filename) => {
-    assert.ok(
-      html.includes(`../../lib/${filename}?v=routing-fix-123`),
-      `${filename} must carry the shared asset version`
-    );
-  });
+    'vendor/fonts/mukta/mukta.css',
+    'lib/tochnyi.css',
+    'vendor/amcharts5/5.20.3/index.js',
+    'vendor/amcharts5/5.20.3/xy.js',
+    'vendor/amcharts5/5.20.3/percent.js',
+    'vendor/amcharts5/5.20.3/themes/Animated.js',
+    'vendor/amcharts5-geodata/russiaLow.js',
+    'lib/tochnyi-maps.js',
+    'lib/tochnyi-map-runtime.js',
+    'lib/tochnyi-charts.js',
+    'lib/tochnyi-visual-plan.js',
+    'lib/brand-images',
+    'lib/tochnyi-runtime.js',
+    'lib/tochnyi-diagnostics.js'
+  ].forEach((name) => assert.ok(assets.includes(name), `${name} must be embedded`));
+  const shell = authoredShell(html);
+  assert.doesNotMatch(shell, /\s(?:src|href)\s*=\s*["'](?!data:)/i, 'shell must not reference external files');
+  assert.doesNotMatch(html, /https?:\/\/(?:cdn\.amcharts\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)/);
+  assert.match(html, /url\(data:font\/woff2;base64,/);
+  assert.match(html, /"tochnyi-logo\.png":"data:image\/png;base64,/);
+  assert.match(html, /"watermark\.svg":"data:image\/svg\+xml;base64,/);
+  assert.match(html, /HOW TO CHANGE THE CHART/);
+  assert.match(html, /Recipe: map\.regional/);
+  assert.ok(html.indexOf('id="tochnyi-spec"') < html.indexOf('data-tochnyi-asset'), 'ChartSpec precedes embedded engine code');
+  assert.deepEqual(extractSpec(html), JSON.parse(JSON.stringify(validated.normalized)));
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  assert.match(runtime, /data-assets-version/);
+  assert.match(runtime, /TOCHNYI_ASSETS/);
   assert.match(runtime, /assetUrl\('tochnyi-logo\.png'\)/);
   assert.match(runtime, /assetUrl\('watermark\.svg'\)/);
+});
+
+test('shell review rejects external references outside embedded assets', () => {
+  const validated = validateSpec(loadExample('ai95-price-spike.json'));
+  const html = renderHtml(validated.normalized);
+  assert.equal(reviewHtml(html).valid, true, reviewHtml(html).errors.join('; '));
+  const linked = html.replace('</head>', '  <script src="https://cdn.example.com/x.js"></script>\n</head>');
+  assert.ok(reviewHtml(linked).errors.some((message) => /self-contained/.test(message)));
+  const styled = html.replace('</head>', '  <style>body { color: red; }</style>\n</head>');
+  assert.ok(reviewHtml(styled).errors.some((message) => /authored inline <style>/.test(message)));
 });
 
 test('visual planning adapts ranking geometry and editorial hierarchy', () => {
@@ -1981,6 +2006,113 @@ test('trend label orientation lock keeps one family on the same side of the line
     VisualPlan.trendLabelLineOverlapCount(layout, points, 8),
     0,
     'orientation consistency must not be achieved by allowing labels to cross the plotted line'
+  );
+});
+
+test('monotonic trend label planning keeps endpoints on the same side as the series', () => {
+  const descending = [95568, 89079, 74096, 51117].map((value, index) => ({
+    label: String(2023 + index),
+    value,
+    displayValue: `${value} units`
+  }));
+  const descendingPlan = VisualPlan.trendLabelPlan(descending);
+  assert.deepEqual(
+    descendingPlan.map((item) => item.preferredPlacement),
+    ['above', 'above', 'above', 'above'],
+    'a falling monotonic series should not flip its first endpoint label below the line'
+  );
+  assert.deepEqual(
+    descendingPlan.map((item) => item.orientationLock),
+    ['above', 'above', 'above', 'above'],
+    'a falling monotonic series should lock every value label to the same side'
+  );
+  assert.deepEqual(descendingPlan.map((item) => item.strictCenter), [true, true, true, true]);
+  assert.deepEqual(descendingPlan.map((item) => item.centerXPercent), [50, 50, 50, 50]);
+  assert.deepEqual(descendingPlan.map((item) => item.dx), [0, 0, 0, 0]);
+
+  const descendingLayout = VisualPlan.trendLabelLayout(descending, {
+    plans: descendingPlan,
+    points: [
+      { x: 100, y: 80 },
+      { x: 310, y: 145 },
+      { x: 520, y: 220 },
+      { x: 730, y: 300 }
+    ],
+    labelSizes: descending.map(() => ({ width: 112, height: 28 })),
+    boundary: { left: 20, top: 20, right: 820, bottom: 350 },
+    pointRadius: 6,
+    pointPadding: 5,
+    labelPadding: 6,
+    lineTolerance: 4,
+    lineStrokeWidth: 4,
+    labelBackgroundPadding: 2
+  });
+  assert.equal(descendingLayout[0].showLabel, true);
+  descendingLayout.forEach((item, index) => {
+    assert.equal(item.showLabel, true, `descending label ${index} should remain visible`);
+    assert.equal(item.placement, 'above',
+      `descending label ${index} should stay centered above its point when that placement is clear`);
+    assert.ok(item.dy < 0);
+  });
+
+  const risingPlan = VisualPlan.trendLabelPlan(descending.slice().reverse());
+  assert.deepEqual(
+    risingPlan.map((item) => item.preferredPlacement),
+    ['below', 'below', 'below', 'below'],
+    'a rising monotonic series should keep the same below-line placement at both endpoints'
+  );
+  assert.deepEqual(risingPlan.map((item) => item.orientationLock), ['below', 'below', 'below', 'below']);
+  assert.deepEqual(risingPlan.map((item) => item.strictCenter), [true, true, true, true]);
+});
+
+test('direct-labeled short trends reserve endpoint gutter for centered endpoint labels', () => {
+  assert.deepEqual(VisualPlan.trendCategoryLocations(4, true), { start: 0, end: 1 });
+  assert.deepEqual(VisualPlan.trendCategoryLocations(7, true), { start: 0, end: 1 });
+  assert.deepEqual(VisualPlan.trendCategoryLocations(8, true), { start: 0.08, end: 0.92 });
+  assert.deepEqual(VisualPlan.trendCategoryLocations(4, false), { start: 0, end: 1 });
+  assert.deepEqual(VisualPlan.trendCategoryLocations(8, false), { start: 0.08, end: 0.92 });
+  assert.equal(VisualPlan.trendEndpointPadding(4, true), 64);
+  assert.equal(VisualPlan.trendEndpointPadding(7, true), 52);
+  assert.equal(VisualPlan.trendEndpointPadding(8, true), 0);
+  assert.equal(VisualPlan.trendEndpointPadding(4, false), 0);
+});
+
+test('trend endpoint labels may use chart gutter while staying centered over their points', () => {
+  const data = [30, 20, 10].map((value, index) => ({ label: String(index + 1), value }));
+  const layout = VisualPlan.trendLabelLayout(data, {
+    plans: VisualPlan.trendLabelPlan(data),
+    points: [
+      { x: 65, y: 85 },
+      { x: 180, y: 145 },
+      { x: 295, y: 205 }
+    ],
+    labelSizes: data.map(() => ({ width: 96, height: 26 })),
+    boundary: { left: 50, top: 20, right: 310, bottom: 250 },
+    outerBoundary: { left: 0, top: 20, right: 360, bottom: 250 },
+    pointRadius: 6,
+    pointPadding: 5,
+    labelPadding: 6,
+    lineTolerance: 4,
+    lineStrokeWidth: 4,
+    labelBackgroundPadding: 2
+  });
+  assert.equal(layout[0].showLabel, true);
+  assert.equal(layout[0].placement, 'above');
+  assert.equal(layout[0].dx, 0);
+  assert.equal(layout[0].centerXPercent, 50);
+  assert.equal(layout[0].box.left, 17);
+  assert.ok(layout[0].box.left < 50,
+    'the centered first label should be allowed to occupy the chart gutter outside the plot');
+});
+
+test('trend label centering correction aligns measured text with its point', () => {
+  assert.equal(
+    VisualPlan.trendLabelCenterCorrection(100, { left: 120, right: 200 }),
+    -60
+  );
+  assert.equal(
+    VisualPlan.trendLabelCenterCorrection(250, { left: 200, right: 300 }),
+    0
   );
 });
 
@@ -3744,12 +3876,12 @@ test('horizontal ranking accepts a full structured category domain', () => {
   assert.equal(result.normalized.data.length, 92);
 });
 
-test('shared quantitative marks use restrained translucent styling', () => {
+test('shared quantitative marks use solid fills without drawn outlines', () => {
   const style = Tochnyi.marks.column;
-  assert.ok(style.fillOpacity >= 0.5 && style.fillOpacity <= 0.72);
-  assert.ok(style.hoverFillOpacity > style.fillOpacity && style.hoverFillOpacity < 0.9);
-  assert.ok(style.strokeOpacity >= 0.8 && style.strokeOpacity <= 1);
-  assert.ok(style.strokeWidth >= 1 && style.strokeWidth <= 2);
+  assert.equal(style.fillOpacity, 1);
+  assert.ok(style.hoverFillOpacity < style.fillOpacity && style.hoverFillOpacity >= 0.8);
+  assert.equal(style.strokeOpacity, 0);
+  assert.equal(style.strokeWidth, 0);
   assert.ok(Tochnyi.marks.watermarkOpacity <= 0.18);
 
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
@@ -3767,13 +3899,14 @@ test('shared quantitative marks use restrained translucent styling', () => {
     strokeOpacity: style.strokeOpacity,
     strokeWidth: style.strokeWidth
   }]).length, 0);
-  const opaqueIssues = diagnoseMarkStyles([{
-    id: 'opaque', role: 'column', rect,
-    fillOpacity: 1,
-    strokeOpacity: 1,
-    strokeWidth: 1.5
+  const faintIssues = diagnoseMarkStyles([{
+    id: 'faint', role: 'column', rect,
+    fillOpacity: 0.3,
+    strokeOpacity: 0,
+    strokeWidth: 0
   }]);
-  assert.ok(opaqueIssues.some((issue) => issue.code === 'column-fill-too-opaque' && issue.severity === 'error'));
+  assert.ok(faintIssues.some((issue) => issue.code === 'column-fill-too-faint'));
+  assert.ok(faintIssues.some((issue) => issue.code === 'column-outline-too-weak'));
 });
 
 test('non-map semantic layouts do not fall back to standalone card grids', () => {
@@ -3844,17 +3977,23 @@ test('watermark opacity is controlled once by CSS rather than compounded inside 
   assert.doesNotMatch(svg, /opacity\s*:\s*\.(?:0[0-9]|1[0-9])/);
 });
 
-test('standard charts keep the watermark large and centered across recipes', () => {
-  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+test('standard charts keep the plot free of the watermark; maps keep theirs behind geography', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'recipes', 'catalog.json'), 'utf8'));
   const standardRecipes = catalog.recipes.filter((recipe) => recipe.id !== 'map.regional');
 
-  assert.match(css, /\.tochnyi-watermark\s*\{[^}]*top:\s*50%[^}]*left:\s*50%[^}]*height:\s*100%[^}]*max-width:\s*100%/s);
-  assert.match(runtime, /watermark\.classList\.add\('watermark-' \+ plan\.watermark\)/);
-  assert.doesNotMatch(runtime, /watermark\.classList\.add\('(?:corner|small)'\)/);
-  assert.ok(standardRecipes.every((recipe) => recipe.defaults.watermark === 'full'));
+  assert.match(runtime, /main\.setAttribute\('data-watermark', plan\.watermark\)/);
+  assert.match(runtime, /if \(plan\.watermark !== 'none'\)/);
+  assert.ok(standardRecipes.every((recipe) => recipe.defaults.watermark === 'none'));
   assert.equal(catalog.recipes.find((recipe) => recipe.id === 'map.regional').defaults.watermark, 'corner');
+
+  const standard = validateSpec(loadExample('regional-ranking.json')).normalized;
+  assert.equal(VisualPlan.resolveVisualPlan(standard, standard.data, 1600).watermark, 'none');
+  const map = validateSpec(loadExample('russia-regional-map.json')).normalized;
+  assert.notEqual(VisualPlan.resolveVisualPlan(map, map.data, 1600).watermark, 'none');
+
+  assert.deepEqual(diagnoseWatermark([], { watermarkRequired: false }), []);
+  assert.ok(diagnoseWatermark([]).some((issue) => issue.code === 'watermark-missing'));
 });
 
 test('watermark diagnostics reject missing, faint, unloaded, and undersized marks', () => {
@@ -4089,9 +4228,8 @@ test('renderer writes a reviewable chart file', () => {
   assert.equal(fs.existsSync(output), true);
   assert.equal(result.recipe, 'comparison.benchmark-gap');
   const html = fs.readFileSync(output, 'utf8');
-  const fingerprint = assetFingerprint(path.join(__dirname, '..'));
-  assert.match(html, new RegExp(`data-assets-version="${fingerprint}"`));
-  assert.ok(html.includes(`tochnyi-runtime.js?v=${fingerprint}`));
+  assert.match(html, /data-standalone="true"/);
+  assert.ok(embeddedAssets(html).includes('lib/tochnyi-runtime.js'));
   const review = reviewFile(output);
   assert.equal(review.valid, true, review.errors.join('; '));
   fs.rmSync(tempDir, { recursive: true, force: true });
@@ -4387,4 +4525,174 @@ test('trend line accepts dense daily series up to one year', () => {
   result = validateSpec(spec);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes('3 to 366')));
+});
+
+test('grouped trend lines support aligned series and optional point suppression', () => {
+  const spec = loadExample('bankruptcies-trend.json');
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr'];
+  spec.title = 'Two cumulative series';
+  spec.data = labels.flatMap((label, index) => [
+    {
+      label, group: 'Series A', value: index + 1,
+      quantity: 'cumulative documented record count', scope: 'shared comparison universe', period: `${label} 2026`
+    },
+    {
+      label, group: 'Series B', value: (index + 1) * 2,
+      quantity: 'cumulative documented record count', scope: 'shared comparison universe', period: `${label} 2026`
+    }
+  ]);
+  spec.measure.quantity = 'cumulative documented record count';
+  spec.measure.unit = 'records';
+  spec.options.showLabels = false;
+  spec.options.showLegend = true;
+  spec.options.showPoints = false;
+  let result = validateSpec(spec);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.options.showPoints, false);
+  assert.equal(result.warnings.some((warning) => /labels are duplicated/i.test(warning)), false);
+  const html = renderHtml(result.normalized);
+  assert.ok(html.includes('Series A'));
+  assert.ok(html.includes('Series B'));
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  assert.match(runtime, /showBullets:\s*spec\.options\.showPoints\s*!==\s*false/);
+
+  const independentAxes = structuredClone(spec);
+  independentAxes.options.independentYAxes = true;
+  independentAxes.options.showLegend = false;
+  result = validateSpec(independentAxes);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.equal(result.normalized.options.independentYAxes, true);
+  assert.match(runtime, /data-trend-y-axis-mode/);
+  assert.match(runtime, /opposite:\s*true/);
+
+  const threeAxes = structuredClone(independentAxes);
+  threeAxes.data.push(...labels.map((label, index) => ({
+    label, group: 'Series C', value: (index + 1) * 3,
+    quantity: 'cumulative documented record count', scope: 'shared comparison universe', period: `${label} 2026`
+  })));
+  result = validateSpec(threeAxes);
+  assert.equal(result.valid, true, result.errors.join('; '));
+  assert.match(runtime, /data-trend-y-axis-count/);
+  assert.match(runtime, /additionalYAxes\[groupIndex - 1\]/);
+  assert.match(runtime, /color:\s*groupedSeriesColor\(groupIndex\)/);
+  assert.match(runtime, /labels\.template\.setAll\(\{ fill:\s*am5\.color\(groupedSeriesColor\(groupIndex\)\)/);
+
+  const unsupportedFourAxes = structuredClone(threeAxes);
+  unsupportedFourAxes.data.push(...labels.map((label, index) => ({
+    label, group: 'Series D', value: (index + 1) * 4,
+    quantity: 'cumulative documented record count', scope: 'shared comparison universe', period: `${label} 2026`
+  })));
+  result = validateSpec(unsupportedFourAxes);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /independentYAxes requires two or three/i.test(error)));
+
+  const missingGroup = structuredClone(spec);
+  delete missingGroup.data[0].group;
+  result = validateSpec(missingGroup);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /group on every item/i.test(error)));
+
+  const directLabels = structuredClone(spec);
+  directLabels.options.showLabels = true;
+  result = validateSpec(directLabels);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /grouped trend\.line.*showLabels false/i.test(error)));
+});
+
+test('comparison.grouped validates cross-tab, panel, and reference contracts', () => {
+  const grouped = loadExample('family-mortgage-payments-grouped.json');
+  const panels = loadExample('family-mortgage-terms-panels.json');
+  assert.deepEqual(validateSpec(grouped).errors, []);
+  assert.deepEqual(validateSpec(panels).errors, []);
+
+  const negative = structuredClone(grouped);
+  negative.data[0].value = -5;
+  assert.ok(validateSpec(negative).errors.some((error) => /zero or greater/.test(error)));
+
+  const tooManySeries = structuredClone(grouped);
+  tooManySeries.data.forEach((item, index) => { item.group = `Series ${index % 5}`; });
+  assert.ok(validateSpec(tooManySeries).errors.some((error) => /at most 4 series/.test(error)));
+
+  const partialGroups = structuredClone(grouped);
+  delete partialGroups.data[0].group;
+  assert.ok(validateSpec(partialGroups).errors.some((error) => /group on every item or on none/.test(error)));
+
+  const toned = structuredClone(grouped);
+  toned.data[0].tone = 'critical';
+  assert.ok(validateSpec(toned).errors.some((error) => /color identifies the series/.test(error)));
+
+  const unknownPanel = structuredClone(panels);
+  unknownPanel.data[0].panel = 'missing';
+  assert.ok(validateSpec(unknownPanel).errors.some((error) => /must name one of panels\[\]\.id/.test(error)));
+
+  const panelReferences = structuredClone(panels);
+  panelReferences.references = [{ value: 8, label: 'Old rate' }];
+  assert.ok(validateSpec(panelReferences).errors.some((error) => /cannot be combined with panels/.test(error)));
+
+  const strayPanels = structuredClone(loadExample('regional-ranking.json'));
+  strayPanels.panels = panels.panels;
+  assert.ok(validateSpec(strayPanels).errors.some((error) => /panels are only supported by comparison\.grouped/.test(error)));
+
+  const strayScale = structuredClone(loadExample('regional-ranking.json'));
+  strayScale.options = { ...(strayScale.options || {}), seriesScale: 'sequential' };
+  assert.ok(validateSpec(strayScale).errors.some((error) => /seriesScale is only supported by comparison\.grouped/.test(error)));
+});
+
+test('flattened "A · B" cross-tab labels are routed to comparison.grouped', () => {
+  const ranking = structuredClone(loadExample('regional-ranking.json'));
+  ranking.data = ranking.data.slice(0, 4).map((item, index) => ({
+    ...item,
+    label: `${index < 2 ? 'Before' : 'After'} · ${index % 2 ? '15 years' : '30 years'}`
+  }));
+  const errors = validateSpec(ranking).errors;
+  assert.ok(errors.some((error) => /flattened cross-tab/.test(error) && /comparison\.grouped/.test(error)));
+
+  const plain = loadExample('regional-ranking.json');
+  assert.ok(!validateSpec(plain).errors.some((error) => /flattened cross-tab/.test(error)));
+});
+
+test('threshold anchoring ignores durations in non-time measures and accepts plotted grouped limits', () => {
+  const grouped = structuredClone(loadExample('family-mortgage-payments-grouped.json'));
+  grouped.subtitle = 'Average monthly payment over 15 years, the new maximum term, in Moscow and St Petersburg.';
+  assert.ok(!validateSpec(grouped).errors.some((error) => /numeric threshold \(15\)/.test(error)));
+
+  const panels = structuredClone(loadExample('family-mortgage-terms-panels.json'));
+  panels.metadata.keyFinding = 'The loan cap reaches ₽18m from the third child.';
+  assert.ok(!validateSpec(panels).errors.some((error) => /numeric threshold/.test(error)));
+});
+
+test('additional sources are validated and normalized alongside the primary source', () => {
+  const spec = structuredClone(loadExample('family-mortgage-terms-panels.json'));
+  const result = validateSpec(spec);
+  assert.equal(result.normalized.source.additional.length, 1);
+  assert.equal(result.normalized.source.additional[0].url, 'https://realty.rbc.ru/news/6ab53dfb336bf305510d6e8a');
+
+  spec.source.additional[0].url = 'mailto:desk@example.com';
+  assert.ok(validateSpec(spec).errors.some((error) => /source\.additional\[0\]\.url/.test(error)));
+  spec.source.additional[0] = { name: 'RBC', extra: true };
+  assert.ok(validateSpec(spec).errors.some((error) => /source\.additional\[0\]\.extra/.test(error)));
+});
+
+test('grouped visual plan keeps authored order and chooses orientation from label length and width', () => {
+  const panels = validateSpec(loadExample('family-mortgage-terms-panels.json')).normalized;
+  const plan = VisualPlan.groupedComparisonPlan(panels, 1600);
+  assert.deepEqual(plan.categories, ['1', '2', '3', '4', '5+']);
+  assert.deepEqual(plan.series, ['Moscow, St Petersburg and their regions', 'Rest of Russia']);
+  assert.deepEqual(plan.panels, ['rate', 'limit']);
+  assert.equal(plan.orientation, 'columns');
+  assert.equal(VisualPlan.groupedComparisonPlan(panels, 480).orientation, 'bars');
+
+  const longLabels = structuredClone(panels);
+  longLabels.data.forEach((item) => { item.label = `Family with ${item.label} children`; });
+  assert.equal(VisualPlan.groupedComparisonPlan(longLabels, 1600).orientation, 'bars');
+  assert.equal(VisualPlan.resolveVisualPlan(panels, panels.data, 1600).canFillChart, true);
+});
+
+test('standard footers center the note between source and byline', () => {
+  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
+  assert.match(runtime, /element\('div', 'tochnyi-footnote', spec\.note\)/);
+  assert.match(runtime, /spec\.source\.additional \|\| \[\]/);
+  assert.match(css, /\.tochnyi-bottom\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, auto\) minmax\(0, 1fr\)/s);
+  assert.match(css, /\.tochnyi-footnote\s*\{[^}]*text-align:\s*center/s);
 });

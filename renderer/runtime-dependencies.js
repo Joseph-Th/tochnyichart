@@ -1,45 +1,63 @@
 'use strict';
 
-const AMCHARTS_VERSION = '5.20.3';
-const AMCHARTS_CDN_ROOT = `https://cdn.amcharts.com/lib/version/${AMCHARTS_VERSION}`;
-const RUSSIA_GEODATA_URL = 'https://cdn.amcharts.com/lib/5/geodata/russiaLow.js';
-const MUKTA_FONT_CSS_URL = 'https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap';
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
 
-function amChartsScriptUrl(relativePath) {
-  return `${AMCHARTS_CDN_ROOT}/${String(relativePath || '').replace(/^\/+/, '')}`;
-}
+const VENDOR_ROOT = path.join(__dirname, '..', 'vendor');
+const VENDOR_MANIFEST = require('../vendor/manifest.json');
+
+const AMCHARTS_VERSION = VENDOR_MANIFEST.dependencies.find((dependency) => dependency.id === 'amcharts5-core').version;
+const AMCHARTS_SCRIPTS = Object.freeze(['index.js', 'xy.js', 'percent.js', 'themes/Animated.js']
+  .map((file) => `amcharts5/${AMCHARTS_VERSION}/${file}`));
+const MUKTA_FONT_CSS = 'fonts/mukta/mukta.css';
 
 const RUNTIME_DEPENDENCY_CONTRACT = Object.freeze({
-  offlineReady: false,
-  rule: 'Chart geometry and renderer policy are repository-owned, but browser capture still requires remote runtime assets. Core amCharts scripts are pinned to a reviewed version; the Mukta webfont and Russia geodata remain provider-managed remote assets. Do not describe the current renderer as fully offline-reproducible.',
-  dependencies: Object.freeze([
-    Object.freeze({
-      id: 'amcharts5-core',
-      mode: 'pinned-cdn',
-      version: AMCHARTS_VERSION,
-      baseUrl: AMCHARTS_CDN_ROOT
-    }),
-    Object.freeze({
-      id: 'amcharts5-russia-geodata',
-      mode: 'provider-managed-cdn',
-      version: 'provider-managed',
-      url: RUSSIA_GEODATA_URL
-    }),
-    Object.freeze({
-      id: 'mukta-webfont',
-      mode: 'provider-managed-css',
-      version: 'provider-managed',
-      url: MUKTA_FONT_CSS_URL
-    })
-  ]),
-  offlineMigrationRule: 'If offline or air-gapped capture becomes a product requirement, vendor reviewed amCharts, geodata, and font assets under an explicit dependency/licensing change. Do not copy remote binaries into the repository ad hoc.'
+  offlineReady: true,
+  selfContainedHtml: true,
+  rule: 'Every generated chart HTML inlines the engine stylesheet and scripts, the vendored amCharts core, map geodata, the Mukta webfont, and brand images. The file renders offline and can be handed over as a standalone, editable deliverable.',
+  dependencies: Object.freeze(VENDOR_MANIFEST.dependencies.map((dependency) => Object.freeze({
+    id: dependency.id,
+    mode: 'vendored',
+    version: dependency.version,
+    license: dependency.license,
+    sourceUrl: dependency.sourceUrl,
+    files: Object.freeze(dependency.files.map((entry) => `vendor/${entry.file}`))
+  }))),
+  updateRule: 'Update vendored assets only together with vendor/manifest.json checksums and vendor/README.md provenance; tests verify every checksum.'
 });
+
+function vendorPath(relativePath) {
+  const resolved = path.resolve(VENDOR_ROOT, relativePath);
+  if (!resolved.startsWith(path.resolve(VENDOR_ROOT) + path.sep)) {
+    throw new Error(`Vendored asset path escapes vendor/: ${relativePath}`);
+  }
+  return resolved;
+}
+
+function verifyVendorAssets() {
+  const problems = [];
+  VENDOR_MANIFEST.dependencies.forEach((dependency) => {
+    dependency.files.forEach((entry) => {
+      const absolute = vendorPath(entry.file);
+      if (!fs.existsSync(absolute)) {
+        problems.push(`${entry.file} is missing.`);
+        return;
+      }
+      const actual = crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex');
+      if (actual !== entry.sha256) problems.push(`${entry.file} checksum ${actual} does not match manifest ${entry.sha256}.`);
+    });
+  });
+  return { valid: problems.length === 0, problems };
+}
 
 module.exports = {
   AMCHARTS_VERSION,
-  AMCHARTS_CDN_ROOT,
-  RUSSIA_GEODATA_URL,
-  MUKTA_FONT_CSS_URL,
+  AMCHARTS_SCRIPTS,
+  MUKTA_FONT_CSS,
   RUNTIME_DEPENDENCY_CONTRACT,
-  amChartsScriptUrl
+  VENDOR_MANIFEST,
+  VENDOR_ROOT,
+  vendorPath,
+  verifyVendorAssets
 };

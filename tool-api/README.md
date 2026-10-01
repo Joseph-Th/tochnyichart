@@ -226,6 +226,13 @@ and the renderer does not infer a regression line, bubble size, or third color
 variable. Use it only when both numeric variables are observed for every
 labeled item; ordered time remains `trend.line`.
 
+Grouped `trend.line` series share one Y scale by default. When two or three
+aligned series need separate cumulative scales, set `options.independentYAxes`
+to `true`; the renderer puts the first axis on the left, additional axes on the
+right, and colors each axis to match its line. In that mode the colored axis
+titles can identify the series without a separate legend. Set
+`options.showPoints` to `false` for line-only output.
+
 When two neighboring recipes remain plausible, use `ambiguityRules` to reject
 the closest alternative explicitly. Typical boundaries include benchmark-gap
 versus change, scenarios versus dumbbell, matrix versus ranking, scatter versus
@@ -235,27 +242,27 @@ render several competing charts.
 
 Use `image` for the normal individual-chart deliverable. With no explicit output
 path, `--project-id <id>` is required and the PNG is published to
-`projects/<id>/output/`. There is no implicit default project. The default
-`auto` profile starts standard charts at 1200×900 and regional maps at their
-maintained 1450×679 wide canvas; it may expand only to avoid clipping.
-`landscape` is fixed at 1200×900, `square` at 1080×1080, and `portrait` at
-1080×1350. Fixed profiles fail rather than silently changing shape when the
-chart does not fit. These profiles are publishing intents, not author-accessible
-layout coordinates. `--run-id` remains accepted only as a compatibility alias
-for `--project-id`.
+`projects/<id>/output/`. There is no implicit default project. Standard charts
+default to fixed `landscape` at 1600×900 (16:9 widescreen); they fail rather
+than silently expanding when content does not fit, so revise semantic copy or
+density and rerun. Regional maps default to the maintained adaptive `auto`
+canvas at 1450×679 and may expand only to avoid clipping. `--profile auto` is
+an explicit opt-in for variable-height standard output. `square` is fixed at
+1080×1080 and `portrait` at 1080×1350. These profiles are publishing intents,
+not author-accessible layout coordinates. `--run-id` remains accepted only as
+a compatibility alias for `--project-id`.
 
 The older `node tools/chart.js` entrypoint remains available for compatibility, but it is not the documented chart-author surface.
 
-The current browser capture stack is not fully offline. The Tool API reports
-`runtimeDependencies.offlineReady: false`. Core amCharts scripts are pinned to
-a reviewed release; the Mukta webfont and Russia geodata remain remote
-provider-managed dependencies. Offline packaging is maintainer work, not a
-ChartSpec option.
+Generated chart HTML is self-contained and renders offline. The Tool API reports
+`runtimeDependencies.offlineReady: true`: amCharts, geodata, and the Mukta
+webfont are vendored and inlined with the engine into every file.
 
-Batch final PNGs and retained HTML belong in `projects/<project-id>/output/`;
+Batch final PNGs and their HTML belong in `projects/<project-id>/output/`;
 any requested presentation belongs there as well. Authored production ChartSpecs
-belong in the same project's `specs/`. An individual `image` call does not retain
-HTML unless the author separately requests a render. Temporary or ad hoc review
+belong in the same project's `specs/`. An individual `image` call also publishes
+a companion `<name>.html` next to `<name>.png`: a standalone, editable file whose
+embedded ChartSpec and editing guide let a recipient change the chart later. Temporary or ad hoc review
 belongs in `projects/<project-id>/work/review/` and is removed during
 finalization. Production project folders under `projects/` are ignored by Git;
 the tracked `projects/README.md` is the sole entrypoint exception. This is checked

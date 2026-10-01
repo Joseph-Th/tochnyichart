@@ -10,7 +10,7 @@ const {
   assertNaturalRegionalRuns
 } = require('./regional-workflow');
 const { diagnoseHtmlResponsive, captureHtml } = require('./capture');
-const { resolveImageProfile } = require('./image-profiles');
+const { defaultImageProfileId, resolveImageProfile } = require('./image-profiles');
 const { buildPresentationPlan, validatePresentationPlan } = require('./presentation-plan');
 const {
   normalizeRunId,
@@ -185,7 +185,7 @@ function buildRunCharts(projectRoot, runId, options = {}) {
       diagnosticWarnings += counts.warnings;
       renderWarnings += Array.isArray(rendered.warnings) ? rendered.warnings.length : 0;
 
-      const imageProfile = resolveImageProfile('auto', spec.recipe);
+      const imageProfile = resolveImageProfile(defaultImageProfileId(spec.recipe), spec.recipe);
       const screenshot = dependencies.capture(htmlPath, pngPath, {
         browser: options.browser,
         viewport: imageProfile.viewport,

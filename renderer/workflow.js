@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { validateSpec } = require('./validate');
-const { renderValidatedSpecFile, assetFingerprint } = require('./render');
+const { renderValidatedSpecFile } = require('./render');
 const { reviewFile } = require('./review');
 const { DEFAULT_REGION_SET_ID } = require('./agent-workflow');
 const { STANDARD_WORKFLOW, REGIONAL_WORKFLOW } = require('./workflow-contract');
@@ -119,10 +119,8 @@ function collectWorkflowWarnings(checked, rendered, review) {
 function renderStandardChart(specPath, outputPath, options = {}) {
   const checked = validateStandardSpec(specPath);
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..'));
-  const assetVersion = options.assetVersion || assetFingerprint(projectRoot);
   const rendered = renderValidatedSpecFile(checked.specPath, checked.validation.normalized, outputPath, {
     projectRoot,
-    assetVersion,
     runId: options.projectId || options.runId,
     warnings: checked.validation.warnings
   });
@@ -134,7 +132,6 @@ function renderStandardChart(specPath, outputPath, options = {}) {
     workflow: STANDARD_WORKFLOW,
     specPath: checked.specPath,
     htmlPath: rendered.htmlPath,
-    assetVersion,
     recipe: rendered.recipe,
     bytes: rendered.bytes,
     warnings: collectWorkflowWarnings(checked, rendered, review),

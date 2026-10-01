@@ -8,13 +8,13 @@ const {
 const IMAGE_OUTPUT_PROFILES = Object.freeze({
   auto: Object.freeze({
     id: 'auto',
-    description: 'Recipe-aware static image canvas. Standard charts start at 1200×900; regional maps use their maintained wide delivery viewport. The canvas may expand only when required to avoid clipping.',
+    description: 'Recipe-aware static image canvas. Standard charts start at 1600×900 widescreen; regional maps use their maintained wide delivery viewport. The canvas may expand only when required to avoid clipping.',
     adaptive: true
   }),
   landscape: Object.freeze({
     id: 'landscape',
-    description: 'Fixed 4:3 landscape image for general editorial use.',
-    width: 1200,
+    description: 'Fixed 16:9 widescreen image for general editorial use.',
+    width: 1600,
     height: 900,
     adaptive: false
   }),
@@ -38,6 +38,10 @@ function autoViewport(recipe) {
   return recipe === 'map.regional'
     ? { ...REGIONAL_STATIC_VIEWPORT }
     : { ...STANDARD_STATIC_VIEWPORT };
+}
+
+function defaultImageProfileId(recipe = '') {
+  return recipe === 'map.regional' ? 'auto' : 'landscape';
 }
 
 function resolveImageProfile(profileId = 'auto', recipe = '') {
@@ -68,6 +72,7 @@ function listImageProfiles() {
 
 module.exports = {
   IMAGE_OUTPUT_PROFILES,
+  defaultImageProfileId,
   resolveImageProfile,
   listImageProfiles
 };

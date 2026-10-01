@@ -38,7 +38,7 @@ const BATCH_WORKFLOW = Object.freeze({
     'decide the appropriate production tool and chart workflow for each accepted story; explanatory geography must use regional-breakdown',
     'author one ChartSpec per accepted chart story, then use the run chart builder to validate, render, diagnose, capture, and manifest the complete selected set',
     'compare authored ChartSpecs for duplicate source, reporting context, recipe, and category or time skeleton; consolidate matches before delivery',
-    'capture one final PNG image per accepted chart',
+    'capture one final PNG image per accepted chart; standard charts publish as fixed 1600×900 landscape by default, while regional maps retain their maintained adaptive wide canvas',
     'when a PowerPoint presentation is requested, assemble the final PNG images by following presentation-plan.json exactly, with one chart per slide and no unrequested title or divider slides',
     'verify that selected source-ledger slugs and titles exactly match the final ChartSpecs',
     'save the ChartSpecs, HTML files, final PNGs, and any requested presentation under the same projects/<project-id>/ folder',
@@ -50,6 +50,7 @@ const BATCH_WORKFLOW = Object.freeze({
   presentation: 'projects/<project-id>/output/tochnyi-charts-<project-id>.pptx',
   presentationPlan: 'projects/<project-id>/output/presentation-plan.json',
   presentationRule: 'The default deck contains exactly one slide per accepted chart in presentation-plan order. Do not add a cover, title, agenda, divider, closing, or other non-chart slide unless the user explicitly requested it.',
+  staticOutputRule: 'Standard charts default to fixed landscape at 1600×900 and must fail rather than expand when the content does not fit. Revise semantic copy or density until the fixed canvas passes. Regional maps default to the maintained adaptive auto profile. Variable-height auto output for standard charts requires an explicit --profile auto request.',
   finalArtifacts: Object.freeze([
     'authored ChartSpec JSON files',
     'rendered chart HTML files',
@@ -166,12 +167,13 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
 
 const STATIC_IMAGE_CONTRACT = Object.freeze({
   primaryArtifactRule: 'Treat the final PNG as the primary chart artifact. The HTML shell is a deterministic rendering surface and review aid, not the publication format the reader should need in order to understand the chart.',
+  handoffRule: 'Every published PNG has a companion HTML with the same basename. It is self-contained (engine, amCharts, fonts, geodata, and brand images embedded), renders offline, and embeds its ChartSpec with an editing guide, so a recipient or their assistant can change the chart by editing that embedded JSON. Inside this repository the ChartSpec in specs/ remains the authority; regenerate rather than hand-editing delivered HTML.',
   visibleEvidenceRule: 'Everything required to understand the claim must be visible in the static image. Never rely on hover, tooltip, click, animation state, hidden legend interaction, or panning for category identity, units, values, thresholds, dates, or the title-defining comparison.',
   directLabelRule: 'Prefer direct labels and visible orientation over interaction. Dense charts may label representative or editorially important points while axes and geometry preserve the complete series, but no essential observation may exist only inside a tooltip.',
   treatmentRule: 'Authors choose semantic evidence and recipe, not renderer styling. Existing recipe mark families stay stable across publishing profiles; output fitting may reduce geometry only to prevent clipping and never changes bars into points, removes observations, or invents analytical marks.',
   densityRule: 'narrative.density is an explicit author field, not an automatic reading-time heuristic. The renderer may adjust spacing and secondary furniture for the declared density, but it must preserve the selected recipe and all primary evidence.',
   interactionRule: 'Any interactive behavior in the HTML preview is optional and must degrade to the same complete static message. Interactivity never rescues an otherwise ambiguous PNG.',
-  profileRule: 'Output profiles express publishing intent, not renderer geometry. Use auto for the maintained recipe-aware canvas, or request landscape, square, or portrait when the destination requires that fixed image shape. The engine owns the pixel dimensions and refuses a fixed profile when content cannot fit.'
+  profileRule: 'Publishing intent is explicit: standard charts default to fixed landscape at 1600×900. If a standard chart does not fit, revise semantic copy or density until it fits; do not silently expand the publication canvas. Regional maps default to the maintained adaptive auto canvas. Use --profile auto for a standard chart only when variable-height output is explicitly acceptable; square and portrait remain explicit fixed publication shapes.'
 });
 
 const RECIPE_AMBIGUITY_RULES = Object.freeze([
@@ -212,6 +214,18 @@ const RECIPE_AMBIGUITY_RULES = Object.freeze([
     choose: 'Use composition.stacked for one total whose internal mix is the finding. Use composition.compared when two or more groups contain the same additive components and both segment size and group total need comparison.'
   }),
   Object.freeze({
+    candidates: Object.freeze(['comparison.grouped', 'ranking.horizontal']),
+    choose: 'Use ranking.horizontal when there is one categorical dimension. When the labels would need a compound form such as "After · 3 children · ₽18m" or "Moscow Region · ₽12m", the story is a cross-tab: use comparison.grouped with the category in data[].label and the repeated dimension in data[].group.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['comparison.grouped', 'relationship.scatter']),
+    choose: 'Use relationship.scatter only when x is an observed continuous variable. When x is a policy tier, loan size, count of children, or another small set of levels shared by several groups, use comparison.grouped; use panels when each group carries two different measures such as a rate and a loan limit.'
+  }),
+  Object.freeze({
+    candidates: Object.freeze(['comparison.grouped', 'matrix.heat']),
+    choose: 'Use comparison.grouped when exact bar lengths and a few series (2 to 4) carry the comparison, optionally with benchmark references. Use matrix.heat when a complete larger cross-tab pattern is the finding and color intensity can carry magnitude.'
+  }),
+  Object.freeze({
     candidates: Object.freeze(['ranking.horizontal', 'map.regional']),
     choose: 'Use ranking only when place names function as ordinary categories. Use map.regional when administrative geography is explanatory; three or more comparable named administrative regions are treated as a regional distribution by the routing contract.'
   })
@@ -224,6 +238,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Positive and negative values measure the same named quantity for the same scope and period', use: 'comparison.diverging', example: 'specs/examples/profit-change-contributions.json' }),
   Object.freeze({ when: 'Values include a min-max interval or threshold for the same named quantity, scope, and period. One interval is allowed only when a visible independent benchmark or total supplies the scale; a reference equal to a range endpoint is redundant. If before/current values cross a story-defining threshold, keep that threshold visibly anchored on the same scale.', use: 'comparison.range', example: 'specs/examples/farm-diesel-range.json' }),
   Object.freeze({ when: 'One or more actual values sit inside benchmark totals, including one or two category-level earlier/current price pairs or two meaningful policy/target shares against the same tangible total; one segmented row is preferred when one relationship fully carries the story', use: 'comparison.benchmark-gap', example: 'specs/examples/urals-benchmark-gap.json' }),
+  Object.freeze({ when: 'One quantity crosses two dimensions (categories × 2 to 4 series, such as family size × region or area × loan amount), or the same categories carry two or three related measures that belong side by side (panels), optionally against labeled benchmark lines such as the value before a policy change. Never flatten such a cross-tab into compound "A · B" labels.', use: 'comparison.grouped', example: 'specs/examples/family-mortgage-payments-grouped.json' }),
   Object.freeze({ when: 'Three or more categories each have an earlier or benchmark value and a later or actual value', use: 'comparison.dumbbell', example: 'specs/examples/marketplace-commission-dumbbell.json' }),
   Object.freeze({ when: 'Three to eight positive physical-size magnitudes where proportional area is itself intuitive, such as facility floor area, land area, storage footprint, or capacity blocks', use: 'comparison.area-squares', example: 'specs/examples/facility-area-squares.json' }),
   Object.freeze({ when: 'One numeric measure forms a complete two-dimensional categorical cross-tab with 2 to 6 row categories and 2 to 6 column categories, and the pattern or concentration across both dimensions is the finding', use: 'matrix.heat', example: 'specs/examples/support-channel-heatmap.json' }),
@@ -413,6 +428,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     workflow: STANDARD_WORKFLOW,
+    defaultImageProfile: 'landscape',
     startHere: 'Use this path when geography is not the primary visual structure. If the story needs a map with regional callouts, stop and use regional-guide plus regional instead.',
     steps: [
       'Preserve the supplied claim or documented data-derived finding, then read supplied sources and fill useful evidence gaps.',
@@ -421,7 +437,7 @@ function standardAgentGuide(regionSetId = DEFAULT_REGION_SET_ID) {
       'Classify the enriched evidence with the selection rules below.',
       'When neighboring recipes remain plausible, use ambiguityRules to state why the rejected alternative does not match the evidence contract.',
       'Write a semantic ChartSpec using the selected recipe.',
-      'Validate the ChartSpec, then use the image command for the primary static artifact. Use render and diagnose only when HTML-level inspection is needed.'
+      'Validate the ChartSpec, then use the image command for the primary static artifact and its self-contained companion HTML. Use render and diagnose only when HTML-level inspection is needed.'
     ],
     authoringSurface: {
       role: 'chart-author',
@@ -461,6 +477,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     workflow: REGIONAL_WORKFLOW,
+    defaultImageProfile: 'auto',
     recipe: 'map.regional',
     command: `${TOOL_API_ENTRYPOINT} regional <spec.json> [output.html] [--project-id <id>]`,
     startHere: 'Use this path when geography is part of the finding. Keep all materially reported regions highlighted; reserve callout cards for the locations that need explicit evidence labels.',
@@ -516,7 +533,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
 function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
-    version: '1.23',
+    version: '1.24',
     interface: {
       type: 'tool-api',
       role: 'chart-author',
@@ -564,6 +581,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     regional: {
       workflow: REGIONAL_WORKFLOW,
+      defaultImageProfile: 'auto',
       regionSet: {
         id: regionSet.id,
         label: regionSet.label,
@@ -575,6 +593,7 @@ function agentWorkflowOrientation(regionSetId = DEFAULT_REGION_SET_ID) {
     },
     standard: {
       workflow: STANDARD_WORKFLOW,
+      defaultImageProfile: 'landscape',
       guideCommand: `${TOOL_API_ENTRYPOINT} guide`,
       renderCommand: `${TOOL_API_ENTRYPOINT} render <spec.json> [output.html] [--project-id <id>]`,
       diagnoseCommand: `${TOOL_API_ENTRYPOINT} diagnose <output.html>`,
@@ -593,7 +612,7 @@ function toolApiManifest(regionSetId = DEFAULT_REGION_SET_ID) {
   const regionSet = getRegionSet(regionSetId);
   return {
     name: 'Tochnyi Charts Tool API',
-    version: '1.23',
+    version: '1.24',
     role: 'chart-author',
     entrypoint: TOOL_API_ENTRYPOINT,
     firstCommand: `${TOOL_API_ENTRYPOINT} orient`,

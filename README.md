@@ -5,7 +5,12 @@ LLM and human chart authors. Authors provide evidence and editorial meaning in a
 compact `ChartSpec` JSON file. The engine owns HTML, CSS, chart configuration,
 typography, layout, maps, diagnostics, and export behavior.
 
-Generated HTML is an output artifact. Do not edit it directly.
+Generated HTML is an output artifact. Inside this repository the `ChartSpec` is
+the authority: change the spec and regenerate rather than editing HTML. Every
+delivered chart HTML is self-contained (engine, amCharts, fonts, geodata, and
+brand images embedded), renders offline, and carries its `ChartSpec` with an
+editing guide at the top of the file, so it can be handed to a recipient on its
+own and changed later by editing that embedded JSON.
 
 [`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists. Repository contributors and coding agents start with [`AGENTS.md`](AGENTS.md); chart-author agents that only need the public authoring surface start with [`tool-api/README.md`](tool-api/README.md).
 
@@ -220,7 +225,7 @@ Use the standard workflow when geography is not the primary visual structure. Fo
 
 ```bash
 node tool-api/chart.js validate specs/examples/ai95-price-spike.json
-node tool-api/chart.js image specs/examples/ai95-price-spike.json --profile auto --project-id examples
+node tool-api/chart.js image specs/examples/ai95-price-spike.json --project-id examples
 ```
 
 `image` validates, renders through a disposable shell, runs target-size browser diagnostics, and writes the PNG only after the capture is acceptable. Use `render` and `diagnose` for HTML-level inspection. `diagnose` launches the browser
@@ -228,7 +233,7 @@ at the default responsive viewports and exits nonzero when error-level layout
 issues are found. Use `--single` for a targeted viewport or `--fit` when strict
 viewport containment is part of the check.
 
-Image profiles are bounded publishing intents. `auto` starts standard charts at 1200×900 and regional maps at 1450×679 and may expand only to avoid clipping. Fixed `landscape`, `square`, and `portrait` profiles use 1200×900, 1080×1080, and 1080×1350 respectively and fail rather than changing shape when content cannot fit.
+Image profiles are bounded publishing intents. Standard charts default to fixed `landscape` at 1600×900 (16:9 widescreen) and fail rather than changing shape when content cannot fit; revise semantic copy or density until the chart fits. Regional maps default to `auto` at their maintained 1450×679 wide canvas and may expand only to avoid clipping. `--profile auto` remains an explicit opt-in for variable-height standard output. Fixed `square` and `portrait` profiles use 1080×1080 and 1080×1350 respectively.
 
 ### Regional breakdown
 
@@ -260,7 +265,7 @@ node tool-api/chart.js review projects/<project-id>/output/<chart>.html \
   --screenshot --output projects/<project-id>/work/review/<chart>.png
 ```
 
-For a direct final regional PNG without retaining HTML, use:
+For a direct final regional PNG with its self-contained companion HTML, use:
 
 ```bash
 node tool-api/chart.js image specs/examples/russia-regional-map.json --profile auto --project-id examples

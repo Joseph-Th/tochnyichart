@@ -1,5 +1,5 @@
 {
-  "version": "2.13.0",
+  "version": "2.14.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -12,7 +12,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 3
       }
     },
@@ -28,7 +28,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 3
       }
     },
@@ -43,7 +43,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -60,7 +60,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -79,7 +79,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -95,7 +95,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -111,7 +111,7 @@
       ],
       "defaults": {
         "height": "tall",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -126,8 +126,24 @@
       ],
       "defaults": {
         "height": "tall",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
+      }
+    },
+    {
+      "id": "comparison.grouped",
+      "purpose": "Compare one quantity across categories for two to four named series (a cross-tab), or show two or three related measures side by side for the same categories. Use it instead of flattening a cross-tab into compound labels such as \"A · B\" in a ranking, scenario, or scatter chart.",
+      "data": "2 to 48 items. data[].label is the category (2 to 10, authored order is kept), data[].group is the series (2 to 4, omit for a single series), and value is the non-negative level. Missing category/series combinations are allowed and simply leave a gap. Optional data[].detail is a short caption (24 characters or fewer) drawn under a column or inside a bar, such as the loan size behind a payment; optional data[].annotation is a short muted note beside the value, such as \"2.6× Moscow Region\". Use panels (2 or 3, each with id, title, and a measure override) when the same categories and series carry different quantities, such as an interest rate and a loan limit; every item then names its panel. Without panels, references draw labeled benchmark lines (for example the payment before a policy change) across the shared axis. Set options.seriesScale to sequential when the series are ordered levels of one quantity (loan sizes, years); keep categorical for unordered groups such as regions. Orientation is renderer-owned: short category labels become columns and longer names become horizontal bars.",
+      "bestFor": [
+        "policy terms by group and tier",
+        "before/after benchmarks across several categories and options",
+        "the same budget across several markets and amounts",
+        "two related measures for the same categories"
+      ],
+      "defaults": {
+        "height": "standard",
+        "watermark": "none",
+        "supportingFacts": 0
       }
     },
     {
@@ -143,7 +159,7 @@
       ],
       "defaults": {
         "height": "tall",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -159,14 +175,14 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
     {
       "id": "trend.line",
       "purpose": "Show a sequence over time.",
-      "data": "3 to 366 ordered labeled numeric values; 5 or more preferred. Dense daily series are supported when the date sequence itself is analytically useful. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",
+      "data": "3 to 366 ordered labeled numeric values; 5 or more preferred. Dense daily series are supported when the date sequence itself is analytically useful. To compare 2 to 6 aligned series on one shared scale, repeat the same ordered labels for each series and identify every item with data[].group; each series may contain up to 366 observations and the flattened grouped dataset may contain at most 732 items. Grouped trends require no direct value labels and normally require a visible legend. For two or three aligned grouped series, options.independentYAxes may be set true when the editorial intent explicitly requires separate cumulative scales; the renderer assigns the first axis left and additional axes right, colors each axis to its line, and the colored axis titles may replace the legend. Set options.showPoints false when the line shape should stand alone without point markers. A 3–4 point sequence of small exact counts or only two distinct count levels requires an independent same-unit denominator/portfolio benchmark or richer quantitative anchor; do not draw a line merely to visualize a few self-evident integers.",
       "bestFor": [
         "time series",
         "rates",
@@ -175,7 +191,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 3
       },
       "events": "Optional. Up to two dated context events drawn as vertical marker lines, each anchored with afterLabel to the plotted period it follows. Use for an external event that changes interpretation of the series, never for a value that belongs in data."
@@ -191,7 +207,7 @@
       ],
       "defaults": {
         "height": "tall",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       },
       "events": "Optional. Up to two dated context events drawn as vertical marker lines, each anchored with afterLabel to the plotted period it follows. Use for an external event that changes interpretation of the series, never for a value that belongs in data."
@@ -210,7 +226,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -225,7 +241,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 3
       }
     },
@@ -241,7 +257,7 @@
       ],
       "defaults": {
         "height": "short",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 3
       }
     },
@@ -257,7 +273,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -273,7 +289,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -289,7 +305,7 @@
       ],
       "defaults": {
         "height": "standard",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 2
       }
     },
@@ -304,7 +320,7 @@
       ],
       "defaults": {
         "height": "tall",
-        "watermark": "full",
+        "watermark": "none",
         "supportingFacts": 0
       }
     },
@@ -329,6 +345,18 @@
     {
       "id": "analysis",
       "purpose": "Add a separate analyst, author, team, or public-account attribution, optionally linked, without conflating it with the underlying source."
+    },
+    {
+      "id": "source.additional",
+      "purpose": "List up to three further publications, each optionally linked, after the primary source when the chart combines evidence from several articles or datasets."
+    },
+    {
+      "id": "credits",
+      "purpose": "Show a right-aligned byline in the footer, such as analysisBy for the analyst or account that produced the chart."
+    },
+    {
+      "id": "note",
+      "purpose": "Add one short footnote (eligibility rule, derivation, or caveat). Standard charts center it in the footer between the source and the byline; maps show it below the map."
     },
     {
       "id": "references",
