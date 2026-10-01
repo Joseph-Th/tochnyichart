@@ -15,3 +15,5 @@
 *.pptx binary
 *.pdf binary
 *.zip binary
+# Vendored assets are checksummed byte-for-byte (vendor/manifest.json); never convert line endings.
+vendor/** -text
