@@ -1,0 +1,67 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.grouped",
+  "title": "Same contract: lower tiers pay more each month",
+  "subtitle": "Average monthly cost of a fictional service on the standard contract and on the largest contract each tier allows.",
+  "date": "2026-09-26",
+  "source": {
+    "name": "Example pricing dataset",
+    "period": "September 2026",
+    "url": "https://example.org/pricing"
+  },
+  "note": "Illustrative data for engine tests. Tier 1 can only take the standard $12k contract.",
+  "data": [
+    { "label": "Tier 1", "group": "Standard $12k contract", "detail": "$12k", "value": 144000, "displayValue": "$144.0k", "quantity": "monthly service cost", "scope": "Tier 1 customers", "period": "From October 2026" },
+    { "label": "Tier 2", "group": "Standard $12k contract", "detail": "$12k", "value": 129000, "displayValue": "$129.0k", "quantity": "monthly service cost", "scope": "Tier 2 customers", "period": "From October 2026" },
+    { "label": "Tier 2", "group": "Largest contract for the tier", "detail": "$15k", "value": 161200, "displayValue": "$161.2k", "quantity": "monthly service cost", "scope": "Tier 2 customers", "period": "From October 2026" },
+    { "label": "Tier 3", "group": "Standard $12k contract", "detail": "$12k", "value": 114700, "displayValue": "$114.7k", "quantity": "monthly service cost", "scope": "Tier 3 customers", "period": "From October 2026" },
+    { "label": "Tier 3", "group": "Largest contract for the tier", "detail": "$18k", "value": 172000, "displayValue": "$172.0k", "quantity": "monthly service cost", "scope": "Tier 3 customers", "period": "From October 2026" },
+    { "label": "Tier 4", "group": "Standard $12k contract", "detail": "$12k", "value": 101300, "displayValue": "$101.3k", "quantity": "monthly service cost", "scope": "Tier 4 customers", "period": "From October 2026" },
+    { "label": "Tier 4", "group": "Largest contract for the tier", "detail": "$18k", "value": 151900, "displayValue": "$151.9k", "quantity": "monthly service cost", "scope": "Tier 4 customers", "period": "From October 2026" },
+    { "label": "Tier 5+", "group": "Standard $12k contract", "detail": "$12k", "value": 88800, "displayValue": "$88.8k", "quantity": "monthly service cost", "scope": "Tier 5+ customers", "period": "From October 2026" },
+    { "label": "Tier 5+", "group": "Largest contract for the tier", "detail": "$18k", "value": 133100, "displayValue": "$133.1k", "quantity": "monthly service cost", "scope": "Tier 5+ customers", "period": "From October 2026" }
+  ],
+  "references": [
+    {
+      "value": 101300,
+      "label": "Before, standard · $12k",
+      "tone": "neutral",
+      "lineStyle": "dashed"
+    },
+    {
+      "value": 71900,
+      "label": "Before, extended · $12k",
+      "tone": "neutral",
+      "lineStyle": "dashed"
+    }
+  ],
+  "measure": {
+    "quantity": "monthly service cost",
+    "unit": "USD",
+    "prefix": "$",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear",
+    "valueMode": "level",
+    "levelAvailability": "reported"
+  },
+  "narrative": {
+    "frame": "comparison",
+    "density": "editorial",
+    "emphasis": "benchmark-gap"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLabels": true,
+    "animate": false,
+    "seriesScale": "categorical"
+  },
+  "metadata": {
+    "slug": "grouped-series-references",
+    "topic": "fictional service pricing",
+    "country": "Fictional",
+    "dataPeriod": "From October 2026",
+    "keyFinding": "On the standard contract, only tier 4 and above pay no more than before."
+  }
+}

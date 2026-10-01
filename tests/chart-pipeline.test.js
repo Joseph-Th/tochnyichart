@@ -1789,13 +1789,13 @@ test('source attribution is optional and omitted sources remain renderable', () 
 test('source and analysis attribution are separate semantic fields', () => {
   const spec = loadExample('regional-ranking.json');
   spec.source = { name: 'Tochnyi Team' };
-  spec.analysis = { name: '@HartreeFock', url: 'https://x.com/HartreeFock' };
+  spec.analysis = { name: '@analyst', url: 'https://example.com/analyst' };
   spec.credits = { dataGatheredBy: '@collector', analysisBy: '@analyst' };
   let result = validateSpec(spec);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.normalized.source.name, 'Tochnyi Team');
-  assert.equal(result.normalized.analysis.name, '@HartreeFock');
-  assert.equal(result.normalized.analysis.url, 'https://x.com/HartreeFock');
+  assert.equal(result.normalized.analysis.name, '@analyst');
+  assert.equal(result.normalized.analysis.url, 'https://example.com/analyst');
   assert.equal(result.normalized.credits.dataGatheredBy, '@collector');
   assert.equal(result.normalized.credits.analysisBy, '@analyst');
 
@@ -4600,8 +4600,8 @@ test('grouped trend lines support aligned series and optional point suppression'
 });
 
 test('comparison.grouped validates cross-tab, panel, and reference contracts', () => {
-  const grouped = loadExample('family-mortgage-payments-grouped.json');
-  const panels = loadExample('family-mortgage-terms-panels.json');
+  const grouped = loadExample('grouped-series-references.json');
+  const panels = loadExample('grouped-panels.json');
   assert.deepEqual(validateSpec(grouped).errors, []);
   assert.deepEqual(validateSpec(panels).errors, []);
 
@@ -4652,38 +4652,38 @@ test('flattened "A · B" cross-tab labels are routed to comparison.grouped', () 
 });
 
 test('threshold anchoring ignores durations in non-time measures and accepts plotted grouped limits', () => {
-  const grouped = structuredClone(loadExample('family-mortgage-payments-grouped.json'));
-  grouped.subtitle = 'Average monthly payment over 15 years, the new maximum term, in Moscow and St Petersburg.';
+  const grouped = structuredClone(loadExample('grouped-series-references.json'));
+  grouped.subtitle = 'Average monthly cost over 15 years, the standard term, across all tiers.';
   assert.ok(!validateSpec(grouped).errors.some((error) => /numeric threshold \(15\)/.test(error)));
 
-  const panels = structuredClone(loadExample('family-mortgage-terms-panels.json'));
-  panels.metadata.keyFinding = 'The loan cap reaches ₽18m from the third child.';
+  const panels = structuredClone(loadExample('grouped-panels.json'));
+  panels.metadata.keyFinding = 'The contract limit reaches $18m from the third tier.';
   assert.ok(!validateSpec(panels).errors.some((error) => /numeric threshold/.test(error)));
 });
 
 test('additional sources are validated and normalized alongside the primary source', () => {
-  const spec = structuredClone(loadExample('family-mortgage-terms-panels.json'));
+  const spec = structuredClone(loadExample('grouped-panels.json'));
   const result = validateSpec(spec);
   assert.equal(result.normalized.source.additional.length, 1);
-  assert.equal(result.normalized.source.additional[0].url, 'https://realty.rbc.ru/news/6ab53dfb336bf305510d6e8a');
+  assert.equal(result.normalized.source.additional[0].url, 'https://example.org/pricing');
 
   spec.source.additional[0].url = 'mailto:desk@example.com';
   assert.ok(validateSpec(spec).errors.some((error) => /source\.additional\[0\]\.url/.test(error)));
-  spec.source.additional[0] = { name: 'RBC', extra: true };
+  spec.source.additional[0] = { name: 'Example', extra: true };
   assert.ok(validateSpec(spec).errors.some((error) => /source\.additional\[0\]\.extra/.test(error)));
 });
 
 test('grouped visual plan keeps authored order and chooses orientation from label length and width', () => {
-  const panels = validateSpec(loadExample('family-mortgage-terms-panels.json')).normalized;
+  const panels = validateSpec(loadExample('grouped-panels.json')).normalized;
   const plan = VisualPlan.groupedComparisonPlan(panels, 1600);
   assert.deepEqual(plan.categories, ['1', '2', '3', '4', '5+']);
-  assert.deepEqual(plan.series, ['Moscow, St Petersburg and their regions', 'Rest of Russia']);
+  assert.deepEqual(plan.series, ['Large-market customers', 'Other customers']);
   assert.deepEqual(plan.panels, ['rate', 'limit']);
   assert.equal(plan.orientation, 'columns');
   assert.equal(VisualPlan.groupedComparisonPlan(panels, 480).orientation, 'bars');
 
   const longLabels = structuredClone(panels);
-  longLabels.data.forEach((item) => { item.label = `Family with ${item.label} children`; });
+  longLabels.data.forEach((item) => { item.label = `Accounts in tier ${item.label} plans`; });
   assert.equal(VisualPlan.groupedComparisonPlan(longLabels, 1600).orientation, 'bars');
   assert.equal(VisualPlan.resolveVisualPlan(panels, panels.data, 1600).canFillChart, true);
 });

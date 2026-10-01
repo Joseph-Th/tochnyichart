@@ -1,0 +1,95 @@
+{
+  "version": "2.0",
+  "recipe": "comparison.grouped",
+  "title": "Each tier cuts the rate 2 points and lifts the limit, up to the third",
+  "subtitle": "Terms of a fictional service from October 2026, by customer tier.",
+  "date": "2026-09-26",
+  "source": {
+    "name": "Example terms dataset",
+    "period": "September 2026",
+    "url": "https://example.org/terms",
+    "additional": [
+      {
+        "name": "Example pricing dataset",
+        "period": "September 2026",
+        "url": "https://example.org/pricing"
+      }
+    ]
+  },
+  "note": "Illustrative data for engine tests.",
+  "panels": [
+    {
+      "id": "rate",
+      "title": "Financing rate",
+      "measure": {
+        "quantity": "financing rate",
+        "unit": "%",
+        "suffix": "%",
+        "valueMode": "rate",
+        "levelAvailability": "not-applicable"
+      }
+    },
+    {
+      "id": "limit",
+      "title": "Largest contract",
+      "measure": {
+        "quantity": "largest contract value",
+        "unit": "million USD",
+        "prefix": "$",
+        "suffix": "m"
+      }
+    }
+  ],
+  "data": [
+    { "panel": "rate", "label": "1", "group": "Large-market customers", "value": 12, "displayValue": "12%", "quantity": "financing rate", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "2", "group": "Large-market customers", "value": 10, "displayValue": "10%", "quantity": "financing rate", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "3", "group": "Large-market customers", "value": 8, "displayValue": "8%", "quantity": "financing rate", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "4", "group": "Large-market customers", "value": 6, "displayValue": "6%", "quantity": "financing rate", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "5+", "group": "Large-market customers", "value": 4, "displayValue": "4%", "quantity": "financing rate", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "1", "group": "Other customers", "value": 10, "displayValue": "10%", "quantity": "financing rate", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "2", "group": "Other customers", "value": 8, "displayValue": "8%", "quantity": "financing rate", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "3", "group": "Other customers", "value": 6, "displayValue": "6%", "quantity": "financing rate", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "4", "group": "Other customers", "value": 4, "displayValue": "4%", "quantity": "financing rate", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "rate", "label": "5+", "group": "Other customers", "value": 2, "displayValue": "2%", "quantity": "financing rate", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "1", "group": "Large-market customers", "value": 12, "displayValue": "$12m", "quantity": "largest contract value", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "2", "group": "Large-market customers", "value": 15, "displayValue": "$15m", "quantity": "largest contract value", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "3", "group": "Large-market customers", "value": 18, "displayValue": "$18m", "quantity": "largest contract value", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "4", "group": "Large-market customers", "value": 18, "displayValue": "$18m", "quantity": "largest contract value", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "5+", "group": "Large-market customers", "value": 18, "displayValue": "$18m", "quantity": "largest contract value", "scope": "Large-market customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "1", "group": "Other customers", "value": 6, "displayValue": "$6m", "quantity": "largest contract value", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "2", "group": "Other customers", "value": 8, "displayValue": "$8m", "quantity": "largest contract value", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "3", "group": "Other customers", "value": 10, "displayValue": "$10m", "quantity": "largest contract value", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "4", "group": "Other customers", "value": 10, "displayValue": "$10m", "quantity": "largest contract value", "scope": "Other customers", "period": "From October 2026" },
+    { "panel": "limit", "label": "5+", "group": "Other customers", "value": 10, "displayValue": "$10m", "quantity": "largest contract value", "scope": "Other customers", "period": "From October 2026" }
+  ],
+  "measure": {
+    "quantity": "financing rate",
+    "unit": "%",
+    "suffix": "%",
+    "decimals": 0,
+    "baseline": "zero",
+    "scale": "linear",
+    "valueMode": "rate",
+    "levelAvailability": "not-applicable",
+    "basisAvailability": "not-applicable",
+    "basisNote": "The financing rate is a native rate."
+  },
+  "narrative": {
+    "frame": "comparison",
+    "density": "editorial",
+    "emphasis": "magnitude"
+  },
+  "options": {
+    "height": "standard",
+    "sort": "none",
+    "showLabels": true,
+    "animate": false
+  },
+  "metadata": {
+    "slug": "grouped-panels",
+    "topic": "fictional service terms",
+    "country": "Fictional",
+    "dataPeriod": "From October 2026",
+    "keyFinding": "Rates fall 2 points per tier in both customer groups; limits rise until the third tier."
+  }
+}
