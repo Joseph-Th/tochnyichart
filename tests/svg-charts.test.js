@@ -316,3 +316,54 @@ test('the stage publishes machine-readable facts about what was drawn', () => {
 
   assert.equal(draw(example('central-bank-scenarios.json')).facts['data-column-label-mode'], 'outside');
 });
+
+test('a scenario set with one neutral baseline states each alternative as a distance from it', () => {
+  const spec = example('central-bank-scenarios.json');
+  spec.title = 'Export plan scenarios';
+  delete spec.subtitle;
+  spec.measure = { quantity: 'coal exports', unit: 'million tonnes', valueMode: 'level', levelAvailability: 'reported', decimals: 1, baseline: 'zero' };
+  const shared = { quantity: 'coal exports', scope: 'national coal exports', period: '2050' };
+  spec.data = [
+    Object.assign({ label: 'Current base', value: 200, displayValue: '200m t', tone: 'neutral' }, shared),
+    Object.assign({ label: 'Growth scenario', value: 350, displayValue: '350m t', tone: 'positive' }, shared),
+    Object.assign({ label: 'Pessimistic scenario', value: 100, displayValue: '100m t', tone: 'critical' }, shared)
+  ];
+  const drawing = draw(spec);
+  assert.deepEqual(texts(drawing, 'bar-delta').map((node) => node.textContent), ['+75%', '−50%']);
+  assert.equal(drawing.facts['data-column-baseline'], 'Current base');
+
+  // Rates differ in points, never as a percentage of a percentage.
+  const rates = draw(example('central-bank-scenarios.json'));
+  assert.deepEqual(texts(rates, 'bar-delta').map((node) => node.textContent), ['−0.5 pts', '−0.3 pts']);
+
+  // Without a single neutral baseline no comparison is invented.
+  spec.data[0].tone = 'primary';
+  assert.equal(texts(draw(spec), 'bar-delta').length, 0);
+});
+
+test('sparse multi-series trends label every reading and the change over the span', () => {
+  const spec = example('bankruptcies-trend.json');
+  delete spec.emphasis;
+  spec.measure = { quantity: 'coal price', unit: 'USD/t', valueMode: 'level', levelAvailability: 'reported', decimals: 0, baseline: 'zero' };
+  const rows = { A: [200, 180, 150], B: [100, 110, 120] };
+  spec.data = ['Jan', 'Feb', 'Mar'].flatMap((label, index) => Object.keys(rows).map((group) => ({
+    label, group, value: rows[group][index], displayValue: `$${rows[group][index]}`,
+    quantity: 'coal price', scope: 'export benchmark', period: `${label} 2026`
+  })));
+  spec.options.showLabels = false;
+  const drawing = draw(spec);
+  assert.deepEqual(texts(drawing, 'series-change').map((node) => node.textContent).sort(), ['+20%', '−25%']);
+  const readings = texts(drawing, 'point-value').map((node) => node.textContent).sort();
+  assert.deepEqual(readings, ['$100', '$110', '$120', '$150', '$180', '$200']);
+});
+
+test('a short single series keeps its endpoint readings when intermediate labels are off', () => {
+  const spec = example('bankruptcies-trend.json');
+  delete spec.emphasis;
+  spec.options.showLabels = false;
+  const drawing = draw(spec);
+  const shown = texts(drawing, 'point-value').map((node) => node.textContent);
+  assert.ok(shown.includes('280K') && shown.includes('568K'));
+  assert.equal(shown.includes('350K'), false);
+  assert.ok(shown.some((text) => /^\+103% since 2020$/.test(text)), shown.join(' | '));
+});

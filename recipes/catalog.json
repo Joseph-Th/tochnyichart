@@ -19,7 +19,7 @@
     {
       "id": "comparison.scenarios",
       "purpose": "Compare actual, expected, target, or alternative values of one named quantity for one shared scope and period. Do not flatten repeated category/time pairs into separate scenario bars.",
-      "data": "3 to 5 independent labeled numeric values with measure.quantity and matching scope and period. Two generic bars are invalid even with supporting copy or a derived total. A defensible two-value relationship must use a relationship-specific recipe such as comparison.benchmark-gap, comparison.change, comparison.diverging, or timeline.duration; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell.",
+      "data": "3 to 5 independent labeled numeric values with measure.quantity and matching scope and period. Two generic bars are invalid even with supporting copy or a derived total. A defensible two-value relationship must use a relationship-specific recipe such as comparison.benchmark-gap, comparison.change, comparison.diverging, or timeline.duration; otherwise enrich, merge, or omit it. Two categories with earlier/later values should use comparison.benchmark-gap; three or more paired categories should use comparison.dumbbell. Give the current, prior, or reference level tone neutral and the alternatives semantic tones: with exactly one neutral item the renderer rules that level across the chart and labels each alternative with its distance from it.",
       "bestFor": [
         "three-or-more scenarios",
         "policy alternatives",
