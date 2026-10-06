@@ -23,8 +23,8 @@
 
     /* Grid and quantitative marks */
     --tochnyi-grid-opacity: 0.3;
-    --tochnyi-column-fill-opacity: 1;
-    --tochnyi-watermark-opacity: 0.085;
+    --tochnyi-column-fill-opacity: 0.9;
+    --tochnyi-watermark-opacity: 0.0425;
     --tochnyi-watermark-opacity-quiet: 0.065;
     --tochnyi-watermark-opacity-corner: 0.10;
     --tochnyi-map-watermark-opacity: 0.075;

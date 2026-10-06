@@ -3845,16 +3845,16 @@ test('horizontal ranking accepts a full structured category domain', () => {
   assert.equal(result.normalized.data.length, 92);
 });
 
-test('shared quantitative marks use solid fills without drawn outlines', () => {
+test('shared quantitative marks use 90% fills without drawn outlines', () => {
   const style = Tochnyi.marks.column;
-  assert.equal(style.fillOpacity, 1);
+  assert.equal(style.fillOpacity, 0.9);
   assert.ok(style.hoverFillOpacity < style.fillOpacity && style.hoverFillOpacity >= 0.8);
   assert.equal(style.strokeOpacity, 0);
   assert.equal(style.strokeWidth, 0);
   assert.ok(Tochnyi.marks.watermarkOpacity <= 0.18);
 
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
-  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.085/);
+  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.0425/);
   assert.match(css, /rgba\(204, 0, 0, 0\.58\)/);
 
   const rect = normalizeRect({ left: 0, top: 0, right: 40, bottom: 100 });
@@ -3936,24 +3936,24 @@ test('branding diagnostics reject missing, faint, unloaded, and undersized logos
 test('watermark opacity is controlled once by CSS rather than compounded inside the SVG', () => {
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   const svg = fs.readFileSync(path.join(__dirname, '..', 'lib', 'watermark.svg'), 'utf8');
-  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.085/);
+  assert.match(css, /--tochnyi-watermark-opacity:\s*0\.0425/);
   assert.match(css, /--tochnyi-watermark-opacity-quiet:\s*0\.065/);
   assert.match(css, /--tochnyi-watermark-opacity-corner:\s*0\.10/);
   assert.doesNotMatch(svg, /opacity\s*:\s*\.(?:0[0-9]|1[0-9])/);
 });
 
-test('standard charts keep the plot free of the watermark; maps keep theirs behind geography', () => {
+test('standard charts carry the centered watermark; maps keep theirs behind geography', () => {
   const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
   const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'recipes', 'catalog.json'), 'utf8'));
   const standardRecipes = catalog.recipes.filter((recipe) => recipe.id !== 'map.regional');
 
   assert.match(runtime, /main\.setAttribute\('data-watermark', plan\.watermark\)/);
   assert.match(runtime, /if \(plan\.watermark !== 'none'\)/);
-  assert.ok(standardRecipes.every((recipe) => recipe.defaults.watermark === 'none'));
+  assert.ok(standardRecipes.every((recipe) => recipe.defaults.watermark === 'standard'));
   assert.equal(catalog.recipes.find((recipe) => recipe.id === 'map.regional').defaults.watermark, 'corner');
 
   const standard = validateSpec(loadExample('regional-ranking.json')).normalized;
-  assert.equal(VisualPlan.resolveVisualPlan(standard, standard.data, 1600).watermark, 'none');
+  assert.equal(VisualPlan.resolveVisualPlan(standard, standard.data, 1600).watermark, 'standard');
   const map = validateSpec(loadExample('russia-regional-map.json')).normalized;
   assert.notEqual(VisualPlan.resolveVisualPlan(map, map.data, 1600).watermark, 'none');
 

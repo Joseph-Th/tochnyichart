@@ -86,9 +86,9 @@ with optional labeled benchmark references; the validator rejects compound
 "A · B" labels that flatten such a cross-tab into a ranking, scenario, or
 scatter chart.
 
-Standard charts keep the plot free of the watermark (the header logo carries
-the brand; maps keep a restrained mark behind geography), use solid
-quantitative fills without outlines, and place the source at the left, an
+Standard charts carry the large centered watermark at a faint 4.25% opacity
+(maps keep a restrained mark behind geography), draw quantitative fills at 90%
+opacity without outlines, and place the source at the left, an
 optional note centered, and credits at the right of the footer. They use the
 full publishing column, and on a fixed image profile the chart stage grows or
 shrinks so the page fills the canvas from header to footer. Columns, waterfalls,
