@@ -1,5 +1,5 @@
 {
-  "version": "2.14.0",
+  "version": "2.15.0",
   "recipes": [
     {
       "id": "comparison.change",
@@ -312,7 +312,7 @@
     {
       "id": "ranking.horizontal",
       "purpose": "Rank categories where labels need horizontal space.",
-      "data": "3 to 100 labeled numeric values. For a finite categorical domain, include every materially relevant non-empty category by default rather than silently truncating to a top-N subset. Dense rankings expand vertically and retain per-bar numeric labels. Categorical-profile mode uses a qualitative palette whose adjacent bars are hue-separated rather than a sequence of light/dark brand-color variants.",
+      "data": "3 to 100 labeled numeric values. For a finite categorical domain, include every materially relevant non-empty category by default rather than silently truncating to a top-N subset. Dense rankings expand vertically and retain per-bar numeric labels. Bars share one color so length carries the comparison; explicit tones mark semantic status, and a ranking-focus story highlights the leading bar.",
       "bestFor": [
         "full categorical profiles",
         "company rankings",

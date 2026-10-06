@@ -39,10 +39,14 @@ test('every recipe has a valid example ChartSpec', () => {
 });
 
 test('generated shells embed the pinned vendored chart runtime', () => {
-  const assets = embeddedAssets(renderHtml(validateSpec(loadExample('ai95-price-spike.json')).normalized));
-  assert.ok(assets.includes('vendor/amcharts5/5.20.3/index.js'));
-  assert.ok(assets.includes('vendor/amcharts5/5.20.3/xy.js'));
-  assert.ok(assets.includes('vendor/amcharts5/5.20.3/percent.js'));
+  const standard = embeddedAssets(renderHtml(validateSpec(loadExample('ai95-price-spike.json')).normalized));
+  assert.ok(standard.includes('lib/tochnyi-svg-charts.js'));
+  assert.equal(standard.some((name) => name.startsWith('vendor/amcharts5')), false,
+    'standard charts are plain SVG and must not ship the amCharts bundle');
+  const map = embeddedAssets(renderHtml(validateSpec(loadExample('russia-regional-map.json')).normalized));
+  assert.ok(map.includes('vendor/amcharts5/5.20.3/index.js'));
+  assert.ok(map.includes('vendor/amcharts5/5.20.3/xy.js'));
+  assert.ok(map.includes('vendor/amcharts5/5.20.3/percent.js'));
 });
 
 test('dumbbell legend explains before-versus-after shape without promising one after color', () => {
@@ -80,13 +84,11 @@ test('renderer centralizes deterministic tokens without changing established mar
   assert.equal(Number(cssVariable('--tochnyi-column-fill-opacity')), Tochnyi.marks.column.fillOpacity);
   assert.equal(Number(cssVariable('--tochnyi-watermark-opacity')), Tochnyi.marks.watermarkOpacity);
   assert.match(cssVariable('--tochnyi-font'), new RegExp(Tochnyi.font.family, 'i'));
-  assert.match(runtime, /prefers-reduced-motion: reduce/);
   assert.match(runtime, /Tochnyi\.scales.*sequentialBlue/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.tochnyi-map-region\s*\{\s*transition:\s*none/);
   assert.match(runtime, /data-output-mode/);
   assert.doesNotMatch(runtime, /addQuantitativeRulerGuides|data-ranking-guide-step|data-trend-period-guides|data-trend-point-mode/);
   assert.doesNotMatch(runtime, /data-scenario-mark-mode|data-waterfall-connectors|fillCaptureRequested/);
-  assert.match(runtime, /showBullets:\s*spec\.options\.showPoints\s*!==\s*false/);
 });
 
 test('scenario comparisons retain their established column grammar and require visible values', () => {
@@ -266,15 +268,6 @@ test('calendar timelines do not require an unrelated numeric measure unit', () =
   const result = validateSpec(loadExample('anchored-duration-timeline.json'));
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.warnings.some((message) => /No measure unit/i.test(message)), false);
-});
-
-test('donut direct labels use simple straight leaders and semantic label color', () => {
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  assert.match(runtime, /alignLabels:\s*spec\.options\.showLabels !== false/);
-  assert.match(runtime, /series\.labels\.template\.adapters\.add\('fill'/);
-  assert.match(runtime, /series\.ticks\.template\.adapters\.add\('stroke'/);
-  assert.doesNotMatch(runtime, /radialKick|kickX|kickY|minimumGap/);
-  assert.match(runtime, /' L ' \+ endX \+ ' ' \+ position\.y\.toFixed\(1\)/);
 });
 
 test('benchmark consumed-share semantics color the actual amount rather than the unused remainder', () => {
@@ -1529,17 +1522,6 @@ test('stacked trends preserve one category domain across ordered periods', () =>
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /segments\[0\]\.value.*greater than or equal to zero/i.test(message)));
 
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  assert.match(runtime, /function renderStackedTrend\(/);
-  assert.match(runtime, /function stackedTrendLegendPlan\(/);
-  assert.match(runtime, /var rowHeight = compact \? 34 : 29/);
-  assert.match(runtime, /root\.container\.set\('layout', root\.verticalLayout\)/);
-  assert.match(runtime, /height: legendPlan\.bandHeight/);
-  assert.match(runtime, /legendBand\.children\.push\(am5\.Legend\.new/);
-  assert.match(runtime, /paddingTop: spec\.options\.showLegend \? 18 : 8/);
-  assert.match(runtime, /case 'trend\.stacked'/);
-  assert.match(runtime, /stacked: true/);
-  assert.match(runtime, /categoricalColor\(index\)/);
 });
 
 test('dense structured charts do not trigger the editorial shell-length warning', () => {
@@ -1597,7 +1579,6 @@ test('runtime includes component, basis, calendar-duration, benchmark-gap, dumbb
   assert.match(runtime, /function renderConvergingSignals\(/);
   assert.match(runtime, /data-relationship-connector': 'continuation'/);
   assert.match(runtime, /class: 'tochnyi-signal-link',[\s\S]{0,120}data-relationship-connector': 'continuation'/);
-  assert.match(runtime, /case 'composition\.components'/);
   assert.match(runtime, /benchmarkGapLabelPlan/);
   assert.match(runtime, /#78aee3/);
   assert.doesNotMatch(runtime, /renderPictogramComparison/);
@@ -3818,18 +3799,6 @@ test('regional map specs validate known regions and load map tooling', () => {
   assert.ok(result.errors.some((error) => error.includes('map.calloutDistribution is not supported')));
 });
 
-test('ranking renderer keeps requested order at the top and supports adaptive labels', () => {
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  assert.match(runtime, /function renderRanking\(spec\)[\s\S]*?inversed:\s*true/);
-  assert.doesNotMatch(runtime, /spec\.options\.sort === 'none'\) data\.sort/);
-  assert.match(runtime, /plan\.labelMode === 'inside'/);
-  assert.match(runtime, /labelFitsInside\(item, bounds\)/);
-  assert.match(runtime, /plan\.colorPolicy === 'categorical'/);
-  assert.match(runtime, /categoricalColor\(index\)/);
-  assert.match(runtime, /Tochnyi\.categoricalPalette \|\| Tochnyi\.palette/);
-  assert.match(runtime, /oversizedBehavior:\s*'none'/);
-});
-
 test('categorical palette separates adjacent categories instead of grouping brand shades', () => {
   const palette = Tochnyi.categoricalPalette;
   assert.ok(Array.isArray(palette));
@@ -3883,10 +3852,6 @@ test('shared quantitative marks use solid fills without drawn outlines', () => {
   assert.equal(style.strokeOpacity, 0);
   assert.equal(style.strokeWidth, 0);
   assert.ok(Tochnyi.marks.watermarkOpacity <= 0.18);
-
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  const uses = runtime.match(/applySemanticColumnAppearance\(series\);/g) || [];
-  assert.equal(uses.length, 4, 'all four AMCharts column recipes should use the shared appearance policy');
 
   const css = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi.css'), 'utf8');
   assert.match(css, /--tochnyi-watermark-opacity:\s*0\.085/);
@@ -4553,8 +4518,6 @@ test('grouped trend lines support aligned series and optional point suppression'
   const html = renderHtml(result.normalized);
   assert.ok(html.includes('Series A'));
   assert.ok(html.includes('Series B'));
-  const runtime = fs.readFileSync(path.join(__dirname, '..', 'lib', 'tochnyi-runtime.js'), 'utf8');
-  assert.match(runtime, /showBullets:\s*spec\.options\.showPoints\s*!==\s*false/);
 
   const independentAxes = structuredClone(spec);
   independentAxes.options.independentYAxes = true;
@@ -4562,8 +4525,6 @@ test('grouped trend lines support aligned series and optional point suppression'
   result = validateSpec(independentAxes);
   assert.equal(result.valid, true, result.errors.join('; '));
   assert.equal(result.normalized.options.independentYAxes, true);
-  assert.match(runtime, /data-trend-y-axis-mode/);
-  assert.match(runtime, /opposite:\s*true/);
 
   const threeAxes = structuredClone(independentAxes);
   threeAxes.data.push(...labels.map((label, index) => ({
@@ -4572,10 +4533,6 @@ test('grouped trend lines support aligned series and optional point suppression'
   })));
   result = validateSpec(threeAxes);
   assert.equal(result.valid, true, result.errors.join('; '));
-  assert.match(runtime, /data-trend-y-axis-count/);
-  assert.match(runtime, /additionalYAxes\[groupIndex - 1\]/);
-  assert.match(runtime, /color:\s*groupedSeriesColor\(groupIndex\)/);
-  assert.match(runtime, /labels\.template\.setAll\(\{ fill:\s*am5\.color\(groupedSeriesColor\(groupIndex\)\)/);
 
   const unsupportedFourAxes = structuredClone(threeAxes);
   unsupportedFourAxes.data.push(...labels.map((label, index) => ({

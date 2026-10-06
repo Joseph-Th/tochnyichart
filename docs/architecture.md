@@ -98,9 +98,11 @@ It owns:
 - Automated tests and fixture generation.
 
 The browser shell is self-contained. `renderer/render.js` inlines the engine
-stylesheet and scripts from `lib/`, the vendored amCharts release, Russia
-geodata, and Mukta webfont from `vendor/`, and the brand images, so every
-generated HTML renders offline and capture needs no network. The embedded
+stylesheet and scripts from `lib/`, the Mukta webfont from `vendor/`, and the
+brand images, so every generated HTML renders offline and capture needs no
+network. Regional maps additionally inline the vendored amCharts release and
+Russia geodata; standard charts do not, because `lib/tochnyi-svg-charts.js`
+and the runtime draw them as plain SVG. The embedded
 ChartSpec sits at the top of the file under an editing guide; the shell review
 strips the marked `data-tochnyi-asset` blocks and rejects anything else that
 references an external file. `vendor/manifest.json` pins each vendored file by

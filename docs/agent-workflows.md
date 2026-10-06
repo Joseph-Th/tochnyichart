@@ -506,12 +506,11 @@ close read of information-rich evidence. Do not reduce density merely to make a
 crowded chart fit. Density may simplify renderer furniture but cannot hide
 title-defining evidence or alter the data contract.
 
-For `ranking.horizontal`, distinguish a categorical profile from a focus story.
-A categorical profile uses the renderer's qualitative palette, ordered so
-adjacent bars are visibly different hue families. Do not manually simulate
-multi-color output by cycling through blue/yellow shade variants. A focus story
-may instead use the restrained focus treatment when one or two ranks are the
-actual editorial emphasis.
+For `ranking.horizontal`, bar length carries the comparison, so the renderer
+draws every bar in one color. Do not assign tones to make the ranking
+multi-colored. Set `tone` only when it encodes a real status (for example
+critical versus neutral); untoned bars then recede to a context gray. A focus
+story highlights the leading bar and mutes the rest.
 
 Composable semantic features include:
 

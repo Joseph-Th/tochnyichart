@@ -7,8 +7,8 @@ typography, layout, maps, diagnostics, and export behavior.
 
 Generated HTML is an output artifact. Inside this repository the `ChartSpec` is
 the authority: change the spec and regenerate rather than editing HTML. Every
-delivered chart HTML is self-contained (engine, amCharts, fonts, geodata, and
-brand images embedded), renders offline, and carries its `ChartSpec` with an
+delivered chart HTML is self-contained (engine, fonts, and brand images
+embedded; maps also embed amCharts and geodata), renders offline, and carries its `ChartSpec` with an
 editing guide at the top of the file, so it can be handed to a recipient on its
 own and changed later by editing that embedded JSON.
 
@@ -198,7 +198,6 @@ the machine-checked evidence inventory and dispositions.
 - Node.js satisfying the `engines.node` requirement in `package.json`.
 - A modern browser to view charts.
 - Microsoft Edge or Google Chrome for browser diagnostics and screenshots.
-- Internet access when loading a chart, because AMCharts and Mukta are loaded from CDNs.
 
 There are no npm runtime dependencies. Set `TOCHNYI_BROWSER` when the browser
 executable is installed in a nonstandard location.
@@ -314,7 +313,7 @@ rules in this repository overview.
 
 The renderer owns:
 
-- HTML, CSS, AMCharts configuration, and JavaScript.
+- HTML, CSS, SVG drawing, and JavaScript.
 - Scales, axes, colors, typography, spacing, animation, and branding.
 - Responsive layout, label placement, map projection, callout placement, and leader routing.
 
@@ -403,7 +402,7 @@ items; detached-region evidence must use a non-map recipe.
 The test layers are intentionally separate:
 
 ```bash
-npm test                  # deterministic unit and workflow tests
+npm test                  # deterministic unit, chart-geometry, and workflow tests
 npm run test:workflow     # agent orientation and CLI route tests
 npm run test:browser      # browser-backed standard/regional comparison
 npm run test:performance  # dense regional planner budget

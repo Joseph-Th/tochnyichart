@@ -167,7 +167,7 @@ const VISUAL_EVIDENCE_CONTRACT = Object.freeze({
 
 const STATIC_IMAGE_CONTRACT = Object.freeze({
   primaryArtifactRule: 'Treat the final PNG as the primary chart artifact. The HTML shell is a deterministic rendering surface and review aid, not the publication format the reader should need in order to understand the chart.',
-  handoffRule: 'Every published PNG has a companion HTML with the same basename. It is self-contained (engine, amCharts, fonts, geodata, and brand images embedded), renders offline, and embeds its ChartSpec with an editing guide, so a recipient or their assistant can change the chart by editing that embedded JSON. Inside this repository the ChartSpec in specs/ remains the authority; regenerate rather than hand-editing delivered HTML.',
+  handoffRule: 'Every published PNG has a companion HTML with the same basename. It is self-contained (engine, fonts, and brand images embedded; maps also embed amCharts and geodata), renders offline, and embeds its ChartSpec with an editing guide, so a recipient or their assistant can change the chart by editing that embedded JSON. Inside this repository the ChartSpec in specs/ remains the authority; regenerate rather than hand-editing delivered HTML.',
   visibleEvidenceRule: 'Everything required to understand the claim must be visible in the static image. Never rely on hover, tooltip, click, animation state, hidden legend interaction, or panning for category identity, units, values, thresholds, dates, or the title-defining comparison.',
   directLabelRule: 'Prefer direct labels and visible orientation over interaction. Dense charts may label representative or editorially important points while axes and geometry preserve the complete series, but no essential observation may exist only inside a tooltip.',
   treatmentRule: 'Authors choose semantic evidence and recipe, not renderer styling. Existing recipe mark families stay stable across publishing profiles; output fitting may reduce geometry only to prevent clipping and never changes bars into points, removes observations, or invents analytical marks.',
@@ -252,7 +252,7 @@ const STANDARD_SELECTION_RULES = Object.freeze([
   Object.freeze({ when: 'Two or more groups contain the same additive components and the comparison depends on both component size and group total', use: 'composition.compared', example: 'specs/examples/compared-composition.json' }),
   Object.freeze({ when: 'Positive additive components reconcile to one reported total and component magnitudes should be compared from zero. With only two components, require an additional independent same-scale benchmark/denominator beyond their derived sum.', use: 'composition.components', example: 'specs/examples/additive-components.json' }),
   Object.freeze({ when: 'A source-supported existing balance moves through genuine positive and/or negative same-period changes into an ending value', use: 'flow.waterfall', example: 'specs/examples/ozon-collateral-waterfall.json' }),
-  Object.freeze({ when: 'Ranked categories with long labels. Categorical profiles use a hue-separated qualitative palette; ranking-focus stories may use restrained focus color instead.', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
+  Object.freeze({ when: 'Ranked categories with long labels. Bars share one color so length carries the comparison; explicit tones mark semantic status and ranking-focus stories highlight the leading bar.', use: 'ranking.horizontal', example: 'specs/examples/regional-ranking.json' })
 ]);
 
 const SHARED_SCALE_CONTRACT = Object.freeze({
@@ -516,7 +516,7 @@ function regionalWorkflowGuide(regionSetId = DEFAULT_REGION_SET_ID) {
     neverAuthor: [
       'coordinates or pixel positions',
       'manual card geometry or route points',
-      'HTML, CSS, JavaScript, or AMCharts configuration'
+      'HTML, CSS, JavaScript, or chart-library configuration'
     ],
     failureBoundary: 'Correct source data, copy, statuses, region IDs, or semantic fields in the ChartSpec. Report persistent planner, rendering, or diagnostic failures as infrastructure issues without inspecting implementation directories.',
     statuses: [...REGIONAL_STATUSES],

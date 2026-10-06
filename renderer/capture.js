@@ -320,7 +320,15 @@ function captureHtml(htmlPath, outputPath, options = {}) {
     );
   }
   if (inspection.diagnostics?.status === 'fail') {
-    throw new Error('PNG capture refused because layout diagnostics still fail after a stable recheck.');
+    const details = (inspection.diagnostics.issues || [])
+      .filter((issue) => issue.severity === 'error')
+      .slice(0, 6)
+      .map((issue) => `${issue.code}: ${issue.message}`)
+      .join(' | ');
+    throw new Error(
+      'PNG capture refused because layout diagnostics still fail after a stable recheck.' +
+      (details ? ` ${details}` : '')
+    );
   }
   const trendConsistencyFailure = trendLabelConsistencyFailure(inspection.trendAttributes);
   if (trendConsistencyFailure) {

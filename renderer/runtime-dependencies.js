@@ -15,7 +15,7 @@ const MUKTA_FONT_CSS = 'fonts/mukta/mukta.css';
 const RUNTIME_DEPENDENCY_CONTRACT = Object.freeze({
   offlineReady: true,
   selfContainedHtml: true,
-  rule: 'Every generated chart HTML inlines the engine stylesheet and scripts, the vendored amCharts core, map geodata, the Mukta webfont, and brand images. The file renders offline and can be handed over as a standalone, editable deliverable.',
+  rule: 'Every generated chart HTML inlines the engine stylesheet and scripts, the Mukta webfont, and brand images; regional maps also inline the vendored amCharts core and map geodata. The file renders offline and can be handed over as a standalone, editable deliverable.',
   dependencies: Object.freeze(VENDOR_MANIFEST.dependencies.map((dependency) => Object.freeze({
     id: dependency.id,
     mode: 'vendored',

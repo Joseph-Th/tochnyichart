@@ -255,8 +255,9 @@ a compatibility alias for `--project-id`.
 The older `node tools/chart.js` entrypoint remains available for compatibility, but it is not the documented chart-author surface.
 
 Generated chart HTML is self-contained and renders offline. The Tool API reports
-`runtimeDependencies.offlineReady: true`: amCharts, geodata, and the Mukta
-webfont are vendored and inlined with the engine into every file.
+`runtimeDependencies.offlineReady: true`: the Mukta webfont is vendored and
+inlined with the engine into every file, and regional maps also inline the
+vendored amCharts core and geodata.
 
 Batch final PNGs and their HTML belong in `projects/<project-id>/output/`;
 any requested presentation belongs there as well. Authored production ChartSpecs

@@ -36,7 +36,7 @@ Usage:
   node tool-api/chart.js review <chart.html> [--screenshot] [--output preview.png]
 
 The model-facing artifact is a ChartSpec JSON file. The renderer owns HTML, CSS,
-AMCharts configuration, branding, layout, and export behavior.
+SVG drawing, branding, layout, and export behavior.
 
 The public chart-author entrypoint is node tool-api/chart.js. The tools/chart.js
 path remains available for backward compatibility and infrastructure work.

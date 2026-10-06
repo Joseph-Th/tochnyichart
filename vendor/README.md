@@ -7,7 +7,7 @@ if a file is missing or altered.
 
 | Dependency | Version | Source | Licence |
 |---|---|---|---|
-| amCharts 5 core (`index.js`, `xy.js`, `percent.js`, `themes/Animated.js`) | 5.20.3 | `https://cdn.amcharts.com/lib/version/5.20.3/` | amCharts 5 free licence; amCharts branding stays visible in charts |
+| amCharts 5 core (`index.js`, `xy.js`, `percent.js`, `themes/Animated.js`) | 5.20.3 | `https://cdn.amcharts.com/lib/version/5.20.3/` | amCharts 5 free licence; amCharts branding stays visible on regional maps, the only charts that load it |
 | amCharts 5 Russia geodata (`russiaLow.js`) | fetched 2026-10-01 | `https://cdn.amcharts.com/lib/5/geodata/russiaLow.js` | amCharts 5 geodata licence |
 | Mukta webfont, weights 400–700, Latin and Latin Extended subsets | Google Fonts v17, fetched 2026-10-01 | `https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700` | SIL Open Font License 1.1 (`fonts/mukta/OFL.txt`) |
 

@@ -70,8 +70,24 @@ try {
     throw new Error('Headless diagnostics failed to detect fixed-canvas overflow.');
   }
 
-  const chartSpecPath = path.join(tempDir, 'amcharts-label-clipping.json');
-  const chartHtmlPath = path.join(tempDir, 'amcharts-label-clipping.html');
+  // A value label drawn past the top edge of its SVG stage must be reported as clipped.
+  const clippedLabel = writeFixture('svg-label-clipping.html', `
+    <main class="tochnyi-v2">
+      <svg data-label-layout="complete" viewBox="0 0 400 200" width="400" height="200" style="overflow: visible; margin-top: 60px;">
+        <rect data-tochnyi-mark="column" data-label-group="column-0" x="150" y="0" width="100" height="200" fill="#005bbb"></rect>
+        <text data-label-role="bar-value" data-label-group="column-0" x="200" y="-12" text-anchor="middle" font-size="24" font-weight="700">100 points</text>
+      </svg>
+    </main>`);
+  const clippedLabelResult = diagnoseHtml(clippedLabel, {
+    browser,
+    viewport: { width: 800, height: 600 }
+  });
+  if (clippedLabelResult.diagnostics?.status !== 'fail' || !hasIssue(clippedLabelResult, 'label-clipped')) {
+    throw new Error('Headless diagnostics failed to detect a value label drawn outside its SVG stage.');
+  }
+
+  const chartSpecPath = path.join(tempDir, 'boundary-label.json');
+  const chartHtmlPath = path.join(tempDir, 'boundary-label.html');
   const chartSpec = {
     version: '2.0',
     recipe: 'comparison.scenarios',
@@ -129,26 +145,19 @@ try {
       labelMode: 'outside'
     }
   };
-  fs.writeFileSync(chartSpecPath, `${JSON.stringify(chartSpec, null, 2)}\n`, 'utf8');
-  renderSpecFile(chartSpecPath, chartHtmlPath, { projectRoot: root });
-  const chartClipResult = diagnoseHtml(chartHtmlPath, {
-    browser,
-    viewport: { width: 1200, height: 900 }
+  // A real column at the axis maximum keeps its outside value label fully visible.
+  ['outside', 'auto'].forEach((labelMode) => {
+    chartSpec.options.labelMode = labelMode;
+    fs.writeFileSync(chartSpecPath, `${JSON.stringify(chartSpec, null, 2)}\n`, 'utf8');
+    renderSpecFile(chartSpecPath, chartHtmlPath, { projectRoot: root });
+    const boundaryResult = diagnoseHtml(chartHtmlPath, {
+      browser,
+      viewport: { width: 1200, height: 900 }
+    });
+    if (boundaryResult.diagnostics?.status === 'fail' || hasIssue(boundaryResult, 'label-clipped')) {
+      throw new Error(`A column at the axis maximum lost its value label (labelMode ${labelMode}).`);
+    }
   });
-  if (chartClipResult.diagnostics?.status !== 'fail' || !hasIssue(chartClipResult, 'label-clipped')) {
-    throw new Error('Headless diagnostics failed to detect a clipped AMCharts value label.');
-  }
-
-  chartSpec.options.labelMode = 'auto';
-  fs.writeFileSync(chartSpecPath, `${JSON.stringify(chartSpec, null, 2)}\n`, 'utf8');
-  renderSpecFile(chartSpecPath, chartHtmlPath, { projectRoot: root });
-  const chartAutoResult = diagnoseHtml(chartHtmlPath, {
-    browser,
-    viewport: { width: 1200, height: 900 }
-  });
-  if (hasIssue(chartAutoResult, 'label-clipped')) {
-    throw new Error('Automatic column-label placement did not resolve the boundary collision.');
-  }
 
   console.log(JSON.stringify({
     status: 'pass',
@@ -157,7 +166,7 @@ try {
       { code: 'text-truncated', detected: true },
       { code: 'canvas-overflow', detected: true },
       { code: 'label-clipped', detected: true },
-      { code: 'adaptive-label-placement', resolved: true }
+      { code: 'boundary-label-headroom', resolved: true }
     ]
   }, null, 2));
 } finally {

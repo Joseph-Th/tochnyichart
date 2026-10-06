@@ -42,6 +42,20 @@ The broad deterministic regression suite covers:
 - Diagnostic issue classification, branding, watermark, and layout contracts.
 - Regional workflow normalization and output generation.
 
+### `tests/svg-charts.test.js`
+
+The chart-geometry suite runs `lib/tochnyi-svg-charts.js` against a minimal SVG
+DOM and asserts on the geometry it actually draws rather than on source text:
+
+- Bar, column, and segment lengths proportional to value from one zero line.
+- Area squares whose drawn area is proportional to value.
+- Waterfall bars floating from the running total and reconciling to the end bar.
+- Point positions that follow both scatter measures; trend labels that do not
+  overlap each other.
+- Direct labels for every slice, series, observation, and reference.
+- Drawings laid out from the measured stage at publication, tall, and phone sizes.
+- The machine-readable layout facts published on the stage node.
+
 ### `tests/workflow.test.js`
 
 The workflow suite is the agent-facing contract. It verifies that:

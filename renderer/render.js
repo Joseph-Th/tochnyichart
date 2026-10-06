@@ -117,7 +117,7 @@ function editingGuide(spec) {
   const fields = Object.keys(spec).filter((key) => key !== 'recipe').join(', ');
   return `<!--
   TOCHNYI CHART: SELF-CONTAINED, EDITABLE FILE
-  Everything this page needs is embedded (chart engine, amCharts ${AMCHARTS_VERSION}, fonts, logo, watermark),
+  Everything this page needs is embedded (chart engine, fonts, logo${spec.recipe === 'map.regional' ? `, amCharts ${AMCHARTS_VERSION}, map geodata` : ''}),
   so it opens offline in any modern browser and can be handed over on its own.
 
   HOW TO CHANGE THE CHART
@@ -141,8 +141,15 @@ function renderHtml(spec) {
   const metadata = spec.metadata || {};
   const description = metadata.keyFinding || spec.subtitle || spec.title;
   const regionSet = spec.recipe === 'map.regional' ? TochnyiMaps.getRegionSet(spec.map.regionSet) : null;
+  // Standard charts are drawn as plain SVG by the engine; only maps need amCharts.
   const mapScripts = regionSet
-    ? [vendorScript(regionSet.geodataScript), libScript('tochnyi-maps.js'), libScript('tochnyi-map-runtime.js')]
+    ? [
+        ...AMCHARTS_SCRIPTS.filter((file) => !file.endsWith('themes/Animated.js')).map(vendorScript),
+        vendorScript(regionSet.geodataScript),
+        libScript('tochnyi-maps.js'),
+        libScript('tochnyi-map-runtime.js'),
+        vendorScript(AMCHARTS_SCRIPTS.find((file) => file.endsWith('themes/Animated.js')))
+      ]
     : [];
 
   return `<!DOCTYPE html>
@@ -156,11 +163,10 @@ ${editingGuide(spec)}
   <script id="tochnyi-spec" type="application/json">${jsonForHtml(spec)}</script>
 ${inlineStyle('vendor/fonts/mukta/mukta.css', fontCss())}
 ${inlineStyle('lib/tochnyi.css', readCached(path.join(LIB_ROOT, 'tochnyi.css'), 'utf8'))}
-${AMCHARTS_SCRIPTS.filter((file) => !file.endsWith('themes/Animated.js')).map(vendorScript).join('\n')}
 ${mapScripts.join('\n')}
-${vendorScript(AMCHARTS_SCRIPTS.find((file) => file.endsWith('themes/Animated.js')))}
 ${libScript('tochnyi-charts.js')}
 ${libScript('tochnyi-visual-plan.js')}
+${libScript('tochnyi-svg-charts.js')}
 ${imageAssetsScript()}
 </head>
 <body>

@@ -633,14 +633,25 @@ a.tochnyi-analysis:hover {
 .mb-30 { margin-bottom: 30px; }
 
 /* ===== Declarative Renderer v2 ===== */
+/* Standard charts use the full publishing column; maps keep their own width. */
 .tochnyi-v2 {
-    width: min(1200px, 100%);
+    width: min(1440px, 100%);
 }
 
-/* Grouped comparisons lay out from the measured stage, so they use the wider
-   publishing column; fixed-viewBox recipes keep the reviewed 1200px column. */
-.tochnyi-v2.recipe-comparison-grouped {
-    width: min(1440px, 100%);
+/* Stage for the SVG chart kit: the drawing is laid out from the measured box. */
+.tochnyi-kit-stage {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.tochnyi-kit-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    font-family: var(--tochnyi-font);
 }
 
 .tochnyi-v2 .tochnyi-title {
@@ -1205,10 +1216,17 @@ a.tochnyi-analysis:hover {
     border-bottom: 0;
 }
 
+/* On the wide publishing column the single grid track is pinned to the stage box
+   so a fixed-viewBox drawing letterboxes inside it instead of growing from its
+   width and overflowing the stage. */
 .tochnyi-svg-stage {
     display: grid;
     place-items: center;
     padding: 12px 8px 0;
+}
+
+@media (min-width: 900px) {
+    .tochnyi-svg-stage { grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
 }
 
 .tochnyi-svg-stage svg {
@@ -1216,6 +1234,7 @@ a.tochnyi-analysis:hover {
     z-index: 3;
     width: 100%;
     height: 100%;
+    min-height: 0;
     overflow: visible;
 }
 

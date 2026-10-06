@@ -25,9 +25,10 @@ Chart authors provide evidence, calculations, editorial meaning, workflow select
 Generated HTML is not an editable source of truth inside this repository.
 
 Generated chart HTML is self-contained and renders offline. The engine
-stylesheet and scripts, amCharts 5.20.3, the Russia geodata, the Mukta webfont,
-and brand images are inlined into every file from `vendor/` (checksummed in
-`vendor/manifest.json`) and `lib/`. Each delivered PNG has a companion HTML of
+stylesheet and scripts, the Mukta webfont, and brand images are inlined into
+every file from `lib/` and `vendor/` (checksummed in `vendor/manifest.json`).
+Standard charts are drawn as plain SVG by the engine; only regional maps also
+inline amCharts 5.20.3 and the Russia geodata. Each delivered PNG has a companion HTML of
 the same name whose embedded `ChartSpec` and editing guide let a recipient, or
 their assistant, change the chart without this repository.
 
@@ -88,7 +89,13 @@ scatter chart.
 Standard charts keep the plot free of the watermark (the header logo carries
 the brand; maps keep a restrained mark behind geography), use solid
 quantitative fills without outlines, and place the source at the left, an
-optional note centered, and credits at the right of the footer.
+optional note centered, and credits at the right of the footer. They use the
+full publishing column, and on a fixed image profile the chart stage grows or
+shrinks so the page fills the canvas from header to footer. Columns, waterfalls,
+rankings, diverging bars, trends, stacked trends, donuts, scatters, and area
+squares are laid out from the measured stage with text measured in the loaded
+webfont; every mark is labelled directly and axis ticks stay numeric with the
+unit named once above the plot.
 
 For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. Standard charts default to fixed `landscape` at 1600×900 and fail instead of expanding when they do not fit. Regional maps default to the adaptive `auto` profile. `auto` remains available as an explicit variable-height standard-chart opt-in, while fixed `square` and `portrait` profiles express other publishing shapes without exposing arbitrary pixel geometry to chart authors.
 

@@ -146,8 +146,10 @@ test('public image CLI defaults standard output to fixed landscape', { skip: bro
     assert.equal(payload.workflow, 'standard-chart');
     assert.equal(payload.profile.id, 'landscape');
     assert.deepEqual(payload.profile.actualDimensions, { width: 1600, height: 900 });
-    assert.ok(['natural', 'shrink'].includes(payload.profile.fitMode));
+    // A standard chart fills the fixed canvas: the stage grows into spare room or shrinks to fit.
+    assert.ok(['natural', 'fill', 'shrink'].includes(payload.profile.fitMode));
     if (payload.profile.fitMode === 'shrink') assert.ok(payload.profile.stageDelta < 0);
+    if (payload.profile.fitMode === 'fill') assert.ok(payload.profile.stageDelta > 0);
     assert.equal(payload.htmlRetained, true);
     assert.equal(path.resolve(payload.htmlPath), path.resolve(outputPath.replace(/\.png$/, '.html')));
     assert.equal(payload.diagnostics.errors, 0);
@@ -170,8 +172,8 @@ test('static image workflow produces an exact square PNG with its self-contained
     assert.equal(result.workflow, 'standard-chart');
     assert.equal(result.profile.id, 'square');
     assert.deepEqual(result.profile.actualDimensions, { width: 1080, height: 1080 });
-    assert.ok(['natural', 'shrink'].includes(result.profile.fitMode));
-    assert.ok(result.profile.stageDelta <= 0);
+    assert.ok(['natural', 'fill', 'shrink'].includes(result.profile.fitMode));
+    assert.equal(result.profile.stageDelta > 0, result.profile.fitMode === 'fill');
     assert.deepEqual(pngDimensions(outputPath), { width: 1080, height: 1080 });
     assert.equal(result.profile.expanded, false);
     assert.equal(result.htmlRetained, true);
@@ -447,9 +449,9 @@ test('ranking outside value labels reserve enough gutter for complete trailing u
       assert.equal(run.diagnostics?.summary?.errors, 0);
       assert.equal(run.diagnostics?.summary?.warnings, 0);
       const gutter = Number(run.rankingAttributes?.['data-ranking-value-label-gutter']);
-      const estimated = Number(run.rankingAttributes?.['data-ranking-value-label-estimated-width']);
-      assert.ok(Number.isFinite(gutter) && Number.isFinite(estimated));
-      assert.ok(gutter >= estimated + 30, `expected ranking gutter ${gutter} to clear estimated label width ${estimated}`);
+      const measured = Number(run.rankingAttributes?.['data-ranking-value-label-width']);
+      assert.ok(Number.isFinite(gutter) && Number.isFinite(measured) && measured > 0);
+      assert.ok(gutter > measured, `expected ranking gutter ${gutter} to clear measured label width ${measured}`);
       assert.equal(run.diagnostics?.issues?.some((issue) =>
         ['label-clipped', 'text-truncated'].includes(issue.code) &&
         issue.elements?.some((element) => /105 stati/i.test(element.text || ''))

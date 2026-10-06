@@ -32,7 +32,7 @@ function reviewHtml(html, options = {}) {
   if (!assets.includes('lib/tochnyi-runtime.js')) errors.push('Missing embedded declarative runtime.');
   if (!assets.includes('lib/tochnyi-diagnostics.js')) errors.push('Missing embedded automatic layout diagnostics.');
   if (!assets.includes('lib/tochnyi.css')) errors.push('Missing embedded shared stylesheet.');
-  if (!assets.some((name) => /^vendor\/amcharts5\/[^/]+\/index\.js$/.test(name))) errors.push('Missing embedded amCharts core.');
+  if (!assets.includes('lib/tochnyi-svg-charts.js')) errors.push('Missing embedded SVG chart kit.');
   if (/<(?:script|link|img)\b[^>]*\s(?:src|href)\s*=\s*["'](?!data:)/i.test(shell)) {
     errors.push('Generated chart references an external file; the shell must be self-contained.');
   }
@@ -47,6 +47,10 @@ function reviewHtml(html, options = {}) {
   } catch (error) {
     errors.push(`Embedded ChartSpec is invalid JSON: ${error.message}`);
   }
+
+  // Standard charts are plain SVG; only regional maps carry the vendored amCharts core.
+  const hasAmCharts = assets.some((name) => /^vendor\/amcharts5\/[^/]+\/index\.js$/.test(name));
+  if (spec && spec.recipe === 'map.regional' && !hasAmCharts) errors.push('Missing embedded amCharts core.');
 
   if (spec) {
     const structuredPointCount = (spec.data || []).reduce((total, item) =>

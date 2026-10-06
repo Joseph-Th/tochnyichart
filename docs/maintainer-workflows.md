@@ -22,7 +22,7 @@ A maintainer must not solve engine defects by editing generated HTML or PNG file
 
 ```text
 renderer/                  workflow adapters, validation, rendering, review, capture
-lib/                       shared runtime, map planner, styles, diagnostics
+lib/                       shared runtime, SVG chart kit, map planner, styles, diagnostics
 tools/                     internal scripts and compatibility CLI implementation
 tests/                     unit, workflow, browser, and performance coverage
 schemas/                   public ChartSpec schema
