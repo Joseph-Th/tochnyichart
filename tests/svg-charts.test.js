@@ -365,5 +365,18 @@ test('a short single series keeps its endpoint readings when intermediate labels
   const shown = texts(drawing, 'point-value').map((node) => node.textContent);
   assert.ok(shown.includes('280K') && shown.includes('568K'));
   assert.equal(shown.includes('350K'), false);
-  assert.ok(shown.some((text) => /^\+103% since 2020$/.test(text)), shown.join(' | '));
+  assert.equal(shown.some((text) => /since/.test(text)), false, 'no automatic span-change label');
+});
+
+test('a single-series trend draws solid points and a range bar behind ranged readings', () => {
+  const spec = example('bankruptcies-trend.json');
+  delete spec.emphasis;
+  spec.data[1].low = 300;
+  spec.data[1].high = 340;
+  const drawing = draw(spec);
+  const points = marks(drawing, 'point');
+  assert.ok(points.every((point) => point.attributes.fill !== '#ffffff'));
+  const bars = drawing.nodes.filter((node) => node.tag === 'line' && Number(node.attributes['stroke-opacity']) === 0.28);
+  assert.equal(bars.length, 1);
+  assert.ok(number(bars[0], 'y2') > number(bars[0], 'y1'));
 });
