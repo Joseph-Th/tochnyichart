@@ -23,7 +23,7 @@ completion lane small while preserving explicit broader checkpoints.
 | `npm run diagnostics` | Standalone diagnostics self-test. |
 | `npm run layout` | Synthetic narrow-label and reference-line regression. |
 
-`npm test` is the routine infrastructure completion lane. The browser test skips when no supported Edge or Chrome executable is found; changes to responsive/browser behavior require a browser-backed lane in an environment that provides one. `npm run test:all` is reserved for changes spanning deterministic, browser, and performance contracts or for an explicit broad delivery checkpoint. Do not run it after narrower lanes merely for reassurance.
+`npm test` is the routine infrastructure completion lane. The browser test fails when no supported Edge or Chrome executable is found, unless `CHART_ALLOW_MISSING_BROWSER=1` is set, in which case its checks are reported as skipped; changes to responsive/browser behavior require a browser-backed lane in an environment that provides one. `npm run test:all` is reserved for changes spanning deterministic, browser, and performance contracts or for an explicit broad delivery checkpoint. Do not run it after narrower lanes merely for reassurance.
 
 ## Test layout
 

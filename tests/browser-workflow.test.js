@@ -24,6 +24,13 @@ const { pngDimensions } = require('../renderer/capture');
 const root = path.join(__dirname, '..');
 const examplesDir = path.join(root, 'specs', 'examples');
 const browser = findBrowser();
+// This lane owns the rendered-layout boundary. A run without a browser proves nothing about it,
+// so it fails unless the run explicitly accepts skipped browser checks.
+if (!browser && process.env.CHART_ALLOW_MISSING_BROWSER !== '1') {
+  throw new Error(
+    'Edge or Chrome is required for the browser lane; set CHART_ALLOW_MISSING_BROWSER=1 to skip its checks instead.'
+  );
+}
 
 function nonNullNumbers(runs, field) {
   return runs
