@@ -53,23 +53,24 @@ function reviewHtml(html, options = {}) {
   if (spec && spec.recipe === 'map.regional' && !hasAmCharts) errors.push('Missing embedded amCharts core.');
 
   if (spec) {
-    const structuredPointCount = (spec.data || []).reduce((total, item) =>
-      total + (Array.isArray(item?.segments) ? item.segments.length : 1), 0
-    );
-    if (shell.length > 12000 && structuredPointCount <= 12) {
-      warnings.push(`Generated shell is ${shell.length} characters without embedded assets; consider shortening editorial copy.`);
-    }
     const validation = validateSpec(spec);
     errors.push(...validation.errors.map((message) => `ChartSpec: ${message}`));
     warnings.push(...validation.warnings.map((message) => `ChartSpec: ${message}`));
-
-    const labels = spec.data.map((item) => item.label);
-    const longestLabel = Math.max(...labels.map((label) => label.length));
-    if (spec.recipe.startsWith('comparison.') && longestLabel > 42) {
-      warnings.push('A comparison label exceeds 42 characters; ranking.horizontal may provide more space.');
-    }
-    if (spec.options.height === 'short' && spec.supportingFacts.length > 3) {
-      warnings.push('A short chart with four supporting facts may exceed a compact canvas.');
+    if (validation.valid) {
+      const checked = validation.normalized;
+      const structuredPointCount = checked.data.reduce((total, item) =>
+        total + (Array.isArray(item.segments) ? item.segments.length : 1), 0
+      );
+      if (shell.length > 12000 && structuredPointCount <= 12) {
+        warnings.push(`Generated shell is ${shell.length} characters without embedded assets; consider shortening editorial copy.`);
+      }
+      const longestLabel = Math.max(...checked.data.map((item) => item.label.length));
+      if (checked.recipe.startsWith('comparison.') && longestLabel > 42) {
+        warnings.push('A comparison label exceeds 42 characters; ranking.horizontal may provide more space.');
+      }
+      if (checked.options.height === 'short' && checked.supportingFacts.length > 3) {
+        warnings.push('A short chart with four supporting facts may exceed a compact canvas.');
+      }
     }
   }
 

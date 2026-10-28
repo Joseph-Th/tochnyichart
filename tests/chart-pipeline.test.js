@@ -28,6 +28,28 @@ function loadExample(name) {
   return JSON.parse(fs.readFileSync(path.join(examplesDir, name), 'utf8'));
 }
 
+test('chart review reports invalid embedded specs and uses validated defaults', () => {
+  const example = loadExample('ai95-price-spike.json');
+  const checked = validateSpec(example);
+  assert.equal(checked.valid, true, checked.errors.join('; '));
+  const shell = renderHtml(checked.normalized);
+  const embedded = (spec) => shell.replace(
+    /(<script id="tochnyi-spec" type="application\/json">)[\s\S]*?(<\/script>)/,
+    (_, opening, closing) => `${opening}${JSON.stringify(spec)}${closing}`
+  );
+
+  const invalid = reviewHtml(embedded({}));
+  assert.equal(invalid.valid, false);
+  assert.ok(invalid.errors.some((error) => error.startsWith('ChartSpec: ')));
+
+  delete example.options;
+  const normalized = validateSpec(example);
+  assert.equal(normalized.valid, true, normalized.errors.join('; '));
+  const review = reviewHtml(embedded(example));
+  assert.equal(review.valid, true, review.errors.join('; '));
+  assert.deepEqual(review.spec, example);
+});
+
 test('every recipe has a valid example ChartSpec', () => {
   const covered = new Set();
   for (const file of exampleFiles) {
