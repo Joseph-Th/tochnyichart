@@ -276,7 +276,7 @@ safe-derivation, research-order, and relevance rules are in
 [`docs/source-enrichment.md`](docs/source-enrichment.md). The shared-scale,
 mixed-evidence, composition-value, pictogram, and regional information-economy
 contracts are in [`docs/story-selection.md`](docs/story-selection.md). Regional routing
-internals are maintainer-only and documented in `docs/regional-routing.md`.
+internals are maintainer-only and documented in [`docs/regional-routing.md`](docs/regional-routing.md).
 
 Final project delivery uses `projects/<project-id>/output/`. The folder contains the
 rendered HTML files, final PNG images, `manifest.csv`, `presentation-plan.json`,
