@@ -12,7 +12,7 @@ embedded; maps also embed amCharts and geodata), renders offline, and carries it
 editing guide at the top of the file, so it can be handed to a recipient on its
 own and changed later by editing that embedded JSON.
 
-[`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists. Repository contributors and coding agents start with [`AGENTS.md`](AGENTS.md); chart-author agents that only need the public authoring surface start with [`tool-api/README.md`](tool-api/README.md).
+[`STATUS.md`](STATUS.md) owns the current supported capability and exclusion boundary. Read it before assuming that an input form, workflow, compatibility entrypoint, artifact, or orchestration step is supported merely because related code or historical output exists. Open work that may be picked up asynchronously is tracked in [`TASKS.md`](TASKS.md). Repository contributors and coding agents start with [`AGENTS.md`](AGENTS.md); chart-author agents that only need the public authoring surface start with [`tool-api/README.md`](tool-api/README.md).
 
 The repository has three explicit operating roles:
 
