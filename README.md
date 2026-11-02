@@ -5,6 +5,8 @@ LLM and human chart authors. Authors provide evidence and editorial meaning in a
 compact `ChartSpec` JSON file. The engine owns HTML, CSS, chart configuration,
 typography, layout, maps, diagnostics, and export behavior.
 
+**Scope:** This repository is the organization-wide Tochnyi Charts tool. A separate personal tool built for one Tochnyi user (`stanichart_2`) may share ideas, recipes, and tests, but this repository does not inherit its scope, documents, or file layout.
+
 Generated HTML is an output artifact. Inside this repository the `ChartSpec` is
 the authority: change the spec and regenerate rather than editing HTML. Every
 delivered chart HTML is self-contained (engine, fonts, and brand images
