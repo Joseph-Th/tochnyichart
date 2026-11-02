@@ -103,10 +103,12 @@ than leaving it to the reader. A `comparison.scenarios` set with exactly one
 chart and every alternative states its distance from it. A multi-series trend
 of six or fewer periods labels every reading on its line and ends each line
 with the series name, latest value, and change over the plotted span. A single
-series of twelve or fewer periods always states its first and last reading,
-and, for a level with no authored `emphasis`, the change between them;
-`options.showLabels: false` only drops the readings in between. Distances are
-percentages for levels and points for values that are already percentages.
+series of twelve or fewer periods always states its first and last reading, and
+`options.showLabels: false` only drops the readings in between. A single-series
+item may carry `low` and `high` beside `value` to draw its reported range as a
+bar behind the line; points are solid and the renderer adds no automatic change
+label, so an authored `data[].annotation` is the only note beside a point.
+Distances are percentages for levels and points for values that are already percentages.
 
 For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. Standard charts default to fixed `landscape` at 1600×900 and fail instead of expanding when they do not fit. Regional maps default to the adaptive `auto` profile. `auto` remains available as an explicit variable-height standard-chart opt-in, while fixed `square` and `portrait` profiles express other publishing shapes without exposing arbitrary pixel geometry to chart authors.
 
