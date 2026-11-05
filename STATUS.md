@@ -28,7 +28,7 @@ Generated chart HTML is self-contained and renders offline. The engine
 stylesheet and scripts, the Mukta webfont, and brand images are inlined into
 every file from `lib/` and `vendor/` (checksummed in `vendor/manifest.json`).
 Standard charts are drawn as plain SVG by the engine; only regional maps also
-inline amCharts 5.20.3 and the Russia geodata. Each delivered PNG has a companion HTML of
+inline amCharts (version owned by `vendor/manifest.json`) and the Russia geodata. Each delivered PNG has a companion HTML of
 the same name whose embedded `ChartSpec` and editing guide let a recipient, or
 their assistant, change the chart without this repository.
 
@@ -110,7 +110,7 @@ bar behind the line; points are solid and the renderer adds no automatic change
 label, so an authored `data[].annotation` is the only note beside a point.
 Distances are percentages for levels and points for values that are already percentages.
 
-For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and retains no HTML shell. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. Standard charts default to fixed `landscape` at 1600×900 and fail instead of expanding when they do not fit. Regional maps default to the adaptive `auto` profile. `auto` remains available as an explicit variable-height standard-chart opt-in, while fixed `square` and `portrait` profiles express other publishing shapes without exposing arbitrary pixel geometry to chart authors.
+For an individual chart, `node tool-api/chart.js image` is the primary static-output command. It validates the specification, routes standard versus regional rendering, captures the final PNG at a maintained output profile, and publishes the companion HTML described above. `render`, `regional`, `diagnose`, and `review` remain supported inspection and debugging surfaces. Standard charts default to fixed `landscape` at 1600×900 and fail instead of expanding when they do not fit. Regional maps default to the adaptive `auto` profile. `auto` remains available as an explicit variable-height standard-chart opt-in, while fixed `square` and `portrait` profiles express other publishing shapes without exposing arbitrary pixel geometry to chart authors.
 
 ## Supported project lifecycle
 
@@ -163,7 +163,7 @@ The current supported product does not treat these as normal authoring behavior:
 - treating external-search silence as proof that supplied editorial evidence is false;
 - treating an optional PowerPoint deck as mandatory when the requested deliverable does not include one;
 - treating ignored project artifacts as repository architecture authorities rather than project-local data.
-- describing the current browser renderer as fully offline-reproducible while remote font and regional-geodata dependencies remain.
+- describing the current browser renderer as fully offline-reproducible without checking the vendored font and regional-geodata inputs the claim depends on.
 
 ## Verification
 

@@ -1,6 +1,6 @@
 # Tasks
 
-Current executable work that may be picked up asynchronously. Keep entries short; remove completed work. `STATUS.md`/`CAPABILITIES.md` owns implemented truth and `ROADMAP.md`/`DIRECTION.md` owns future direction.
+Current executable work that may be picked up asynchronously. Keep entries short; remove completed work. `STATUS.md` owns implemented truth; this file owns the current executable work, and completed items are deleted rather than kept as history.
 
 ## T-0001 - Separate publication commit from cleanup
 
