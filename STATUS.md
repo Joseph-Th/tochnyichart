@@ -50,6 +50,7 @@ The exact `projects/<project-id>/input/` directory is the source boundary for
 that project. A project begins by inventorying and hashing those source files.
 
 - `input/`, `source-ledger.json`, `specs/`, and `output/` are durable project material.
+- The durable source ledger accepts its current documented schema version only; [`docs/source-ledger.md`](docs/source-ledger.md) owns that version, and the source-fidelity validator rejects any other version before use.
 - `work/` is the only disposable subtree and is removed by finalization.
 - Optional research, download, review, render, and staging folders are created under `work/` only when a tool needs them; initialization does not pre-create empty scratch directories.
 - Prose may be anchored by exact excerpts.

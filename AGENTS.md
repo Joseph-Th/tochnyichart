@@ -2,9 +2,9 @@
 
 **BCA policy:** advisory
 
-**Profiles:** Universal, Agent Tool, Artifact Generation
+**Profiles:** Universal, Stateful Application, Agent Tool, Artifact Generation
 
-This file is the execution card for the organization-wide Tochnyi Charts tool. The project applies the Universal, Agent Tool, and Artifact Generation portfolio profiles. The personal `stanichart_2` tool is separate; do not import its scope or documents. `README.md` owns workflow orientation, `STATUS.md` owns supported scope, `docs/architecture.md` owns role/layer boundaries, `docs/testing.md` owns infrastructure verification, and the batch/source-ledger/authoring documents own their specialized contracts.
+This file is the execution card for the organization-wide Tochnyi Charts tool. The profile declaration above governs this project. The personal `stanichart_2` tool is separate; do not import its scope or documents. `README.md` owns workflow orientation, `STATUS.md` owns supported scope, `docs/architecture.md` owns role/layer boundaries, `docs/testing.md` owns infrastructure verification, and the batch/source-ledger/authoring documents own their specialized contracts.
 
 <!-- workspace-contract:begin (generated from ../AGENTS.md by tools/sync_agent_context.py; edit the source, not this copy) -->
 ## Workspace contract
